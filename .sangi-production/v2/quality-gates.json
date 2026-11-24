@@ -1,0 +1,21 @@
+{
+  "gates": [
+    {"id": "G00", "name": "Integridade inicial", "description": "Repositório, working tree, ferramentas e escopo verificados"},
+    {"id": "G01", "name": "Inventário e baseline", "description": "Diagnóstico e capturas originais registrados"},
+    {"id": "G02", "name": "Especificação individual", "description": "Plano visual, funcional e técnico específico aprovado"},
+    {"id": "G03", "name": "Assets e licenciamento", "description": "Recursos completos, otimizados e documentados"},
+    {"id": "G04", "name": "Direção artística", "description": "Qualidade visual aprovada por revisão independente (rubrica >= 4, nenhum < 3)"},
+    {"id": "G05", "name": "Mecânica principal", "description": "Funcionalidade central comprovada por teste real"},
+    {"id": "G06", "name": "Expansão", "description": "Novos conteúdos e interações efetivamente implementados"},
+    {"id": "G07", "name": "Física", "description": "Estabilidade e comportamento comprovados (multi-FPS, sem NaN)"},
+    {"id": "G08", "name": "Áudio e efeitos", "description": "Resposta adequada às interações e descarte correto de buffers/contexts"},
+    {"id": "G09", "name": "UX e acessibilidade", "description": "Controles claros, utilizáveis e acessíveis com foco/safe area"},
+    {"id": "G10", "name": "Mobile", "description": "Interação funcional nos viewports 360x640, 390x844 e tablets"},
+    {"id": "G11", "name": "Performance", "description": "Benchmarks registrados (30 FPS mobile intermediário / 60 FPS desktop)"},
+    {"id": "G12", "name": "Ciclo de vida", "description": "Pausa, retomada, reinício e encerramento verificados"},
+    {"id": "G13", "name": "Regressão", "description": "Funcionalidades existentes preservadas"},
+    {"id": "G14", "name": "Integração", "description": "Aplicativo integrado localmente e launcher validado"},
+    {"id": "G15", "name": "Documentação", "description": "Pacote individual completo, evidências e limitações registradas"},
+    {"id": "G16", "name": "Certificação física", "description": "Performance verificada em dispositivos reais (ou DEVICE_VALIDATION_PENDING)"}
+  ]
+}

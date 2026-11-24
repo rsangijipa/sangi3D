@@ -1,0 +1,25 @@
+{
+  "milestone": "M0",
+  "gate": "G00",
+  "timestamp": "2026-11-24T18:24:19.827Z",
+  "referenceCommit": "a87f539c9bb66832a0b5474178941711064d62dd",
+  "integrationBranch": "integration/sangi3d-production-v2",
+  "taskBranch": "engine/infra-v2",
+  "snapshotSha256": {
+    "api/apps.json": "6a67e5227424e00b8d1151e80e52a5d6c93df970ff16610dbd62a87acf1a04e8",
+    "launcher/api/apps.json": "13062bba04e44c9d93f86d74104e5bac2bdcd7729709c53b3a338051cf432aff"
+  },
+  "catalogCounts": {
+    "original": 101,
+    "uncatalogedOnDisk": 1,
+    "totalCanonicalTarget": 102,
+    "blockedPrompts": 2
+  },
+  "blockers": [
+    "B001",
+    "B002-T11",
+    "B003-T19",
+    "B004-junction",
+    "B005-missing-nm"
+  ]
+}

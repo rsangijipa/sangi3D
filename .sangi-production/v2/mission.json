@@ -1,0 +1,24 @@
+{
+  "mission": "SANGI3D 2.0 — MASTER PRODUCTION WORKFLOW",
+  "version": "2.0.0",
+  "startedAt": "2026-11-24T18:08:00Z",
+  "workingDirectory": "c:\\Users\\aless\\Downloads\\Ambientes 3D",
+  "repository": "https://github.com/rsangijipa/sangi3D",
+  "integrityMode": "development",
+  "executionMode": "Multi-agent production orchestration",
+  "gitStrategy": "Local branches and isolated worktrees",
+  "integrationBranch": "integration/sangi3d-production-v2",
+  "scope": "100% das entradas existentes no catálogo original com rastreabilidade integral",
+  "principles": [
+    "R0.1: Identidade visual, mecânica e experiência próprias por aplicativo",
+    "R0.2: Não realizar melhorias genéricas indiscriminadas",
+    "R0.3: Preservar funcionalidades úteis e funcionais existentes",
+    "R0.4: Não substituir 3D por imagens estáticas ou fake HUDs",
+    "R0.5: Não declarar funcionalidade sem teste de comportamento",
+    "R0.6: Não declarar qualidade gráfica/estabilidade sem evidências",
+    "R0.7: Não remover conteúdo sem justificativa documentada",
+    "R0.8: Nenhum push ou alteração remota sem autorização",
+    "R0.9: Não descartar alterações locais anteriores do usuário",
+    "R0.10: Trabalho incremental com checkpoints persistentes e bloqueios rastreados"
+  ]
+}
