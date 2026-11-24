@@ -16,6 +16,7 @@ const slugs = [
   '18_orgao-do-perfumista', '15_barista-de-bancada', '14_bancada-da-manicure', '07_copos-musicais',
   '04_maquina-de-escrever-das-intencoes', '16-teatro-das-historias-possiveis',
   '14-estudio-dos-limites', '13-museu-dos-pontos-de-vista',
+  'oficina-de-estofados', 'restauro-de-azulejos',
 ];
 const selection = process.argv.slice(2);
 const captures = process.env.SANGI_CAPTURE_DIR;
@@ -127,6 +128,18 @@ try {
           assert.equal(await frame.locator('#btn-pov').getAttribute('aria-pressed'), 'true');
           await frame.locator('#mode').click();
           assert.match(await frame.locator('#progress').innerText(), /LIVRE/);
+        }
+        if (slug === 'oficina-de-estofados') {
+          await frame.locator('[data-fabric="linho_salvia"]').click();
+          assert.match(await frame.locator('#fabricBadge').innerText(), /Linho Sálvia/i);
+          await frame.locator('[data-cam="assento"]').click();
+          assert.match(await frame.locator('[data-cam="assento"]').getAttribute('class'), /btn-active/);
+        }
+        if (slug === 'restauro-de-azulejos') {
+          await frame.locator('#btn-toggle-raking').click();
+          assert.match(await frame.locator('#btn-toggle-raking').innerText(), /OFF/);
+          await frame.locator('#btn-go-clean').click();
+          assert.match(await frame.locator('#step-clean').getAttribute('class'), /active/);
         }
         assert.deepEqual(errors, []);
         await page.locator('#closePlayerBtn').click();

@@ -1894,5 +1894,37 @@
     "mtime": 1795289542705.106,
     "versions": [],
     "id": "01_jogos_html-legado_arquivado-ambientes-html-vila-dos-encontros-html"
+  },
+  {
+    "name": "Oficina de Estofados",
+    "subtitle": "Simulador 3D Interativo",
+    "fullTitle": "Oficina de Estofados — Simulador 3D Interativo",
+    "description": "Simulador de estofamento em que você escolhe o tecido, alinha a trama e fixa o revestimento de uma poltrona.",
+    "url": "/01_Jogos_HTML/oficina-de-estofados/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Ambientes avulsos",
+    "thumb": null,
+    "order": 999,
+    "path": "01_Jogos_HTML\\oficina-de-estofados\\index.html",
+    "mtime": 1795532804415.6562,
+    "versions": [],
+    "id": "01_jogos_html-oficina-de-estofados-index-html"
+  },
+  {
+    "name": "Restauro de Azulejos",
+    "subtitle": "Ateliê 3D de Conservação",
+    "fullTitle": "Restauro de Azulejos — Ateliê 3D de Conservação",
+    "description": "Ateliê de conservação em que você inspeciona, limpa e encaixa fragmentos de azulejos históricos.",
+    "url": "/01_Jogos_HTML/restauro-de-azulejos/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Ambientes avulsos",
+    "thumb": null,
+    "order": 999,
+    "path": "01_Jogos_HTML\\restauro-de-azulejos\\index.html",
+    "mtime": 1795532804418.6528,
+    "versions": [],
+    "id": "01_jogos_html-restauro-de-azulejos-index-html"
   }
 ]
