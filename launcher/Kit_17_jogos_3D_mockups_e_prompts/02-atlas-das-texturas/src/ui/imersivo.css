@@ -1,0 +1,362 @@
+/*
+ * Barra Imersiva — padrão de controles de todos os ambientes 3D do Launcher.
+ * A cena ocupa a janela inteira; os controles ficam em barras compactas e
+ * semitransparentes (topo e base) e podem ser recolhidos (botão ou tecla H).
+ * Este arquivo é copiado para os apps React (src/styles/imersivo.css). Mantenha-os iguais.
+ */
+.imv-root {
+  --imv-bg: rgba(20, 16, 13, 0.46);
+  --imv-bg-strong: rgba(20, 16, 13, 0.72);
+  --imv-fg: #f6eee4;
+  --imv-muted: rgba(246, 238, 228, 0.66);
+  --imv-line: rgba(255, 244, 230, 0.16);
+  --imv-hover: rgba(255, 244, 230, 0.12);
+  --imv-accent: #e2b07a;
+  --imv-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  --imv-font: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --imv-serif: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
+}
+.imv-root.imv-light {
+  --imv-bg: rgba(250, 248, 244, 0.55);
+  --imv-bg-strong: rgba(250, 248, 244, 0.86);
+  --imv-fg: #1f2a2e;
+  --imv-muted: rgba(31, 42, 46, 0.66);
+  --imv-line: rgba(20, 40, 50, 0.14);
+  --imv-hover: rgba(20, 40, 50, 0.08);
+  --imv-shadow: 0 10px 30px rgba(20, 40, 50, 0.16);
+}
+
+.imv-glass {
+  background: var(--imv-bg);
+  color: var(--imv-fg);
+  border: 1px solid var(--imv-line);
+  box-shadow: var(--imv-shadow);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+}
+
+.imv-top,
+.imv-bottom,
+.imv-panel,
+.imv-reveal {
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+.imv-top *,
+.imv-bottom *,
+.imv-panel * {
+  box-sizing: border-box;
+}
+
+/* ---------- Barra superior ---------- */
+.imv-top {
+  position: fixed;
+  z-index: 2147483000;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 8px;
+  border-radius: 14px;
+  font: 500 12.5px/1.2 var(--imv-font);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.imv-back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 11px 0 9px;
+  border-radius: 10px;
+  color: var(--imv-fg) !important;
+  text-decoration: none !important;
+  border: 1px solid var(--imv-line);
+  font: 600 12px/1 var(--imv-font);
+  white-space: nowrap;
+}
+.imv-back:hover,
+.imv-btn:hover {
+  background: var(--imv-hover);
+}
+.imv-title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 6px;
+  flex: 0 0 auto;
+  max-width: 38%;
+}
+.imv-title strong {
+  font: 600 15px/1.15 var(--imv-serif);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.imv-title span {
+  font-size: 11px;
+  color: var(--imv-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.imv-spacer {
+  flex: 1 1 auto;
+  min-width: 4px;
+}
+.imv-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 0 1 auto;
+}
+.imv-actions::-webkit-scrollbar {
+  display: none;
+}
+.imv-actions > *,
+.imv-bottom > * {
+  flex: none;
+}
+.imv-actions button,
+.imv-actions select,
+.imv-actions a {
+  white-space: nowrap;
+  font-size: 12px !important;
+}
+.imv-sep {
+  flex: none;
+  width: 1px;
+  height: 22px;
+  background: var(--imv-line);
+  margin: 0 2px;
+}
+.imv-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid var(--imv-line);
+  background: transparent;
+  color: var(--imv-fg);
+  font: 600 12px/1 var(--imv-font);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.imv-btn.imv-icon {
+  padding: 0;
+  width: 34px;
+}
+.imv-btn[aria-expanded='true'],
+.imv-btn.is-active {
+  background: var(--imv-accent);
+  border-color: transparent;
+  color: #1c140e;
+}
+.imv-btn svg,
+.imv-back svg,
+.imv-reveal svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.imv-btn:focus-visible,
+.imv-back:focus-visible,
+.imv-reveal:focus-visible {
+  outline: 2px solid var(--imv-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Barra inferior ---------- */
+.imv-bottom {
+  position: fixed;
+  z-index: 2147483000;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  margin-inline: auto;
+  width: max-content;
+  max-width: calc(100% - 20px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  font: 500 12px/1.2 var(--imv-font);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.imv-bottom::-webkit-scrollbar {
+  display: none;
+}
+.imv-bottom:empty {
+  display: none;
+}
+.imv-bottom > .imv-flat {
+  flex-wrap: nowrap !important;
+  padding: 0 !important;
+}
+
+/* ---------- Painéis sob demanda ---------- */
+.imv-panel {
+  position: fixed;
+  z-index: 2147482990;
+  top: 68px;
+  width: min(360px, calc(100% - 20px));
+  max-height: calc(100% - 140px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--imv-bg-strong);
+  font: 500 12.5px/1.45 var(--imv-font);
+  overflow: hidden;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.imv-panel[hidden] {
+  display: none;
+}
+.imv-panel.is-right {
+  right: 10px;
+}
+.imv-panel.is-left {
+  left: 10px;
+}
+.imv-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 8px 14px;
+  border-bottom: 1px solid var(--imv-line);
+  font: 600 13px/1.2 var(--imv-serif);
+}
+.imv-panel-body {
+  overflow: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+}
+
+/* elementos originais movidos para dentro das barras/painéis perdem o "flutuar" próprio */
+.imv-flat {
+  position: static !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  translate: none !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+  z-index: auto !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  pointer-events: auto !important;
+}
+.imv-flat.imv-keep-pad {
+  padding: inherit;
+}
+.imv-hidden {
+  display: none !important;
+}
+
+/* ---------- Recolhido ---------- */
+.imv-collapsed .imv-top {
+  opacity: 0;
+  transform: translateY(-16px);
+  pointer-events: none;
+}
+.imv-collapsed .imv-bottom {
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+}
+.imv-collapsed .imv-panel,
+.imv-collapsed .imv-hide-collapsed {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+.imv-reveal {
+  position: fixed;
+  z-index: 2147483001;
+  right: 14px;
+  bottom: 14px;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid var(--imv-line);
+  background: var(--imv-bg);
+  color: var(--imv-fg);
+  font: 600 12px/1 var(--imv-font);
+  cursor: pointer;
+  opacity: 0.42;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: opacity 0.25s ease;
+}
+.imv-reveal:hover,
+.imv-reveal:focus-visible {
+  opacity: 1;
+}
+.imv-collapsed .imv-reveal {
+  display: inline-flex;
+}
+
+@media (max-width: 720px) {
+  .imv-top {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    border-radius: 12px;
+  }
+  .imv-title span,
+  .imv-back .imv-label,
+  .imv-btn .imv-label {
+    display: none;
+  }
+  .imv-title strong {
+    font-size: 14px;
+  }
+  .imv-bottom {
+    bottom: 6px;
+    max-width: calc(100% - 12px);
+  }
+  .imv-panel {
+    top: 62px;
+    left: 6px !important;
+    right: 6px !important;
+    width: auto;
+    max-height: calc(100% - 132px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .imv-top,
+  .imv-bottom,
+  .imv-panel {
+    transition: none;
+  }
+}

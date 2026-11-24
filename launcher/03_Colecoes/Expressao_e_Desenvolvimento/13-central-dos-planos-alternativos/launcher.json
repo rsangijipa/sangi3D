@@ -1,0 +1,16 @@
+{
+  "id": "13-central-dos-planos-alternativos",
+  "title": "Central dos Planos Alternativos",
+  "category": "TCC e funções executivas",
+  "description": "Planeje uma viagem na maquete ferroviária. Sinalize o percurso, observe bloqueios anunciados e escolha uma alternativa real.",
+  "entry": "dist/index.html",
+  "thumbnail": "miniatura.png",
+  "capabilities": [
+    "pause",
+    "resume",
+    "undo",
+    "export",
+    "fallback"
+  ],
+  "status": "implementation"
+}

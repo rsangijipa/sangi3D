@@ -1,7 +1,8 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/apps", "destination": "/api/apps.json" }
+    { "source": "/api/apps", "destination": "/api/apps.json" },
+    { "source": "/launcher/capas/(.*)", "destination": "/launcher/capas/$1" }
   ],
   "headers": [
     {

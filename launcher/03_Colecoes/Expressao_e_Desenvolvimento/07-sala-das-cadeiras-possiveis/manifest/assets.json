@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "project": "07-sala-das-cadeiras-possiveis",
+  "units": "metres",
+  "assets": [
+    {
+      "id": "poltrona_de_linho",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cadeira_de_madeira",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cadeira_vazia_estofada",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "tapete",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mesa_baixa",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cortinas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "janela",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cartoes_de_nomes_opcionais",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    }
+  ]
+}

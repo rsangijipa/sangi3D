@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tear dos Vínculos — Oficina 3D de tecelagem</title>
+  <meta name="description" content="Oficina têxtil em 3D: escolher fio, entrelaçar por cima e por baixo, tensionar, separar e reconectar trechos, ver o tecido pronto." />
+  <meta name="theme-color" content="#26332f" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <style>
+    html,body{margin:0;height:100%;background:#2a221a}
+    #carregando{position:fixed;inset:0;display:grid;place-items:center;color:#eee5d4;font:500 17px 'Segoe UI',system-ui,sans-serif;background:radial-gradient(ellipse at 50% 40%,#5a4632,#2a221a)}
+    #carregando span{display:block;margin-top:12px;font-size:14px;color:#cfc4b1}
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="carregando" role="status"><div style="text-align:center">Preparando a oficina…<span>Montando o tear, os fios e a luz da tarde.</span></div></div>
+  <noscript>O Tear dos Vínculos precisa de JavaScript para funcionar.</noscript>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

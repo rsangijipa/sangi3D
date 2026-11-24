@@ -362,10 +362,25 @@
     const STAR = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/></svg>';
     const STAR_O = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/></svg>';
 
+    function handleThumbError(img, name, collection) {
+      if (img.dataset.triedAlt) {
+        img.outerHTML = art(name, collection);
+        return;
+      }
+      img.dataset.triedAlt = '1';
+      if (img.src.includes('/launcher/capas/')) {
+        img.src = img.src.replace('/launcher/capas/', '/capas/');
+      } else if (img.src.includes('/capas/')) {
+        img.src = img.src.replace('/capas/', '/launcher/capas/');
+      } else {
+        img.outerHTML = art(name, collection);
+      }
+    }
+
     function statusOf(a) { return (a.kind === 'project' && BUILD[a.build?.state]) || STATUS[a.status]; }
     function thumbOf(a) {
       return a.thumb
-        ? `<img src="${esc(a.thumb)}" alt="" loading="lazy" decoding="async" data-fallback="${esc(a.id)}" />`
+        ? `<img src="${esc(a.thumb)}" alt="" loading="lazy" decoding="async" data-fallback="${esc(a.id)}" onerror="handleThumbError(this, '${esc(a.name)}', '${esc(a.collection)}')" />`
         : art(a.name, a.collection);
     }
     function actionsOf(a, compact) {

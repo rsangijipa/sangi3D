@@ -1,0 +1,79 @@
+[
+  {
+    "profile": "1440x810",
+    "calls": 94,
+    "triangles": 150380,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "equilibrada",
+    "ratio": 1,
+    "width": 1440,
+    "height": 810,
+    "measureMs": null
+  },
+  {
+    "profile": "1280x720",
+    "calls": 94,
+    "triangles": 150380,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "equilibrada",
+    "ratio": 1,
+    "width": 1280,
+    "height": 720,
+    "measureMs": 25.659999999403954
+  },
+  {
+    "profile": "1280x720 alta",
+    "calls": 92,
+    "triangles": 150140,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "alta",
+    "ratio": 1,
+    "width": 1280,
+    "height": 720,
+    "measureMs": 24.790000000596045
+  },
+  {
+    "profile": "390x844",
+    "calls": 40,
+    "triangles": 73296,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "equilibrada",
+    "ratio": 1,
+    "width": 390,
+    "height": 844,
+    "measureMs": 11.209999999403953
+  },
+  {
+    "profile": "390x844 leve",
+    "calls": 40,
+    "triangles": 73296,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "leve",
+    "ratio": 1,
+    "width": 390,
+    "height": 844,
+    "measureMs": 12.65
+  },
+  {
+    "profile": "360x640",
+    "calls": 46,
+    "triangles": 76350,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "equilibrada",
+    "ratio": 1,
+    "width": 360,
+    "height": 640,
+    "measureMs": null
+  },
+  {
+    "profile": "844x390",
+    "calls": 94,
+    "triangles": 150380,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "level": "equilibrada",
+    "ratio": 1,
+    "width": 844,
+    "height": 390,
+    "measureMs": null
+  }
+]

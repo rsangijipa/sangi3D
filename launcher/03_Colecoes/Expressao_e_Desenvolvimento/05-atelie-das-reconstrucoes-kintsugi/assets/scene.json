@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "units": "m",
+  "up": "Y",
+  "nodes": [
+    {"id":"bancada","position":[0,0.8,0.06],"rotation":[0,0,0],"scale":[1,1,1],"role":"tampo de nogueira"},
+    {"id":"linho","position":[0,0.852,0.16],"rotation":[0,0,0],"scale":[1,1,1],"role":"base dos fragmentos soltos"},
+    {"id":"janela","position":[-0.69,1.69,-1.38],"rotation":[0,0,0],"scale":[1,1,1],"role":"abertura circular para o jardim"},
+    {"id":"base_da_peca","position":[0,0.904,-0.065],"rotation":[0,0,0],"scale":[1,1,1],"role":"pivô da restauração; juntas e posições são locais a este nó"},
+    {"id":"bandeja","position":[0.97,0.864,0.055],"rotation":[0,0.08,0],"scale":[1,1,1],"role":"suporte de laca e pigmento"},
+    {"id":"estante_inferior","position":[1.63,1.21,-1.12],"rotation":[0,0,0],"scale":[1,1,1],"role":"exposição de cerâmicas"},
+    {"id":"estante_superior","position":[1.63,1.79,-1.12],"rotation":[0,0,0],"scale":[1,1,1],"role":"exposição de cerâmicas"}
+  ]
+}

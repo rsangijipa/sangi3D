@@ -1,0 +1,146 @@
+{
+  "quando": "2026-11-24T09:56:42.018Z",
+  "resultados": [
+    {
+      "name": "entrada → modo livre e HUD com rótulos do brief",
+      "status": "PASS",
+      "ms": 2310
+    },
+    {
+      "name": "escolher fio e espessura pela cena e pela doca",
+      "status": "FAIL",
+      "ms": 299,
+      "error": "Expected values to be strictly equal:\n\n'salvia' !== 'telha'\n"
+    },
+    {
+      "name": "cruzamentos seguem a ordem escolhida (teclado + chips 3D)",
+      "status": "FAIL",
+      "ms": 2989,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'over',\n    'over',\n    'under',\n-   'over',\n-   'under',\n-   'under'\n  ]\n"
+    },
+    {
+      "name": "arrastar a lançadeira completa a passada e o pente bate",
+      "status": "FAIL",
+      "ms": 26921,
+      "error": "cruzamentos manuais preservados\n+ actual - expected\n\n  [\n    'over',\n    'over',\n    'under',\n+   'under',\n    'over',\n    'under',\n-   'under'\n  ]\n"
+    },
+    {
+      "name": "desfazer/refazer (Ctrl+Z/Ctrl+Y) restauram o estado do tecido",
+      "status": "PASS",
+      "ms": 57
+    },
+    {
+      "name": "tensão altera curvatura sem instabilidade (inclui extremos)",
+      "status": "PASS",
+      "ms": 15728
+    },
+    {
+      "name": "corte só remove o trecho escolhido (com confirmação)",
+      "status": "PASS",
+      "ms": 16042
+    },
+    {
+      "name": "reconectar preserva o desenho restante",
+      "status": "PASS",
+      "ms": 1161
+    },
+    {
+      "name": "prender ponta e dar nó (pré-condição validada)",
+      "status": "PASS",
+      "ms": 164
+    },
+    {
+      "name": "ver tecido e exportar composição (PNG) e resumo sem nomes",
+      "status": "PASS",
+      "ms": 28339
+    },
+    {
+      "name": "salvar explicitamente, reabrir e apagar (IndexedDB)",
+      "status": "PASS",
+      "ms": 17330
+    },
+    {
+      "name": "reset exige confirmação; alternância de modo",
+      "status": "PASS",
+      "ms": 7408
+    },
+    {
+      "name": "demonstração pulável restaura o estado",
+      "status": "PASS",
+      "ms": 4606
+    },
+    {
+      "name": "diagnóstico 1280x720 (SwiftShader, CPU — não representa GPU real)",
+      "status": "INFO",
+      "perf": {
+        "calls": 313,
+        "triangles": 369353,
+        "geometries": 189,
+        "textures": 40,
+        "frameMs": 83.39999999999418,
+        "p50": 16.699999999999818,
+        "p95": 166.6999999999971,
+        "scale": 1,
+        "tier": "leve",
+        "width": 988,
+        "height": 556
+      }
+    },
+    {
+      "name": "eventos de integração sem dados pessoais",
+      "status": "FAIL",
+      "ms": 6948048,
+      "error": "page.evaluate: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Users\\aless\\AppData\\Local/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-win64/chrome-headless-shell.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-break"
+    },
+    {
+      "name": "layout desktop-1920x1080: sem rolagem horizontal, alvos ≥44px, HUD fora da área central",
+      "status": "FAIL",
+      "ms": 13,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "layout desktop-1280x720: sem rolagem horizontal, alvos ≥44px, HUD fora da área central",
+      "status": "FAIL",
+      "ms": 1,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "layout tablet-paisagem-1024x768: sem rolagem horizontal, alvos ≥44px, HUD fora da área central",
+      "status": "FAIL",
+      "ms": 2,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "layout celular-390x844: sem rolagem horizontal, alvos ≥44px, HUD fora da área central",
+      "status": "FAIL",
+      "ms": 1,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "layout celular-360x640: sem rolagem horizontal, alvos ≥44px, HUD fora da área central",
+      "status": "FAIL",
+      "ms": 5,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "sessões repetidas e resize não acumulam geometrias",
+      "status": "FAIL",
+      "ms": 4,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "perda de contexto WebGL mostra alternativa DOM funcional e recupera",
+      "status": "FAIL",
+      "ms": 9,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "name": "sem erros de console e sem 404",
+      "status": "PASS",
+      "ms": 1
+    }
+  ],
+  "consoleErrors": [],
+  "notFound": [],
+  "sensitiveLeaks": []
+}

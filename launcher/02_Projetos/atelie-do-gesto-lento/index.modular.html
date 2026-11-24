@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ateliê do Gesto Lento — Oficina 3D</title>
+  <style>
+    :root {
+      --paper: #F4EDE2;
+      --paper-alpha: rgba(244, 237, 226, 0.95);
+      --wall: #DCD1BC;
+      --clay: #A95F43;
+      --clay-wet: #8E4C36;
+      --wood: #9A7251;
+      --text: #332C26;
+      --text-muted: #6B5E52;
+      --olive: #596344;
+      --olive-hover: #485136;
+      --linen: #C9B99D;
+      --border: rgba(90, 68, 48, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--wall);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      touch-action: none;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #stage:active {
+      cursor: grabbing;
+    }
+
+    .serif-title {
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+
+    /* UI Paper Containers */
+    .paper-card {
+      background: var(--paper-alpha);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(54, 39, 25, 0.12);
+      pointer-events: auto;
+    }
+
+    /* Buttons */
+    button {
+      font-family: inherit;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+
+    button:hover {
+      background: rgba(89, 99, 68, 0.08);
+      border-color: var(--olive);
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--olive);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      border-color: var(--border);
+      background: transparent;
+    }
+
+    .btn-olive {
+      background: var(--olive);
+      color: #FFFFFF;
+      border: 1px solid var(--olive);
+    }
+
+    .btn-olive:hover {
+      background: var(--olive-hover);
+    }
+
+    .btn-tool {
+      min-width: 88px;
+      padding: 10px 14px;
+      font-size: 13.5px;
+      justify-content: center;
+    }
+
+    .btn-tool.active-tool {
+      background: var(--olive);
+      color: #FFFFFF;
+      border-color: var(--olive);
+      font-weight: 600;
+    }
+
+    .active-view {
+      background: rgba(89, 99, 68, 0.16);
+      border-color: var(--olive);
+      font-weight: 600;
+    }
+
+    /* Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 5px;
+      border-radius: 4px;
+      background: #D5C8B4;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--olive);
+      border: 2px solid var(--paper);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--olive);
+      border: 2px solid var(--paper);
+      cursor: pointer;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(30, 24, 18, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .highlight-advance {
+      border-color: var(--olive) !important;
+      background: rgba(89, 99, 68, 0.15) !important;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .desktop-only { display: none !important; }
+      .mobile-dock {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 12px !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Three.js Stage Container -->
+  <main id="stage" aria-label="Oficina 3D de Cerâmica"></main>
+
+  <!-- Non-intrusive Toast Notification -->
+  <div
+    id="toast"
+    class="fixed top-5 left-1/2 -translate-x-1/2 z-40 pointer-events-none opacity-0 translate-y-2 transition-all duration-300 px-4 py-2 rounded paper-card text-xs font-semibold shadow-xl border border-[var(--border)]"
+    style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 40;"
+    role="status"
+    aria-live="polite"
+  >
+    Ateliê Pronto
+  </div>
+
+  <!-- Top Bar (Header) -->
+  <header
+    class="fixed top-4 left-4 right-4 z-20 flex items-start justify-between pointer-events-none"
+    style="position: fixed; top: 18px; left: 24px; right: 24px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 20; pointer-events: none;"
+  >
+    <!-- Branding -->
+    <div class="paper-card p-3 max-w-sm pointer-events-auto" style="padding: 14px 18px; max-width: 380px;">
+      <div style="font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--olive); font-weight: 700; margin-bottom: 4px;">
+        Um tempo para criar
+      </div>
+      <h1 class="serif-title" style="margin: 0; font-size: 20px; font-weight: 700; line-height: 1.2;">
+        Ateliê do Gesto Lento
+      </h1>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+        A argila acompanha o seu ritmo.
+      </p>
+    </div>
+
+    <!-- Header Actions (Right) -->
+    <div class="flex items-center gap-2 pointer-events-auto" style="display: flex; gap: 8px; align-items: center;">
+      <button id="btn-audio-toggle" class="paper-card" title="Ativar sons da oficina e argila">
+        <span id="audio-icon">🔈</span>
+        <span id="audio-label" class="desktop-only">Som</span>
+      </button>
+
+      <!-- Camera Presets -->
+      <div class="paper-card flex items-center p-1" style="display: flex; gap: 4px; padding: 4px;">
+        <button data-cam="trabalho" class="active-view" title="Visão de modelagem">Trabalho</button>
+        <button data-cam="detalhe" title="Visão aproximada">Detalhe</button>
+        <button data-cam="ambiente" title="Visão da oficina">Ambiente</button>
+      </div>
+
+      <button id="btn-open-guided" class="paper-card btn-olive" title="Experimentar uma prática com 5 convites curtos">
+        🌿 <span class="desktop-only">Experimentar uma prática</span>
+      </button>
+
+      <button id="btn-toggle-settings" class="paper-card" title="Ajustes do gesto e ferramentas" aria-expanded="false">
+        ⚙️ <span class="desktop-only">Seu gesto</span>
+      </button>
+
+      <button id="btn-export-img" class="paper-card" title="Guardar imagem em alta resolução">
+        📷
+      </button>
+    </div>
+  </header>
+
+  <!-- Left Side: Guidance Card (Free Mode & Guided Mode) -->
+  <aside
+    id="guidance-container"
+    style="position: fixed; left: 24px; bottom: 84px; z-index: 20; max-width: 320px; pointer-events: none;"
+  >
+    <!-- Free Mode Gentle Hint -->
+    <div id="free-guidance" class="paper-card" style="padding: 12px 16px;">
+      <div id="tool-guidance" style="font-size: 12.5px; color: var(--text); line-height: 1.5;">
+        Toque na argila e arraste devagar. Você pode desfazer quando quiser.
+      </div>
+    </div>
+
+    <!-- Active Guided Invitation Card -->
+    <div id="guidance-card" class="paper-card hidden" style="padding: 16px 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span id="guided-step-badge" style="font-size: 10.5px; font-weight: 700; color: var(--olive); text-transform: uppercase; letter-spacing: 0.12em;">
+          Convite 1 de 5
+        </span>
+        <div style="display: flex; gap: 6px;">
+          <button id="btn-pause-guided" style="padding: 2px 8px; font-size: 11px;">Pausar</button>
+        </div>
+      </div>
+      <h3 id="guided-step-title" class="serif-title" style="margin: 0 0 6px 0; font-size: 16px;">
+        Chegar
+      </h3>
+      <p id="guided-primary-text" style="margin: 0 0 6px 0; font-size: 13px; line-height: 1.5; color: var(--text);">
+        Antes de fazer alguma coisa, encontre um jeito confortável de ficar. Olhe a luz, a bancada e a argila.
+      </p>
+      <p id="guided-aux-text" style="margin: 0 0 12px 0; font-size: 12px; line-height: 1.4; color: var(--text-muted);">
+        Se quiser, perceba o apoio dos pés e das mãos onde você está.
+      </p>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="btn-guided-primary" class="btn-olive" style="flex: 1; justify-content: center;">
+          Me aproximar da argila
+        </button>
+        <button id="btn-guided-skip" style="font-size: 12px;">
+          Pular
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Side: Collapsible "Seu Gesto" Adjustments Panel -->
+  <aside
+    id="settings-panel"
+    class="paper-card hidden"
+    style="position: fixed; right: 24px; top: 76px; z-index: 20; width: 280px; padding: 16px 18px; max-height: calc(100vh - 160px); overflow-y: auto;"
+  >
+    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--olive); margin-bottom: 12px;">
+      Ajustes do Gesto
+    </div>
+
+    <!-- Scope: Faixa inteira vs Toque local -->
+    <div style="margin-bottom: 14px;">
+      <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Alcance da ferramenta</label>
+      <div style="display: flex; gap: 12px; font-size: 12px;">
+        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+          <input type="radio" name="scope" value="ring" checked accent-color="var(--olive)" />
+          Faixa inteira (torno)
+        </label>
+        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+          <input type="radio" name="scope" value="local" accent-color="var(--olive)" />
+          Toque local
+        </label>
+      </div>
+    </div>
+
+    <!-- Brush Size -->
+    <div style="margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+        <span>Tamanho do toque</span>
+        <span style="color: var(--text-muted);">Suave</span>
+      </div>
+      <input id="slider-brush" type="range" min="0" max="100" value="45" style="width: 100%;" />
+    </div>
+
+    <!-- Sensitivity -->
+    <div style="margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+        <span>Sensibilidade</span>
+        <span style="color: var(--text-muted);">55%</span>
+      </div>
+      <input id="slider-sens" type="range" min="20" max="100" value="55" style="width: 100%;" />
+    </div>
+
+    <!-- Piece Height -->
+    <div style="margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+        <span>Altura da peça</span>
+        <span id="height-value" style="color: var(--olive); font-weight: 600;">23 cm</span>
+      </div>
+      <input id="slider-height" type="range" min="10" max="38" value="23" style="width: 100%;" />
+    </div>
+
+    <!-- Wheel Rotation -->
+    <div style="margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+        <span>Girar peça no torno</span>
+        <span style="color: var(--text-muted);">Manual</span>
+      </div>
+      <input id="slider-wheel" type="range" min="0" max="360" value="0" style="width: 100%;" />
+    </div>
+
+    <!-- Presets -->
+    <div style="margin-bottom: 16px; padding-top: 10px; border-top: 1px solid var(--border);">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px;">Formas de partida</div>
+      <div style="display: flex; gap: 6px;">
+        <button data-preset="bloco" style="flex: 1; padding: 6px; font-size: 11.5px; justify-content: center;">Bloco</button>
+        <button data-preset="tigela" style="flex: 1; padding: 6px; font-size: 11.5px; justify-content: center;">Tigela</button>
+        <button data-preset="vaso" style="flex: 1; padding: 6px; font-size: 11.5px; justify-content: center;">Vaso</button>
+      </div>
+    </div>
+
+    <!-- Precision Keyboard Adjustments -->
+    <div style="padding-top: 6px;">
+      <button id="btn-open-precision" style="width: 100%; justify-content: center; font-size: 12px;">
+        ⌨️ Ajustes por teclado
+      </button>
+    </div>
+  </aside>
+
+  <!-- Bottom Central Dock (Ferramentas & Histórico) -->
+  <footer
+    class="mobile-dock"
+    style="position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: none;"
+  >
+    <div class="paper-card flex items-center gap-1.5 p-2" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px;">
+      
+      <!-- Tool 1: Modelar -->
+      <button data-tool="modelar" class="btn-tool active-tool" title="Modelar: arraste para abrir ou estreitar (Tecla 1)" aria-pressed="true">
+        🖐️ <span>Modelar</span>
+      </button>
+
+      <!-- Tool 2: Alisar -->
+      <button data-tool="alisar" class="btn-tool" title="Alisar: passe suavemente pela superfície (Tecla 2)" aria-pressed="false">
+        ✨ <span>Alisar</span>
+      </button>
+
+      <!-- Tool 3: Marcar -->
+      <button data-tool="marcar" class="btn-tool" title="Marcar: entalhe marcas com a esteca (Tecla 3)" aria-pressed="false">
+        ✏️ <span>Marcar</span>
+      </button>
+
+      <!-- Separator -->
+      <div style="width: 1px; height: 24px; background: var(--border); margin: 0 4px;"></div>
+
+      <!-- Undo / Redo -->
+      <button id="btn-undo" title="Desfazer último gesto (Ctrl+Z)" disabled>
+        ↩️ <span class="desktop-only">Desfazer</span>
+      </button>
+
+      <button id="btn-redo" title="Refazer gesto (Ctrl+Shift+Z)" disabled>
+        ↪️ <span class="desktop-only">Refazer</span>
+      </button>
+
+      <div style="width: 1px; height: 24px; background: var(--border); margin: 0 4px;" class="desktop-only"></div>
+
+      <!-- Export JSON -->
+      <button id="btn-export-json" class="desktop-only" title="Exportar arquivo da peça">
+        💾 Exportar
+      </button>
+    </div>
+  </footer>
+
+  <!-- Modal: Guided Practice Setup ("Como você quer chegar?") -->
+  <div id="modal-guided-setup" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-setup-title">
+    <div class="paper-card" style="max-width: 440px; width: 100%; padding: 24px;">
+      <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--olive); font-weight: 700; margin-bottom: 6px;">
+        Prática Guiada
+      </div>
+      <h2 id="modal-setup-title" class="serif-title" style="margin: 0 0 10px 0; font-size: 22px;">
+        Como você quer chegar?
+      </h2>
+      <p style="margin: 0 0 20px 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+        A prática oferece cinco convites curtos para tocar, experimentar e observar. Sua peça atual permanece intacta e você pode seguir no seu próprio ritmo.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <button data-duration="brief" class="btn-olive" style="padding: 12px; justify-content: flex-start; text-align: left;">
+          <div>
+            <div style="font-weight: 600;">Breve · cerca de 3 minutos</div>
+            <div style="font-size: 11.5px; opacity: 0.85; margin-top: 2px;">Convites rápidos para uma pausa atenta.</div>
+          </div>
+        </button>
+
+        <button data-duration="timed" style="padding: 12px; justify-content: flex-start; text-align: left;">
+          <div>
+            <div style="font-weight: 600;">Com tempo · cerca de 7 minutos</div>
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Mais tempo em cada região da peça.</div>
+          </div>
+        </button>
+
+        <button data-duration="timeless" style="padding: 12px; justify-content: flex-start; text-align: left;">
+          <div>
+            <div style="font-weight: 600;">Sem relógio</div>
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Você decide quando passar para o próximo convite.</div>
+          </div>
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button onclick="document.getElementById('modal-guided-setup').classList.add('hidden')">
+          Voltar ao ateliê
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Guided Practice Paused ("Uma pausa também faz parte") -->
+  <div id="modal-guided-pause" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="paper-card" style="max-width: 400px; width: 100%; padding: 24px; text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 8px;">🌿</div>
+      <h2 class="serif-title" style="margin: 0 0 8px 0; font-size: 20px;">
+        Uma pausa também faz parte.
+      </h2>
+      <p style="margin: 0 0 20px 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+        A sua peça fica aqui enquanto você faz uma pausa.
+      </p>
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button id="btn-resume-guided" class="btn-olive">Retomar</button>
+        <button id="btn-exit-guided">Continuar sem orientação</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Guided Practice Finished ("Por hoje, pode ser assim") -->
+  <div id="modal-guided-finish" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="paper-card" style="max-width: 450px; width: 100%; padding: 24px;">
+      <h2 class="serif-title" style="margin: 0 0 10px 0; font-size: 22px;">
+        Por hoje, pode ser assim.
+      </h2>
+      <p style="margin: 0 0 14px 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+        Como foi criar sem precisar chegar a uma forma certa?
+      </p>
+
+      <div style="margin-bottom: 14px;">
+        <label for="reflection-input" style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">
+          Uma anotação para você (opcional)
+        </label>
+        <textarea
+          id="reflection-input"
+          maxlength="500"
+          rows="3"
+          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: rgba(255,255,255,0.7); font-family: inherit; font-size: 13px;"
+          placeholder="Escreva algo se desejar..."
+        ></textarea>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
+          <input type="checkbox" id="check-save-reflection" accent-color="var(--olive)" />
+          Guardar esta anotação neste dispositivo
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="document.getElementById('modal-guided-finish').classList.add('hidden')">
+          Continuar criando
+        </button>
+        <button class="btn-olive" onclick="document.getElementById('modal-guided-finish').classList.add('hidden')">
+          Guardar e encerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Accessible Precision Keyboard Adjustments -->
+  <div id="modal-precision" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-precision-title">
+    <div class="paper-card" style="max-width: 440px; width: 100%; padding: 22px;">
+      <h2 id="modal-precision-title" class="serif-title" style="margin: 0 0 10px 0; font-size: 18px;">
+        Ajustes Precisos por Teclado
+      </h2>
+      <p style="margin: 0 0 16px 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.4;">
+        Permite alterar a largura da peça por regiões específicas sem uso do mouse.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+        <!-- Borda -->
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+          <span style="font-weight: 500;">Borda superior</span>
+          <div style="display: flex; gap: 6px;">
+            <button data-adjust-band="borda" data-adjust-action="expand">Ampliar</button>
+            <button data-adjust-band="borda" data-adjust-action="narrow">Estreitar</button>
+          </div>
+        </div>
+
+        <!-- Colo -->
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+          <span style="font-weight: 500;">Colo / Pescoço</span>
+          <div style="display: flex; gap: 6px;">
+            <button data-adjust-band="colo" data-adjust-action="expand">Ampliar</button>
+            <button data-adjust-band="colo" data-adjust-action="narrow">Estreitar</button>
+          </div>
+        </div>
+
+        <!-- Meio / Bojo -->
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+          <span style="font-weight: 500;">Bojo / Meio</span>
+          <div style="display: flex; gap: 6px;">
+            <button data-adjust-band="meio" data-adjust-action="expand">Ampliar</button>
+            <button data-adjust-band="meio" data-adjust-action="narrow">Estreitar</button>
+          </div>
+        </div>
+
+        <!-- Base -->
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+          <span style="font-weight: 500;">Base da peça</span>
+          <div style="display: flex; gap: 6px;">
+            <button data-adjust-band="base" data-adjust-action="expand">Ampliar</button>
+            <button data-adjust-band="base" data-adjust-action="narrow">Estreitar</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button onclick="document.getElementById('modal-precision').classList.add('hidden')">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entry Script -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

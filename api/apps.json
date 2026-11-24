@@ -175,7 +175,7 @@
     "subtitle": "Oficina 3D de tecelagem",
     "fullTitle": "Tear dos Vínculos — Oficina 3D de tecelagem",
     "description": "Oficina têxtil em 3D: escolher fio, entrelaçar por cima e por baixo, tensionar, separar e reconectar trechos, ver o tecido pronto.",
-    "url": "/play/04-tear-dos-vinculos",
+    "url": "/04-tear-dos-vinculos/dist/index.html",
     "direct": "/04-tear-dos-vinculos/dist/",
     "status": "ready",
     "kind": "project",
@@ -201,7 +201,7 @@
     "subtitle": "",
     "fullTitle": "Ateliê das Máscaras Emocionais",
     "description": "Um ateliê privado para esculpir, pintar e decorar máscaras em 3D.",
-    "url": "/play/02_projetos-ateliemascaras",
+    "url": "/02_Projetos/ateliemascaras/dist/index.html",
     "direct": "/02_Projetos/ateliemascaras/dist/",
     "status": "ready",
     "kind": "project",
@@ -226,7 +226,7 @@
     "name": "Ateliê do Gesto Lento",
     "subtitle": "Oficina 3D de Cerâmica e Presença | Instituto Gestaltear",
     "fullTitle": "Ateliê do Gesto Lento — Oficina 3D de Cerâmica e Presença | Instituto Gestaltear",
-    "url": "/play/02_projetos-atelie-do-gesto-lento",
+    "url": "/02_Projetos/atelie-do-gesto-lento/dist/index.html",
     "direct": "/02_Projetos/atelie-do-gesto-lento/dist/",
     "status": "ready",
     "kind": "project",
@@ -274,7 +274,7 @@
     "subtitle": "",
     "fullTitle": "Jardim dos Ciclos",
     "description": "Jardim dos Ciclos — Uma estufa botânica contemplativa e interativa em 3D sobre cuidado, crescimento e passagem do tempo.",
-    "url": "/play/02_projetos-jardim-dos-ciclos",
+    "url": "/02_Projetos/jardim-dos-ciclos/dist/index.html",
     "direct": "/02_Projetos/jardim-dos-ciclos/dist/",
     "status": "ready",
     "kind": "project",
@@ -314,7 +314,7 @@
     "name": "Oficina dos Gestos Compartilhados",
     "subtitle": "",
     "fullTitle": "Oficina dos Gestos Compartilhados",
-    "url": "/play/02_projetos-oficina-dos-gestos-compartilhados-projeto",
+    "url": "/02_Projetos/oficina-dos-gestos-compartilhados-projeto/dist/index.html",
     "direct": "/02_Projetos/oficina-dos-gestos-compartilhados-projeto/dist/",
     "status": "ready",
     "kind": "project",
@@ -340,7 +340,7 @@
     "subtitle": "Experiência 3D Interativa",
     "fullTitle": "Cartografia dos Sons — Experiência 3D Interativa",
     "description": "Explore uma cidade em miniatura como cartógrafo sonoro: localize, desloque, compare e combine fontes de som em um mapa tridimensional.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-01-cartografia-dos-sons",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/dist/",
     "status": "ready",
     "kind": "project",
@@ -366,7 +366,7 @@
     "subtitle": "",
     "fullTitle": "Atlas das Texturas",
     "description": "Atlas das Texturas: ateliê 3D para observar superfícies sob luz difusa e rasante, com lupa e atlas de descritores.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-02-atlas-das-texturas",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/dist/",
     "status": "ready",
     "kind": "project",
@@ -392,7 +392,7 @@
     "subtitle": "Mixagem Artesanal 3D",
     "fullTitle": "Laboratório de Camadas Sonoras — Mixagem Artesanal 3D",
     "description": "Mesa de mixagem artesanal 3D para explorar sons sobrepostos, selecionar foco e ajustar preferências auditivas.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-03-laboratorio-de-camadas-sonoras",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/dist/",
     "status": "ready",
     "kind": "project",
@@ -428,7 +428,8 @@
     "mtime": 1795483868487.8438,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/04-observatorio-da-luz/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz",
+    "isConcept": true
   },
   {
     "name": "Oficina do Tempo",
@@ -445,7 +446,8 @@
     "mtime": 1795483868523.892,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/05-oficina-do-tempo/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-05-oficina-do-tempo"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-05-oficina-do-tempo",
+    "isConcept": true
   },
   {
     "name": "Torre do Impulso",
@@ -462,7 +464,8 @@
     "mtime": 1795483868575.33,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/06-torre-do-impulso/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-06-torre-do-impulso"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-06-torre-do-impulso",
+    "isConcept": true
   },
   {
     "name": "Ilha das Pausas",
@@ -479,14 +482,15 @@
     "mtime": 1795483868607.5933,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/07-ilha-das-pausas/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-07-ilha-das-pausas"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-07-ilha-das-pausas",
+    "isConcept": true
   },
   {
     "name": "Meteorologia das Emoções",
     "subtitle": "",
     "fullTitle": "Meteorologia das Emoções",
     "description": "Meteorologia das Emoções — componha um clima simbólico para suas experiências emocionais.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/dist/",
     "status": "ready",
     "kind": "project",
@@ -522,14 +526,15 @@
     "mtime": 1795483868670.3425,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/09-estacao-das-trocas/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-09-estacao-das-trocas"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-09-estacao-das-trocas",
+    "isConcept": true
   },
   {
     "name": "Porto das Decisões",
     "subtitle": "Planejamento Náutico 3D",
     "fullTitle": "Porto das Decisões — Planejamento Náutico 3D",
     "description": "Planeje cargas e rotas de pequenas embarcações em um diorama náutico 3D interativo.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-10-porto-das-decisoes",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/dist/",
     "status": "ready",
     "kind": "project",
@@ -555,7 +560,7 @@
     "subtitle": "",
     "fullTitle": "Bússola do Corpo",
     "description": null,
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-11-bussola-do-corpo",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo/dist/",
     "status": "ready",
     "kind": "project",
@@ -581,7 +586,7 @@
     "subtitle": "Cidade de Miniaturas",
     "fullTitle": "12. Cidade das Conversas · Cidade de Miniaturas",
     "description": "12. Cidade das Conversas - Cidade de miniaturas com conversas ramificadas em situações cotidianas com diorama 3D realista.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-12-cidade-das-conversas",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas/dist/",
     "status": "ready",
     "kind": "project",
@@ -617,7 +622,8 @@
     "mtime": 1795483868792.1826,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/13-museu-dos-pontos-de-vista/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-13-museu-dos-pontos-de-vista"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-13-museu-dos-pontos-de-vista",
+    "isConcept": true
   },
   {
     "name": "Estúdio dos Limites",
@@ -634,14 +640,15 @@
     "mtime": 1795483868824.108,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/14-estudio-dos-limites/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-14-estudio-dos-limites"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-14-estudio-dos-limites",
+    "isConcept": true
   },
   {
     "name": "Casa das Memórias",
     "subtitle": "",
     "fullTitle": "Casa das Memórias",
     "description": null,
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-15-casa-das-memorias",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/dist/",
     "status": "ready",
     "kind": "project",
@@ -677,14 +684,15 @@
     "mtime": 1795483868887.4346,
     "doc": "/Kit_17_jogos_3D_mockups_e_prompts/16-teatro-das-historias-possiveis/PROMPT.md",
     "versions": [],
-    "id": "kit_17_jogos_3d_mockups_e_prompts-16-teatro-das-historias-possiveis"
+    "id": "kit_17_jogos_3d_mockups_e_prompts-16-teatro-das-historias-possiveis",
+    "isConcept": true
   },
   {
     "name": "17. Ensaio do Cotidiano",
     "subtitle": "Mercadinho Acolhedor",
     "fullTitle": "17. Ensaio do Cotidiano · Mercadinho Acolhedor",
     "description": "17. Ensaio do Cotidiano - Ensaio de rotinas cotidianas em mercadinho acolhedor com navegação guiada, carrinho 3D e acompanhamento pedagógico.",
-    "url": "/play/kit_17_jogos_3d_mockups_e_prompts-17-ensaio-do-cotidiano",
+    "url": "/Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/dist/index.html",
     "direct": "/Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/dist/",
     "status": "ready",
     "kind": "project",
@@ -1112,7 +1120,8 @@
     "mtime": 1795492302468.306,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/04_maquina-de-escrever-das-intencoes/04_maquina-de-escrever-das-intencoes.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-04_maquina-de-escrever-das-intencoes"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-04_maquina-de-escrever-das-intencoes",
+    "isConcept": true
   },
   {
     "name": "Clepsidra do Foco",
@@ -1129,7 +1138,8 @@
     "mtime": 1795492323619.1423,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/05_clepsidra-do-foco/05_clepsidra-do-foco.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-05_clepsidra-do-foco"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-05_clepsidra-do-foco",
+    "isConcept": true
   },
   {
     "name": "Copos Musicais",
@@ -1146,7 +1156,8 @@
     "mtime": 1795492227686.1587,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/07_copos-musicais/07_copos-musicais.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-07_copos-musicais"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-07_copos-musicais",
+    "isConcept": true
   },
   {
     "name": "Toca-Discos de Vinil",
@@ -1163,7 +1174,8 @@
     "mtime": 1795492487599.5396,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/08_toca-discos-de-vinil/08_toca-discos-de-vinil.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-08_toca-discos-de-vinil"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-08_toca-discos-de-vinil",
+    "isConcept": true
   },
   {
     "name": "Máquina de Reação em Cadeia",
@@ -1180,7 +1192,8 @@
     "mtime": 1795492916578.6443,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/10_maquina-de-reacao-em-cadeia/10_maquina-de-reacao-em-cadeia.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-10_maquina-de-reacao-em-cadeia"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-10_maquina-de-reacao-em-cadeia",
+    "isConcept": true
   },
   {
     "name": "Relógio Aberto",
@@ -1197,7 +1210,8 @@
     "mtime": 1795492936355.2417,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/11_relogio-aberto/11_relogio-aberto.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-11_relogio-aberto"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-11_relogio-aberto",
+    "isConcept": true
   },
   {
     "name": "Pinball de Madeira",
@@ -1230,7 +1244,8 @@
     "mtime": 1795492227717.4326,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/14_bancada-da-manicure/14_bancada-da-manicure.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-14_bancada-da-manicure"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-14_bancada-da-manicure",
+    "isConcept": true
   },
   {
     "name": "Barista de Bancada",
@@ -1247,7 +1262,8 @@
     "mtime": 1795492227719.944,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/15_barista-de-bancada/15_barista-de-bancada.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-15_barista-de-bancada"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-15_barista-de-bancada",
+    "isConcept": true
   },
   {
     "name": "Órgão do Perfumista",
@@ -1264,14 +1280,15 @@
     "mtime": 1795492227735.1504,
     "doc": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/18_orgao-do-perfumista/18_orgao-do-perfumista.md",
     "versions": [],
-    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-18_orgao-do-perfumista"
+    "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-18_orgao-do-perfumista",
+    "isConcept": true
   },
   {
     "name": "Trilha do Mestre Mandou",
     "subtitle": "",
     "fullTitle": "Trilha do Mestre Mandou",
     "description": "Trilha do Mestre Mandou: ambiente 3D interativo para seguimento de instruções, planejamento, atenção e expressão no parque florestal.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-02-trilha-do-mestre-mandou",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou/dist/",
     "status": "ready",
     "kind": "project",
@@ -1297,7 +1314,7 @@
     "subtitle": "Kintsugi",
     "fullTitle": "Ateliê das Reconstruções · Kintsugi",
     "description": "Oficina interativa de cerâmica. Reúna fragmentos, aplique laca e experimente o acabamento dourado.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-05-atelie-das-reconstrucoes-kintsugi",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi/dist/",
     "status": "ready",
     "kind": "project",
@@ -1323,7 +1340,7 @@
     "subtitle": "",
     "fullTitle": "Galeria dos Equilíbrios Impossíveis",
     "description": "Galeria dos Equilíbrios Impossíveis — Experiência 3D interativa de física, móbiles cinéticos de Calder e alavancas em galeria de arte contemporânea.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-06-galeria-dos-equilibrios-impossiveis",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis/dist/",
     "status": "ready",
     "kind": "project",
@@ -1349,7 +1366,7 @@
     "subtitle": "",
     "fullTitle": "Sala das Cadeiras Possíveis",
     "description": "Organize os lugares, experimente a distância e observe a sala a partir de outra cadeira. Não há respostas prontas nem personagens simulando pessoas.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-07-sala-das-cadeiras-possiveis",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/07-sala-das-cadeiras-possiveis/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/07-sala-das-cadeiras-possiveis/dist/",
     "status": "ready",
     "kind": "project",
@@ -1375,7 +1392,7 @@
     "subtitle": "",
     "fullTitle": "Sopraria das Transformações",
     "description": "Dê forma ao vidro: aqueça, expanda, modele e resfrie uma peça. O calor virtual modifica sua resistência e aparência.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-08-sopraria-das-transformacoes",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/08-sopraria-das-transformacoes/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/08-sopraria-das-transformacoes/dist/",
     "status": "ready",
     "kind": "project",
@@ -1401,7 +1418,7 @@
     "subtitle": "",
     "fullTitle": "Pavilhão dos Tecidos Flutuantes",
     "description": "Entre em uma instalação de seda e linho. Puxe os tecidos, mova seus apoios e experimente vento, camadas e aberturas.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-09-pavilhao-dos-tecidos-flutuantes",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/09-pavilhao-dos-tecidos-flutuantes/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/09-pavilhao-dos-tecidos-flutuantes/dist/",
     "status": "ready",
     "kind": "project",
@@ -1427,7 +1444,7 @@
     "subtitle": "",
     "fullTitle": "Agência de Investigação dos Pensamentos",
     "description": "Investigue um caso fictício. Separe o que foi observado, o que é interpretação e o que ainda falta saber. Conecte mais de uma hipótese.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-10-agencia-de-investigacao-dos-pensamentos",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/10-agencia-de-investigacao-dos-pensamentos/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/10-agencia-de-investigacao-dos-pensamentos/dist/",
     "status": "ready",
     "kind": "project",
@@ -1453,7 +1470,7 @@
     "subtitle": "",
     "fullTitle": "Rádio dos Pensamentos",
     "description": "Um pensamento pode ser notado como uma frase em um rádio. Experimente a sintonia e continue uma pequena atividade, com ou sem som.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-11-radio-dos-pensamentos",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/11-radio-dos-pensamentos/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/11-radio-dos-pensamentos/dist/",
     "status": "ready",
     "kind": "project",
@@ -1479,7 +1496,7 @@
     "subtitle": "",
     "fullTitle": "Máquina das Consequências",
     "description": "Construa uma previsão, escolha uma bifurcação e libere uma esfera. Observe o percurso físico e experimente outra configuração.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-12-maquina-das-consequencias",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/12-maquina-das-consequencias/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/12-maquina-das-consequencias/dist/",
     "status": "ready",
     "kind": "project",
@@ -1505,7 +1522,7 @@
     "subtitle": "",
     "fullTitle": "Central dos Planos Alternativos",
     "description": "Planeje uma viagem na maquete ferroviária. Sinalize o percurso, observe bloqueios anunciados e escolha uma alternativa real.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-13-central-dos-planos-alternativos",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/13-central-dos-planos-alternativos/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/13-central-dos-planos-alternativos/dist/",
     "status": "ready",
     "kind": "project",
@@ -1531,7 +1548,7 @@
     "subtitle": "",
     "fullTitle": "Relojoaria das Prioridades",
     "description": "Organize atividades no mostrador de 24 horas. Durações, intervalos e pausas podem ser ajustados sem cronômetro obrigatório.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-14-relojoaria-das-prioridades",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/14-relojoaria-das-prioridades/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/14-relojoaria-das-prioridades/dist/",
     "status": "ready",
     "kind": "project",
@@ -1557,7 +1574,7 @@
     "subtitle": "",
     "fullTitle": "Farol da Atenção",
     "description": "Gire a lanterna de um farol e encontre barcos por sua descrição. Você define o ritmo, a intensidade e o número de estímulos.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-15-farol-da-atencao",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/15-farol-da-atencao/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/15-farol-da-atencao/dist/",
     "status": "ready",
     "kind": "project",
@@ -1583,7 +1600,7 @@
     "subtitle": "",
     "fullTitle": "Vale dos Balões Passageiros",
     "description": "Observe os balões e, se quiser, associe a eles palavras. Você pode seguir a trilha mantendo os balões presentes.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-16-vale-dos-baloes-passageiros",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/16-vale-dos-baloes-passageiros/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/16-vale-dos-baloes-passageiros/dist/",
     "status": "ready",
     "kind": "project",
@@ -1609,7 +1626,7 @@
     "subtitle": "",
     "fullTitle": "Navegador dos Valores",
     "description": "Ajuste a vela e o leme, escolha uma direção e experimente navegar com o vento que existe. Ancorar está sempre disponível.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-17-navegador-dos-valores",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/17-navegador-dos-valores/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/17-navegador-dos-valores/dist/",
     "status": "ready",
     "kind": "project",
@@ -1635,7 +1652,7 @@
     "subtitle": "",
     "fullTitle": "Areias do Impermanente",
     "description": "Desenhe sulcos, posicione pedras e umedeça a areia. As marcas permanecem, a menos que você escolha observar sua transformação.",
-    "url": "/play/03_colecoes-expressao_e_desenvolvimento-18-areias-do-impermanente",
+    "url": "/03_Colecoes/Expressao_e_Desenvolvimento/18-areias-do-impermanente/dist/index.html",
     "direct": "/03_Colecoes/Expressao_e_Desenvolvimento/18-areias-do-impermanente/dist/",
     "status": "ready",
     "kind": "project",

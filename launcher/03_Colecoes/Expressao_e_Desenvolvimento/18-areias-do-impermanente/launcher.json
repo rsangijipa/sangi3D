@@ -1,0 +1,16 @@
+{
+  "id": "18-areias-do-impermanente",
+  "title": "Areias do Impermanente",
+  "category": "ACT",
+  "description": "Desenhe sulcos, posicione pedras e umedeça a areia. As marcas permanecem, a menos que você escolha observar sua transformação.",
+  "entry": "dist/index.html",
+  "thumbnail": "miniatura.png",
+  "capabilities": [
+    "pause",
+    "resume",
+    "undo",
+    "export",
+    "fallback"
+  ],
+  "status": "implementation"
+}

@@ -1,0 +1,86 @@
+{
+  "project": "10-porto-das-decisoes",
+  "version": "1.0.0",
+  "assets": [
+    {
+      "id": "harbor_base",
+      "path": "procedural:src/scene/environment.ts#buildHarborBase",
+      "category": "environment",
+      "license": "Custom/MIT",
+      "triangles": 1280,
+      "materials": ["stoneMat", "woodPlankMat", "quayStoneWallMat"],
+      "collider": "static_box",
+      "description": "Cais de pedra calcária e decks de tábuas de madeira mel."
+    },
+    {
+      "id": "warehouse_set",
+      "path": "procedural:src/scene/environment.ts#buildWarehouses",
+      "category": "architecture",
+      "license": "Custom/MIT",
+      "triangles": 860,
+      "materials": ["wallMat", "terracottaRoofMat", "greenDoorMat", "redDoorMat"],
+      "collider": "static_box",
+      "description": "Armazéns com telhas terracota, paredes creme, portas corrediças verdes e porta lateral vermelha."
+    },
+    {
+      "id": "crane",
+      "path": "procedural:src/scene/crane.ts#HarborCrane",
+      "category": "machinery",
+      "license": "Custom/MIT",
+      "triangles": 1420,
+      "materials": ["yellowIndustrialMat", "darkSteelMat", "cableMat"],
+      "collider": "kinematic_cylinder",
+      "description": "Guindaste amarelo articulado com pórtico giratório, contrapeso e gancho içando caixa de madeira."
+    },
+    {
+      "id": "boat_blue",
+      "path": "procedural:src/scene/boats.ts#BoatModel(blue)",
+      "category": "vehicle",
+      "license": "Custom/MIT",
+      "triangles": 1150,
+      "materials": ["blueHullMat", "whiteCabinMat", "brassPortholeMat", "lifeRingMat"],
+      "collider": "kinematic_hull",
+      "description": "Andorinha Azul — lancha costeira de capacidade 3 caixas com boia salva-vidas e vigias de latão."
+    },
+    {
+      "id": "boat_green",
+      "path": "procedural:src/scene/boats.ts#BoatModel(green)",
+      "category": "vehicle",
+      "license": "Custom/MIT",
+      "triangles": 1340,
+      "materials": ["greenHullMat", "woodTrimMat", "fishingNetMat", "lifeRingMat"],
+      "collider": "kinematic_hull",
+      "description": "Traineira Caiçara — embarcação artesanal de pesca de capacidade 4 caixas com rede drapeada na popa."
+    },
+    {
+      "id": "boat_red",
+      "path": "procedural:src/scene/boats.ts#BoatModel(red)",
+      "category": "vehicle",
+      "license": "Custom/MIT",
+      "triangles": 1280,
+      "materials": ["redHullMat", "whiteBridgeMat", "smokestackMat"],
+      "collider": "kinematic_hull",
+      "description": "Rebocador Guardião — embarcação robusta de capacidade 5 caixas com chaminé alta."
+    },
+    {
+      "id": "water",
+      "path": "procedural:src/scene/water.ts#HarborWater",
+      "category": "shader_surface",
+      "license": "Custom/MIT",
+      "triangles": 8192,
+      "materials": ["turquoiseWaterPBR"],
+      "collider": "plane_y0",
+      "description": "Água turquesa procedural com normal animada e ondulação hidrostática."
+    },
+    {
+      "id": "buoy_nodes",
+      "path": "procedural:src/scene/routeView.ts#RouteView",
+      "category": "interactive_markers",
+      "license": "Custom/MIT",
+      "triangles": 960,
+      "materials": ["greenRimMat", "creamDiscMat", "haloGlowMat"],
+      "collider": "raycast_cylinder",
+      "description": "Boias circulares verdes e creme com halo radiante e traços de foco."
+    }
+  ]
+}

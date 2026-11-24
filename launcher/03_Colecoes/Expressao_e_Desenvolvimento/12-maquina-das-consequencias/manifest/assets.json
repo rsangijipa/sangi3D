@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "project": "12-maquina-das-consequencias",
+  "units": "metres",
+  "assets": [
+    {
+      "id": "esferas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "rampas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "bifurcadores",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "trilhos",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "alavancas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "dominos",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "molas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "caixas_receptoras",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "suportes",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cartao_de_previsao",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    }
+  ]
+}

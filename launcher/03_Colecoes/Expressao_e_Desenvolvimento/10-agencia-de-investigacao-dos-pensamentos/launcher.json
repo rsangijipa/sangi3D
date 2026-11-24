@@ -1,0 +1,16 @@
+{
+  "id": "10-agencia-de-investigacao-dos-pensamentos",
+  "title": "Agência de Investigação dos Pensamentos",
+  "category": "TCC e funções executivas",
+  "description": "Investigue um caso fictício. Separe o que foi observado, o que é interpretação e o que ainda falta saber. Conecte mais de uma hipótese.",
+  "entry": "dist/index.html",
+  "thumbnail": "miniatura.png",
+  "capabilities": [
+    "pause",
+    "resume",
+    "undo",
+    "export",
+    "fallback"
+  ],
+  "status": "implementation"
+}

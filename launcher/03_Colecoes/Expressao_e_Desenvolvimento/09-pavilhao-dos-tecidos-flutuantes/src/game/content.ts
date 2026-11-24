@@ -1,0 +1,28 @@
+import type { Config } from "../core/types";
+export const config:Config={
+  "id": "09-pavilhao-dos-tecidos-flutuantes",
+  "kind": 9,
+  "title": "Pavilhão dos Tecidos Flutuantes",
+  "subtitle": "envolver e afastar",
+  "category": "Gestalt e expressiva",
+  "accent": "#B56C76",
+  "palette": [
+    "#DCC8B1",
+    "#B56C76",
+    "#477F80",
+    "#CCAB67",
+    "#8D799C"
+  ],
+  "intro": "Entre em uma instalação de seda e linho. Puxe os tecidos, mova seus apoios e experimente vento, camadas e aberturas.",
+  "presets": [
+    "Camadas ao vento",
+    "Instalação silenciosa",
+    "Véus em movimento"
+  ],
+  "guide": [
+    "Escolha um painel de tecido.",
+    "Puxe uma região e solte para observar.",
+    "Experimente mudar o vento ou sobrepor camadas.",
+    "Crie uma abertura ou experimente o percurso."
+  ]
+};

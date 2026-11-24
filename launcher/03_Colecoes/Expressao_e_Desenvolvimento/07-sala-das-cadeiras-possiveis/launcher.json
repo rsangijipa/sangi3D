@@ -1,0 +1,16 @@
+{
+  "id": "07-sala-das-cadeiras-possiveis",
+  "title": "Sala das Cadeiras Possíveis",
+  "category": "Gestalt e expressiva",
+  "description": "Organize os lugares, experimente a distância e observe a sala a partir de outra cadeira. Não há respostas prontas nem personagens simulando pessoas.",
+  "entry": "dist/index.html",
+  "thumbnail": "miniatura.png",
+  "capabilities": [
+    "pause",
+    "resume",
+    "undo",
+    "export",
+    "fallback"
+  ],
+  "status": "implementation"
+}
