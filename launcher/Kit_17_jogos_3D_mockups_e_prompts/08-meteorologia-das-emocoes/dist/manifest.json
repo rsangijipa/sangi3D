@@ -1,0 +1,11 @@
+{
+  "name": "Meteorologia das Emoções",
+  "short_name": "Meteorologia das Emoções",
+  "description": "Componha um clima simbólico para representar experiências emocionais mistas.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#254533",
+  "theme_color": "#254533",
+  "icons": []
+}

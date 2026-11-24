@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#2a211b" />
+    <meta name="description" content="Atlas das Texturas: ateliê 3D para observar superfícies sob luz difusa e rasante, com lupa e atlas de descritores." />
+    <title>Atlas das Texturas</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23254533'/%3E%3Cpath d='M9 20c3-6 11-6 14 0' stroke='%23F2E4CC' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <script type="module" crossorigin src="./assets/index-BCFaFCZK.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CkEDWviF.css">
+  </head>
+  <body>
+    <main id="cena" aria-label="Bancada 3D do ateliê com amostras, luminária e lupa"></main>
+
+    <div id="carregando" class="loading" role="status" aria-live="polite">
+      <div class="lcard">
+        <p class="kicker">Ateliê de observação</p>
+        <h1 class="serif">Atlas das Texturas</h1>
+        <div class="bar" role="progressbar" aria-label="Carregando a bancada" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+        <p class="line">Preparando a bancada…</p>
+        <div class="row err-only">
+          <button type="button" class="b-cta" id="tentar">Tentar de novo</button>
+          <button type="button" class="b-sec" id="descritivo">Seguir sem 3D</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="contexto" class="ov" hidden>
+      <div class="card" role="alertdialog" aria-modal="true" aria-labelledby="t-ctx">
+        <h2 id="t-ctx" class="serif">A cena 3D foi interrompida</h2>
+        <p>O navegador liberou a placa de vídeo. Os painéis continuam funcionando; a cena volta sozinha quando possível.</p>
+        <div class="row">
+          <button type="button" class="b-cta" id="ctx-leve">Recarregar no modo Leve</button>
+          <button type="button" class="b-sec" id="ctx-seguir">Seguir pelos painéis</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sem-webgl" class="nogl" hidden>
+      <p><strong>Modo descritivo.</strong> A cena 3D não está disponível neste aparelho. Todas as etapas funcionam pelos painéis: escolher, observar, comparar, guardar e revisar.</p>
+    </div>
+
+    <div id="demo-pill" class="demo-pill" hidden>
+      <span>Demonstração</span>
+      <button type="button" class="b-sec" id="demo-stop">Pular demonstração</button>
+    </div>
+
+    <noscript>O Atlas das Texturas precisa de JavaScript para funcionar.</noscript>
+  </body>
+</html>
