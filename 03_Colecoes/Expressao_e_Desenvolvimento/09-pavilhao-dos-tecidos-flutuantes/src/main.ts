@@ -26,5 +26,15 @@ try{
  addEventListener('resize',()=>{stage?.resize();if(experience)stage?.view(experience.camera,experience.target,true)});canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();pause(true);ui.toast('O contexto gráfico foi interrompido. Use Recarregar para recuperá-lo.');settings();ui.button('Recarregar ambiente',()=>location.reload())});
 }catch(error){console.warn('Visualização 3D indisponível; controles acessíveis mantidos.',error instanceof Error?error.message:'');$('world').innerHTML='<div class="fallback"><h2>Modo de interação sem 3D</h2><p>Seu navegador não disponibilizou WebGL2. Você pode continuar as ações essenciais pelos controles abaixo, com o mesmo estado e histórico.</p><div id="fallbackItems"></div><p id="fallbackStatus"></p></div>';const {fallbackTools}=await import('./game/fallback');ui.setTools(fallbackTools(store,ui,send));store.listeners.push(()=>$('fallbackStatus').textContent=JSON.stringify(store.state.sceneState.values));$('world').dataset.ready='fallback';}
 addEventListener('pagehide',()=>{disposed=true;experience?.dispose?.();stage?.dispose();sound.dispose()});
+if (parent !== window) {
+  try { parent.postMessage({ type: 'SANGI_APP_READY', id: config.id, capabilities: { webgl2: true, touch: true, audio: true, physics: 'pbd' } }, '*'); } catch {}
+}
+window.addEventListener('message', (e) => {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === 'SANGI_APP_PAUSE') pause(true);
+  else if (e.data.type === 'SANGI_APP_RESUME') pause(false);
+  else if (e.data.type === 'SANGI_APP_MUTE') sound.mute();
+  else if (e.data.type === 'SANGI_APP_DISPOSE') { disposed = true; experience?.dispose?.(); stage?.dispose(); sound.dispose(); }
+});
 if('serviceWorker' in navigator)void navigator.serviceWorker.register('./sw.js').catch(()=>{});
 Object.assign(window,{__experience:{get state(){return structuredClone(store.state)},command:send,undo:()=>store.undo(),redo:()=>store.redo(),reset:(n=0)=>store.reset(n),get diagnostics(){return stage?.diagnostics()},project:(id:string)=>{if(!stage||!experience)return null;let target:import('three').Object3D|undefined;experience.root.traverse(o=>{if(o.userData.pick===id)target=o});if(!target)return null;const point=target.getWorldPosition(new (stage.camera.position.constructor as typeof import('three').Vector3)());point.project(stage.camera);return {x:(point.x+1)*innerWidth/2,y:(1-point.y)*innerHeight/2}},pause,dispose:()=>{disposed=true;experience?.dispose?.();stage?.dispose();sound.dispose()}}});

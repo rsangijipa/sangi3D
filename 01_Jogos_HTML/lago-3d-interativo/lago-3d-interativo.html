@@ -1729,8 +1729,12 @@
         fish.rightFin.rotation.z = -Math.sin(fish.wigglePhase) * 0.25;
       }
 
+      let rafId = 0;
+      let isPaused = false;
+
       function animate(now) {
-        requestAnimationFrame(animate);
+        if (isPaused || document.hidden) return;
+        rafId = requestAnimationFrame(animate);
         const dt = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
         clockTime += dt;
@@ -1880,7 +1884,52 @@
 
       // Kick off welcome ripple
       addRipple(0, 0, 0.11);
-      requestAnimationFrame(animate);
+      rafId = requestAnimationFrame(animate);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          cancelAnimationFrame(rafId);
+        } else if (!isPaused) {
+          lastTime = performance.now();
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(animate);
+        }
+      });
+
+      // Sangi3D Universal Bridge
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({
+            type: 'SANGI_APP_READY',
+            id: 'lago-3d-interativo',
+            capabilities: { webgl2: true, touch: true, audio: true, physics: 'ripples' }
+          }, '*');
+        } catch {}
+      }
+      window.addEventListener('message', (e) => {
+        if (!e.data || typeof e.data !== 'object') return;
+        if (e.data.type === 'SANGI_APP_PAUSE') {
+          isPaused = true;
+          cancelAnimationFrame(rafId);
+          try { audio.ctx?.suspend(); } catch {}
+        } else if (e.data.type === 'SANGI_APP_RESUME') {
+          isPaused = false;
+          lastTime = performance.now();
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(animate);
+          try { audio.ctx?.resume(); } catch {}
+        } else if (e.data.type === 'SANGI_APP_MUTE') {
+          state.audio = !e.data.muted;
+        } else if (e.data.type === 'SANGI_APP_DISPOSE') {
+          isPaused = true;
+          cancelAnimationFrame(rafId);
+          try {
+            renderer.dispose();
+            renderer.forceContextLoss();
+            audio.ctx?.close();
+          } catch {}
+        }
+      });
     })();
   </script>
 <!-- barra-imersiva -->

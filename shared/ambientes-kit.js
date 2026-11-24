@@ -345,3 +345,102 @@ export function setupEnvironmentLifecycle({ onPause, onResume, onReducedMotionCh
     onReducedMotionChange?.(e.matches);
   });
 }
+
+/**
+ * Protocolo e ponte de comunicação universal com o Launcher Sangi3D.
+ * Conecta eventos postMessage (READY, PAUSE, RESUME, MUTE, DISPOSE) e gerencia ciclo de vida.
+ */
+export function setupSangiBridge({
+  id = '',
+  capabilities = {},
+  onPause = null,
+  onResume = null,
+  onMute = null,
+  onDispose = null,
+} = {}) {
+  const isIframe = window.parent && window.parent !== window;
+
+  // Notifica o Launcher que o ambiente está pronto
+  if (isIframe) {
+    try {
+      window.parent.postMessage({
+        type: 'SANGI_APP_READY',
+        id,
+        capabilities: {
+          webgl2: Boolean(window.WebGL2RenderingContext),
+          touch: 'ontouchstart' in window,
+          ...capabilities,
+        },
+      }, '*');
+    } catch {}
+  }
+
+  // Escuta comandos enviados pelo Launcher
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    switch (e.data.type) {
+      case 'SANGI_APP_PAUSE':
+        onPause?.();
+        break;
+      case 'SANGI_APP_RESUME':
+        onResume?.();
+        break;
+      case 'SANGI_APP_MUTE':
+        onMute?.(Boolean(e.data.muted));
+        break;
+      case 'SANGI_APP_DISPOSE':
+        onDispose?.();
+        break;
+    }
+  });
+
+  // Também registra visibilitychange nativo
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) onPause?.();
+    else onResume?.();
+  });
+}
+
+/**
+ * Utilitário de descarte profundo e liberação de recursos Three.js / WebGL
+ */
+export function disposeScene(renderer, scene) {
+  if (scene) {
+    scene.traverse((obj) => {
+      if (obj.geometry) {
+        try { obj.geometry.dispose(); } catch {}
+      }
+      if (obj.material) {
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach((m) => disposeMaterial(m));
+        } else {
+          disposeMaterial(obj.material);
+        }
+      }
+    });
+    while (scene.children.length > 0) {
+      scene.remove(scene.children[0]);
+    }
+  }
+
+  if (renderer) {
+    try {
+      renderer.dispose();
+      renderer.forceContextLoss();
+      if (renderer.domElement && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+    } catch {}
+  }
+}
+
+function disposeMaterial(mat) {
+  if (!mat) return;
+  const textureKeys = ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap', 'envMap', 'alphaMap', 'roughnessMap', 'metalnessMap', 'aoMap'];
+  for (const key of textureKeys) {
+    if (mat[key] && typeof mat[key].dispose === 'function') {
+      try { mat[key].dispose(); } catch {}
+    }
+  }
+  try { mat.dispose(); } catch {}
+}

@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-09-pavilhao-dos-tecidos-flutuantes:' + self.registration.scope + ':'
-const cacheName = prefix + '4d8e930781578c'
+const cacheName = prefix + 'cce17b9df1f618'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-DXt1XRsc.js","assets/experience-CEUw_H-G.js","assets/fallback-CuV_qD9K.js","assets/index-DBVB0dXH.css","assets/index-eWc1VXX9.js","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-DXt1XRsc.js","assets/experience-CEUw_H-G.js","assets/fallback-CuV_qD9K.js","assets/index-DBVB0dXH.css","assets/index-pIRM6bM5.js","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

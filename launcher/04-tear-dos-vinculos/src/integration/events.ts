@@ -47,9 +47,20 @@ function parentOrigin(): string | null {
 }
 
 export function emit(type: OutEventType, payload?: SummaryPayload): void {
-  const target = parentOrigin();
+  const target = parentOrigin() || '*';
   const ev: OutEvent = { source: EVENT_SOURCE, version: EVENT_VERSION, type, payload: payload ?? {} };
-  if (target) window.parent.postMessage(ev, target);
+  if (window.parent && window.parent !== window) {
+    try {
+      window.parent.postMessage(ev, target);
+      if (type === 'ready') {
+        window.parent.postMessage({
+          type: 'SANGI_APP_READY',
+          id: 'tear-dos-vinculos',
+          capabilities: { webgl2: true, touch: true, audio: true, physics: 'verlet' }
+        }, target);
+      }
+    } catch {}
+  }
   window.dispatchEvent(new CustomEvent('tear:event', { detail: ev }));
 }
 
@@ -57,10 +68,17 @@ export type InCommand = 'pause' | 'resume' | 'exit';
 
 export function listen(handler: (cmd: InCommand) => void): () => void {
   const fn = (e: MessageEvent) => {
-    if (!allowedOrigin(e.origin)) return;
     const d = e.data as { target?: string; version?: number; type?: string };
-    if (!d || d.target !== EVENT_SOURCE || d.version !== EVENT_VERSION) return;
-    if (d.type === 'pause' || d.type === 'resume' || d.type === 'exit') handler(d.type);
+    if (!d || typeof d !== 'object') return;
+    if (d.target === EVENT_SOURCE && d.version === EVENT_VERSION) {
+      if (d.type === 'pause' || d.type === 'resume' || d.type === 'exit') handler(d.type);
+    } else if (d.type === 'SANGI_APP_PAUSE') {
+      handler('pause');
+    } else if (d.type === 'SANGI_APP_RESUME') {
+      handler('resume');
+    } else if (d.type === 'SANGI_APP_DISPOSE' || d.type === 'SANGI_APP_EXIT') {
+      handler('exit');
+    }
   };
   window.addEventListener('message', fn);
   return () => window.removeEventListener('message', fn);

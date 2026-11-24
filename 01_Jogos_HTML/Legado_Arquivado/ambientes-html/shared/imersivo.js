@@ -69,7 +69,29 @@
   var api = null;
 
   function init(cfg) {
-    if (api) return api;
+    if (api) 
+    // Sangi3D Universal Bridge
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          type: 'SANGI_APP_READY',
+          title: cfg.title || document.title,
+          capabilities: { webgl2: true, touch: true, imersivo: true }
+        }, '*');
+      } catch (e) {}
+    }
+    window.addEventListener('message', function (e) {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === 'SANGI_APP_PAUSE') {
+        if (typeof cfg.onPause === 'function') cfg.onPause();
+      } else if (e.data.type === 'SANGI_APP_RESUME') {
+        if (typeof cfg.onResume === 'function') cfg.onResume();
+      } else if (e.data.type === 'SANGI_APP_DISPOSE') {
+        if (typeof cfg.onDispose === 'function') cfg.onDispose();
+      }
+    });
+
+    return api;
     cfg = cfg || {};
     var root = document.documentElement;
     root.classList.add('imv-root');

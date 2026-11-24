@@ -64,7 +64,9 @@ copyRecursive(
 
 console.log('--- 8. Ajustando URLs de /play/ e capas no catálogo apps.json ---');
 const appsJsonPath = path.join(ROOT, 'api', 'apps.json');
-const apps = JSON.parse(fs.readFileSync(appsJsonPath, 'utf8'));
+let apps = JSON.parse(fs.readFileSync(appsJsonPath, 'utf8'));
+// Filtra qualquer autorreferência ao index.html
+apps = apps.filter(app => app.id !== 'index-html' && app.url !== '/index.html' && app.name !== 'Ambientes');
 
 for (const app of apps) {
   // Ajuste de URLs /play/<id> para apontar diretamente para a pasta dist compilada

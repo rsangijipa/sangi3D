@@ -89,12 +89,31 @@ try {
 function post(type: 'ready' | 'pause' | 'resume' | 'complete' | 'exit' | 'summary', data?: unknown) {
   if (window.parent === window) return;
   try {
-    if (window.parent.location.origin !== location.origin) return;
-  } catch {
-    return; // origem diferente: nada é enviado
-  }
-  window.parent.postMessage({ source: 'atlas-das-texturas', v: 1, type, data }, location.origin);
+    window.parent.postMessage({ source: 'atlas-das-texturas', v: 1, type, data }, '*');
+    if (type === 'ready') {
+      window.parent.postMessage({
+        type: 'SANGI_APP_READY',
+        id: 'atlas-das-texturas',
+        capabilities: { webgl2: true, pbr: true, touch: true, audio: true }
+      }, '*');
+    }
+  } catch {}
 }
+
+window.addEventListener('message', (e) => {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === 'SANGI_APP_PAUSE') dispatch({ type: 'pause' });
+  else if (e.data.type === 'SANGI_APP_RESUME') dispatch({ type: 'resume' });
+  else if (e.data.type === 'SANGI_APP_MUTE') {
+    prefs.sound = !e.data.muted;
+    sound.setEnabled(prefs.sound);
+    savePrefs();
+  } else if (e.data.type === 'SANGI_APP_DISPOSE') {
+    ws?.dispose();
+    engine?.dispose();
+    sound.dispose();
+  }
+});
 
 /* ------------------------------------------------------------------ */
 /* Tempo ativo (relógio monotônico, sem contar aba oculta nem pausa)    */

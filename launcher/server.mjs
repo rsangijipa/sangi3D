@@ -199,8 +199,8 @@ async function scan() {
         return;
       }
     } else {
-      // Raiz: cada .html é um app.
-      for (const h of files.filter((f) => f.toLowerCase().endsWith('.html'))) {
+      // Raiz: cada .html é um app (exceto index.html e loading.html que pertencem ao launcher).
+      for (const h of files.filter((f) => f.toLowerCase().endsWith('.html') && !['index.html', 'loading.html'].includes(f.toLowerCase()))) {
         const abs = join(dir, h);
         const info = await htmlInfo(abs);
         const t = info.title ?? prettyFolder(h.replace(/\.html$/i, ''));

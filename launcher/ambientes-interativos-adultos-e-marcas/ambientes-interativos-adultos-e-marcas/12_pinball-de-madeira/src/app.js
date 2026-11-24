@@ -323,5 +323,29 @@ motions.addEventListener('change',request);
 if(window.PINBALL_STILL)$('#fallback-picture').src=window.PINBALL_STILL;
 action('menu').innerHTML=icon('menu');
 setBrand();show();
+
+// Sangi3D Universal Bridge
+if (window.parent && window.parent !== window) {
+  try {
+    window.parent.postMessage({
+      type: 'SANGI_APP_READY',
+      id: 'pinball-de-madeira',
+      capabilities: { webgl2: true, physics: 'rapier2d', touch: true, audio: true }
+    }, '*');
+  } catch {}
+}
+window.addEventListener('message', (e) => {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === 'SANGI_APP_PAUSE') {
+    paused = true; releaseAll(true); audio.roll(0); cancelAnimationFrame(raf);
+  } else if (e.data.type === 'SANGI_APP_RESUME') {
+    paused = false; last = 0; request();
+  } else if (e.data.type === 'SANGI_APP_MUTE') {
+    sound = !e.data.muted; audio.toggle(sound); show();
+  } else if (e.data.type === 'SANGI_APP_DISPOSE') {
+    pointerAbort?.abort(); stage?.dispose(); sim?.free(); audio.close(); cancelAnimationFrame(raf);
+  }
+});
+
 void boot();
 

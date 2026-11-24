@@ -5,6 +5,8 @@ node_modules/
 # Builds compilados pelo launcher
 dist/
 **/dist/
+!launcher/**/dist/
+!launcher/**/dist/**
 .dist-launcher-backup/
 **/.dist-launcher-backup/
 .launcher-build
