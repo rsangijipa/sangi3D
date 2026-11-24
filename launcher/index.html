@@ -545,7 +545,10 @@
     let busy = false;
     async function load() {
       try {
-        const res = await fetch('/api/apps', { cache: 'no-store' });
+        let res = await fetch('/api/apps', { cache: 'no-store' }).catch(() => null);
+        if (!res || !res.ok) res = await fetch('/api/apps.json', { cache: 'no-store' }).catch(() => null);
+        if (!res || !res.ok) res = await fetch('./api/apps.json', { cache: 'no-store' }).catch(() => null);
+        if (!res || !res.ok) throw new Error('API não disponível');
         const apps = await res.json();
         busy = apps.some((a) => BUILD[a.build?.state]?.busy);
         const sig = JSON.stringify(apps.map((a) => [a.id, a.status, a.mtime, a.versions.length, a.build?.state]));
