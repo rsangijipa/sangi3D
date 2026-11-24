@@ -1,3 +1,5 @@
+import * as THREE from '../vendor/three.module.js';
+
 /**
  * shared/engine/input.js
  * Gerenciador unificado de ponteiro, touch e interações 3D
@@ -31,9 +33,11 @@ export class InputManager {
 
   getPointerNDC(event) {
     const rect = this.canvas.getBoundingClientRect();
+    const w = rect.width > 0 ? rect.width : 1;
+    const h = rect.height > 0 ? rect.height : 1;
     return {
-      x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      y: -((event.clientY - rect.top) / rect.height) * 2 + 1
+      x: ((event.clientX - rect.left) / w) * 2 - 1,
+      y: -((event.clientY - rect.top) / h) * 2 + 1
     };
   }
 

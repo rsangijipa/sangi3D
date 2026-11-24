@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Paisagem Sonora 3D — Riacho e Pássaros</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="../../shared/vendor/three-r128.min.js"></script>
+  <style>
+*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width:640px){.container{max-width:640px}}@media (min-width:768px){.container{max-width:768px}}@media (min-width:1024px){.container{max-width:1024px}}@media (min-width:1280px){.container{max-width:1280px}}@media (min-width:1536px){.container{max-width:1536px}}.pointer-events-none{pointer-events:none}.invisible{visibility:hidden}.fixed{position:fixed}.inset-0{inset:0}.right-6{right:1.5rem}.top-5{top:1.25rem}.z-20{z-index:20}.z-30{z-index:30}.mx-auto{margin-left:auto;margin-right:auto}.mb-0\.5{margin-bottom:.125rem}.mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-3\.5{margin-bottom:.875rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mt-2{margin-top:.5rem}.inline-block{display:inline-block}.flex{display:flex}.hidden{display:none}.h-1{height:.25rem}.h-12{height:3rem}.h-full{height:100%}.w-12{width:3rem}.w-full{width:100%}.max-w-\[380px\]{max-width:380px}.max-w-md{max-width:28rem}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.resize{resize:both}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.self-end{align-self:flex-end}.overflow-hidden{overflow:hidden}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.border{border-width:1px}.border-t{border-top-width:1px}.border-black\/5{border-color:rgba(0,0,0,.05)}.bg-\[\#005A1F\]\/10{background-color:rgba(0,90,31,.1)}.bg-\[\#005A1F\]\/70{background-color:rgba(0,90,31,.7)}.bg-\[\#E6E1D6\]{--tw-bg-opacity:1;background-color:rgb(230 225 214/var(--tw-bg-opacity,1))}.bg-black\/45{background-color:rgba(0,0,0,.45)}.bg-black\/5{background-color:rgba(0,0,0,.05)}.bg-black\/\[0\.03\]{background-color:rgba(0,0,0,.03)}.p-2\.5{padding:.625rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pt-1{padding-top:.25rem}.text-center{text-align:center}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[11\.5px\]{font-size:11.5px}.text-\[11px\]{font-size:11px}.text-\[12\.5px\]{font-size:12.5px}.text-\[14px\]{font-size:14px}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.leading-snug{line-height:1.375}.leading-tight{line-height:1.25}.tracking-\[0\.14em\]{letter-spacing:.14em}.text-\[\#005A1F\]{--tw-text-opacity:1;color:rgb(0 90 31/var(--tw-text-opacity,1))}.text-\[\#2B2620\]{--tw-text-opacity:1;color:rgb(43 38 32/var(--tw-text-opacity,1))}.text-\[\#3B352E\]{--tw-text-opacity:1;color:rgb(59 53 46/var(--tw-text-opacity,1))}.text-\[\#4A4339\]{--tw-text-opacity:1;color:rgb(74 67 57/var(--tw-text-opacity,1))}.text-\[\#5C5346\],.text-\[\#5c5346\]{--tw-text-opacity:1;color:rgb(92 83 70/var(--tw-text-opacity,1))}.text-\[\#786D5F\]{--tw-text-opacity:1;color:rgb(120 109 95/var(--tw-text-opacity,1))}.opacity-0{opacity:0}.shadow{--tw-shadow:0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px -1px rgba(0,0,0,.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color),0 1px 2px -1px var(--tw-shadow-color)}.shadow,.shadow-lg{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color)}.outline{outline-style:solid}.ring{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}.blur{--tw-blur:blur(8px)}.blur,.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px)}.backdrop-blur-sm,.backdrop-filter{backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-200{transition-duration:.2s}.duration-300{transition-duration:.3s}.hover\:bg-\[\#005A1F\]\/15:hover{background-color:rgba(0,90,31,.15)}.hover\:bg-black\/10:hover{background-color:rgba(0,0,0,.1)}.hover\:text-\[\#005A1F\]:hover{--tw-text-opacity:1;color:rgb(0 90 31/var(--tw-text-opacity,1))}.hover\:text-\[\#231F1A\]:hover{--tw-text-opacity:1;color:rgb(35 31 26/var(--tw-text-opacity,1))}@media (min-width:640px){.sm\:inline-flex{display:inline-flex}.sm\:flex-row{flex-direction:row}.sm\:items-end{align-items:flex-end}.sm\:text-\[28px\]{font-size:28px}}@media (min-width:768px){.md\:inline-flex{display:inline-flex}}
+  </style>
   <style>
     :root {
       --bg-card: rgba(253, 250, 244, 0.94);
@@ -272,7 +273,7 @@
           </button>
           <div id="credits-panel" class="hidden mt-2 text-[11.5px] text-[#5C5346] leading-relaxed bg-black/[0.03] p-2.5 rounded-lg">
             <p class="font-medium text-[#2B2620] mb-1">Paisagem Sonora & Visual 3D em Tempo Real</p>
-            <p>Cena 3D interativa construída em Three.js com shaders GLSL de hidrodinâmica, rochas com musgo volumétrico, peixes articulados e síntese acústica procedural via Web Audio API (riacho cristalino e canto de pássaros nativos). Clique na água para atrair peixes e gerar ondulações.</p>
+            <p>Riacho 3D com corredeiras, pedras cobertas de musgo e som de água e pássaros. Toque ou clique na água para criar ondulações e atrair um peixe.</p>
           </div>
         </div>
       </section>
@@ -415,9 +416,46 @@
       return height;
     }
 
+    const waterLimitZ = 14.8;
+    const gravity = 9.81;
+    const { clamp, lerp, smoothstep } = THREE.MathUtils;
+
+    function getChannelHalfWidth(z) {
+      return 6.0 + Math.sin(z * 0.31) * 0.9 + Math.cos(z * 0.67) * 0.35;
+    }
+
+    function getStreamDepth(x, z) {
+      const side = Math.abs(x - getStreamCenterX(z)) / getChannelHalfWidth(z);
+      const bank = smoothstep(side, 0.18, 1.22);
+      const gravel = noiseGen.noise3D(x * 0.42, z * 0.42, 1.3) * 0.12;
+      return 0.92 - bank * 1.45 - Math.pow(Math.max(0, side - 0.96), 1.25) * 1.6 + gravel;
+    }
+
+    function getBedHeight(x, z) {
+      return getStreamElevation(x, z) - getStreamDepth(x, z);
+    }
+
+    function getFlowSlope(x, z) {
+      const s = -x * 0.65 + z * 0.76;
+      const a = Math.tanh((s + 6.5) * 1.6);
+      const b = Math.tanh((s + 1.2) * 1.9);
+      const c = Math.tanh((s - 3.8) * 1.7);
+      return 0.19 + 0.608 * (1 - a * a) + 0.798 * (1 - b * b) + 0.595 * (1 - c * c);
+    }
+
+    // Keep the physical surface in sync with the two displacement waves in the vertex shader.
+    function getWaterHeight(x, z, time) {
+      const depth = Math.max(0, getStreamDepth(x, z));
+      const across = x - getStreamCenterX(z);
+      return getStreamElevation(x, z) + smoothstep(depth, 0, 0.28) * (
+        0.037 * Math.sin(z * 5.2 + across * 0.46 - time * 7.0) +
+        0.018 * Math.sin(across * 4.4 - z * 1.25 + time * 3.6)
+      );
+    }
+
     // Generate high-detail warm ochre/sienna granite & moss texture for boulders
     function createRockTextures() {
-      const size = 512;
+      const size = 768;
       const diffCanvas = document.createElement('canvas');
       diffCanvas.width = diffCanvas.height = size;
       const dCtx = diffCanvas.getContext('2d');
@@ -441,9 +479,9 @@
           const combined = Math.max(0, Math.min(1, 0.5 + n1 * 0.45 + n2 * 0.2 + strata + grain));
 
           // Warm ochre, sienna, umber palette from the watercolor/realistic reference
-          let r = 158 + combined * 68 - Math.abs(n2) * 28;
-          let g = 112 + combined * 54 - Math.abs(n2) * 25;
-          let b = 72 + combined * 38 - Math.abs(n2) * 20;
+          let r = 129 + combined * 65 - Math.abs(n2) * 26;
+          let g = 110 + combined * 56 - Math.abs(n2) * 23;
+          let b = 88 + combined * 49 - Math.abs(n2) * 19;
 
           // Subtle mineral speckles
           if (grain > 0.045) {
@@ -458,7 +496,8 @@
           dImg.data[idx + 2] = Math.max(0, Math.min(255, b));
           dImg.data[idx + 3] = 255;
 
-          const bumpVal = Math.max(0, Math.min(255, Math.floor((0.5 + n1 * 0.5 + n2 * 0.35 + grain * 1.5) * 255)));
+          const seam = Math.pow(1 - Math.abs(Math.sin(ny * 7.2 + n1 * 2.6 + n2 * 0.65)), 12);
+          const bumpVal = (0.55 + n1 * 0.35 + n2 * 0.26 + grain * 1.2 - seam * 0.14) * 255;
           bImg.data[idx] = bumpVal;
           bImg.data[idx + 1] = bumpVal;
           bImg.data[idx + 2] = bumpVal;
@@ -472,11 +511,14 @@
       const map = new THREE.CanvasTexture(diffCanvas);
       map.wrapS = map.wrapT = THREE.RepeatWrapping;
       map.repeat.set(2, 2);
+      map.encoding = THREE.sRGBEncoding;
 
       const bumpMap = new THREE.CanvasTexture(bumpCanvas);
       bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
       bumpMap.repeat.set(2, 2);
 
+      const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      map.anisotropy = bumpMap.anisotropy = anisotropy;
       return { map, bumpMap };
     }
 
@@ -553,27 +595,111 @@
     camera.position.copy(DEFAULT_CAM_POS);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    function resizeView() {
+      const { clientWidth: width, clientHeight: height } = container;
+      if (!width || !height) return;
+      const pixelBudget = 5500000;
+      const ratio = Math.min(window.devicePixelRatio || 1, 2.5, Math.sqrt(pixelBudget / (width * height)));
+      renderer.setPixelRatio(ratio);
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+    resizeView();
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    function createStreamOrbit(camera, canvas) {
+      const target = new THREE.Vector3();
+      const offset = new THREE.Vector3();
+      const orbit = new THREE.Spherical();
+      const activePointers = new Map();
+      let horizontal = 0, vertical = 0, zoom = 0;
+      let gesture = false;
+      const distance = () => {
+        const [a, b] = activePointers.values();
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      };
+
+      canvas.style.touchAction = 'none';
+      canvas.style.cursor = 'grab';
+      canvas.tabIndex = 0;
+      canvas.setAttribute('aria-label', 'Câmera do riacho. Use as setas para girar e mais ou menos para aproximar.');
+      canvas.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        if (!activePointers.size) gesture = false;
+        activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (activePointers.size > 1) gesture = true;
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener('pointermove', event => {
+        const pointer = activePointers.get(event.pointerId);
+        if (!pointer) return;
+        const before = activePointers.size === 2 ? distance() : 0;
+        const dx = event.clientX - pointer.x, dy = event.clientY - pointer.y;
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        if (activePointers.size === 1) {
+          horizontal -= dx * .0054;
+          vertical -= dy * .0048;
+        } else if (before > 0) {
+          zoom += Math.log(before / Math.max(8, distance()));
+        }
+      });
+      const release = event => activePointers.delete(event.pointerId);
+      canvas.addEventListener('pointerup', release);
+      canvas.addEventListener('pointercancel', release);
+      canvas.addEventListener('lostpointercapture', release);
+      canvas.addEventListener('wheel', event => {
+        event.preventDefault();
+        const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 240 : 1;
+        zoom += THREE.MathUtils.clamp(event.deltaY * scale, -125, 125) * .002;
+      }, { passive: false });
+      canvas.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft') horizontal += .14;
+        else if (event.key === 'ArrowRight') horizontal -= .14;
+        else if (event.key === 'ArrowUp') vertical -= .12;
+        else if (event.key === 'ArrowDown') vertical += .12;
+        else if (event.key === '+' || event.key === '=') zoom -= .18;
+        else if (event.key === '-') zoom += .18;
+        else return;
+        event.preventDefault();
+      });
+      return {
+        target,
+        get gesture() { return gesture; },
+        reset() { horizontal = 0; vertical = 0; zoom = 0; },
+        update(dt = 1 / 60) {
+          if (Math.abs(horizontal) + Math.abs(vertical) + Math.abs(zoom) > .00005) {
+            const damping = 1 - Math.pow(0.80, dt * 60);
+            orbit.setFromVector3(offset.copy(camera.position).sub(target));
+            orbit.theta += horizontal * damping;
+            orbit.phi = THREE.MathUtils.clamp(orbit.phi + vertical * damping, Math.PI * 0.12, Math.PI * 0.46);
+            orbit.radius = THREE.MathUtils.clamp(orbit.radius * Math.exp(zoom * damping), 5.5, 24);
+            camera.position.copy(target).add(offset.setFromSpherical(orbit));
+            const { x, z } = camera.position;
+            if (Math.abs(x) < 29 && Math.abs(z) < 18) {
+              camera.position.y = Math.max(camera.position.y, getBedHeight(x, z) + 0.55);
+            }
+              horizontal *= 1 - damping;
+            vertical *= 1 - damping;
+            zoom *= 1 - damping;
+          }
+          camera.lookAt(target);
+        }
+      };
+    }
+
+    const controls = createStreamOrbit(camera, renderer.domElement);
     controls.target.copy(DEFAULT_CAM_TARGET);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI * 0.46;
-    controls.minPolarAngle = Math.PI * 0.12;
-    controls.minDistance = 5.5;
-    controls.maxDistance = 24.0;
-    controls.enablePan = false;
     controls.update();
 
     // Lighting setup
-    const hemiLight = new THREE.HemisphereLight(0xFFFDF2, 0x4E5E42, 0.82);
+    const hemiLight = new THREE.HemisphereLight(0xFFFDF2, 0x4E5E42, 0.70);
     hemiLight.position.set(0, 25, 0);
     scene.add(hemiLight);
 
@@ -589,11 +715,12 @@
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
     sunLight.shadow.camera.bottom = -d;
-    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.bias = -0.00018;
+    sunLight.shadow.normalBias = 0.035;
     scene.add(sunLight);
 
     // Warm bounce light from the sunlit rocks
-    const bounceLight = new THREE.DirectionalLight(0xE8B878, 0.42);
+    const bounceLight = new THREE.DirectionalLight(0xC5C9A3, 0.25);
     bounceLight.position.set(-12, 6, -8);
     scene.add(bounceLight);
 
@@ -603,7 +730,7 @@
     // ============================================================================
     // 3. RIVERBED TERRAIN & SUBMERGED PEBBLES
     // ============================================================================
-    const bedGeo = new THREE.PlaneGeometry(42, 36, 140, 140);
+    const bedGeo = new THREE.PlaneGeometry(58, 36, 232, 180);
     bedGeo.rotateX(-Math.PI / 2);
     const bedPos = bedGeo.attributes.position;
     const bedColors = new Float32Array(bedPos.count * 3);
@@ -611,34 +738,15 @@
     for (let i = 0; i < bedPos.count; i++) {
       const x = bedPos.getX(i);
       const z = bedPos.getZ(i);
-      const streamCenter = getStreamCenterX(z);
-      const distFromCenter = Math.abs(x - streamCenter);
+      const depth = getStreamDepth(x, z);
+      bedPos.setY(i, getStreamElevation(x, z) - depth);
 
-      // Channel trough profile: deeper inside the river channel, rising on banks
-      const channelWidth = 6.8 + Math.sin(z * 0.3) * 1.2;
-      const bankFactor = Math.max(0, (distFromCenter - channelWidth * 0.55) / 5.0);
-      const bankRise = Math.pow(bankFactor, 1.45) * 2.4;
-
-      const baseElev = getStreamElevation(x, z);
-      const rockyDetail = noiseGen.fbm(x * 0.35, z * 0.35, 1.2, 4) * 0.45;
-      const y = baseElev - 0.55 + bankRise + rockyDetail;
-      bedPos.setY(i, y);
-
-      // Vertex coloring: wet mossy dark olive/ochre in riverbed, warm sandy earth on banks
-      const c = new THREE.Color();
-      if (distFromCenter < channelWidth * 0.75) {
-        const pebbleTone = 0.5 + 0.5 * noiseGen.noise3D(x * 1.8, z * 1.8, 0.5);
-        c.setRGB(
-          0.26 + pebbleTone * 0.16,
-          0.31 + pebbleTone * 0.14,
-          0.20 + pebbleTone * 0.08
-        );
-      } else {
-        c.setRGB(0.46, 0.42, 0.28);
-      }
-      bedColors[i * 3] = c.r;
-      bedColors[i * 3 + 1] = c.g;
-      bedColors[i * 3 + 2] = c.b;
+      const grain = noiseGen.noise3D(x * 1.8, z * 1.8, 0.5);
+      const bank = smoothstep(-depth, -0.16, 0.30);
+      const bankCover = bank * smoothstep(noiseGen.noise3D(x * 0.36, z * 0.36, 2), -0.34, 0.48);
+      bedColors[i * 3] = lerp(0.33, 0.22, bankCover) + grain * 0.075;
+      bedColors[i * 3 + 1] = lerp(0.37, 0.35, bankCover) + grain * 0.062;
+      bedColors[i * 3 + 2] = lerp(0.28, 0.19, bankCover) + grain * 0.045;
     }
     bedGeo.setAttribute('color', new THREE.BufferAttribute(bedColors, 3));
     bedGeo.computeVertexNormals();
@@ -647,42 +755,48 @@
       vertexColors: true,
       map: rockTextures.map,
       bumpMap: rockTextures.bumpMap,
-      bumpScale: 0.08,
-      roughness: 0.88,
-      metalness: 0.05
+      bumpScale: 0.032,
+      roughness: 0.83
     });
     const riverbedMesh = new THREE.Mesh(bedGeo, bedMat);
     riverbedMesh.receiveShadow = true;
     scene.add(riverbedMesh);
 
     // Instanced submerged & shoreline river pebbles (seixos rolados)
-    const pebbleCount = 420;
-    const pebbleGeo = new THREE.DodecahedronGeometry(0.18, 1);
-    pebbleGeo.scale(1.25, 0.58, 1.0);
+    const pebbleCount = 780;
+    const pebbleGeo = new THREE.IcosahedronGeometry(0.18, 1);
+    pebbleGeo.scale(1.25, 0.66, 1.0);
     const pebbleMat = new THREE.MeshStandardMaterial({
       map: rockTextures.map,
-      roughness: 0.42,
-      metalness: 0.08
+      bumpMap: rockTextures.bumpMap,
+      bumpScale: 0.012,
+      roughness: 0.5
     });
     const pebbleInst = new THREE.InstancedMesh(pebbleGeo, pebbleMat, pebbleCount);
     pebbleInst.receiveShadow = true;
     const dummy = new THREE.Object3D();
     const pColor = new THREE.Color();
 
+    let scatterSeed = 20381;
+    function scatter() {
+      scatterSeed = (Math.imul(1664525, scatterSeed) + 1013904223) >>> 0;
+      return scatterSeed / 4294967296;
+    }
+
     for (let i = 0; i < pebbleCount; i++) {
-      const z = (Math.random() - 0.5) * 26;
-      const center = getStreamCenterX(z);
-      const x = center + (Math.random() - 0.5) * 13.5;
-      const y = getStreamElevation(x, z) - 0.42 + (Math.random() - 0.5) * 0.15;
+      const z = (scatter() - 0.5) * 28;
+      const x = getStreamCenterX(z) + (scatter() * 2 - 1) * getChannelHalfWidth(z) * 1.14;
+      const s = 0.29 + Math.pow(scatter(), 1.8) * 1.8;
+      const flatten = 0.65 + scatter() * 0.52;
+      const y = getBedHeight(x, z) + 0.042 * s * flatten;
       dummy.position.set(x, y, z);
-      dummy.rotation.set(Math.random() * 0.4, Math.random() * Math.PI * 2, Math.random() * 0.4);
-      const s = 0.5 + Math.random() * 1.45;
-      dummy.scale.set(s, s * (0.6 + Math.random() * 0.5), s);
+      dummy.rotation.set((scatter() - 0.5) * 0.27, scatter() * Math.PI * 2, (scatter() - 0.5) * 0.27);
+      dummy.scale.set(s, s * flatten, s * (0.72 + scatter() * 0.64));
       dummy.updateMatrix();
       pebbleInst.setMatrixAt(i, dummy.matrix);
 
-      const hueShift = (Math.random() - 0.5) * 0.06;
-      pColor.setHSL(0.08 + hueShift, 0.38 + Math.random() * 0.2, 0.34 + Math.random() * 0.24);
+      const wet = smoothstep(getStreamDepth(x, z), -0.12, 0.15);
+      pColor.setHSL(0.07 + scatter() * 0.08, 0.16 + scatter() * 0.27, 0.37 + scatter() * 0.23 - wet * 0.07);
       pebbleInst.setColorAt(i, pColor);
     }
     pebbleInst.instanceMatrix.needsUpdate = true;
@@ -695,7 +809,20 @@
     const bouldersGroup = new THREE.Group();
     scene.add(bouldersGroup);
 
-    const mossPatches = [];
+    const rockObstacles = [];
+    const boulderMaterial = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      map: rockTextures.map,
+      bumpMap: rockTextures.bumpMap,
+      bumpScale: 0.042,
+      roughness: 0.89
+    });
+    boulderMaterial.onBeforeCompile = (shader) => {
+      shader.vertexShader = 'attribute float aRockWet; varying float vRockWet;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvRockWet = aRockWet;');
+      shader.fragmentShader = 'varying float vRockWet;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.37, vRockWet);');
+    };
 
     function createSculptedBoulder({
       x, y, z,
@@ -705,79 +832,81 @@
       mossAmount = 0.35,
       wetLine = 0.25
     }) {
-      const geo = new THREE.IcosahedronGeometry(1.0, 4);
+      const geo = new THREE.IcosahedronGeometry(1, 8);
       const pos = geo.attributes.position;
       const colors = new Float32Array(pos.count * 3);
+      const wetness = new Float32Array(pos.count);
       const v = new THREE.Vector3();
+      const color = new THREE.Color();
+      const tone = 0.5 + 0.5 * noiseGen.noise3D(seed, 0.2, 1.6);
+      const stone = new THREE.Color(0x756E5C).lerp(new THREE.Color(0xA78A68), tone);
+      const mineral = new THREE.Color(0xB3A18E);
+      const damp = new THREE.Color(0x343B33);
+      const moss = new THREE.Color(0x3B5322);
+      const cos = Math.cos(rotY), sin = Math.sin(rotY);
 
       for (let i = 0; i < pos.count; i++) {
         v.fromBufferAttribute(pos, i);
-        // Flatten bottom slightly so boulder sits naturally in the stream bed
-        if (v.y < -0.25) {
-          v.y = -0.25 + (v.y + 0.25) * 0.45;
-        }
-
-        // Multi-scale rock fracture & facet displacement
-        const nLarge = noiseGen.fbm(v.x * 1.3 + seed, v.y * 1.3 + seed, v.z * 1.3, 3);
-        const nCracks = Math.abs(noiseGen.noise3D(v.x * 3.2 + seed * 2, v.y * 3.2, v.z * 3.2));
-        const disp = 1.0 + nLarge * 0.28 - nCracks * 0.09;
-
-        v.x *= rx * disp;
-        v.y *= ry * disp;
-        v.z *= rz * disp;
+        const broad = noiseGen.fbm(v.x * 1.6 + seed, v.y * 1.6, v.z * 1.6, 3);
+        const fracture = noiseGen.noise3D(v.x * 4.2 + seed, v.y * 5.1, v.z * 4.2);
+        const strata = Math.sin(v.y * 9 + v.x * 2.3 + broad * 2.2);
+        const shape = 1 + broad * 0.31 + fracture * 0.055;
+        v.x = (v.x + v.y * 0.15) * rx * shape;
+        v.z = (v.z - v.y * 0.09) * rz * shape;
+        v.y = (v.y < -0.28 ? -0.28 + (v.y + 0.28) * 0.48 : v.y) * ry * shape + strata * 0.036;
         pos.setXYZ(i, v.x, v.y, v.z);
+      }
 
-        // Vertex color modulation: wet dark base near water, warm sunlit ochre on top, moss patches
-        const heightNorm = (v.y / ry + 1.0) * 0.5;
-        const mossNoise = noiseGen.fbm(v.x * 0.9 + seed, v.y * 0.9, v.z * 0.9 + seed, 3);
-        const col = new THREE.Color(0xC88A52); // Warm ochre base
-
-        // Sunlit warm top
-        col.lerp(new THREE.Color(0xE0A96D), Math.max(0, Math.min(1, heightNorm * 0.85)));
-
-        // Crevice darkening
-        col.multiplyScalar(0.84 + 0.22 * (1.0 - nCracks));
-
-        // Wet dark sheen near bottom waterline
-        if (v.y < wetLine) {
-          const wetFactor = Math.max(0, Math.min(1, (wetLine - v.y) / 0.65));
-          col.lerp(new THREE.Color(0x3D2A19), wetFactor * 0.58);
-        }
-
-        // Natural moss coloring on damp/shaded sides
-        if (mossAmount > 0 && mossNoise > (0.18 - mossAmount * 0.35) && v.y > -0.2) {
-          const mStrength = Math.min(1, (mossNoise - (0.18 - mossAmount * 0.35)) * 3.2);
-          col.lerp(new THREE.Color(0x4E6B2A), mStrength * 0.78);
-        }
-
-        colors[i * 3] = col.r;
-        colors[i * 3 + 1] = col.g;
-        colors[i * 3 + 2] = col.b;
+      geo.computeBoundingBox();
+      const ground = getBedHeight(x, z);
+      const baseY = ground - geo.boundingBox.min.y;
+      y = clamp(y, baseY - ry * 0.33, baseY - 0.05);
+      rockObstacles.push({ x, y, z, rx, ry, rz, cos, sin });
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        const wx = x + v.x * cos + v.z * sin;
+        const wz = z - v.x * sin + v.z * cos;
+        const level = y + v.y - getStreamElevation(wx, wz);
+        const wet = (1 - smoothstep(level, -0.15, wetLine)) * smoothstep(getStreamDepth(wx, wz), -0.27, 0.22);
+        const grain = noiseGen.fbm(v.x * 1.5 + seed, v.y * 3.2, v.z * 1.5, 3);
+        const cover = smoothstep(grain + mossAmount * 0.73, 0.19, 0.48) * smoothstep(level, -0.13, 0.16);
+        color.copy(stone).lerp(mineral, clamp(0.44 + grain * 0.8 + v.y / ry * 0.13, 0, 1));
+        color.lerp(moss, cover * 0.91).lerp(damp, wet * 0.57);
+        color.toArray(colors, i * 3);
+        wetness[i] = wet;
       }
 
       geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setAttribute('aRockWet', new THREE.BufferAttribute(wetness, 1));
       geo.computeVertexNormals();
 
-      const mat = new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        map: rockTextures.map,
-        bumpMap: rockTextures.bumpMap,
-        bumpScale: 0.11,
-        roughness: 0.72,
-        metalness: 0.06
-      });
+      // IcosahedronGeometry has duplicated vertices at face and UV seams.
+      const normals = geo.attributes.normal;
+      const normalSums = new Map();
+      const normal = new THREE.Vector3();
+      const keys = [];
+      for (let i = 0; i < pos.count; i++) {
+        const key = [pos.getX(i), pos.getY(i), pos.getZ(i)].map(n => Math.round(n * 10000)).join(',');
+        keys.push(key);
+        if (!normalSums.has(key)) normalSums.set(key, new THREE.Vector3());
+        normalSums.get(key).add(normal.fromBufferAttribute(normals, i));
+      }
+      for (const sum of normalSums.values()) sum.normalize();
+      for (let i = 0; i < normals.count; i++) {
+        const sum = normalSums.get(keys[i]);
+        normal.fromBufferAttribute(normals, i).lerp(sum, 0.82).normalize();
+        normals.setXYZ(i, normal.x, normal.y, normal.z);
+      }
 
-      const mesh = new THREE.Mesh(geo, mat);
+      const mesh = new THREE.Mesh(geo, boulderMaterial);
       mesh.position.set(x, y, z);
       mesh.rotation.y = rotY;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       bouldersGroup.add(mesh);
-
-      return mesh;
     }
 
-    // Place the exact boulders seen in the reference image:
+    // Place the rock formations that frame the central cascades.
     // 1. Hero Left Foreground/Midground Boulder (Large warm brown/ochre rock with lush moss on left)
     createSculptedBoulder({
       x: -3.5, y: 0.72, z: 3.1,
@@ -848,38 +977,45 @@
       roughness: 0.92,
       metalness: 0.02
     });
-    const mossInst = new THREE.InstancedMesh(mossGeo, mossMat, 220);
-    mossInst.castShadow = true;
+    const mossInst = new THREE.InstancedMesh(mossGeo, mossMat, 390);
     mossInst.receiveShadow = true;
 
     const mossZones = [
       // Left side of Hero Boulder
-      { cx: -5.0, cy: 0.65, cz: 3.6, sx: 1.3, sy: 0.8, sz: 1.1, count: 110 },
+      { cx: -5.0, cy: 0.65, cz: 3.6, sx: 1.3, sy: 0.8, sz: 1.1, count: 190 },
       // Lower-right mossy rock
-      { cx: 1.6, cy: -0.1, cz: 6.2, sx: 1.1, sy: 0.4, sz: 0.9, count: 65 },
+      { cx: 1.6, cy: -0.1, cz: 6.2, sx: 1.1, sy: 0.4, sz: 0.9, count: 120 },
       // Upper-left bank moss
-      { cx: -3.2, cy: 1.8, cz: -1.2, sx: 1.4, sy: 0.6, sz: 1.2, count: 45 }
+      { cx: -3.2, cy: 1.8, cz: -1.2, sx: 1.4, sy: 0.6, sz: 1.2, count: 80 }
     ];
+    bouldersGroup.updateMatrixWorld(true);
+    const mossRay = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0));
     let mIdx = 0;
     mossZones.forEach(zone => {
-      for (let i = 0; i < zone.count && mIdx < 220; i++, mIdx++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = Math.pow(Math.random(), 0.7);
-        dummy.position.set(
-          zone.cx + Math.cos(a) * r * zone.sx,
-          zone.cy + (Math.random() - 0.3) * zone.sy,
-          zone.cz + Math.sin(a) * r * zone.sz
-        );
-        dummy.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-        const s = 0.6 + Math.random() * 1.35;
-        dummy.scale.set(s * 1.2, s * 0.75, s);
+      for (let i = 0; i < zone.count; i++) {
+        const a = scatter() * Math.PI * 2;
+        const r = Math.sqrt(scatter());
+        const x = zone.cx + Math.cos(a) * r * zone.sx;
+        const z = zone.cz + Math.sin(a) * r * zone.sz;
+        mossRay.ray.origin.set(x, zone.cy + zone.sy + 3, z);
+        const [contact] = mossRay.intersectObjects(bouldersGroup.children);
+        if (!contact || contact.point.y < getStreamElevation(x, z) + 0.04 ||
+            noiseGen.noise3D(x * 1.7, z * 1.7, 1.1) < -0.21) continue;
+
+        const normal = contact.face.normal.clone().transformDirection(contact.object.matrixWorld);
+        dummy.position.copy(contact.point).addScaledVector(normal, 0.008);
+        dummy.quaternion.setFromUnitVectors(THREE.Object3D.DefaultUp, normal);
+        dummy.rotateY(scatter() * Math.PI * 2);
+        const size = 0.23 + scatter() * 0.54;
+        dummy.scale.set(size * 1.35, size * 0.31, size * 0.8);
         dummy.updateMatrix();
         mossInst.setMatrixAt(mIdx, dummy.matrix);
 
-        pColor.setHSL(0.23 + (Math.random() - 0.5) * 0.06, 0.52 + Math.random() * 0.2, 0.24 + Math.random() * 0.16);
-        mossInst.setColorAt(mIdx, pColor);
+        pColor.setHSL(0.18 + scatter() * 0.07, 0.35 + scatter() * 0.19, 0.19 + scatter() * 0.18);
+        mossInst.setColorAt(mIdx++, pColor);
       }
     });
+    mossInst.count = mIdx;
     mossInst.instanceMatrix.needsUpdate = true;
     if (mossInst.instanceColor) mossInst.instanceColor.needsUpdate = true;
     scene.add(mossInst);
@@ -887,120 +1023,73 @@
     // ============================================================================
     // 5. CUSTOM GLSL SHADER FOR REALISTIC DOWNHILL FLOWING STREAM & CASCADES
     // ============================================================================
-    const waterGeo = new THREE.PlaneGeometry(36, 30, 180, 180);
+    // The ribbon follows the meander and ends inside the rising banks.
+    const waterGeo = new THREE.PlaneGeometry(2, waterLimitZ * 2, 66, 190);
     waterGeo.rotateX(-Math.PI / 2);
-
-    // Pre-shape the water mesh to follow the downhill river slope and stepped cascades,
-    // and store local slope/rock-proximity in vertex attributes for foam generation!
     const wPos = waterGeo.attributes.position;
-    const foamAttr = new Float32Array(wPos.count);
-
-    // Key boulder centers in (x, z, radius) to generate realistic turbulent wake foam around rocks
-    const rockObstacles = [
-      { x: -3.5, z: 3.1, r: 2.55 },
-      { x: -0.5, z: -3.8, r: 2.2 },
-      { x: 3.4, z: -3.2, r: 1.55 },
-      { x: 5.5, z: -0.5, r: 2.1 },
-      { x: 1.45, z: 2.6, r: 1.35 },
-      { x: 3.9, z: 4.5, r: 2.2 },
-      { x: 2.1, z: 6.4, r: 1.65 },
-      { x: -1.8, z: 5.8, r: 1.15 }
-    ];
-
+    const waterData = new Float32Array(wPos.count * 4);
     for (let i = 0; i < wPos.count; i++) {
-      const x = wPos.getX(i);
       const z = wPos.getZ(i);
-      const elev = getStreamElevation(x, z);
-      const elevDown = getStreamElevation(x - 0.35, z + 0.35);
-      const slope = Math.max(0, (elev - elevDown) / 0.5); // Steeper at cascade drops!
-
-      wPos.setY(i, elev);
-
-      // Compute proximity to boulders for whitewater collars & wakes
-      let rockWake = 0.0;
-      for (let j = 0; j < rockObstacles.length; j++) {
-        const ro = rockObstacles[j];
-        const dx = x - ro.x;
-        const dz = z - ro.z;
-        const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < ro.r * 1.45) {
-          const proximity = Math.max(0, 1.0 - Math.abs(dist - ro.r * 0.92) / (ro.r * 0.55));
-          rockWake = Math.max(rockWake, proximity);
-        }
+      const across = wPos.getX(i) * getChannelHalfWidth(z) * 1.15;
+      const x = getStreamCenterX(z) + across;
+      const depth = getStreamDepth(x, z);
+      let wake = 0;
+      for (const rock of rockObstacles) {
+        const dx = x - rock.x, dz = z - rock.z;
+        const along = -dx * 0.65 + dz * 0.76;
+        const cross = dx * 0.76 + dz * 0.65;
+        const scale = (rock.rx + rock.rz) * 0.5;
+        const tail = Math.max(0, along / scale - 0.65);
+        const spread = (0.45 + tail * 0.24) * scale;
+        const trail = Math.exp(-tail * 1.45 - (cross / spread) ** 2);
+        const collar = 1 - smoothstep(0.1, 0.52, Math.abs(Math.hypot(dx, dz) / scale - 0.91));
+        const crest = rock.y + rock.ry - getStreamElevation(rock.x, rock.z);
+        wake = Math.max(wake, Math.max(collar * 0.58, trail * smoothstep(along / scale, 0.42, 0.96)) *
+          smoothstep(crest, -0.18, 0.35));
       }
-
-      // Combine cascade drop slope + boulder wake into foam intensity attribute
-      foamAttr[i] = Math.min(1.0, Math.pow(slope * 1.35, 1.4) + rockWake * 0.75);
+      wPos.setXYZ(i, x, getStreamElevation(x, z), z);
+      waterData.set([depth, getFlowSlope(x, z), wake, across], i * 4);
     }
-    waterGeo.setAttribute('aFoamWeight', new THREE.BufferAttribute(foamAttr, 1));
+    waterGeo.setAttribute('aWaterData', new THREE.BufferAttribute(waterData, 4));
     waterGeo.computeVertexNormals();
 
+    const rippleSlots = 8;
+    const rippleUniform = Array.from({ length: rippleSlots }, () => new THREE.Vector4(0, 0, -10, 0));
     const waterUniforms = {
       uTime: { value: 0 },
-      uSunDir: { value: new THREE.Vector3(0.55, 0.8, 0.35).normalize() },
-      uSunColor: { value: new THREE.Color(0xFFF7E0) },
-      uDeepColor: { value: new THREE.Color(0x2F5A48) },     // Natural olive-emerald river depth
-      uShallowColor: { value: new THREE.Color(0x6D8C62) },  // Sunlit translucent green-ochre
-      uBedTint: { value: new THREE.Color(0x9E7B4F) },       // Warm golden riverbed refraction
-      uSkyColor: { value: new THREE.Color(0xE4EED8) },
-      uFoamColor: { value: new THREE.Color(0xFBFDF9) }
+      uRipples: { value: rippleUniform },
+      uSunDir: { value: sunLight.position.clone().normalize() },
+      uSunColor: { value: sunLight.color },
+      uDeepColor: { value: new THREE.Color(0x2F5A48) },
+      uShallowColor: { value: new THREE.Color(0x668B68) },
+      uSkyColor: { value: scene.fog.color }
     };
 
     const waterVertexShader = `
       uniform float uTime;
-      attribute float aFoamWeight;
+      attribute vec4 aWaterData;
+      varying vec4 vWater;
       varying vec3 vWorldPos;
-      varying vec3 vNormal;
-      varying float vFoam;
-      varying float vWaveHeight;
-
-      // Fast hash & 2D noise for GLSL vertex/fragment waves
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-      }
-
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        f = f * f * (3.0 - 2.0 * f);
-        float a = hash(i);
-        float b = hash(i + vec2(1.0, 0.0));
-        float c = hash(i + vec2(0.0, 1.0));
-        float d = hash(i + vec2(1.0, 1.0));
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-      }
+      varying vec3 vWorldNormal;
 
       void main() {
         vec3 pos = position;
+        float a = pos.z * 5.2 + aWaterData.w * 0.46 - uTime * 7.0;
+        float b = aWaterData.w * 4.4 - pos.z * 1.25 + uTime * 3.6;
+        float wet = smoothstep(0.0, 0.28, aWaterData.x);
+        pos.y += (0.037 * sin(a) + 0.018 * sin(b)) * wet;
 
-        // Flow direction vector: from upper-right (+x, -z) to lower-left (-x, +z)
-        vec2 flowDir = normalize(vec2(-0.68, 0.73));
-        float speed = 2.2 + aFoamWeight * 1.6;
-        vec2 flowUV = pos.xz * 0.75 - flowDir * (uTime * speed);
-
-        // Multi-layered directional stream waves
-        float w1 = sin(dot(pos.xz, flowDir) * 3.2 - uTime * 4.8) * 0.045;
-        float w2 = sin(pos.x * 2.7 + pos.z * 1.9 - uTime * 3.6) * 0.03;
-        float w3 = (noise(flowUV * 2.4) - 0.5) * (0.09 + aFoamWeight * 0.11);
-        float w4 = (noise(flowUV * 5.2 + vec2(uTime * 1.5, -uTime * 1.2)) - 0.5) * 0.045;
-
-        float totalWave = w1 + w2 + w3 + w4;
-        pos.y += totalWave;
-
-        // Perturb normal dynamically based on wave derivatives
-        vec3 perturbedNormal = normalize(normal + vec3(
-          (w1 + w3) * 1.6,
-          0.0,
-          (w2 + w4) * 1.6
-        ));
-
-        vNormal = normalize(normalMatrix * perturbedNormal);
-        vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
-        vWorldPos = worldPosition.xyz;
-        vFoam = aFoamWeight;
-        vWaveHeight = totalWave;
-
-        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        float bend = -1.15 + 0.352 * cos(pos.z * 0.22);
+        vec2 waveSlope = (
+          vec2(0.46, 5.2 - bend * 0.46) * 0.037 * cos(a) +
+          vec2(4.4, -1.25 - bend * 4.4) * 0.018 * cos(b)
+        ) * wet;
+        vec3 waveNormal = normalize(normal - vec3(waveSlope.x, 0.0, waveSlope.y));
+        vec4 world = modelMatrix * vec4(pos, 1.0);
+        vWorldNormal = normalize(mat3(modelMatrix) * waveNormal);
+        vWorldPos = world.xyz;
+        vWater = aWaterData;
+        gl_Position = projectionMatrix * viewMatrix * world;
       }
     `;
 
@@ -1010,90 +1099,78 @@
       uniform vec3 uSunColor;
       uniform vec3 uDeepColor;
       uniform vec3 uShallowColor;
-      uniform vec3 uBedTint;
       uniform vec3 uSkyColor;
-      uniform vec3 uFoamColor;
-
+      uniform vec4 uRipples[${rippleSlots}];
+      varying vec4 vWater;
       varying vec3 vWorldPos;
-      varying vec3 vNormal;
-      varying float vFoam;
-      varying float vWaveHeight;
+      varying vec3 vWorldNormal;
 
       float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        vec3 q = fract(vec3(p.xyx) * 0.1031);
+        q += dot(q, q.yzx + 33.33);
+        return fract((q.x + q.y) * q.z);
       }
 
       float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
+        vec2 i = floor(p), f = fract(p);
         f = f * f * (3.0 - 2.0 * f);
-        float a = hash(i);
-        float b = hash(i + vec2(1.0, 0.0));
-        float c = hash(i + vec2(0.0, 1.0));
-        float d = hash(i + vec2(1.0, 1.0));
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-      }
-
-      float fbm(vec2 p) {
-        float v = 0.0;
-        float a = 0.5;
-        for (int i = 0; i < 4; i++) {
-          v += a * noise(p);
-          p *= 2.08;
-          a *= 0.5;
-        }
-        return v;
+        return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x),
+          mix(hash(i + vec2(0, 1)), hash(i + 1.0), f.x), f.y);
       }
 
       void main() {
-        vec2 flowDir = normalize(vec2(-0.68, 0.73));
-        vec2 uv = vWorldPos.xz;
+        float depth = vWater.x;
+        if (depth <= 0.0) discard;
+        float rapids = smoothstep(0.27, 0.87, vWater.y);
+        vec2 uv = vec2(vWater.w, vWorldPos.z);
+        vec2 flow = vec2(uv.x * 2.7, uv.y * 1.42 - uTime * 2.4);
+        float broad = noise(flow);
+        float micro = noise(flow * vec2(3.3, 2.4) + vec2(broad * 1.8, 4.0));
+        float ridges = 1.0 - abs(2.0 * noise(flow * vec2(1.6, 0.69) + micro * 0.36) - 1.0);
+        float broken = smoothstep(0.50, 0.89, mix(broad, ridges, 0.62));
+        float foam = max(rapids * 0.73, vWater.z * 0.86) * broken;
+        foam += (1.0 - smoothstep(0.035, 0.18, depth)) * smoothstep(0.58, 0.84, micro) * 0.34;
+        foam *= smoothstep(0.012, 0.095, depth);
 
-        // Animated flowing water noise layers
-        vec2 flow1 = uv * 1.15 - flowDir * (uTime * 2.5);
-        vec2 flow2 = uv * 2.35 - flowDir * (uTime * 3.4) + vec2(4.2, -1.7);
+        vec2 normals = vec2(broad - 0.5, micro - 0.5) * (0.115 + rapids * 0.21);
+        float rings = 0.0;
+        for (int i = 0; i < ${rippleSlots}; i++) {
+          vec4 event = uRipples[i];
+          float age = uTime - event.z;
+          if (age < 0.0 || age > 2.0 || event.w == 0.0) continue;
+          vec2 radial = vWorldPos.xz - event.xy - vec2(-0.25, 0.32) * age;
+          float radius = length(radial);
+          float wave = radius - age * 1.08;
+          float falloff = exp(-wave * wave * 17.0) * (1.0 - age * 0.5) * event.w;
+          float ripple = cos(wave * 19.0) * falloff;
+          normals += radial / max(0.08, radius) * ripple * 0.20;
+          rings += max(0.0, ripple) * 0.18;
+        }
 
-        float n1 = fbm(flow1);
-        float n2 = fbm(flow2);
-        float ripples = (n1 * 0.6 + n2 * 0.4);
+        vec3 n = normalize(vWorldNormal + vec3(normals.x, 0.0, normals.y));
+        vec3 toEye = cameraPosition - vWorldPos;
+        vec3 view = normalize(toEye);
+        float facing = max(0.0, dot(n, view));
+        float fresnel = 0.025 + 0.975 * pow(1.0 - facing, 5.0);
+        vec3 reflected = reflect(-view, n);
+        float canopy = smoothstep(-0.14, 0.72, reflected.y + 0.11 * broad);
+        vec3 sky = mix(uDeepColor * 0.55, uSkyColor, canopy);
+        float absorb = 1.0 - exp(-depth * (1.08 + (1.0 - facing) * 0.72));
+        vec3 body = mix(uShallowColor, uDeepColor, absorb * 0.85);
+        vec3 lightHalf = normalize(uSunDir + view);
+        float shine = max(dot(n, lightHalf), 0.0);
+        float glint = pow(shine, 85.0) * (0.13 + micro * 0.26) + pow(shine, 26.0) * 0.084;
+        vec3 color = mix(body, sky, fresnel * 0.86) + uSunColor * glint;
+        float caustic = pow(clamp(ridges, 0.0, 1.0), 16.0) * (1.0 - absorb);
+        color += uSunColor * (caustic * 0.092 + rings);
+        color = mix(color, mix(vec3(0.76, 0.86, 0.82), uSunColor, 0.34), clamp(foam * 1.22, 0.0, 0.88));
 
-        // Construct detailed surface normal
-        vec3 N = normalize(vNormal + vec3((n1 - 0.5) * 0.55, 0.0, (n2 - 0.5) * 0.55));
-        vec3 V = normalize(cameraPosition - vWorldPos);
-
-        // Fresnel reflectance
-        float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.2);
-        fresnel = clamp(fresnel * 0.75 + 0.12, 0.0, 1.0);
-
-        // Mix warm shallow ochre refraction and emerald stream water (matching reference)
-        float shallowMask = smoothstep(0.25, 0.78, n1 + vFoam * 0.45);
-        vec3 waterBody = mix(uDeepColor, uShallowColor, shallowMask);
-        waterBody = mix(waterBody, uBedTint, (1.0 - fresnel) * 0.36 * n2);
-
-        // Sky & foliage reflection
-        vec3 reflected = mix(waterBody, uSkyColor, fresnel * 0.58);
-
-        // Sun specular highlights (glints on moving ripples)
-        vec3 H = normalize(uSunDir + V);
-        float spec = pow(max(dot(N, H), 0.0), 96.0) * 0.85 + pow(max(dot(N, H), 0.0), 18.0) * 0.22;
-        vec3 color = reflected + uSunColor * spec;
-
-        // Whitewater cascades & foam streaks (corredeiras brancas)
-        float streakNoise = fbm(vec2(
-          dot(uv, vec2(flowDir.y, -flowDir.x)) * 3.2,
-          dot(uv, flowDir) * 1.1 - uTime * 3.8
-        ));
-        float foamPattern = smoothstep(0.42, 0.74, vFoam * 0.85 + streakNoise * 0.62 + vWaveHeight * 2.2);
-        // Fine lacy foam bubbles at the edges
-        float lace = smoothstep(0.55, 0.68, n2 + vFoam * 0.5) * vFoam;
-        float finalFoam = clamp(foamPattern + lace * 0.55, 0.0, 0.95);
-
-        color = mix(color, uFoamColor, finalFoam);
-
-        // Translucent alpha so submerged pebbles and swimming fish are visible
-        float alpha = clamp(0.76 + finalFoam * 0.22 + fresnel * 0.12, 0.0, 0.96);
-
-        gl_FragColor = vec4(color, alpha);
+        float fog = 1.0 - exp(-0.000256 * dot(toEye, toEye));
+        color = mix(color, uSkyColor, fog);
+        float alpha = clamp(absorb * 0.85 + fresnel * 0.46 + foam * 0.62 + glint * 0.36 + rings, 0.0, 0.97);
+        gl_FragColor = vec4(color, alpha * smoothstep(0.0, 0.093, depth));
+        #include <tonemapping_fragment>
+        #include <encodings_fragment>
       }
     `;
 
@@ -1106,7 +1183,9 @@
     });
 
     const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+    waterMesh.renderOrder = 1;
     scene.add(waterMesh);
+
 
     // ============================================================================
     // 6. CASCADE FOAM SPRAY & FLOATING STREAM BUBBLES (Bolhas e Espuma 3D)
@@ -1120,7 +1199,8 @@
     for (let i = 0; i < bubbleCount; i++) {
       const z = -6.0 + Math.random() * 14.0;
       const cx = getStreamCenterX(z);
-      const x = cx + (Math.random() - 0.5) * 9.0;
+      const lane = (scatter() - 0.5) * 1.52;
+      const x = cx + lane * getChannelHalfWidth(z);
       const y = getStreamElevation(x, z) + 0.05 + Math.random() * 0.35;
       bubblePositions[i * 3] = x;
       bubblePositions[i * 3 + 1] = y;
@@ -1128,7 +1208,7 @@
       bubbleData.push({
         speed: 1.4 + Math.random() * 1.6,
         bobPhase: Math.random() * Math.PI * 2,
-        offsetSpread: (Math.random() - 0.5) * 8.5
+        lane
       });
     }
     bubbleGeo.setAttribute('position', new THREE.BufferAttribute(bubblePositions, 3));
@@ -1136,12 +1216,14 @@
     const bubbleMat = new THREE.PointsMaterial({
       map: particleTex,
       color: 0xFFFFFF,
-      size: 0.26,
+      size: 0.14,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.55,
       depthWrite: false
     });
     const bubblePoints = new THREE.Points(bubbleGeo, bubbleMat);
+    bubblePoints.renderOrder = 2;
+    bubblePoints.frustumCulled = false;
     scene.add(bubblePoints);
 
     // Fine mist spray at the waterfall cascade ledges
@@ -1175,12 +1257,14 @@
     const sprayMat = new THREE.PointsMaterial({
       map: particleTex,
       color: 0xF5FAF7,
-      size: 0.34,
+      size: 0.24,
       transparent: true,
-      opacity: 0.48,
+      opacity: 0.33,
       depthWrite: false
     });
     const sprayPoints = new THREE.Points(sprayGeo, sprayMat);
+    sprayPoints.renderOrder = 2;
+    sprayPoints.frustumCulled = false;
     scene.add(sprayPoints);
 
     // ============================================================================
@@ -1325,128 +1409,141 @@
       pecR.rotation.z = -Math.sin(time * freq * 0.7) * 0.25;
     }
 
-    // Concentric Water Ripple Rings System (matching the white elliptical rings in the screenshot)
-    const activeRipples = [];
-    const rippleRingGeo = new THREE.RingGeometry(0.82, 1.0, 48);
-    rippleRingGeo.rotateX(-Math.PI / 2);
+    let rippleIndex = 0;
+    let sceneTime = 0;
 
-    function spawnWaterRipples(x, z, intensity = 1.0) {
-      const baseY = getStreamElevation(x, z) + 0.04;
-      // Spawn 2 concentric rings staggered slightly
-      for (let r = 0; r < 2; r++) {
-        const mat = new THREE.MeshBasicMaterial({
-          color: 0xF7FAF5,
-          transparent: true,
-          opacity: (0.78 - r * 0.22) * intensity,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-        const ring = new THREE.Mesh(rippleRingGeo, mat);
-        ring.position.set(x, baseY, z);
-        const initScale = 0.22 + r * 0.28;
-        ring.scale.set(initScale * 1.25, 1, initScale * 0.9);
-        scene.add(ring);
-
-        activeRipples.push({
-          mesh: ring,
-          age: 0,
-          maxAge: 1.85 + r * 0.35,
-          startScale: initScale,
-          endScale: (1.65 + r * 0.55) * intensity,
-          initOpacity: (0.78 - r * 0.22) * intensity
-        });
-      }
+    function spawnWaterRipples(x, z, intensity = 1) {
+      rippleUniform[rippleIndex].set(x, z, sceneTime, intensity);
+      rippleIndex = (rippleIndex + 1) % rippleSlots;
     }
 
-    // Splash Droplets Burst System when fish jumps or lands
+    function getRockTop(x, z) {
+      let height = -Infinity;
+      for (const rock of rockObstacles) {
+        const dx = x - rock.x, dz = z - rock.z;
+        const u = (dx * rock.cos - dz * rock.sin) / (rock.rx * 0.9);
+        const v = (dx * rock.sin + dz * rock.cos) / (rock.rz * 0.9);
+        const radiusSquared = u * u + v * v;
+        if (radiusSquared < 1) {
+          height = Math.max(height, rock.y + rock.ry * Math.sqrt(1 - radiusSquared));
+        }
+      }
+      return height;
+    }
+
     const splashDrops = [];
-    const dropGeo = new THREE.SphereGeometry(0.038, 6, 6);
-    const dropMat = new THREE.MeshBasicMaterial({
-      color: 0xFFFFFF,
+    const dropGeo = new THREE.SphereGeometry(0.035, 7, 5);
+    const dropMat = new THREE.MeshStandardMaterial({
+      color: 0xE4F4E9,
+      roughness: 0.28,
       transparent: true,
-      opacity: 0.88
+      opacity: 0.78,
+      depthWrite: false
     });
 
-    function spawnWaterSplash(x, z, count = 14) {
-      const y = getStreamElevation(x, z) + 0.06;
-      for (let i = 0; i < count; i++) {
+    function spawnWaterSplash(x, z, count = 14, impact = 1) {
+      const y = getWaterHeight(x, z, sceneTime) + 0.045;
+      for (let i = 0; i < count && splashDrops.length < 96; i++) {
         const mesh = new THREE.Mesh(dropGeo, dropMat);
-        mesh.position.set(
-          x + (Math.random() - 0.5) * 0.3,
-          y,
-          z + (Math.random() - 0.5) * 0.3
-        );
+        mesh.position.set(x, y, z);
+        mesh.scale.setScalar(0.45 + Math.random() * 0.8);
+        mesh.renderOrder = 2;
         const angle = Math.random() * Math.PI * 2;
-        const speedH = 0.6 + Math.random() * 1.4;
+        const speed = (0.45 + Math.random() * 1.3) * impact;
         scene.add(mesh);
         splashDrops.push({
-          mesh,
-          vx: Math.cos(angle) * speedH,
-          vy: 2.2 + Math.random() * 2.4,
-          vz: Math.sin(angle) * speedH,
-          age: 0,
-          maxAge: 0.65 + Math.random() * 0.35
+          mesh, x, y, z, age: 0,
+          vx: Math.cos(angle) * speed - 0.17,
+          vy: (1.15 + Math.random() * 2.1) * impact,
+          vz: Math.sin(angle) * speed + 0.21
         });
       }
     }
 
-    // Fish Population:
-    // - Fish #0 is the hero center jumper (matching the exact spot in the reference screenshot!)
-    // - Additional fish leap across different pools of the rapids and swim underwater
-    const fishes = [];
     const jumpSpots = [
-      // Spot 0: Exact hero center spot from the screenshot (right beside the big left boulder)
-      { x: -0.65, z: 3.35, dx: 1.1, dz: -0.45, jumpHeight: 1.25, interval: 3.6, delay: 0.2, scale: 0.95 },
-      // Spot 1: Foreground right pool (where the second ripple ring appears in the screenshot!)
-      { x: 1.55, z: 5.15, dx: -0.95, dz: -0.6, jumpHeight: 1.15, interval: 4.8, delay: 1.9, scale: 0.85 },
-      // Spot 2: Upper-center cascade pool
-      { x: 1.2, z: -0.8, dx: -1.1, dz: 0.5, jumpHeight: 1.2, interval: 5.4, delay: 3.1, scale: 0.82 },
-      // Spot 3: Lower-left rapids pool
-      { x: -2.4, z: 5.6, dx: 1.2, dz: -0.5, jumpHeight: 1.1, interval: 6.0, delay: 4.2, scale: 0.78 }
+      { x: -0.65, z: 3.35, heading: -0.39, height: 1.26, interval: 3.6, scale: 0.95 },
+      { x: -3.0, z: 5.15, heading: -2.58, height: 1.06, interval: 4.8, scale: 0.85 },
+      { x: 1.2, z: -0.8, heading: 2.72, height: 1.15, interval: 5.4, scale: 0.82 },
+      { x: -5.5, z: 6.4, heading: -0.39, height: 0.97, interval: 6.0, scale: 0.78 }
     ];
 
-    jumpSpots.forEach((spot, idx) => {
+    function hasFishClearance(x, z) {
+      return Math.abs(z) < waterLimitZ - 0.55 && getStreamDepth(x, z) > 0.37 &&
+        getRockTop(x, z) < getStreamElevation(x, z) - 0.34;
+    }
+
+    function findJump(x, z, heading, height) {
+      const candidates = [[0, 0], [-0.65, 0], [0.65, 0], [0, -0.65], [0, 0.65],
+        [-1.25, 0], [1.25, 0], [-0.65, 1.15], [0.65, -1.15]];
+      for (const [ox, oz] of candidates) {
+        const cx = x + ox, cz = z + oz;
+        for (let i = 0; i < 6; i++) {
+          const angle = heading + i * Math.PI / 3;
+          const dx = Math.cos(angle) * 0.83, dz = Math.sin(angle) * 0.83;
+          if (![-1.2, -0.6, 0, 0.6, 1.2].every(t => hasFishClearance(cx + dx * t, cz + dz * t))) continue;
+          const start = new THREE.Vector3(cx - dx, getStreamElevation(cx - dx, cz - dz) - 0.22, cz - dz);
+          const end = new THREE.Vector3(cx + dx, getStreamElevation(cx + dx, cz + dz) - 0.22, cz + dz);
+          const duration = Math.sqrt(8 * height / gravity);
+          return {
+            start, end, duration, vx: (end.x - start.x) / duration, vz: (end.z - start.z) / duration,
+            vy: (end.y - start.y) / duration + 0.5 * gravity * duration
+          };
+        }
+      }
+      return null;
+    }
+
+    function findFishHome(spot) {
+      const nearSpot = findJump(spot.x, spot.z, spot.heading, spot.height);
+      if (nearSpot) return nearSpot;
+      for (const offset of [0, -1.6, 1.6, -3.2, 3.2, -5.0, 5.0]) {
+        const z = spot.z + offset;
+        const center = getStreamCenterX(z);
+        for (const lane of [0, -1.9, 1.9, -3.1, 3.1]) {
+          const jump = findJump(center + lane, z, spot.heading, spot.height);
+          if (jump) return jump;
+        }
+      }
+      return null;
+    }
+
+    const fishes = jumpSpots.flatMap((spot, index) => {
+      const home = findFishHome(spot);
+      if (!home) return [];
       const mesh = createRealisticFishMesh(spot.scale);
+      mesh.position.copy(home.start);
       scene.add(mesh);
-      fishes.push({
-        id: idx,
-        mesh,
-        spot,
-        state: idx === 0 ? 'jumping' : 'swimming',
-        timer: idx === 0 ? 0.32 : spot.delay, // Start Fish #0 mid-leap immediately on load like the screenshot!
-        jumpDuration: 1.18,
-        startPos: new THREE.Vector3(spot.x - spot.dx * 0.5, getStreamElevation(spot.x, spot.z) - 0.18, spot.z - spot.dz * 0.5),
-        endPos: new THREE.Vector3(spot.x + spot.dx * 0.5, getStreamElevation(spot.x, spot.z) - 0.18, spot.z + spot.dz * 0.5),
-        peakHeight: spot.jumpHeight,
-        enteredWater: false,
-        phaseOffset: idx * 2.1
-      });
+      return {
+        mesh, spot, home, jump: home, state: 'swimming', timer: index * 0.37,
+        phaseOffset: index * 2.1, aboveWater: false,
+        approachStart: new THREE.Vector3()
+      };
     });
 
-    // Spawn initial concentric ripples at the two exact locations seen in image_998cfb.jpg!
-    spawnWaterRipples(-0.55, 3.45, 1.15);
-    spawnWaterRipples(1.65, 5.25, 1.25);
-
-    // Function to trigger an immediate fish leap at a specific (x, z) or random spot
-    function triggerFishJumpAt(targetX, targetZ) {
-      // Pick a swimming fish or the closest fish
-      let chosen = fishes.find(f => f.state === 'swimming') || fishes[0];
-      const dx = (Math.random() > 0.5 ? 1 : -1) * (0.9 + Math.random() * 0.5);
-      const dz = -0.5 + (Math.random() - 0.5) * 0.5;
-      const baseElev = getStreamElevation(targetX, targetZ);
-
-      chosen.startPos.set(targetX - dx * 0.5, baseElev - 0.12, targetZ - dz * 0.5);
-      chosen.endPos.set(targetX + dx * 0.5, baseElev - 0.12, targetZ + dz * 0.5);
-      chosen.peakHeight = 1.2 + Math.random() * 0.35;
-      chosen.jumpDuration = 1.15;
-      chosen.state = 'jumping';
-      chosen.timer = 0.0;
-      chosen.enteredWater = false;
-
-      spawnWaterRipples(chosen.startPos.x, chosen.startPos.z, 1.1);
-      spawnWaterSplash(chosen.startPos.x, chosen.startPos.z, 14);
-      soundEngine.playSplashSound();
+    function beginFishJump(fish, jump) {
+      fish.jump = jump;
+      fish.state = 'approach';
+      fish.timer = 0;
+      fish.aboveWater = false;
+      fish.approachStart.copy(fish.mesh.position);
+      fish.approachDuration = clamp(fish.approachStart.distanceTo(jump.start) * 0.21, 0.26, 1.8);
     }
+
+    function triggerFishJumpAt(x, z) {
+      const jump = findJump(x, z, 0.75, 1.16);
+      if (!jump) return;
+      let closest = null, distance = Infinity;
+      for (const fish of fishes) {
+        const candidate = fish.mesh.position.distanceToSquared(jump.start);
+        if (fish.state === 'swimming' && candidate < distance) {
+          closest = fish;
+          distance = candidate;
+        }
+      }
+      if (closest) beginFishJump(closest, jump);
+    }
+
+    if (fishes.length) beginFishJump(fishes[0], fishes[0].home);
 
     // ============================================================================
     // 8. RIPARIAN FOLIAGE & YELLOW WILDFLOWERS (Vegetação e flores amarelas)
@@ -1907,15 +2004,19 @@
       userPausedAudio = false;
       soundEngine.resume();
       updateSoundButtonUI(true);
-      triggerFishJumpAt(-0.65, 3.35);
+      const fish = fishes.find(candidate => candidate.state === 'swimming');
+      if (fish) beginFishJump(fish, fish.home);
     });
 
     btnJumpFish.addEventListener('click', () => {
-      const spot = jumpSpots[Math.floor(Math.random() * jumpSpots.length)];
-      triggerFishJumpAt(spot.x, spot.z);
+      const available = fishes.filter(fish => fish.state === 'swimming');
+      if (!available.length) return;
+      const fish = available[Math.floor(Math.random() * available.length)];
+      beginFishJump(fish, fish.home);
     });
 
     btnResetCam.addEventListener('click', () => {
+      controls.reset();
       camera.position.copy(DEFAULT_CAM_POS);
       controls.target.copy(DEFAULT_CAM_TARGET);
       controls.update();
@@ -1929,9 +2030,9 @@
         bg: 0xD8E2CE,
         sunColor: 0xFFF3D6,
         sunInt: 1.35,
-        hemiInt: 0.82,
+        hemiInt: 0.70,
         deepWater: 0x2F5A48,
-        shallowWater: 0x6D8C62
+        shallowWater: 0x668B68
       },
       {
         name: 'Luz Dourada',
@@ -1983,31 +2084,32 @@
     // Raycasting on water surface: clicking the stream creates ripples and triggers a jumping fish!
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
-    let pointerDownPos = { x: 0, y: 0 };
+    let pointerDown = null;
 
     renderer.domElement.addEventListener('pointerdown', (e) => {
-      pointerDownPos.x = e.clientX;
-      pointerDownPos.y = e.clientY;
+      if (e.isPrimary && e.button === 0) pointerDown = { id: e.pointerId, x: e.clientX, y: e.clientY };
     });
-
+    renderer.domElement.addEventListener('pointercancel', () => { pointerDown = null; });
     renderer.domElement.addEventListener('pointerup', (e) => {
-      const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
-      if (moveDist > 6) return; // Was a camera drag, not a click
+      if (!pointerDown || pointerDown.id !== e.pointerId) return;
+      const moved = Math.hypot(e.clientX - pointerDown.x, e.clientY - pointerDown.y);
+      pointerDown = null;
+      if (moved > 6 || controls.gesture) return;
 
-      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-      pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      const bounds = renderer.domElement.getBoundingClientRect();
+      pointer.x = (e.clientX - bounds.left) / bounds.width * 2 - 1;
+      pointer.y = 1 - (e.clientY - bounds.top) / bounds.height * 2;
       raycaster.setFromCamera(pointer, camera);
 
-      const hits = raycaster.intersectObject(waterMesh);
-      if (hits.length > 0) {
-        const pt = hits[0].point;
-        spawnWaterRipples(pt.x, pt.z, 1.15);
-        spawnWaterSplash(pt.x, pt.z, 10);
-        // If clicked near the central stream channel, make a fish leap there
-        if (Math.abs(pt.x - getStreamCenterX(pt.z)) < 5.5) {
-          triggerFishJumpAt(pt.x, pt.z);
-        }
-      }
+      const [water] = raycaster.intersectObject(waterMesh);
+      if (!water || getStreamDepth(water.point.x, water.point.z) < 0.045) return;
+      const [solid] = raycaster.intersectObjects([riverbedMesh, bouldersGroup], true);
+      if (solid && solid.distance < water.distance - 0.035) return;
+
+      const { x, z } = water.point;
+      spawnWaterRipples(x, z, 0.82);
+      spawnWaterSplash(x, z, 9, 0.72);
+      triggerFishJumpAt(x, z);
     });
 
     // ============================================================================
@@ -2018,12 +2120,13 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      const dt = Math.min(clock.getDelta(), 0.05);
-      const elapsed = clock.getElapsedTime();
+      const frameTime = clock.getDelta();
+      const dt = Math.min(frameTime, 0.075);
+      const elapsed = sceneTime += dt;
 
       // Update 45-second audio/visual contemplation progress bar
       if (!userPausedAudio) {
-        cycleElapsed = (cycleElapsed + dt) % 45.0;
+        cycleElapsed = (cycleElapsed + frameTime) % 45.0;
         const pct = (cycleElapsed / 45.0) * 100;
         loopProgress.style.width = pct.toFixed(1) + '%';
         const rem = Math.max(1, Math.ceil(45 - cycleElapsed));
@@ -2037,13 +2140,14 @@
       const bAttr = bubbleGeo.attributes.position;
       for (let i = 0; i < bubbleCount; i++) {
         const bd = bubbleData[i];
-        let z = bAttr.getZ(i) + dt * bd.speed * 0.72;
-        if (z > 8.2) {
-          z = -6.5;
-        }
-        const cx = getStreamCenterX(z);
-        const x = cx + bd.offsetSpread + Math.sin(elapsed * 1.5 + bd.bobPhase) * 0.25;
-        const y = getStreamElevation(x, z) + 0.08 + Math.sin(elapsed * 3.2 + bd.bobPhase) * 0.06;
+        const previousX = bAttr.getX(i), previousZ = bAttr.getZ(i);
+        const rapid = getFlowSlope(previousX, previousZ);
+        let z = previousZ + dt * bd.speed * (0.48 + rapid * 0.95);
+        if (z > 9.5) z = -8.6;
+        const x = getStreamCenterX(z) + bd.lane * getChannelHalfWidth(z) +
+          Math.sin(elapsed * 1.55 + bd.bobPhase) * 0.12;
+        const water = getWaterHeight(x, z, elapsed);
+        const y = getRockTop(x, z) > water ? -70 : water + 0.018;
         bAttr.setXYZ(i, x, y, z);
       }
       bAttr.needsUpdate = true;
@@ -2052,118 +2156,86 @@
       const sAttr = sprayGeo.attributes.position;
       for (let i = 0; i < sprayCount; i++) {
         const sd = sprayData[i];
-        sd.life += dt * 1.35;
-        if (sd.life >= 1.0) {
-          sd.life = 0;
-        }
-        const curX = sd.baseX - sd.life * 0.35;
-        const curZ = sd.baseZ + sd.life * 0.35;
-        const arcY = sd.baseY + Math.sin(sd.life * Math.PI) * 0.42 * sd.vy;
-        sAttr.setXYZ(i, curX, arcY, curZ);
+        sd.life = (sd.life + dt * 1.65) % 1;
+        const age = sd.life * 0.61;
+        const curX = sd.baseX - age * 0.41;
+        const curZ = sd.baseZ + age * 0.36;
+        const water = getWaterHeight(curX, curZ, elapsed);
+        const arcY = sd.baseY + 0.025 + (sd.vy + 1.22) * age - 0.5 * gravity * age * age;
+        const visible = getStreamDepth(curX, curZ) > 0.10 && arcY > Math.max(water, getRockTop(curX, curZ));
+        sAttr.setXYZ(i, curX, visible ? arcY : -70, curZ);
       }
       sAttr.needsUpdate = true;
 
-      // 4. Update Articulated Jumping & Swimming Fish
-      for (let i = 0; i < fishes.length; i++) {
-        const f = fishes[i];
-        f.timer += dt;
+      for (const fish of fishes) {
+        const { mesh, jump, phaseOffset } = fish;
+        fish.timer += dt;
 
-        if (f.state === 'swimming') {
-          // Swim gracefully beneath the translucent water surface
-          const swimAngle = elapsed * 1.1 + f.phaseOffset;
-          const sx = f.spot.x + Math.cos(swimAngle) * 0.85;
-          const sz = f.spot.z + Math.sin(swimAngle * 0.8) * 0.65;
-          const sy = getStreamElevation(sx, sz) - 0.24 + Math.sin(elapsed * 2.5 + i) * 0.04;
-
-          f.mesh.position.set(sx, sy, sz);
-          // Point nose along swimming velocity tangent
-          const vx = -Math.sin(swimAngle) * 0.85;
-          const vz = Math.cos(swimAngle * 0.8) * 0.52;
-          f.mesh.rotation.set(0, Math.atan2(-vz, vx), 0);
-
-          updateFishAnimation(f.mesh, elapsed + f.phaseOffset, 12.0, 0.065);
-
-          // Ready to leap out of the water!
-          if (f.timer >= f.spot.interval) {
-            f.state = 'jumping';
-            f.timer = 0;
-            f.enteredWater = false;
-            const baseElev = getStreamElevation(f.spot.x, f.spot.z);
-            f.startPos.set(f.spot.x - f.spot.dx * 0.5, baseElev - 0.1, f.spot.z - f.spot.dz * 0.5);
-            f.endPos.set(f.spot.x + f.spot.dx * 0.5, baseElev - 0.1, f.spot.z + f.spot.dz * 0.5);
-
-            // Exit splash & concentric ripples
-            spawnWaterRipples(f.startPos.x, f.startPos.z, 1.05);
-            spawnWaterSplash(f.startPos.x, f.startPos.z, 12);
-            soundEngine.playSplashSound();
+        if (fish.state === 'swimming') {
+          const a = elapsed * 0.94 + phaseOffset;
+          const x = lerp(jump.start.x, jump.end.x, 0.5 + 0.38 * Math.sin(a));
+          const z = lerp(jump.start.z, jump.end.z, 0.5 + 0.38 * Math.sin(a));
+          const y = getWaterHeight(x, z, elapsed) - 0.25 + 0.025 * Math.sin(a * 2.2);
+          const response = 1 - Math.exp(-dt * 4);
+          mesh.position.set(lerp(mesh.position.x, x, response), lerp(mesh.position.y, y, response), lerp(mesh.position.z, z, response));
+          const direction = Math.cos(a) > 0 ? 1 : -1;
+          mesh.rotation.set(0, Math.atan2(-jump.vz * direction, jump.vx * direction), 0);
+          if (fish.timer >= fish.spot.interval) beginFishJump(fish, fish.home);
+        } else if (fish.state === 'approach') {
+          const progress = smoothstep(fish.timer, 0, fish.approachDuration);
+          mesh.position.lerpVectors(fish.approachStart, jump.start, progress);
+          const { x, z } = mesh.position;
+          mesh.position.y = getWaterHeight(x, z, elapsed) - 0.30;
+          mesh.visible = hasFishClearance(x, z);
+          mesh.rotation.set(0, Math.atan2(fish.approachStart.z - jump.start.z, jump.start.x - fish.approachStart.x), 0);
+          if (progress >= 1) {
+            fish.state = 'jumping';
+            fish.timer = 0;
+            mesh.position.copy(jump.start);
+            mesh.visible = true;
           }
-        } else if (f.state === 'jumping') {
-          const u = f.timer / f.jumpDuration;
-
-          if (u <= 1.0) {
-            // Parabolic trajectory: P(u) = lerp(start, end, u) + 4 * H * u * (1 - u) * up
-            const px = THREE.MathUtils.lerp(f.startPos.x, f.endPos.x, u);
-            const pz = THREE.MathUtils.lerp(f.startPos.z, f.endPos.z, u);
-            const baseY = THREE.MathUtils.lerp(f.startPos.y, f.endPos.y, u);
-            const arcY = 4.0 * f.peakHeight * u * (1.0 - u);
-            f.mesh.position.set(px, baseY + arcY, pz);
-
-            // Tangent vector for realistic pitch and heading during the leap
-            const vx = f.endPos.x - f.startPos.x;
-            const vz = f.endPos.z - f.startPos.z;
-            const vy = (f.endPos.y - f.startPos.y) + 4.0 * f.peakHeight * (1.0 - 2.0 * u);
-            const horizSpeed = Math.hypot(vx, vz) || 0.001;
-
-            const yaw = Math.atan2(-vz, vx);
-            const pitch = Math.atan2(vy, horizSpeed) * 0.72;
-            f.mesh.rotation.set(0, yaw, pitch);
-
-            // Vigorous mid-air tail propulsion
-            updateFishAnimation(f.mesh, elapsed + f.phaseOffset, 22.0, 0.11);
-
-            // Trigger splash & concentric ripple rings as the fish re-enters the water!
-            if (u >= 0.88 && !f.enteredWater) {
-              f.enteredWater = true;
-              spawnWaterRipples(f.endPos.x, f.endPos.z, 1.25);
-              spawnWaterSplash(f.endPos.x, f.endPos.z, 16);
-              soundEngine.playSplashSound();
-            }
-          } else {
-            f.state = 'swimming';
-            f.timer = 0;
-          }
-        }
-      }
-
-      // 5. Update Expanding Concentric Water Ripple Rings
-      for (let i = activeRipples.length - 1; i >= 0; i--) {
-        const rp = activeRipples[i];
-        rp.age += dt;
-        const p = rp.age / rp.maxAge;
-        if (p >= 1.0) {
-          scene.remove(rp.mesh);
-          rp.mesh.material.dispose();
-          activeRipples.splice(i, 1);
         } else {
-          const curScale = THREE.MathUtils.lerp(rp.startScale, rp.endScale, Math.pow(p, 0.75));
-          // Slightly elliptical perspective matching the reference rings
-          rp.mesh.scale.set(curScale * 1.35, 1, curScale * 0.88);
-          rp.mesh.material.opacity = rp.initOpacity * (1.0 - Math.pow(p, 1.3));
+          const t = Math.min(fish.timer, jump.duration);
+          const px = jump.start.x + jump.vx * t;
+          const pz = jump.start.z + jump.vz * t;
+          const py = jump.start.y + jump.vy * t - 0.5 * gravity * t * t;
+          const vy = jump.vy - gravity * t;
+          const previous = mesh.position;
+          const previousLevel = previous.y - getWaterHeight(previous.x, previous.z, elapsed - dt);
+          const surfaceLevel = py - getWaterHeight(px, pz, elapsed);
+          const above = surfaceLevel > 0;
+          if (above !== fish.aboveWater) {
+            const progress = clamp(previousLevel / (previousLevel - surfaceLevel), 0, 1);
+            const sx = lerp(previous.x, px, progress), sz = lerp(previous.z, pz, progress);
+            const intensity = above ? 0.84 : 1.12;
+            spawnWaterRipples(sx, sz, intensity);
+            spawnWaterSplash(sx, sz, above ? 10 : 16, intensity);
+            soundEngine.playSplashSound();
+            fish.aboveWater = above;
+          }
+          mesh.position.set(px, py, pz);
+          mesh.rotation.set(0, Math.atan2(-jump.vz, jump.vx), Math.atan2(vy, Math.hypot(jump.vx, jump.vz)) * 0.84, 'YZX');
+          if (fish.timer >= jump.duration) {
+            fish.state = 'swimming';
+            fish.timer = 0;
+          }
         }
+        const airborne = fish.state === 'jumping';
+        updateFishAnimation(mesh, elapsed + phaseOffset, airborne ? 19 : 11, airborne ? 0.087 : 0.057);
       }
 
-      // 6. Update Water Splash Droplets (Gravity physics)
       for (let i = splashDrops.length - 1; i >= 0; i--) {
-        const d = splashDrops[i];
-        d.age += dt;
-        if (d.age >= d.maxAge) {
-          scene.remove(d.mesh);
+        const drop = splashDrops[i];
+        const t = drop.age += dt;
+        const x = drop.x + drop.vx * t, z = drop.z + drop.vz * t;
+        const y = drop.y + drop.vy * t - 0.5 * gravity * t * t;
+        const ground = Math.max(getBedHeight(x, z), getRockTop(x, z));
+        const surface = getStreamDepth(x, z) > 0 ? Math.max(ground, getWaterHeight(x, z, elapsed)) : ground;
+        if (y <= surface || t > 1.12) {
+          scene.remove(drop.mesh);
           splashDrops.splice(i, 1);
         } else {
-          d.vy -= 9.2 * dt; // Gravity
-          d.mesh.position.x += d.vx * dt;
-          d.mesh.position.y += d.vy * dt;
-          d.mesh.position.z += d.vz * dt;
+          drop.mesh.position.set(x, y, z);
         }
       }
 
@@ -2174,19 +2246,14 @@
         sp.group.rotation.x = sp.baseRotX + Math.cos(elapsed * sp.speed * 0.8 + sp.phase) * 0.025;
       }
 
-      controls.update();
+      controls.update(dt);
       renderer.render(scene, camera);
     }
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    window.addEventListener('resize', resizeView);
+    if (typeof ResizeObserver === 'function') new ResizeObserver(resizeView).observe(container);
+    animate();
 
-    window.onload = () => {
-      animate();
-    };
   </script>
 <!-- barra-imersiva -->
 <script src="../../shared/imersivo.js?v=3"></script>

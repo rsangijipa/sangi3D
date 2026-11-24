@@ -1,3 +1,5 @@
+import * as THREE from '../vendor/three.module.js';
+
 /**
  * shared/engine/particles.js
  * Sistema de partículas GPU instanciadas (Poeira volumétrica, Faíscas, Ondas, Vapor)
@@ -7,6 +9,18 @@ export class ParticleSystem {
   constructor(scene) {
     this.scene = scene;
     this.systems = [];
+    this.particleScale = 1.0;
+  }
+
+  setQualityScale(scale = 1.0) {
+    this.particleScale = Math.max(0.1, Math.min(1, Number(scale) || 1));
+    for (let i = 0; i < this.systems.length; i++) {
+      const sys = this.systems[i];
+      if (sys.points?.geometry && sys.maxCount) {
+        const active = Math.max(1, Math.round(sys.maxCount * this.particleScale));
+        sys.points.geometry.setDrawRange(0, active);
+      }
+    }
   }
 
   /**
@@ -43,12 +57,16 @@ export class ParticleSystem {
 
     const dust = {
       points,
+      maxCount: count,
       positions,
       velocities,
       bounds,
       update(dt) {
         const pos = points.geometry.attributes.position.array;
-        for (let i = 0; i < count; i++) {
+        const activeCount = points.geometry.drawRange?.count && Number.isFinite(points.geometry.drawRange.count)
+          ? Math.min(count, points.geometry.drawRange.count)
+          : count;
+        for (let i = 0; i < activeCount; i++) {
           pos[i * 3] += velocities[i * 3] * dt;
           pos[i * 3 + 1] += velocities[i * 3 + 1] * dt;
           pos[i * 3 + 2] += velocities[i * 3 + 2] * dt;
@@ -64,6 +82,9 @@ export class ParticleSystem {
         mat.dispose();
       }
     };
+    if (this.particleScale < 1.0) {
+      geo.setDrawRange(0, Math.max(1, Math.round(count * this.particleScale)));
+    }
 
     this.systems.push(dust);
     return dust;

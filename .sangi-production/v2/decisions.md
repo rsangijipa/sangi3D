@@ -31,3 +31,10 @@
 - M0 (`engine/infra-v2`) executes on primary workspace checkout to preserve `.sangi-production/v2/` untracked files and existing `node_modules` / Playwright caches.
 - Broken NTFS junction `03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou/node_modules` is removed cleanly via `cmd /c rmdir` so resolution falls back to shared `03_Colecoes/Expressao_e_Desenvolvimento/node_modules`.
 - Later Vite/TS app batches (`M4`, `M5`, `M7`) running in `git worktree`s must link `node_modules` via NTFS junctions and never run concurrent `npm install` against shared parent `node_modules`.
+
+## D006: Shared Engine, Bridge & Material Composition Contracts
+- `shared/imersivo.js` is the single canonical source (with `if (api) return api;` restored, dual `SANGI_COMMAND` + `SANGI_APP_*` support, and `destroy()`/`dispose()` cleanup); `scripts/sync-imersivo.mjs` and `scripts/prepare-online-build.mjs` mirror it identically.
+- `shared/sangi-bridge.js`, `shared/ambientes-kit.js`, and `shared/engine/lifecycle.js` support both `{ type: 'SANGI_COMMAND', command, payload }` (`READY`, `PAUSE`, `RESUME`, `MUTE`, `UNMUTE`, `RESET`, `SET_QUALITY`, `DISPOSE`) and legacy `{ type: 'SANGI_APP_*' }`, returning explicit `dispose()`/`unsubscribe()` handles and closing `AudioContext`s cleanly.
+- All 14 `shared/engine/*.js` modules resolve `THREE` via relative ESM (`../vendor/three.module.js`) with zero reliance on global `window.THREE`.
+- `PerformanceMonitor` (`shared/engine/performance.js`) implements bidirectional `ULTRA` ↔ `HIGH` ↔ `BALANCED` ↔ `LOW` adaptation targeting `30 FPS` mobile / `60 FPS` desktop and publishes read-only `window.__SANGI_QA__` telemetry.
+- `shared/engine/materials.js` exposes `createGlassMaterial`, `createWoodMaterial`, `createClayMaterial`, and `createMetalMaterial` (both named exports and `MaterialFactory.*`) aligned with `threejs-skills/materials/material-composition` on WebGL `MeshPhysicalMaterial`/`MeshStandardMaterial`, with cached procedural `CanvasTexture`s, quality-tier scaling, and feature guards for r128/r187 compatibility.
