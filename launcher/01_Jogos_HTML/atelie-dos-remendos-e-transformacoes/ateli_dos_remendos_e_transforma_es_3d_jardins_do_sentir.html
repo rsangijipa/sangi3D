@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ateliê dos Remendos e Transformações 3D — Jardins do Sentir</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    :root {
+      --bg: #1e1612;
+      --panel: rgba(34, 25, 20, 0.84);
+      --border: rgba(240, 214, 185, 0.22);
+      --ink: #f7efe6;
+      --muted: #cbb9a8;
+      --accent: #d97b54;
+      --accent2: #7fa89b;
+    }
+    * { box-sizing: border-box; user-select: none; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    #canvas-container { position: fixed; inset: 0; z-index: 1; }
+    .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .glass { background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--border); box-shadow: 0 18px 42px rgba(0,0,0,0.42); }
+    .pill-btn { transition: all 0.2s ease; cursor: pointer; }
+    .pill-btn:hover { transform: translateY(-1px); border-color: rgba(240,214,185,0.5); }
+    .pill-btn.active { background: linear-gradient(135deg, #d97b54, #b85c38); color: #fff; border-color: #f4be9e; box-shadow: 0 6px 18px rgba(217,123,84,0.35); }
+    .swatch { width: 34px; height: 34px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.22); cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.active { border-color: #fff; box-shadow: 0 0 0 3px rgba(217,123,84,0.7); transform: scale(1.08); }
+    #toast { position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%) translateY(18px); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 40; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(240,214,185,0.28); border-radius: 99px; }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <!-- Top Header -->
+  <header class="fixed top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+    <div class="glass rounded-2xl px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/30 to-rose-500/30 border border-amber-300/30 flex items-center justify-center text-lg">🧵</div>
+      <div>
+        <h1 class="serif text-xl font-semibold leading-tight tracking-wide text-amber-50">Ateliê dos Remendos e Transformações</h1>
+        <p class="text-[11px] text-amber-200/75">Jardins do Sentir 3D · Integração, cuidado e beleza nas costuras</p>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl px-3 py-2 flex items-center gap-2 pointer-events-auto">
+      <select id="quality-select" class="bg-black/30 text-xs text-amber-100 border border-amber-200/25 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer" title="Qualidade gráfica">
+        <option value="high">Qualidade: Alta (PBR + 2K)</option>
+        <option value="balanced" selected>Qualidade: Equilibrada</option>
+        <option value="eco">Qualidade: Econômica</option>
+      </select>
+      <button id="btn-lamp" class="pill-btn px-2.5 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-amber-500/15 text-amber-100">💡 Luz Quente</button>
+      <button id="btn-audio" class="pill-btn px-2.5 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-white/5 text-amber-100">🔊 Som</button>
+      <button id="btn-guide" class="pill-btn px-2.5 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-white/5 text-amber-100">📖 Guia Clínico</button>
+    </div>
+  </header>
+
+  <!-- Left Workbench Controls -->
+  <aside class="fixed left-4 top-24 bottom-24 z-20 w-72 glass rounded-2xl p-4 flex flex-col gap-3.5 overflow-y-auto custom-scroll">
+    <div>
+      <div class="text-[11px] uppercase tracking-widest text-amber-300/80 font-semibold mb-2">1. Escolha o Tecido</div>
+      <div id="fabric-grid" class="flex flex-wrap gap-2"></div>
+      <div id="fabric-label" class="text-xs text-amber-100/80 mt-1.5 italic">Linho Terracota — trama orgânica</div>
+    </div>
+
+    <div>
+      <div class="text-[11px] uppercase tracking-widest text-amber-300/80 font-semibold mb-2">2. Ponto de Costura</div>
+      <div class="grid grid-cols-2 gap-1.5" id="stitch-grid">
+        <button data-stitch="running" class="pill-btn active text-xs py-1.5 px-2 rounded-lg border border-amber-200/20 bg-white/5">〰️ Alinhavo</button>
+        <button data-stitch="zigzag" class="pill-btn text-xs py-1.5 px-2 rounded-lg border border-amber-200/20 bg-white/5">⚡ Zigue-zague</button>
+        <button data-stitch="blanket" class="pill-btn text-xs py-1.5 px-2 rounded-lg border border-amber-200/20 bg-white/5">🪡 Caseado</button>
+        <button data-stitch="cross" class="pill-btn text-xs py-1.5 px-2 rounded-lg border border-amber-200/20 bg-white/5">✖️ Ponto Cruz</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="text-[11px] uppercase tracking-widest text-amber-300/80 font-semibold mb-2">3. Ações na Bancada</div>
+      <div class="flex flex-col gap-2">
+        <button id="btn-add-patch" class="pill-btn w-full py-2 px-3 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white border border-amber-300/40">✂️ Cortar e Pousar Retalho na Manta</button>
+        <button id="btn-sew-machine" class="pill-btn w-full py-2 px-3 rounded-xl text-xs font-semibold bg-teal-700/70 hover:bg-teal-600/80 text-teal-50 border border-teal-300/30">⚙️ Costurar na Máquina (Animar)</button>
+        <button id="btn-hug-bear" class="pill-btn w-full py-2 px-3 rounded-xl text-xs font-semibold bg-rose-800/60 hover:bg-rose-700/75 text-rose-50 border border-rose-300/30">🧸 Acolher Ursinho Remendado</button>
+        <button id="btn-add-memory" class="pill-btn w-full py-1.5 px-3 rounded-xl text-xs bg-white/10 hover:bg-white/15 text-amber-100 border border-amber-200/25">🏷️ Etiquetar História do Remendo</button>
+      </div>
+    </div>
+
+    <div class="border-t border-amber-200/15 pt-3">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[11px] uppercase tracking-widest text-amber-300/80 font-semibold">Histórias Costuradas</span>
+        <span id="patch-count" class="text-[11px] text-amber-200/70">3 retalhos</span>
+      </div>
+      <ul id="memory-list" class="space-y-1.5 text-xs text-amber-100/85 max-h-36 overflow-y-auto custom-scroll pr-1"></ul>
+    </div>
+
+    <div class="mt-auto pt-2 flex gap-2">
+      <button id="btn-undo" class="pill-btn flex-1 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-white/5 text-amber-100">↩️ Desfazer</button>
+      <button id="btn-clear-ask" class="pill-btn flex-1 py-1.5 rounded-lg text-xs border border-rose-300/30 bg-rose-950/40 text-rose-200">🧹 Limpar Manta</button>
+    </div>
+  </aside>
+
+  <!-- Bottom Camera & Prompt Bar -->
+  <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass rounded-2xl px-4 py-2 flex items-center gap-2.5">
+    <button data-cam="overview" class="pill-btn active px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🪑 Bancada Geral</button>
+    <button data-cam="quilt" class="pill-btn px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🪡 Base de Corte</button>
+    <button data-cam="machine" class="pill-btn px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">⚙️ Máquina</button>
+    <button data-cam="bear" class="pill-btn px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🧸 Ursinho</button>
+    <span class="hidden md:inline text-[11px] text-amber-200/70 pl-2 border-l border-amber-200/20">Clique na manta para posicionar retalho · Clique no ursinho ou máquina para interagir</span>
+  </footer>
+
+  <!-- Toast -->
+  <div id="toast" class="glass rounded-full px-5 py-2 text-xs text-amber-50 font-medium border border-amber-300/35"></div>
+
+  <!-- In-page Confirmation Modal (Replaces native confirm()) -->
+  <div id="clear-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="glass rounded-2xl max-w-sm w-full p-5 border border-amber-200/30">
+      <h3 class="serif text-2xl font-semibold text-amber-50 mb-2">Recomeçar a manta?</h3>
+      <p class="text-xs text-amber-100/80 leading-relaxed mb-4">Os retalhos costurados sobre a base de corte serão guardados de volta na cesta, deixando o linho pronto para uma nova composição. O ursinho permanecerá acolhido na bancada.</p>
+      <div class="flex justify-end gap-2">
+        <button id="cancel-clear" class="pill-btn px-3.5 py-1.5 rounded-lg text-xs bg-white/10 text-amber-100 border border-amber-200/20">Cancelar</button>
+        <button id="confirm-clear" class="pill-btn px-3.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white border border-rose-300/40">Sim, limpar manta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory Label Modal -->
+  <div id="memory-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-5 border border-amber-200/30">
+      <h3 class="serif text-2xl font-semibold text-amber-50 mb-1">Etiquetar História do Remendo</h3>
+      <p class="text-xs text-amber-200/75 mb-3">Que parte de uma experiência, cuidado ou recomeço este retalho representa?</p>
+      <input id="memory-input" type="text" maxlength="90" placeholder="Ex.: A paciência para recomeçar depois de um dia difícil..." class="w-full rounded-xl bg-black/35 border border-amber-200/25 px-3.5 py-2.5 text-xs text-amber-50 outline-none focus:border-amber-400 mb-4" />
+      <div class="flex justify-end gap-2">
+        <button id="cancel-memory" class="pill-btn px-3.5 py-1.5 rounded-lg text-xs bg-white/10 text-amber-100 border border-amber-200/20">Fechar</button>
+        <button id="save-memory" class="pill-btn px-4 py-1.5 rounded-lg text-xs bg-amber-600 text-white border border-amber-300/40 font-semibold">Costurar Etiqueta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinical Guide Modal -->
+  <div id="guide-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/65 backdrop-blur-sm p-4">
+    <div class="glass rounded-2xl max-w-lg w-full p-6 border border-amber-200/30">
+      <div class="flex justify-between items-start mb-3">
+        <div>
+          <h2 class="serif text-2xl font-semibold text-amber-50">Sentido Terapêutico do Ateliê</h2>
+          <p class="text-xs text-amber-200/70">Fenomenologia & Gestalt-terapia · Jardins do Sentir 3D</p>
+        </div>
+        <button id="close-guide" class="text-amber-200 hover:text-white text-lg">✕</button>
+      </div>
+      <div class="space-y-3 text-xs text-amber-100/85 leading-relaxed">
+        <p><strong class="text-amber-200">Para que serve esta cena:</strong> Inspirado na reparação têxtil e na integração gestáltica de fragmentos, este ateliê convida a olhar para rasgos, marcas e partes distintas não como defeitos a esconder, mas como matéria viva que ganha resistência e identidade ao ser costurada.</p>
+        <p><strong class="text-amber-200">Convites de exploração:</strong> Experimente combinar texturas contrastantes, alternar pontos de costura (do alinhavo leve ao ponto cruz firme), ouvir o ritmo da máquina e dar nome ao cuidado que cada retalho simboliza. Ao tocar o ursinho remendado, observe como o acolhimento convive com as cicatrizes visíveis.</p>
+        <p class="text-[11px] text-amber-200/65 pt-2 border-t border-amber-200/15">Ambiente psicoeducativo sem pontuação, cronômetro ou avaliação. Instituto Gestaltear.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      // Optional Imersivo bridge
+      if (window.Imersivo && typeof window.Imersivo.init === 'function') {
+        try { window.Imersivo.init({ id: 'atelie-remendos', title: 'Ateliê dos Remendos e Transformações' }); } catch (e) {}
+      }
+
+      // --- Audio Engine (Procedural Web Audio) ---
+      let audioCtx = null;
+      let audioEnabled = true;
+      function ensureAudio() {
+        if (!audioEnabled) return null;
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+      function playSnipSound() {
+        const ctx = ensureAudio(); if (!ctx) return;
+        const now = ctx.currentTime;
+        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.09), ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          const env = Math.exp(-i / (ctx.sampleRate * 0.02));
+          data[i] = (Math.random() * 2 - 1) * env * 0.35;
+        }
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3200; filter.Q.value = 2.5;
+        const gain = ctx.createGain(); gain.gain.setValueAtTime(0.32, now);
+        src.connect(filter).connect(gain).connect(ctx.destination);
+        src.start(now);
+      }
+      function playStitchTick() {
+        const ctx = ensureAudio(); if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(190, now);
+        osc.frequency.exponentialRampToValueAtTime(75, now + 0.045);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now); osc.stop(now + 0.055);
+      }
+      function playWarmChime() {
+        const ctx = ensureAudio(); if (!ctx) return;
+        const now = ctx.currentTime;
+        [392, 493.88, 587.33].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.07);
+          gain.gain.setValueAtTime(0.001, now + i * 0.07);
+          gain.gain.linearRampToValueAtTime(0.08, now + i * 0.07 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0008, now + i * 0.07 + 0.7);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(now + i * 0.07); osc.stop(now + i * 0.07 + 0.75);
+        });
+      }
+
+      // --- Toast helper ---
+      const toastEl = document.getElementById('toast');
+      let toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800);
+      }
+
+      // --- Procedural PBR Texture Generators ---
+      function makeWoodTextures(baseHex, grainHex, size = 512) {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        const b = document.createElement('canvas'); b.width = b.height = size;
+        const bctx = b.getContext('2d');
+        ctx.fillStyle = baseHex; ctx.fillRect(0, 0, size, size);
+        bctx.fillStyle = '#808080'; bctx.fillRect(0, 0, size, size);
+        for (let y = 0; y < size; y++) {
+          const wave = Math.sin(y * 0.045) * 8 + Math.sin(y * 0.13) * 3;
+          ctx.strokeStyle = grainHex;
+          ctx.globalAlpha = 0.08 + (Math.sin(y * 0.25) * 0.5 + 0.5) * 0.12;
+          ctx.beginPath(); ctx.moveTo(0, y);
+          for (let x = 0; x <= size; x += 32) {
+            ctx.lineTo(x, y + Math.sin((x + wave) * 0.015) * 2.2);
+          }
+          ctx.stroke();
+          const gVal = Math.floor(110 + (Math.sin(y * 0.25) * 0.5 + 0.5) * 40);
+          bctx.fillStyle = `rgb(${gVal},${gVal},${gVal})`;
+          bctx.fillRect(0, y, size, 1);
+        }
+        // Plank seams
+        ctx.globalAlpha = 0.35; ctx.fillStyle = '#22140b';
+        bctx.fillStyle = '#282828';
+        for (let p = 1; p < 4; p++) {
+          const py = Math.floor((size / 4) * p);
+          ctx.fillRect(0, py, size, 2);
+          bctx.fillRect(0, py, size, 3);
+        }
+        const map = new THREE.CanvasTexture(c); map.encoding = THREE.sRGBEncoding; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(2, 2);
+        const bumpMap = new THREE.CanvasTexture(b); bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping; bumpMap.repeat.set(2, 2);
+        return { map, bumpMap };
+      }
+
+      function makeFabricTextures(cfg, size = 512) {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        const b = document.createElement('canvas'); b.width = b.height = size;
+        const bctx = b.getContext('2d');
+        ctx.fillStyle = cfg.base; ctx.fillRect(0, 0, size, size);
+        bctx.fillStyle = '#707070'; bctx.fillRect(0, 0, size, size);
+
+        // Woven warp & weft
+        const step = 6;
+        for (let y = 0; y < size; y += step) {
+          for (let x = 0; x < size; x += step) {
+            const alt = ((x / step) + (y / step)) % 2 === 0;
+            ctx.fillStyle = alt ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+            ctx.fillRect(x, y, step - 1, step - 1);
+            bctx.fillStyle = alt ? '#b8b8b8' : '#525252';
+            bctx.fillRect(x, y, step - 1, step - 1);
+          }
+        }
+        // Pattern overlay
+        ctx.save();
+        if (cfg.pattern === 'plaid') {
+          ctx.fillStyle = cfg.accent; ctx.globalAlpha = 0.32;
+          for (let i = 0; i < size; i += 64) { ctx.fillRect(i, 0, 14, size); ctx.fillRect(0, i, size, 14); }
+          ctx.fillStyle = cfg.accent2 || '#fff'; ctx.globalAlpha = 0.25;
+          for (let i = 32; i < size; i += 64) { ctx.fillRect(i, 0, 4, size); ctx.fillRect(0, i, size, 4); }
+        } else if (cfg.pattern === 'dots') {
+          ctx.fillStyle = cfg.accent; ctx.globalAlpha = 0.72;
+          for (let y = 18; y < size; y += 36) {
+            for (let x = 18; x < size; x += 36) {
+              ctx.beginPath(); ctx.arc(x + ((y / 36) % 2 ? 18 : 0), y, 5.5, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        } else if (cfg.pattern === 'stripes') {
+          ctx.fillStyle = cfg.accent; ctx.globalAlpha = 0.36;
+          for (let x = 0; x < size; x += 28) ctx.fillRect(x, 0, 10, size);
+        } else if (cfg.pattern === 'floral') {
+          for (let y = 32; y < size; y += 64) {
+            for (let x = 32; x < size; x += 64) {
+              ctx.fillStyle = cfg.accent; ctx.globalAlpha = 0.65;
+              for (let p = 0; p < 5; p++) {
+                const a = (p / 5) * Math.PI * 2;
+                ctx.beginPath(); ctx.arc(x + Math.cos(a) * 8, y + Math.sin(a) * 8, 5, 0, Math.PI * 2); ctx.fill();
+              }
+              ctx.fillStyle = '#f6d365'; ctx.globalAlpha = 0.9;
+              ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        } else if (cfg.pattern === 'sashiko') {
+          ctx.strokeStyle = cfg.accent; ctx.lineWidth = 2.2; ctx.globalAlpha = 0.68;
+          ctx.setLineDash([7, 5]);
+          for (let y = 24; y < size; y += 48) {
+            for (let x = 24; x < size; x += 48) {
+              ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
+            }
+          }
+        }
+        ctx.restore();
+        const map = new THREE.CanvasTexture(c); map.encoding = THREE.sRGBEncoding; map.wrapS = map.wrapT = THREE.RepeatWrapping;
+        const bumpMap = new THREE.CanvasTexture(b); bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+        return { map, bumpMap };
+      }
+
+      function makeCuttingMatTexture(size = 1024) {
+        const c = document.createElement('canvas'); c.width = size; c.height = size * 0.66;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#2d5a4c'; ctx.fillRect(0, 0, c.width, c.height);
+        // Subtle self-healing matte noise
+        for (let i = 0; i < 4500; i++) {
+          ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.03)';
+          ctx.fillRect(Math.random() * c.width, Math.random() * c.height, 2, 2);
+        }
+        const pad = 44;
+        ctx.strokeStyle = 'rgba(235, 245, 232, 0.45)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(pad, pad, c.width - pad * 2, c.height - pad * 2);
+        const step = 46;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(235, 245, 232, 0.22)';
+        for (let x = pad; x <= c.width - pad; x += step) {
+          ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, c.height - pad); ctx.stroke();
+        }
+        for (let y = pad; y <= c.height - pad; y += step) {
+          ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(c.width - pad, y); ctx.stroke();
+        }
+        // Angle guide lines
+        ctx.strokeStyle = 'rgba(246, 224, 155, 0.32)';
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath(); ctx.moveTo(pad, c.height - pad); ctx.lineTo(pad + 320, c.height - pad - 320); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(c.width - pad, c.height - pad); ctx.lineTo(c.width - pad - 320, c.height - pad - 320); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(240, 248, 238, 0.65)';
+        ctx.font = '600 18px sans-serif';
+        ctx.fillText('BASE DE CORTE · ATELIÊ DOS REMENDOS · cm', pad + 12, pad - 14);
+        const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+        return tex;
+      }
+
+      function makePlushFurBump(size = 512) {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#787878'; ctx.fillRect(0, 0, size, size);
+        for (let i = 0; i < 16000; i++) {
+          const x = Math.random() * size, y = Math.random() * size;
+          const v = 70 + Math.floor(Math.random() * 140);
+          ctx.strokeStyle = `rgb(${v},${v},${v})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (Math.random() - 0.5) * 4, y + 4 + Math.random() * 4); ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(3, 3);
+        return tex;
+      }
+
+      function makeStudioEnvMap(renderer) {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+        const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+        const ctx = c.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 0, 256);
+        g.addColorStop(0, '#49372a');
+        g.addColorStop(0.42, '#b68963');
+        g.addColorStop(0.55, '#594232');
+        g.addColorStop(1, '#1e1510');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 256);
+        // Warm studio window softbox
+        ctx.fillStyle = '#fff5e0'; ctx.fillRect(60, 48, 120, 75);
+        // Warm desk lamp highlight
+        const rg = ctx.createRadialGradient(360, 86, 4, 360, 86, 55);
+        rg.addColorStop(0, '#ffd89b'); rg.addColorStop(1, 'rgba(255,216,155,0)');
+        ctx.fillStyle = rg; ctx.fillRect(300, 25, 120, 120);
+        const tex = new THREE.CanvasTexture(c);
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.encoding = THREE.sRGBEncoding;
+        const envRT = pmrem.fromEquirectangular(tex);
+        tex.dispose(); pmrem.dispose();
+        return envRT.texture;
+      }
+
+      // --- Scene Setup ---
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#1d1511');
+      scene.fog = new THREE.FogExp2('#1d1511', 0.042);
+
+      const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 80);
+      camera.position.set(0.4, 4.3, 5.4);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+
+      scene.environment = makeStudioEnvMap(renderer);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.target.set(0, 0.45, 0);
+      controls.minDistance = 2.2;
+      controls.maxDistance = 10.5;
+      controls.maxPolarAngle = Math.PI * 0.47;
+
+      // --- Lighting ---
+      const hemiLight = new THREE.HemisphereLight('#ffe9cc', '#3a271d', 0.65);
+      scene.add(hemiLight);
+
+      const windowKey = new THREE.DirectionalLight('#fff2db', 1.35);
+      windowKey.position.set(-5.5, 7.2, 4.0);
+      windowKey.castShadow = true;
+      windowKey.shadow.mapSize.set(2048, 2048);
+      windowKey.shadow.camera.near = 1;
+      windowKey.shadow.camera.far = 22;
+      windowKey.shadow.camera.left = -6;
+      windowKey.shadow.camera.right = 6;
+      windowKey.shadow.camera.top = 6;
+      windowKey.shadow.camera.bottom = -6;
+      windowKey.shadow.bias = -0.0005;
+      windowKey.shadow.normalBias = 0.025;
+      scene.add(windowKey);
+
+      const lampSpot = new THREE.SpotLight('#ffba6b', 2.4, 14, Math.PI * 0.34, 0.55, 1.2);
+      lampSpot.position.set(2.8, 3.6, -1.3);
+      lampSpot.target.position.set(0.2, 0.1, 0.2);
+      lampSpot.castShadow = true;
+      lampSpot.shadow.mapSize.set(1024, 1024);
+      lampSpot.shadow.bias = -0.0005;
+      scene.add(lampSpot, lampSpot.target);
+
+      const rimLight = new THREE.DirectionalLight('#9ec7d6', 0.45);
+      rimLight.position.set(4.5, 3.5, -5.0);
+      scene.add(rimLight);
+
+      // --- Studio Architecture & Workbench ---
+      const woodTex = makeWoodTextures('#6e482e', '#3a2112', 512);
+      const tableMat = new THREE.MeshStandardMaterial({
+        map: woodTex.map, bumpMap: woodTex.bumpMap, bumpScale: 0.022, roughness: 0.62, metalness: 0.04
+      });
+      const tableTop = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.28, 5.2), tableMat);
+      tableTop.position.set(0, -0.14, 0);
+      tableTop.receiveShadow = true;
+      scene.add(tableTop);
+
+      // Warm plaster back wall + pegboard
+      const wallMat = new THREE.MeshStandardMaterial({ color: '#3b2c23', roughness: 0.9 });
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(18, 9), wallMat);
+      backWall.position.set(0, 3.6, -2.7);
+      backWall.receiveShadow = true;
+      scene.add(backWall);
+
+      // Cozy window frame on left wall
+      const winFrame = new THREE.Group();
+      winFrame.position.set(-4.6, 2.3, -1.2);
+      winFrame.rotation.y = Math.PI * 0.32;
+      const glowGlass = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.4, 2.8),
+        new THREE.MeshBasicMaterial({ color: '#ffecd1' })
+      );
+      winFrame.add(glowGlass);
+      const frameMat = new THREE.MeshStandardMaterial({ color: '#4c3221', roughness: 0.7 });
+      [[0, 1.45, 2.6, 0.12], [0, -1.45, 2.6, 0.12], [-1.25, 0, 0.12, 2.9], [1.25, 0, 0.12, 2.9], [0, 0, 2.5, 0.08], [0, 0, 0.08, 2.8]].forEach(([x, y, w, h]) => {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.12), frameMat);
+        bar.position.set(x, y, 0.04);
+        winFrame.add(bar);
+      });
+      scene.add(winFrame);
+
+      // Articulated Brass Desk Lamp
+      const lampGroup = new THREE.Group();
+      lampGroup.position.set(3.25, 0, -1.65);
+      const brassMat = new THREE.MeshStandardMaterial({ color: '#c89b54', metalness: 0.82, roughness: 0.28 });
+      const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.1, 28), brassMat);
+      lampBase.position.y = 0.05; lampBase.castShadow = true; lampGroup.add(lampBase);
+      const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.75, 12), brassMat);
+      arm1.position.set(-0.15, 0.9, 0.1); arm1.rotation.z = 0.18; arm1.castShadow = true; lampGroup.add(arm1);
+      const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.35, 12), brassMat);
+      arm2.position.set(-0.52, 2.15, 0.35); arm2.rotation.z = 0.72; arm2.rotation.x = 0.3; lampGroup.add(arm2);
+      const shadeMat = new THREE.MeshStandardMaterial({ color: '#274c43', roughness: 0.32, metalness: 0.35, side: THREE.DoubleSide });
+      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.52, 28, 1, true), shadeMat);
+      shade.position.set(-0.88, 2.55, 0.55); shade.rotation.z = 0.45; shade.rotation.x = 0.25; shade.castShadow = true; lampGroup.add(shade);
+      const bulbMat = new THREE.MeshStandardMaterial({ color: '#fff3d6', emissive: '#ffbd66', emissiveIntensity: 2.2, roughness: 0.2 });
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 16), bulbMat);
+      bulb.position.set(-0.85, 2.46, 0.54); lampGroup.add(bulb);
+      // Soft volumetric lamp light cone
+      const coneGeo = new THREE.ConeGeometry(2.1, 2.9, 28, 1, true);
+      const coneMat = new THREE.MeshBasicMaterial({ color: '#ffd18c', transparent: true, opacity: 0.045, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+      const lightCone = new THREE.Mesh(coneGeo, coneMat);
+      lightCone.position.set(-1.35, 1.35, 0.9);
+      lightCone.rotation.z = 0.35; lightCone.rotation.x = 0.22;
+      lampGroup.add(lightCone);
+      scene.add(lampGroup);
+
+      // --- Cutting Mat & Base Linen Quilt ---
+      const cuttingMat = new THREE.Mesh(
+        new THREE.BoxGeometry(3.85, 0.035, 2.55),
+        new THREE.MeshStandardMaterial({ map: makeCuttingMatTexture(1024), roughness: 0.82, metalness: 0.02 })
+      );
+      cuttingMat.position.set(-0.2, 0.018, 0.35);
+      cuttingMat.receiveShadow = true;
+      cuttingMat.name = 'cuttingMat';
+      scene.add(cuttingMat);
+
+      const baseLinenTex = makeFabricTextures({ base: '#e8dcc8', accent: '#cbb89d', pattern: 'plain' }, 512);
+      baseLinenTex.map.repeat.set(3, 2); baseLinenTex.bumpMap.repeat.set(3, 2);
+      const quiltGeo = new THREE.PlaneGeometry(3.15, 2.05, 36, 24);
+      quiltGeo.rotateX(-Math.PI / 2);
+      // Subtle organic cloth drape waves on edges
+      const qPos = quiltGeo.attributes.position;
+      for (let i = 0; i < qPos.count; i++) {
+        const x = qPos.getX(i), z = qPos.getZ(i);
+        const edge = Math.max(Math.abs(x) / 1.575, Math.abs(z) / 1.025);
+        const ripple = Math.sin(x * 4.5) * Math.cos(z * 5.2) * 0.008 * edge;
+        qPos.setY(i, 0.042 + ripple);
+      }
+      quiltGeo.computeVertexNormals();
+      const quiltBase = new THREE.Mesh(
+        quiltGeo,
+        new THREE.MeshStandardMaterial({ map: baseLinenTex.map, bumpMap: baseLinenTex.bumpMap, bumpScale: 0.015, roughness: 0.9, side: THREE.DoubleSide })
+      );
+      quiltBase.position.set(-0.2, 0.006, 0.35);
+      quiltBase.receiveShadow = true;
+      quiltBase.name = 'quiltBase';
+      scene.add(quiltBase);
+
+      // --- Sculpted Vintage Sewing Machine (Curved Silhouette + Animated Mechanism) ---
+      const machineGroup = new THREE.Group();
+      machineGroup.position.set(2.35, 0, 0.15);
+      machineGroup.rotation.y = -0.35;
+      machineGroup.name = 'sewingMachine';
+
+      const enamelMat = new THREE.MeshStandardMaterial({ color: '#2b5954', roughness: 0.24, metalness: 0.35 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: '#dde3e8', metalness: 0.92, roughness: 0.16 });
+      const goldTrimMat = new THREE.MeshStandardMaterial({ color: '#d7aa55', metalness: 0.85, roughness: 0.26 });
+
+      // Flatbed base
+      const bed = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.14, 0.82), enamelMat);
+      bed.position.set(0, 0.07, 0); bed.castShadow = true; bed.receiveShadow = true; machineGroup.add(bed);
+      const needlePlate = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.012, 0.36), chromeMat);
+      needlePlate.position.set(-0.52, 0.145, 0); machineGroup.add(needlePlate);
+
+      // Curved pillar & arm via ExtrudeGeometry
+      const armShape = new THREE.Shape();
+      armShape.moveTo(0.28, 0.14);
+      armShape.lineTo(0.72, 0.14);
+      armShape.quadraticCurveTo(0.76, 0.95, 0.56, 1.02);
+      armShape.lineTo(-0.56, 1.02);
+      armShape.quadraticCurveTo(-0.72, 1.0, -0.72, 0.72);
+      armShape.lineTo(-0.42, 0.72);
+      armShape.quadraticCurveTo(-0.35, 0.82, 0.22, 0.82);
+      armShape.quadraticCurveTo(0.32, 0.75, 0.28, 0.14);
+      const armGeo = new THREE.ExtrudeGeometry(armShape, { depth: 0.34, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 5 });
+      armGeo.translate(0, 0, -0.17);
+      const armMesh = new THREE.Mesh(armGeo, enamelMat);
+      armMesh.castShadow = true; armMesh.receiveShadow = true; machineGroup.add(armMesh);
+
+      // Handwheel on right
+      const handwheel = new THREE.Group();
+      handwheel.position.set(0.76, 0.68, 0);
+      const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.036, 14, 32), chromeMat);
+      wheelRim.rotation.y = Math.PI / 2; handwheel.add(wheelRim);
+      for (let s = 0; s < 3; s++) {
+        const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.44, 8), chromeMat);
+        spoke.rotation.x = (s / 3) * Math.PI;
+        handwheel.add(spoke);
+      }
+      machineGroup.add(handwheel);
+
+      // Spool pin & red thread spool on top
+      const spoolPin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.28, 10), chromeMat);
+      spoolPin.position.set(0.38, 1.16, 0); machineGroup.add(spoolPin);
+      const topSpool = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.18, 20), new THREE.MeshStandardMaterial({ color: '#d9534f', roughness: 0.72 }));
+      topSpool.position.set(0.38, 1.14, 0); topSpool.castShadow = true; machineGroup.add(topSpool);
+
+      // Needle bar & presser foot
+      const needleBar = new THREE.Group();
+      needleBar.position.set(-0.55, 0.56, 0);
+      const needleRod = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.008, 0.46, 10), chromeMat);
+      needleBar.add(needleRod);
+      machineGroup.add(needleBar);
+
+      const presserFoot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.025, 0.07), chromeMat);
+      presserFoot.position.set(-0.55, 0.17, 0); machineGroup.add(presserFoot);
+
+      // Moving cloth strip fed under machine
+      const feedClothTex = makeFabricTextures({ base: '#d97b54', accent: '#f7e1c4', pattern: 'sashiko' }, 256);
+      const feedCloth = new THREE.Mesh(
+        new THREE.BoxGeometry(0.55, 0.018, 0.42),
+        new THREE.MeshStandardMaterial({ map: feedClothTex.map, bumpMap: feedClothTex.bumpMap, bumpScale: 0.01, roughness: 0.9 })
+      );
+      feedCloth.position.set(-0.55, 0.156, 0); feedCloth.castShadow = true; machineGroup.add(feedCloth);
+
+      // Tension dial
+      const tensionDial = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 18), goldTrimMat);
+      tensionDial.rotation.x = Math.PI / 2; tensionDial.position.set(-0.46, 0.72, 0.21); machineGroup.add(tensionDial);
+      scene.add(machineGroup);
+
+      // --- Sculpted Plush Mended Teddy Bear with Spring Physics ---
+      const bearGroup = new THREE.Group();
+      bearGroup.position.set(-2.55, 0, -0.35);
+      bearGroup.rotation.y = 0.48;
+      bearGroup.name = 'teddyBear';
+
+      const furBump = makePlushFurBump(512);
+      const bearFurMat = new THREE.MeshStandardMaterial({ color: '#b5835a', bumpMap: furBump, bumpScale: 0.028, roughness: 0.94, metalness: 0.0 });
+      const pawMat = new THREE.MeshStandardMaterial({ color: '#e2c4a2', bumpMap: furBump, bumpScale: 0.012, roughness: 0.88 });
+      const bearPatchTex = makeFabricTextures({ base: '#5f8d8b', accent: '#f2e6d0', pattern: 'plaid' }, 256);
+      const bearPatchMat = new THREE.MeshStandardMaterial({ map: bearPatchTex.map, bumpMap: bearPatchTex.bumpMap, bumpScale: 0.015, roughness: 0.9 });
+
+      const bearBodyPivot = new THREE.Group();
+      bearGroup.add(bearBodyPivot);
+
+      const torso = new THREE.Mesh(new THREE.SphereGeometry(0.52, 32, 24), bearFurMat);
+      torso.scale.set(1.0, 1.15, 0.92); torso.position.set(0, 0.56, 0); torso.castShadow = true; torso.receiveShadow = true;
+      bearBodyPivot.add(torso);
+
+      // Heart-shaped mended patch on bear's chest with visible stitches
+      const chestPatch = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.42), bearPatchMat);
+      chestPatch.position.set(0.08, 0.62, 0.28); chestPatch.rotation.x = Math.PI * 0.44; chestPatch.rotation.z = -0.18;
+      bearBodyPivot.add(chestPatch);
+
+      // Stitches around bear chest patch
+      const stitchThreadMat = new THREE.MeshStandardMaterial({ color: '#f6ead7', roughness: 0.85 });
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.055, 6), stitchThreadMat);
+        st.position.set(0.08 + Math.cos(a) * 0.19, 0.62 + Math.sin(a) * 0.17, 0.475);
+        st.rotation.z = a;
+        bearBodyPivot.add(st);
+      }
+
+      // Head
+      const bearHead = new THREE.Group();
+      bearHead.position.set(0, 1.24, 0.04);
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.39, 32, 24), bearFurMat);
+      headMesh.scale.set(1.05, 0.96, 0.98); headMesh.castShadow = true; bearHead.add(headMesh);
+      const snout = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 16), pawMat);
+      snout.scale.set(1.1, 0.85, 0.95); snout.position.set(0, -0.06, 0.33); bearHead.add(snout);
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.052, 16, 12), new THREE.MeshStandardMaterial({ color: '#3b2419', roughness: 0.4 }));
+      nose.scale.set(1.25, 0.85, 0.8); nose.position.set(0, -0.01, 0.47); bearHead.add(nose);
+
+      // Button eyes (one glossy button, one stitched button)
+      const eyeMat = new THREE.MeshStandardMaterial({ color: '#1b1310', roughness: 0.2, metalness: 0.1 });
+      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.042, 16, 12), eyeMat);
+      leftEye.position.set(-0.14, 0.07, 0.34); bearHead.add(leftEye);
+      const rightEye = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.02, 18), new THREE.MeshStandardMaterial({ color: '#3b2820', roughness: 0.35 }));
+      rightEye.rotation.x = Math.PI / 2; rightEye.position.set(0.14, 0.07, 0.35); bearHead.add(rightEye);
+      // Cross thread on button eye
+      const cross1 = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.008, 0.008), stitchThreadMat);
+      cross1.position.set(0.14, 0.07, 0.365); cross1.rotation.z = Math.PI / 4; bearHead.add(cross1);
+      const cross2 = cross1.clone(); cross2.rotation.z = -Math.PI / 4; bearHead.add(cross2);
+
+      // Ears
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.14, 18, 14), bearFurMat);
+        ear.scale.set(1, 1, 0.55); ear.position.set(side * 0.31, 0.3, -0.02); ear.castShadow = true; bearHead.add(ear);
+        const inner = new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 10), pawMat);
+        inner.scale.set(1, 1, 0.4); inner.position.set(side * 0.31, 0.3, 0.03); bearHead.add(inner);
+      });
+      bearBodyPivot.add(bearHead);
+
+      // Arms & seated legs
+      const bearArms = [];
+      [-1, 1].forEach(side => {
+        const arm = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 16), bearFurMat);
+        arm.scale.set(0.85, 1.55, 0.85); arm.position.set(side * 0.48, 0.68, 0.14);
+        arm.rotation.z = side * 0.35; arm.rotation.x = -0.35; arm.castShadow = true;
+        bearBodyPivot.add(arm); bearArms.push(arm);
+
+        const leg = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), bearFurMat);
+        leg.scale.set(0.95, 0.85, 1.45); leg.position.set(side * 0.32, 0.2, 0.42);
+        leg.rotation.y = side * 0.22; leg.castShadow = true;
+        bearBodyPivot.add(leg);
+        const pad = new THREE.Mesh(new THREE.CircleGeometry(0.13, 18), pawMat);
+        pad.position.set(side * 0.36, 0.2, 0.71); pad.rotation.y = side * 0.22;
+        bearBodyPivot.add(pad);
+      });
+      scene.add(bearGroup);
+
+      // --- Atelier Props: Thread Spools, Pincushion, Tailor Scissors ---
+      const spoolColors = ['#d97b54', '#5f8d8b', '#d9a441', '#8e5a7c', '#c9524b', '#526b84'];
+      spoolColors.forEach((col, i) => {
+        const sp = new THREE.Group();
+        sp.position.set(-2.3 + i * 0.34, 0, -1.62 + (i % 2) * 0.16);
+        const woodSpoolMat = new THREE.MeshStandardMaterial({ color: '#c49b6c', roughness: 0.65 });
+        const topFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 20), woodSpoolMat);
+        topFlange.position.y = 0.28; sp.add(topFlange);
+        const botFlange = topFlange.clone(); botFlange.position.y = 0.012; sp.add(botFlange);
+        const threadBody = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.25, 22), new THREE.MeshStandardMaterial({ color: col, bumpMap: furBump, bumpScale: 0.008, roughness: 0.78 }));
+        threadBody.position.y = 0.145; threadBody.castShadow = true; sp.add(threadBody);
+        scene.add(sp);
+      });
+
+      // Tomato pincushion with colored glass-head pins
+      const pincushion = new THREE.Group();
+      pincushion.position.set(1.65, 0, 1.48);
+      const cushionMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), new THREE.MeshStandardMaterial({ color: '#b53838', bumpMap: furBump, bumpScale: 0.015, roughness: 0.88 }));
+      cushionMesh.scale.set(1.15, 0.72, 1.15); cushionMesh.position.y = 0.15; cushionMesh.castShadow = true; pincushion.add(cushionMesh);
+      ['#f7d154', '#70c1b3', '#ffffff', '#f28482', '#90be6d'].forEach((pinCol, i) => {
+        const angle = i * 1.25;
+        const pin = new THREE.Group();
+        pin.position.set(Math.cos(angle) * 0.09, 0.25, Math.sin(angle) * 0.09);
+        pin.rotation.set(Math.sin(angle) * 0.35, 0, -Math.cos(angle) * 0.35);
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.24, 8), chromeMat);
+        shaft.position.y = 0.08; pin.add(shaft);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.026, 12, 12), new THREE.MeshStandardMaterial({ color: pinCol, roughness: 0.15, metalness: 0.1 }));
+        head.position.y = 0.2; pin.add(head);
+        pincushion.add(pin);
+      });
+      scene.add(pincushion);
+
+      // Tailor Scissors
+      const scissors = new THREE.Group();
+      scissors.position.set(-2.2, 0.03, 1.35);
+      scissors.rotation.y = 0.55;
+      const blade1 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.012, 0.055), chromeMat);
+      blade1.position.set(0.18, 0.008, 0.015); blade1.rotation.y = 0.09; blade1.castShadow = true; scissors.add(blade1);
+      const blade2 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.012, 0.055), chromeMat);
+      blade2.position.set(0.18, 0.0, -0.015); blade2.rotation.y = -0.09; blade2.castShadow = true; scissors.add(blade2);
+      const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.026, 12), goldTrimMat);
+      screw.position.set(0.02, 0.006, 0); scissors.add(screw);
+      const handle1 = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.022, 10, 22), goldTrimMat);
+      handle1.rotation.x = Math.PI / 2; handle1.position.set(-0.26, 0.006, 0.09); scissors.add(handle1);
+      const handle2 = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 10, 22), goldTrimMat);
+      handle2.rotation.x = Math.PI / 2; handle2.position.set(-0.28, 0.006, -0.11); scissors.add(handle2);
+      scene.add(scissors);
+
+      // Floating warm dust motes
+      const dustCount = 120;
+      const dustGeo = new THREE.BufferGeometry();
+      const dustPos = new Float32Array(dustCount * 3);
+      for (let i = 0; i < dustCount; i++) {
+        dustPos[i * 3] = (Math.random() - 0.5) * 8;
+        dustPos[i * 3 + 1] = 0.3 + Math.random() * 3.8;
+        dustPos[i * 3 + 2] = (Math.random() - 0.5) * 5;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+      const dustPoints = new THREE.Points(
+        dustGeo,
+        new THREE.PointsMaterial({ color: '#ffe3b3', size: 0.032, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false })
+      );
+      scene.add(dustPoints);
+
+      // --- Fabric Catalog & Soft-Body Drape Patches ---
+      const FABRICS = [
+        { id: 'terracotta', name: 'Linho Terracota — trama orgânica', base: '#c96b4b', accent: '#f3dec7', pattern: 'sashiko' },
+        { id: 'indigo', name: 'Índigo Sashiko — resistência serena', base: '#344c6b', accent: '#e7edf5', pattern: 'sashiko' },
+        { id: 'sage', name: 'Xadrez Sálvia — abrigo cotidiano', base: '#6b8e7b', accent: '#f5ead6', accent2: '#3c5749', pattern: 'plaid' },
+        { id: 'ochre', name: 'Algodão Ocre — calor de fim de tarde', base: '#d49a45', accent: '#fff4d9', pattern: 'dots' },
+        { id: 'rose', name: 'Floral Antigo — memória afetiva', base: '#b0636e', accent: '#f9e3e6', pattern: 'floral' },
+        { id: 'stripe', name: 'Risca de Giz — ritmo e direção', base: '#6e5c78', accent: '#e9dff0', pattern: 'stripes' }
+      ];
+      const fabricCache = {};
+      FABRICS.forEach(f => { fabricCache[f.id] = makeFabricTextures(f, 512); });
+
+      let selectedFabric = FABRICS[0];
+      let selectedStitch = 'running';
+      const patches = [];
+      const patchGroup = new THREE.Group();
+      scene.add(patchGroup);
+
+      // Build distinct 3D stitch geometry around patch perimeter
+      function buildStitchBorder(w, h, style, colorHex = '#f7ede0') {
+        const g = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.85 });
+        const hw = w / 2 - 0.025, hh = h / 2 - 0.025;
+        const perimPts = [];
+        const stepsX = Math.max(5, Math.round(w / 0.075));
+        const stepsZ = Math.max(5, Math.round(h / 0.075));
+        for (let i = 0; i < stepsX; i++) perimPts.push({ x: -hw + (i / stepsX) * (hw * 2), z: -hh, nx: 0, nz: -1, dir: 0 });
+        for (let i = 0; i < stepsZ; i++) perimPts.push({ x: hw, z: -hh + (i / stepsZ) * (hh * 2), nx: 1, nz: 0, dir: Math.PI / 2 });
+        for (let i = 0; i < stepsX; i++) perimPts.push({ x: hw - (i / stepsX) * (hw * 2), z: hh, nx: 0, nz: 1, dir: 0 });
+        for (let i = 0; i < stepsZ; i++) perimPts.push({ x: -hw, z: hh - (i / stepsZ) * (hh * 2), nx: -1, nz: 0, dir: Math.PI / 2 });
+
+        perimPts.forEach((p, idx) => {
+          if (style === 'running') {
+            if (idx % 2 === 0) {
+              const dash = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.045, 6), mat);
+              dash.rotation.z = Math.PI / 2;
+              dash.rotation.y = p.dir;
+              dash.position.set(p.x, 0.012, p.z);
+              g.add(dash);
+            }
+          } else if (style === 'zigzag') {
+            const zig = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.055, 6), mat);
+            zig.rotation.z = Math.PI / 2;
+            zig.rotation.y = p.dir + (idx % 2 === 0 ? 0.65 : -0.65);
+            zig.position.set(p.x + p.nx * 0.012, 0.012, p.z + p.nz * 0.012);
+            g.add(zig);
+          } else if (style === 'blanket') {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.052, 6), mat);
+            leg.rotation.z = Math.PI / 2;
+            leg.rotation.y = p.dir + Math.PI / 2;
+            leg.position.set(p.x + p.nx * 0.018, 0.012, p.z + p.nz * 0.018);
+            g.add(leg);
+          } else if (style === 'cross') {
+            [-0.78, 0.78].forEach(ang => {
+              const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 0.048, 6), mat);
+              arm.rotation.z = Math.PI / 2;
+              arm.rotation.y = p.dir + ang;
+              arm.position.set(p.x, 0.013, p.z);
+              g.add(arm);
+            });
+          }
+        });
+        return g;
+      }
+
+      const memories = [
+        { fabric: 'Índigo Sashiko', stitch: 'Alinhavo', note: 'Um respiro no meio da semana corrida' },
+        { fabric: 'Xadrez Sálvia', stitch: 'Caseado', note: 'O abraço que segurou as pontas' },
+        { fabric: 'Algodão Ocre', stitch: 'Ponto Cruz', note: 'Coragem para recomeçar devagar' }
+      ];
+
+      function spawnPatch(x, z, fabricObj, stitchStyle, noteText = null, dropAnim = true) {
+        const w = 0.48 + Math.random() * 0.24;
+        const h = 0.42 + Math.random() * 0.22;
+        const geo = new THREE.PlaneGeometry(w, h, 14, 14);
+        geo.rotateX(-Math.PI / 2);
+        const tex = fabricCache[fabricObj.id];
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex.map, bumpMap: tex.bumpMap, bumpScale: 0.018, roughness: 0.9, side: THREE.DoubleSide
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true; mesh.receiveShadow = true;
+
+        const holder = new THREE.Group();
+        const baseY = 0.058 + patches.length * 0.0045;
+        holder.position.set(x, dropAnim ? baseY + 0.75 : baseY, z);
+        holder.rotation.y = (Math.random() - 0.5) * 0.42;
+        holder.add(mesh);
+
+        const stitches = buildStitchBorder(w, h, stitchStyle);
+        stitches.visible = !dropAnim;
+        holder.add(stitches);
+        patchGroup.add(holder);
+
+        const entry = {
+          holder, mesh, geo, stitches, w, h, baseY,
+          velY: 0, settled: !dropAnim, flutter: dropAnim ? 1.0 : 0.0,
+          phase: Math.random() * 6.28, fabric: fabricObj.name.split(' — ')[0],
+          stitch: stitchStyle, note: noteText
+        };
+        patches.push(entry);
+        updatePatchUI();
+        return entry;
+      }
+
+      function updatePatchUI() {
+        document.getElementById('patch-count').textContent = `${patches.length} retalho${patches.length === 1 ? '' : 's'}`;
+        const ul = document.getElementById('memory-list');
+        ul.innerHTML = '';
+        const items = memories.slice(-8).reverse();
+        items.forEach(m => {
+          const li = document.createElement('li');
+          li.className = 'bg-white/5 border border-amber-200/15 rounded-lg px-2.5 py-1.5';
+          li.innerHTML = `<div class="text-[10px] text-amber-300/85 font-semibold">${m.fabric} · ${m.stitch}</div><div class="text-[11px] text-amber-50/90">${m.note}</div>`;
+          ul.appendChild(li);
+        });
+      }
+
+      // Initial 3 patches already stitched on the quilt
+      spawnPatch(-0.85, 0.25, FABRICS[1], 'running', memories[0].note, false);
+      spawnPatch(-0.1, 0.52, FABRICS[2], 'blanket', memories[1].note, false);
+      spawnPatch(0.58, 0.15, FABRICS[3], 'cross', memories[2].note, false);
+
+      // --- Physics & Interactive Animation States ---
+      let sewingTimer = 0;
+      let bearSpring = { scale: 1, vel: 0, headTilt: 0, headVel: 0 };
+      let lampOn = true;
+      let camAnim = null;
+
+      function triggerBearHug() {
+        bearSpring.vel = -2.4;
+        bearSpring.headVel = 4.2;
+        playWarmChime();
+        showToast('🧸 O ursinho acolhe o abraço — cada costura fortalece a história.');
+      }
+
+      function triggerSewingMachine() {
+        sewingTimer = 3.2;
+        showToast('⚙️ Costurando ponto a ponto na máquina...');
+      }
+
+      // --- UI Bindings ---
+      const fabricGrid = document.getElementById('fabric-grid');
+      const fabricLabel = document.getElementById('fabric-label');
+      FABRICS.forEach((f, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'swatch' + (idx === 0 ? ' active' : '');
+        btn.style.background = `radial-gradient(circle at 30% 30%, ${f.accent}, ${f.base})`;
+        btn.title = f.name;
+        btn.addEventListener('click', () => {
+          selectedFabric = f;
+          fabricLabel.textContent = f.name;
+          fabricGrid.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        fabricGrid.appendChild(btn);
+      });
+
+      document.getElementById('stitch-grid').querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedStitch = btn.dataset.stitch;
+          document.getElementById('stitch-grid').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      document.getElementById('btn-add-patch').addEventListener('click', () => {
+        const rx = -1.2 + Math.random() * 2.0;
+        const rz = -0.35 + Math.random() * 1.4;
+        spawnPatch(rx, rz, selectedFabric, selectedStitch, null, true);
+        playSnipSound();
+        showToast(`✂️ Retalho de ${selectedFabric.name.split(' — ')[0]} pousando na manta.`);
+      });
+
+      document.getElementById('btn-sew-machine').addEventListener('click', triggerSewingMachine);
+      document.getElementById('btn-hug-bear').addEventListener('click', triggerBearHug);
+
+      document.getElementById('btn-undo').addEventListener('click', () => {
+        if (!patches.length) return showToast('A manta já está limpa.');
+        const last = patches.pop();
+        patchGroup.remove(last.holder);
+        updatePatchUI();
+        showToast('↩️ Último retalho devolvido à cesta.');
+      });
+
+      // Safe in-page clear confirmation (no confirm())
+      const clearModal = document.getElementById('clear-modal');
+      document.getElementById('btn-clear-ask').addEventListener('click', () => clearModal.classList.replace('hidden', 'flex'));
+      document.getElementById('cancel-clear').addEventListener('click', () => clearModal.classList.replace('flex', 'hidden'));
+      document.getElementById('confirm-clear').addEventListener('click', () => {
+        while (patches.length) patchGroup.remove(patches.pop().holder);
+        updatePatchUI();
+        clearModal.classList.replace('flex', 'hidden');
+        showToast('🧹 Manta limpa — pronta para novos encontros.');
+      });
+
+      // Memory tag modal
+      const memModal = document.getElementById('memory-modal');
+      const memInput = document.getElementById('memory-input');
+      document.getElementById('btn-add-memory').addEventListener('click', () => {
+        memInput.value = '';
+        memModal.classList.replace('hidden', 'flex');
+        setTimeout(() => memInput.focus(), 60);
+      });
+      document.getElementById('cancel-memory').addEventListener('click', () => memModal.classList.replace('flex', 'hidden'));
+      document.getElementById('save-memory').addEventListener('click', () => {
+        const txt = memInput.value.trim();
+        if (!txt) return showToast('Escreva uma breve frase para etiquetar o retalho.');
+        const stitchNames = { running: 'Alinhavo', zigzag: 'Zigue-zague', blanket: 'Caseado', cross: 'Ponto Cruz' };
+        memories.push({ fabric: selectedFabric.name.split(' — ')[0], stitch: stitchNames[selectedStitch], note: txt });
+        updatePatchUI();
+        memModal.classList.replace('flex', 'hidden');
+        playWarmChime();
+        showToast('🏷️ História costurada ao caderno do ateliê.');
+      });
+
+      // Guide modal
+      const guideModal = document.getElementById('guide-modal');
+      document.getElementById('btn-guide').addEventListener('click', () => guideModal.classList.replace('hidden', 'flex'));
+      document.getElementById('close-guide').addEventListener('click', () => guideModal.classList.replace('flex', 'hidden'));
+
+      // Lamp & Audio & Quality controls
+      document.getElementById('btn-lamp').addEventListener('click', (e) => {
+        lampOn = !lampOn;
+        lampSpot.intensity = lampOn ? 2.4 : 0.0;
+        bulbMat.emissiveIntensity = lampOn ? 2.2 : 0.1;
+        lightCone.visible = lampOn;
+        e.target.textContent = lampOn ? '💡 Luz Quente' : '🌙 Luz Suave';
+      });
+      document.getElementById('btn-audio').addEventListener('click', (e) => {
+        audioEnabled = !audioEnabled;
+        e.target.textContent = audioEnabled ? '🔊 Som' : '🔇 Mudo';
+      });
+      document.getElementById('quality-select').addEventListener('change', (e) => {
+        const q = e.target.value;
+        if (q === 'high') { renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); dustPoints.visible = true; }
+        else if (q === 'balanced') { renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); dustPoints.visible = true; }
+        else { renderer.setPixelRatio(1); dustPoints.visible = false; }
+      });
+
+      // Camera Presets
+      const CAM_VIEWS = {
+        overview: { pos: new THREE.Vector3(0.4, 4.3, 5.4), target: new THREE.Vector3(0, 0.45, 0) },
+        quilt: { pos: new THREE.Vector3(-0.2, 3.1, 2.35), target: new THREE.Vector3(-0.2, 0.05, 0.35) },
+        machine: { pos: new THREE.Vector3(1.15, 1.85, 2.45), target: new THREE.Vector3(2.2, 0.55, 0.15) },
+        bear: { pos: new THREE.Vector3(-1.35, 1.65, 2.05), target: new THREE.Vector3(-2.55, 0.72, -0.35) }
+      };
+      document.querySelectorAll('[data-cam]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const v = CAM_VIEWS[btn.dataset.cam];
+          camAnim = { fromPos: camera.position.clone(), toPos: v.pos.clone(), fromT: controls.target.clone(), toT: v.target.clone(), t: 0 };
+          document.querySelectorAll('[data-cam]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      // --- 3D Raycasting Interaction ---
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let downXY = null;
+      renderer.domElement.addEventListener('pointerdown', (e) => { downXY = { x: e.clientX, y: e.clientY }; });
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (!downXY) return;
+        if (Math.hypot(e.clientX - downXY.x, e.clientY - downXY.y) > 7) return;
+        pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects([quiltBase, bearGroup, machineGroup], true);
+        if (!hits.length) return;
+        let obj = hits[0].object;
+        while (obj && !obj.name && obj.parent) obj = obj.parent;
+        if (obj.name === 'quiltBase') {
+          const pt = hits[0].point;
+          spawnPatch(pt.x, pt.z, selectedFabric, selectedStitch, null, true);
+          playSnipSound();
+          showToast('✂️ Retalho pousado suavemente no ponto escolhido.');
+        } else if (obj.name === 'teddyBear') {
+          triggerBearHug();
+        } else if (obj.name === 'sewingMachine') {
+          triggerSewingMachine();
+        }
+      });
+
+      // --- Main Animation Loop (Cloth Drape + Spring Physics + Sewing Kinematics) ---
+      const clock = new THREE.Clock();
+      let stitchTickAccum = 0;
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const dt = Math.min(clock.getDelta(), 0.05);
+        const t = clock.elapsedTime;
+
+        // Smooth camera transitions
+        if (camAnim) {
+          camAnim.t = Math.min(1, camAnim.t + dt * 2.2);
+          const ease = 1 - Math.pow(1 - camAnim.t, 3);
+          camera.position.lerpVectors(camAnim.fromPos, camAnim.toPos, ease);
+          controls.target.lerpVectors(camAnim.fromT, camAnim.toT, ease);
+          if (camAnim.t >= 1) camAnim = null;
+        }
+        controls.update();
+
+        // Soft-body cloth flutter & gravity settling for patches
+        for (const p of patches) {
+          if (!p.settled) {
+            p.velY -= 2.4 * dt;
+            p.holder.position.y += p.velY * dt;
+            if (p.holder.position.y <= p.baseY) {
+              p.holder.position.y = p.baseY;
+              p.velY = 0;
+              p.settled = true;
+              p.stitches.visible = true;
+              playStitchTick();
+            }
+          }
+          if (p.flutter > 0.005) {
+            p.flutter = Math.max(0, p.flutter - (p.settled ? dt * 2.8 : dt * 0.25));
+            const pos = p.geo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+              const vx = pos.getX(i), vz = pos.getZ(i);
+              const dist = Math.hypot(vx, vz);
+              const wave = Math.sin(vx * 11 + t * 8 + p.phase) * Math.cos(vz * 11 - t * 6) * 0.055 * p.flutter * (0.4 + dist * 1.4);
+              pos.setY(i, wave);
+            }
+            pos.needsUpdate = true;
+            p.geo.computeVertexNormals();
+          }
+        }
+
+        // Sewing machine mechanical kinematics
+        if (sewingTimer > 0) {
+          sewingTimer = Math.max(0, sewingTimer - dt);
+          handwheel.rotation.x -= dt * 16;
+          needleBar.position.y = 0.44 + Math.sin(t * 36) * 0.13;
+          feedCloth.position.z = Math.sin(t * 2.5) * 0.14;
+          topSpool.rotation.y += dt * 10;
+          stitchTickAccum += dt;
+          if (stitchTickAccum > 0.11) { stitchTickAccum = 0; playStitchTick(); }
+        } else {
+          needleBar.position.y += (0.56 - needleBar.position.y) * 0.12;
+        }
+
+        // Teddy bear spring-damper hug physics
+        const k = 42, c = 6.5;
+        const fScale = -k * (bearSpring.scale - 1) - c * bearSpring.vel;
+        bearSpring.vel += fScale * dt;
+        bearSpring.scale += bearSpring.vel * dt;
+        const fTilt = -32 * bearSpring.headTilt - 5.2 * bearSpring.headVel;
+        bearSpring.headVel += fTilt * dt;
+        bearSpring.headTilt += bearSpring.headVel * dt;
+
+        bearBodyPivot.scale.set(1 / Math.sqrt(Math.max(0.7, bearSpring.scale)), Math.max(0.75, bearSpring.scale), 1 / Math.sqrt(Math.max(0.7, bearSpring.scale)));
+        bearHead.rotation.z = bearSpring.headTilt * 0.22 + Math.sin(t * 1.1) * 0.035;
+        bearArms[0].rotation.x = -0.35 - Math.max(0, 1 - bearSpring.scale) * 1.2;
+        bearArms[1].rotation.x = -0.35 - Math.max(0, 1 - bearSpring.scale) * 1.2;
+
+        // Floating dust motes drift
+        if (dustPoints.visible) {
+          const dp = dustGeo.attributes.position;
+          for (let i = 0; i < dustCount; i++) {
+            let y = dp.getY(i) + dt * 0.04;
+            if (y > 4.0) y = 0.3;
+            dp.setY(i, y);
+            dp.setX(i, dp.getX(i) + Math.sin(t * 0.5 + i) * 0.0008);
+          }
+          dp.needsUpdate = true;
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+    })();
+  </script>
+</body>
+</html>

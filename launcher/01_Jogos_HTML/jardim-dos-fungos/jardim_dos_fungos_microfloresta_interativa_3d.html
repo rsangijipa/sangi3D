@@ -1,0 +1,4001 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Jardim dos Fungos — Microfloresta Interativa 3D</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-deep: #0e1411;
+      --bg-panel: rgba(16, 24, 20, 0.84);
+      --bg-panel-solid: #131d18;
+      --bg-elevated: rgba(26, 39, 32, 0.9);
+      --border-subtle: rgba(164, 198, 174, 0.18);
+      --border-active: rgba(132, 224, 178, 0.65);
+      --text-primary: #eef5f0;
+      --text-secondary: #aec4b6;
+      --text-muted: #7d9687;
+      --accent-moss: #6fd49e;
+      --accent-amber: #e2a45b;
+      --accent-cyan: #67d8d0;
+      --accent-lilac: #c39be8;
+      --danger: #e26d6d;
+      --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.42);
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 35%, #1c2922 0%, #0d1310 75%);
+      color: var(--text-primary);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      user-select: none;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100dvh;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    #canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    #canvas-container.cursor-inocular {
+      cursor: crosshair;
+    }
+
+    #canvas-container.cursor-borrifar {
+      cursor: cell;
+    }
+
+    /* Fallback overlay when WebGL or CDN fails */
+    #fallback-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(circle at 50% 30%, #1a2720, #0c120f);
+    }
+
+    #fallback-screen.visible {
+      display: flex;
+    }
+
+    .fallback-card {
+      max-width: 520px;
+      width: 100%;
+      background: var(--bg-panel-solid);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-soft);
+      user-select: text;
+    }
+
+    .fallback-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      color: var(--accent-moss);
+    }
+
+    .fallback-card p {
+      margin: 0 0 12px;
+      color: var(--text-secondary);
+    }
+
+    .fallback-card code {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-subtle);
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.82rem;
+      color: var(--accent-cyan);
+    }
+
+    .fallback-card code.code-block {
+      display: block;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 8px 0 14px;
+      overflow-x: auto;
+    }
+
+    /* Top bar */
+    .topbar {
+      position: fixed;
+      top: calc(10px + var(--safe-top));
+      left: calc(12px + var(--safe-left));
+      right: calc(12px + var(--safe-right));
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .topbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 5px 8px;
+      box-shadow: var(--shadow-soft);
+      pointer-events: auto;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .topbar-group::-webkit-scrollbar {
+      display: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px 0 4px;
+      white-space: nowrap;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-cyan), var(--accent-moss));
+      box-shadow: 0 0 10px rgba(111, 212, 158, 0.65);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      letter-spacing: 0.01em;
+      color: var(--text-primary);
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: none;
+    }
+
+    @media (min-width: 820px) {
+      .brand-sub { display: inline; }
+    }
+
+    button, select, input[type="range"] {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .btn-icon, .btn-pill, .btn-primary, .btn-ghost, .btn-danger {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 36px;
+      min-width: 36px;
+      padding: 0 11px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.1s ease;
+    }
+
+    @media (pointer: coarse) {
+      .btn-icon, .btn-pill, .btn-primary, .btn-ghost, .btn-danger, .dock-btn {
+        min-height: 44px;
+        min-width: 44px;
+      }
+    }
+
+    .btn-icon:hover, .btn-pill:hover, .btn-ghost:hover {
+      background: rgba(164, 198, 174, 0.12);
+      color: var(--text-primary);
+    }
+
+    .btn-icon.active, .btn-pill.active {
+      background: rgba(111, 212, 158, 0.18);
+      border-color: var(--border-active);
+      color: var(--accent-moss);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b8d63, #2a6e54);
+      border-color: rgba(132, 224, 178, 0.45);
+      color: #f3fbf6;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #47a374, #328062);
+    }
+
+    .btn-ghost {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .btn-danger {
+      background: rgba(226, 109, 109, 0.16);
+      border-color: rgba(226, 109, 109, 0.45);
+      color: #f7b0b0;
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+    }
+
+    .btn-danger:hover {
+      background: rgba(226, 109, 109, 0.28);
+      color: #fff;
+    }
+
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 2px solid var(--accent-moss);
+      outline-offset: 2px;
+    }
+
+    .compact-select {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      min-height: 34px;
+      cursor: pointer;
+    }
+
+    .compact-select option {
+      background: #14201a;
+      color: var(--text-primary);
+    }
+
+    /* HUD Status Strip (top-left below topbar) */
+    .hud-stack {
+      position: fixed;
+      top: calc(64px + var(--safe-top));
+      left: calc(12px + var(--safe-left));
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(320px, calc(100vw - 24px));
+      pointer-events: none;
+    }
+
+    .hud-card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-soft);
+      pointer-events: auto;
+    }
+
+    .hud-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .hud-tool-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--accent-moss);
+      background: rgba(111, 212, 158, 0.14);
+      border: 1px solid rgba(111, 212, 158, 0.35);
+      border-radius: 999px;
+      padding: 2px 9px;
+    }
+
+    .hud-day {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .metric-cell {
+      background: rgba(255, 255, 255, 0.035);
+      border-radius: 8px;
+      padding: 5px 6px;
+      text-align: center;
+    }
+
+    .metric-val {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-lbl {
+      display: block;
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .hud-status-line {
+      margin-top: 7px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    /* Guided Tutorial Card */
+    .guide-card {
+      border-color: rgba(226, 164, 91, 0.45);
+      background: rgba(23, 30, 24, 0.9);
+    }
+
+    .guide-step-tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent-amber);
+    }
+
+    .guide-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin: 3px 0 4px;
+      color: var(--text-primary);
+    }
+
+    .guide-body {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin: 0 0 8px;
+    }
+
+    .guide-result {
+      font-size: 0.74rem;
+      color: var(--accent-moss);
+      background: rgba(111, 212, 158, 0.1);
+      border-radius: 6px;
+      padding: 5px 8px;
+      margin-bottom: 8px;
+    }
+
+    .guide-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    /* Bottom Dock & Contextual Drawer */
+    .bottom-shell {
+      position: fixed;
+      bottom: calc(12px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: min(760px, calc(100vw - 20px));
+      pointer-events: none;
+    }
+
+    .context-panel {
+      width: 100%;
+      max-height: min(44dvh, 340px);
+      overflow-y: auto;
+      background: var(--bg-panel);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-soft);
+      pointer-events: auto;
+      display: none;
+    }
+
+    .context-panel.open {
+      display: block;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dock {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 6px 8px;
+      box-shadow: var(--shadow-soft);
+      pointer-events: auto;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .dock::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dock-btn {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 0 14px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.16s ease;
+    }
+
+    .dock-btn:hover {
+      background: rgba(164, 198, 174, 0.12);
+      color: var(--text-primary);
+    }
+
+    .dock-btn.active {
+      background: linear-gradient(135deg, rgba(111, 212, 158, 0.24), rgba(103, 216, 208, 0.16));
+      border-color: var(--border-active);
+      color: var(--text-primary);
+      box-shadow: inset 0 0 0 1px rgba(111, 212, 158, 0.22);
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border-subtle);
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+
+    /* Option cards inside panels */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-card {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 11px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .choice-card:hover {
+      background: rgba(164, 198, 174, 0.09);
+      border-color: rgba(164, 198, 174, 0.35);
+    }
+
+    .choice-card.selected {
+      background: rgba(111, 212, 158, 0.15);
+      border-color: var(--border-active);
+    }
+
+    .choice-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.84rem;
+    }
+
+    .swatch {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .choice-meta {
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+    }
+
+    .choice-tags {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Controls row */
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .slider-wrap {
+      flex: 1 1 210px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-moss);
+      cursor: pointer;
+    }
+
+    .speed-group {
+      display: inline-flex;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .speed-btn {
+      appearance: none;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 32px;
+    }
+
+    .speed-btn.active {
+      background: rgba(111, 212, 158, 0.22);
+      color: var(--accent-moss);
+    }
+
+    /* Secondary tabs */
+    .subtabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .subtab {
+      appearance: none;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    .subtab.active {
+      background: rgba(111, 212, 158, 0.18);
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      margin-top: 8px;
+    }
+
+    .compare-table th, .compare-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: left;
+    }
+
+    .compare-table th {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .challenge-item {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 9px 11px;
+      margin-bottom: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .challenge-item.done {
+      border-color: rgba(111, 212, 158, 0.5);
+      background: rgba(111, 212, 158, 0.1);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-moss), var(--accent-cyan));
+      transition: width 0.25s ease;
+    }
+
+    /* Modal & Toast */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(5, 10, 8, 0.68);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(520px, 100%);
+      max-height: 85dvh;
+      overflow-y: auto;
+      background: var(--bg-panel-solid);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-soft);
+      user-select: text;
+    }
+
+    .modal-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+    }
+
+    .modal-card p, .modal-card li {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .toast {
+      position: fixed;
+      top: calc(64px + var(--safe-top));
+      right: calc(14px + var(--safe-right));
+      z-index: 50;
+      background: rgba(18, 30, 24, 0.94);
+      border: 1px solid var(--border-active);
+      color: var(--text-primary);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      box-shadow: var(--shadow-soft);
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      max-width: min(320px, calc(100vw - 28px));
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .ui-hidden .hud-stack,
+    .ui-hidden .bottom-shell,
+    .ui-hidden .topbar-controls-hideable {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .diag-log {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      margin-top: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .note-disclaimer {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 640px) {
+      .hud-stack {
+        top: calc(58px + var(--safe-top));
+        max-width: calc(100vw - 24px);
+      }
+      .hud-metrics {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .topbar-group {
+        padding: 4px 6px;
+      }
+      .brand-title {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container" aria-label="Cena 3D interativa do Jardim dos Fungos"></div>
+
+  <div id="fallback-screen" role="alert">
+    <div class="fallback-card">
+      <h2>Não foi possível iniciar a cena 3D</h2>
+      <p id="fallback-reason">Ocorreu uma falha ao carregar os módulos Three.js ou o contexto WebGL.</p>
+      <p>Se você abriu o arquivo diretamente via <code>file://</code> ou sem acesso à internet na primeira carga, inicie um servidor local na pasta do arquivo:</p>
+      <code class="code-block">python3 -m http.server 8000</code>
+      <p>Depois acesse <strong>http://localhost:8000/</strong> em um navegador moderno com WebGL habilitado. Para uso totalmente offline, copie <code>three@0.160.0</code> para uma pasta local <code>vendor/</code> e aponte o <code>importmap</code> para ela.</p>
+      <div class="modal-footer">
+        <button id="btn-fallback-retry" class="btn-primary" type="button">Tentar novamente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <header class="topbar" aria-label="Barra superior de controles">
+    <div class="topbar-group">
+      <div class="brand">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-title">Jardim dos Fungos</span>
+        <span class="brand-sub">Microfloresta em Vidro</span>
+      </div>
+      <div class="topbar-controls-hideable" style="display:flex;align-items:center;gap:4px;">
+        <button id="btn-mode-livre" class="btn-pill active" type="button" title="Exploração livre">Livre</button>
+        <button id="btn-mode-guiado" class="btn-pill" type="button" title="Demonstração guiada passo a passo">Guiado</button>
+      </div>
+    </div>
+
+    <div class="topbar-group">
+      <div class="topbar-controls-hideable" style="display:flex;align-items:center;gap:4px;">
+        <button id="btn-cam" class="btn-pill" type="button" title="Alternar enquadramento da câmera">Câmera: Geral</button>
+        <button id="btn-light" class="btn-pill" type="button" title="Alternar iluminação da cena">Luz: Estufa</button>
+        <select id="select-quality" class="compact-select" aria-label="Perfil de qualidade gráfica" title="Qualidade gráfica">
+          <option value="auto">Qualidade: Auto</option>
+          <option value="equilibrado" selected>Equilibrado</option>
+          <option value="cinema">Cinema</option>
+          <option value="leve">Leve</option>
+        </select>
+        <button id="btn-audio" class="btn-icon" type="button" aria-pressed="false" title="Ativar ou silenciar som">Som: Off</button>
+        <button id="btn-help" class="btn-icon" type="button" title="Ajuda e sobre o modelo">?</button>
+        <button id="btn-fullscreen" class="btn-icon" type="button" title="Alternar tela cheia">⛶</button>
+      </div>
+      <button id="btn-toggle-ui" class="btn-icon" type="button" title="Recolher ou exibir controles (tecla H)">H</button>
+    </div>
+  </header>
+
+  <!-- HUD -->
+  <aside class="hud-stack" aria-label="Painel de estado do ecossistema">
+    <section class="hud-card" aria-live="polite">
+      <div class="hud-header">
+        <span id="hud-tool" class="hud-tool-badge">Explorar</span>
+        <span id="hud-day" class="hud-day">Dia 1 · 08:00</span>
+      </div>
+      <div class="hud-metrics">
+        <div class="metric-cell">
+          <span id="m-humidity" class="metric-val">78%</span>
+          <span class="metric-lbl">Umidade</span>
+        </div>
+        <div class="metric-cell">
+          <span id="m-nutrients" class="metric-val">84%</span>
+          <span class="metric-lbl">Nutrientes</span>
+        </div>
+        <div class="metric-cell">
+          <span id="m-nodes" class="metric-val">0</span>
+          <span class="metric-lbl">Micélio</span>
+        </div>
+        <div class="metric-cell">
+          <span id="m-mushrooms" class="metric-val">0</span>
+          <span class="metric-lbl">Fungos</span>
+        </div>
+      </div>
+      <div class="hud-status-line">
+        <span id="hud-eco-state">Substrato: Carvalho Úmido</span>
+        <span id="hud-fps" style="color:var(--text-muted);font-variant-numeric:tabular-nums;">-- fps</span>
+      </div>
+    </section>
+
+    <section id="guide-panel" class="hud-card guide-card" style="display:none;" aria-live="polite">
+      <div class="guide-step-tag" id="guide-step-tag">Passo 1 de 4</div>
+      <div class="guide-title" id="guide-title">Escolha o substrato</div>
+      <p class="guide-body" id="guide-body"></p>
+      <div class="guide-result" id="guide-result"></div>
+      <div class="guide-actions">
+        <button id="btn-guide-skip" class="btn-ghost" type="button" style="padding:5px 10px;font-size:0.75rem;">Pular</button>
+        <div style="display:flex;gap:6px;">
+          <button id="btn-guide-action" class="btn-primary" type="button" style="padding:5px 10px;font-size:0.75rem;">Abrir etapa</button>
+          <button id="btn-guide-next" class="btn-ghost" type="button" style="padding:5px 10px;font-size:0.75rem;">Próximo</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <!-- Bottom Dock & Contextual Drawer -->
+  <main class="bottom-shell">
+    <section id="context-panel" class="context-panel" aria-label="Opções da ferramenta selecionada">
+      <div class="panel-head">
+        <div id="panel-title" class="panel-title">Ferramenta</div>
+        <button id="btn-exit-tool" class="btn-ghost" type="button" style="padding:5px 11px;font-size:0.78rem;">Sair da ferramenta (Esc)</button>
+      </div>
+
+      <!-- Tool 1: Substrato -->
+      <div id="view-substrato" class="tool-view" style="display:none;">
+        <div id="substrate-cards" class="card-grid"></div>
+        <p class="note-disclaimer">Cada substrato altera a retenção hídrica, o perfil de nutrientes e a afinidade das espécies fictícias.</p>
+      </div>
+
+      <!-- Tool 2: Inocular -->
+      <div id="view-inocular" class="tool-view" style="display:none;">
+        <div id="species-cards" class="card-grid"></div>
+        <div class="control-row" style="margin-top:10px;margin-bottom:0;justify-content:space-between;">
+          <span style="font-size:0.78rem;color:var(--text-secondary);">Toque ou clique sobre a madeira/substrato na cena para inocular, ou use o botão ao lado.</span>
+          <button id="btn-inoculate-auto" class="btn-primary" type="button">Inocular em ponto sugerido</button>
+        </div>
+        <p class="note-disclaimer">Espécies fictícias criadas para observação educacional e contemplativa; não representam cultivo real.</p>
+      </div>
+
+      <!-- Tool 3: Umidade e Crescimento -->
+      <div id="view-clima" class="tool-view" style="display:none;">
+        <div class="control-row">
+          <div class="slider-wrap">
+            <label class="slider-label" for="slider-humidity">
+              <span>Umidade relativa alvo</span>
+              <strong id="lbl-humidity-val" style="color:var(--accent-cyan);">78% UR</strong>
+            </label>
+            <input id="slider-humidity" type="range" min="20" max="98" step="1" value="78" />
+          </div>
+          <button id="btn-spray" class="btn-primary" type="button">Borrifar névoa (+8% UR)</button>
+        </div>
+        <div class="control-row" style="justify-content:space-between;margin-bottom:4px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:0.78rem;color:var(--text-secondary);">Ritmo temporal:</span>
+            <div class="speed-group" role="group" aria-label="Velocidade do tempo">
+              <button class="speed-btn" data-speed="0" type="button">Pausa</button>
+              <button class="speed-btn active" data-speed="1" type="button">1×</button>
+              <button class="speed-btn" data-speed="4" type="button">4×</button>
+              <button class="speed-btn" data-speed="12" type="button">12×</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button id="btn-step-6h" class="btn-ghost" type="button">Avançar +6h</button>
+            <button id="btn-step-24h" class="btn-ghost" type="button">Avançar +1 dia</button>
+          </div>
+        </div>
+        <p class="note-disclaimer">Avanço determinístico (passo fixo 1/60s com semente fixa). Umidade muito baixa induz dormência; umidade ótima favorece ramificação e esporulação.</p>
+      </div>
+
+      <!-- Secondary Panel: Opções -->
+      <div id="view-opcoes" class="tool-view" style="display:none;">
+        <div class="subtabs" role="tablist">
+          <button class="subtab active" data-subtab="presets" type="button" role="tab">Cenários</button>
+          <button class="subtab" data-subtab="comparar" type="button" role="tab">Comparar Versões</button>
+          <button class="subtab" data-subtab="desafios" type="button" role="tab">Desafios Opcionais</button>
+          <button class="subtab" data-subtab="dados" type="button" role="tab">Salvar &amp; Exportar</button>
+        </div>
+
+        <div id="subtab-presets" class="subtab-body">
+          <div id="preset-cards" class="card-grid"></div>
+        </div>
+
+        <div id="subtab-comparar" class="subtab-body" style="display:none;">
+          <div class="control-row" style="justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:0.78rem;color:var(--text-secondary);">Salve estados para comparar evolução ou voltar sem perder o experimento atual.</span>
+            <button id="btn-save-snapshot" class="btn-primary" type="button">Salvar versão atual</button>
+          </div>
+          <div id="snapshots-container"></div>
+        </div>
+
+        <div id="subtab-desafios" class="subtab-body" style="display:none;">
+          <div id="challenges-container"></div>
+          <p class="note-disclaimer">Objetivos opcionais de exploração biológica, sem cronômetro ou pressão.</p>
+        </div>
+
+        <div id="subtab-dados" class="subtab-body" style="display:none;">
+          <div class="control-row" style="gap:8px;">
+            <button id="btn-undo" class="btn-ghost" type="button">Desfazer</button>
+            <button id="btn-redo" class="btn-ghost" type="button">Refazer</button>
+            <button id="btn-save-local" class="btn-primary" type="button">Salvar no navegador</button>
+            <button id="btn-load-local" class="btn-ghost" type="button">Reabrir salvo</button>
+            <button id="btn-export-json" class="btn-ghost" type="button">Exportar JSON</button>
+            <button id="btn-import-json" class="btn-ghost" type="button">Importar JSON</button>
+            <input id="input-import-json" type="file" accept="application/json,.json" style="display:none;" />
+            <button id="btn-export-png" class="btn-ghost" type="button">Capturar PNG</button>
+            <button id="btn-run-diag" class="btn-ghost" type="button">Autodiagnóstico</button>
+            <button id="btn-reset-request" class="btn-danger" type="button">Reiniciar</button>
+          </div>
+          <div id="diag-output" class="diag-log" style="display:none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="dock" aria-label="Ferramentas principais">
+      <button id="dock-substrato" class="dock-btn" data-tool="substrato" type="button">1. Substrato</button>
+      <button id="dock-inocular" class="dock-btn" data-tool="inocular" type="button">2. Inocular</button>
+      <button id="dock-clima" class="dock-btn" data-tool="clima" type="button">3. Umidade &amp; Tempo</button>
+      <span class="dock-divider" aria-hidden="true"></span>
+      <button id="dock-opcoes" class="dock-btn" data-tool="opcoes" type="button">Opções &amp; Versões</button>
+    </nav>
+  </main>
+
+  <!-- Help Modal -->
+  <div id="modal-help" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-card">
+      <h3 id="help-title">Sobre o Jardim dos Fungos</h3>
+      <p>Uma microfloresta interativa em caixa de vidro para observar, em ritmo contemplativo ou acelerado, como uma rede de micélio em grafo responde a substrato, nutrientes e umidade.</p>
+      <ul>
+        <li><strong>1. Escolher substrato:</strong> altera a composição visual, a retenção de água e a oferta de nutrientes.</li>
+        <li><strong>2. Inocular espécies fictícias:</strong> clique diretamente no tronco ou solo (ou use o botão de ponto sugerido) para iniciar novas colônias.</li>
+        <li><strong>3. Ajustar umidade e acelerar crescimento:</strong> controle a umidade relativa, borrife névoa e avance o tempo de forma reproduzível.</li>
+        <li><strong>Atalhos:</strong> <code>1</code>, <code>2</code>, <code>3</code> abrem ferramentas; <code>Espaço</code> pausa/retoma; <code>H</code> oculta controles; <code>Esc</code> sai da ferramenta ou fecha janelas.</li>
+      </ul>
+      <p class="note-disclaimer"><strong>Aviso educativo:</strong> Todas as espécies, taxas de crescimento e comportamentos são modelos simplificados e fictícios voltados à educação, biologia conceitual e contemplação. Não constituem guia nem promessa de cultivo real.</p>
+      <div class="modal-footer">
+        <button id="btn-restart-guide" class="btn-ghost" type="button">Iniciar modo guiado</button>
+        <button id="btn-close-help" class="btn-primary" type="button">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="modal-reset" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+    <div class="modal-card">
+      <h3 id="reset-title">Reiniciar terrário?</h3>
+      <p>Escolha se deseja voltar ao estado inicial de demonstração ou começar com o terrário vazio. Você pode salvar uma versão antes em <em>Comparar Versões</em> para não perder seu experimento.</p>
+      <div class="modal-footer">
+        <button id="btn-reset-cancel" class="btn-ghost" type="button">Cancelar</button>
+        <button id="btn-reset-empty" class="btn-ghost" type="button">Começar vazio</button>
+        <button id="btn-reset-demo" class="btn-danger" type="button">Restaurar demonstração</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    // =========================================================================
+    // 1. CONFIGURAÇÃO, UNIDADES E TABELAS ECOLÓGICAS (FICTÍCIAS)
+    // Unidades de mundo: metros (m), Y para cima, g = 9.81 m/s²
+    // Terrário: 0.62m (X) x 0.44m (Y) x 0.42m (Z)
+    // =========================================================================
+    const SCHEMA_VERSION = 1;
+    const STORAGE_KEY = 'jardim_dos_fungos_save_v1';
+    const PREFS_KEY = 'jardim_dos_fungos_prefs_v1';
+
+    const config = {
+      world: {
+        width: 0.62,
+        depth: 0.42,
+        height: 0.44,
+        baseY: 0.036,
+        gravity: 9.81
+      },
+      sim: {
+        fixedDt: 1 / 60,
+        baseHoursPerSec: 0.42,
+        gridCols: 16,
+        gridRows: 12,
+        maxNodes: 220,
+        maxEdges: 320,
+        maxMushrooms: 96,
+        maxSpores: 180,
+        maxMist: 140
+      },
+      substrates: {
+        carvalho: {
+          id: 'carvalho',
+          name: 'Carvalho Úmido',
+          shortDesc: 'Tronco fibroso e solo rico em lignina.',
+          retention: 0.80,
+          baseNutrient: 0.90,
+          evapRate: 0.32,
+          colorHex: '#4f3a28',
+          soilColors: ['#3a2b1e', '#4d3a27', '#2b2016'],
+          mossDensity: 0.72,
+          logVisible: true
+        },
+        musgo: {
+          id: 'musgo',
+          name: 'Musgo & Turfa',
+          shortDesc: 'Alta retenção hídrica e tapete aveludado.',
+          retention: 0.92,
+          baseNutrient: 0.84,
+          evapRate: 0.20,
+          colorHex: '#355939',
+          soilColors: ['#293b29', '#385137', '#1f2b20'],
+          mossDensity: 1.0,
+          logVisible: true
+        },
+        vulcanico: {
+          id: 'vulcanico',
+          name: 'Casca Vulcânica',
+          shortDesc: 'Poroso, drenagem rápida e folhiço mineral.',
+          retention: 0.65,
+          baseNutrient: 0.76,
+          evapRate: 0.48,
+          colorHex: '#464147',
+          soilColors: ['#353237', '#4a4347', '#262328'],
+          mossDensity: 0.36,
+          logVisible: true
+        }
+      },
+      species: {
+        lumenaria: {
+          id: 'lumenaria',
+          name: 'Lumenaria velata',
+          shortDesc: 'Sino translúcido com brilho ciano suave.',
+          optHumidity: 84,
+          minHumidity: 52,
+          humidityTol: 18,
+          preferredSubstrate: 'carvalho',
+          growthRate: 1.05,
+          branchEnergy: 1.0,
+          fruitEnergy: 1.55,
+          minSpacing: 0.042,
+          capColor: '#56d9c7',
+          stipeColor: '#c9efe7',
+          hyphaColor: '#7be8da',
+          emissiveColor: '#1f9e8f',
+          emissiveStrength: 0.55,
+          maxScale: 0.044
+        },
+        rubropilus: {
+          id: 'rubropilus',
+          name: 'Rubropilus corallinus',
+          shortDesc: 'Chapéu âmbar-coral de crescimento ágil.',
+          optHumidity: 74,
+          minHumidity: 44,
+          humidityTol: 20,
+          preferredSubstrate: 'carvalho',
+          growthRate: 1.22,
+          branchEnergy: 0.92,
+          fruitEnergy: 1.42,
+          minSpacing: 0.038,
+          capColor: '#e07a42',
+          stipeColor: '#f0cfa8',
+          hyphaColor: '#eab075',
+          emissiveColor: '#4a1d08',
+          emissiveStrength: 0.12,
+          maxScale: 0.041
+        },
+        umbraculum: {
+          id: 'umbraculum',
+          name: 'Umbraculum muscosum',
+          shortDesc: 'Guarda-chuva oliva aveludado de porte amplo.',
+          optHumidity: 72,
+          minHumidity: 42,
+          humidityTol: 22,
+          preferredSubstrate: 'musgo',
+          growthRate: 0.92,
+          branchEnergy: 1.08,
+          fruitEnergy: 1.65,
+          minSpacing: 0.054,
+          capColor: '#7a8a4b',
+          stipeColor: '#d7d1b6',
+          hyphaColor: '#b7c78f',
+          emissiveColor: '#1a2410',
+          emissiveStrength: 0.05,
+          maxScale: 0.054
+        },
+        crystallina: {
+          id: 'crystallina',
+          name: 'Crystallina spora',
+          shortDesc: 'Cachos lilás-marfim ricos em esporos claros.',
+          optHumidity: 66,
+          minHumidity: 38,
+          humidityTol: 19,
+          preferredSubstrate: 'vulcanico',
+          growthRate: 1.08,
+          branchEnergy: 0.96,
+          fruitEnergy: 1.48,
+          minSpacing: 0.036,
+          capColor: '#b88fe0',
+          stipeColor: '#ebe0f5',
+          hyphaColor: '#d3b8f2',
+          emissiveColor: '#48286b',
+          emissiveStrength: 0.22,
+          maxScale: 0.038
+        }
+      },
+      presets: [
+        {
+          id: 'demo',
+          name: 'Floresta Equilibrada',
+          desc: 'Estado inicial de demonstração com micélio ativo e duas espécies.',
+          substrateId: 'carvalho',
+          humidity: 78,
+          lightPreset: 'estufa',
+          seed: 23041,
+          preSimHours: 22,
+          inoculations: [
+            { speciesId: 'lumenaria', x: -0.08, z: 0.01, surface: 'log' },
+            { speciesId: 'rubropilus', x: 0.09, z: -0.02, surface: 'log' },
+            { speciesId: 'umbraculum', x: -0.14, z: 0.09, surface: 'ground' }
+          ]
+        },
+        {
+          id: 'biolum',
+          name: 'Tronco Bioluminescente',
+          desc: 'Umidade alta (86%) e crepúsculo para destacar Lumenaria velata.',
+          substrateId: 'carvalho',
+          humidity: 86,
+          lightPreset: 'crepusculo',
+          seed: 77419,
+          preSimHours: 28,
+          inoculations: [
+            { speciesId: 'lumenaria', x: -0.12, z: -0.01, surface: 'log' },
+            { speciesId: 'lumenaria', x: 0.05, z: 0.02, surface: 'log' },
+            { speciesId: 'crystallina', x: 0.14, z: 0.08, surface: 'ground' }
+          ]
+        },
+        {
+          id: 'musgo_jardim',
+          name: 'Canteiro de Musgo & Turfa',
+          desc: 'Substrato de musgo denso com Umbraculum e Crystallina.',
+          substrateId: 'musgo',
+          humidity: 72,
+          lightPreset: 'estufa',
+          seed: 51903,
+          preSimHours: 24,
+          inoculations: [
+            { speciesId: 'umbraculum', x: -0.12, z: 0.08, surface: 'ground' },
+            { speciesId: 'umbraculum', x: 0.11, z: -0.08, surface: 'ground' },
+            { speciesId: 'crystallina', x: 0.02, z: 0.01, surface: 'log' }
+          ]
+        },
+        {
+          id: 'vazio',
+          name: 'Terrário Vazio',
+          desc: 'Comece do zero para escolher substrato e inocular livremente.',
+          substrateId: 'vulcanico',
+          humidity: 68,
+          lightPreset: 'estufa',
+          seed: 10023,
+          preSimHours: 0,
+          inoculations: []
+        }
+      ],
+      tutorialSteps: [
+        {
+          tool: 'substrato',
+          title: '1. Escolher o substrato',
+          body: 'O substrato define a base nutricional e quanto tempo o terrário retém umidade. Selecione um substrato no painel abaixo.',
+          result: 'Exemplo: "Musgo & Turfa" retém 92% da umidade; "Carvalho Úmido" favorece espécies de madeira.',
+          actionLabel: 'Abrir Substrato'
+        },
+        {
+          tool: 'inocular',
+          title: '2. Inocular espécies fictícias',
+          body: 'Escolha uma espécie e clique sobre o tronco ou solo dentro da caixa de vidro (ou use "Inocular em ponto sugerido").',
+          result: 'Resultado esperado: um ponto de micélio aparece na superfície e inicia sua rede de hifas.',
+          actionLabel: 'Abrir Inocular'
+        },
+        {
+          tool: 'clima',
+          title: '3. Ajustar umidade e borrifar',
+          body: 'Ajuste a umidade alvo ou borrife névoa. Observe o higrômetro de latão na lateral direita e o brilho úmido da madeira.',
+          result: 'Resultado esperado: entre 65% e 88% UR, as hifas saem da dormência e absorvem nutrientes.',
+          actionLabel: 'Abrir Umidade & Tempo'
+        },
+        {
+          tool: 'clima',
+          title: '4. Acelerar e observar estágios',
+          body: 'Aumente a velocidade para 4× ou clique em "Avançar +1 dia" para ver primórdios evoluírem até cogumelos maduros esporulando.',
+          result: 'Você pode salvar versões em "Opções & Versões" para comparar resultados ou continuar no modo livre.',
+          actionLabel: 'Avançar +1 dia'
+        }
+      ]
+    };
+
+    // =========================================================================
+    // 2. PRNG DETERMINÍSTICO (MULBERRY32) E FUNÇÕES DE SUPERFÍCIE
+    // =========================================================================
+    function nextRandom(st) {
+      let t = (st.prngState += 0x6D2B79F5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function getGroundHeight(x, z) {
+      const w = config.world.width * 0.5;
+      const d = config.world.depth * 0.5;
+      const nx = x / w;
+      const nz = z / d;
+      const mound =
+        0.022 * Math.sin(nx * 2.4 + 0.4) * Math.cos(nz * 2.1 - 0.3) +
+        0.012 * Math.cos(nx * 4.8 - nz * 3.5) +
+        0.014 * Math.exp(-((nx + 0.35) ** 2 + (nz - 0.25) ** 2) * 3.2) +
+        0.010 * Math.exp(-((nx - 0.4) ** 2 + (nz + 0.3) ** 2) * 3.8);
+      const edgeDip = 0.012 * (nx * nx * 0.55 + nz * nz * 0.55);
+      return config.world.baseY + 0.044 + mound - edgeDip;
+    }
+
+    // Centerline of the fallen moist log in world coordinates
+    function getLogCenterAtX(x) {
+      const t = clamp((x + 0.22) / 0.44, 0, 1);
+      const z = Math.sin(t * Math.PI * 1.15 - 0.3) * 0.038 - 0.01;
+      const y = getGroundHeight(x, z) + 0.036 + Math.sin(t * Math.PI) * 0.022;
+      const r = 0.046 * (1 - 0.22 * t) + 0.004 * Math.sin(t * 14);
+      return { x, y, z, r };
+    }
+
+    function projectToSurface(x, z, surface) {
+      const halfX = config.world.width * 0.43;
+      const halfZ = config.world.depth * 0.41;
+      const cx = clamp(x, -halfX, halfX);
+      const cz = clamp(z, -halfZ, halfZ);
+
+      if (surface === 'log' && cx >= -0.21 && cx <= 0.21) {
+        const log = getLogCenterAtX(cx);
+        const dz = clamp(cz - log.z, -log.r * 0.82, log.r * 0.82);
+        const dy = Math.sqrt(Math.max(0.0001, log.r * log.r - dz * dz));
+        const len = Math.hypot(dy, dz) || 1;
+        return {
+          x: cx,
+          y: log.y + dy,
+          z: log.z + dz,
+          nx: 0,
+          ny: dy / len,
+          nz: dz / len,
+          surface: 'log'
+        };
+      }
+
+      const gy = getGroundHeight(cx, cz);
+      const eps = 0.008;
+      const hx = getGroundHeight(cx + eps, cz) - getGroundHeight(cx - eps, cz);
+      const hz = getGroundHeight(cx, cz + eps) - getGroundHeight(cx, cz - eps);
+      const len = Math.hypot(-hx, 2 * eps, -hz) || 1;
+      return {
+        x: cx,
+        y: gy,
+        z: cz,
+        nx: -hx / len,
+        ny: (2 * eps) / len,
+        nz: -hz / len,
+        surface: 'ground'
+      };
+    }
+
+    function worldToGrid(x, z) {
+      const cols = config.sim.gridCols;
+      const rows = config.sim.gridRows;
+      const u = clamp((x / config.world.width) + 0.5, 0, 0.999);
+      const v = clamp((z / config.world.depth) + 0.5, 0, 0.999);
+      return {
+        col: Math.floor(u * cols),
+        row: Math.floor(v * rows),
+        idx: Math.floor(v * rows) * cols + Math.floor(u * cols)
+      };
+    }
+
+    // =========================================================================
+    // 3. ESTADO SERIALIZÁVEL E HISTÓRICO (UNDO/REDO)
+    // =========================================================================
+    let state = null;
+    let undoStack = [];
+    let redoStack = [];
+    const MAX_HISTORY = 16;
+
+    function createNutrientGrid(baseVal) {
+      const len = config.sim.gridCols * config.sim.gridRows;
+      const arr = new Array(len);
+      for (let i = 0; i < len; i++) {
+        arr[i] = Number(clamp(baseVal, 0.2, 1.0).toFixed(4));
+      }
+      return arr;
+    }
+
+    function createEmptyState(opts = {}) {
+      const subId = config.substrates[opts.substrateId] ? opts.substrateId : 'carvalho';
+      const sub = config.substrates[subId];
+      const seed = Number.isFinite(opts.seed) ? (opts.seed >>> 0) : 23041;
+      const hum = clamp(Number.isFinite(opts.humidity) ? opts.humidity : 78, 20, 98);
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        seed,
+        prngState: seed,
+        nextId: 1,
+        simTimeHours: 8,
+        paused: false,
+        timeScale: 1,
+        substrateId: subId,
+        activeTool: null,
+        secondaryTab: 'presets',
+        selectedSpeciesId: 'lumenaria',
+        lightPreset: opts.lightPreset === 'crepusculo' ? 'crepusculo' : 'estufa',
+        cameraPreset: 'geral',
+        qualityMode: 'equilibrado',
+        mode: 'livre',
+        tutorialStep: 0,
+        environment: {
+          humidity: hum,
+          targetHumidity: hum,
+          tempC: 21.5,
+          nutrientGrid: createNutrientGrid(sub.baseNutrient)
+        },
+        inoculations: [],
+        myceliumNodes: [],
+        myceliumEdges: [],
+        mushrooms: [],
+        snapshots: [],
+        stats: {
+          totalSprays: 0,
+          substrateChanges: 0
+        }
+      };
+    }
+
+    function cloneSerializableState(st) {
+      return JSON.parse(JSON.stringify(st));
+    }
+
+    function pushUndoSnapshot() {
+      if (!state) return;
+      const snap = cloneSerializableState(state);
+      snap.snapshots = []; // keep undo stack light
+      undoStack.push(snap);
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      redoStack = [];
+    }
+
+    function serialize(st = state) {
+      return JSON.stringify(st, null, 2);
+    }
+
+    function validateImportedState(obj) {
+      if (!obj || typeof obj !== 'object') return { ok: false, error: 'JSON inválido.' };
+      if (obj.schemaVersion !== SCHEMA_VERSION) {
+        return { ok: false, error: `Versão de esquema incompatível (${obj.schemaVersion}).` };
+      }
+      if (!config.substrates[obj.substrateId]) {
+        return { ok: false, error: 'Substrato desconhecido no arquivo.' };
+      }
+      if (!obj.environment || !Array.isArray(obj.environment.nutrientGrid) ||
+          obj.environment.nutrientGrid.length !== config.sim.gridCols * config.sim.gridRows) {
+        return { ok: false, error: 'Grade de nutrientes ausente ou corrompida.' };
+      }
+      if (!Array.isArray(obj.myceliumNodes) || !Array.isArray(obj.myceliumEdges) || !Array.isArray(obj.mushrooms)) {
+        return { ok: false, error: 'Estruturas do grafo de micélio ausentes.' };
+      }
+      // Sanitize bounds
+      obj.environment.humidity = clamp(Number(obj.environment.humidity) || 70, 20, 98);
+      obj.environment.targetHumidity = clamp(Number(obj.environment.targetHumidity) || 70, 20, 98);
+      obj.simTimeHours = Math.max(0, Number(obj.simTimeHours) || 0);
+      obj.myceliumNodes = obj.myceliumNodes.slice(0, config.sim.maxNodes);
+      obj.myceliumEdges = obj.myceliumEdges.slice(0, config.sim.maxEdges);
+      obj.mushrooms = obj.mushrooms.slice(0, config.sim.maxMushrooms);
+      return { ok: true, data: obj };
+    }
+
+    // =========================================================================
+    // 4. SIMULAÇÃO BIOLÓGICA / GRAFO DE MICÉLIO (PASSO FIXO DETERMINÍSTICO)
+    // =========================================================================
+    function addInoculationToState(st, speciesId, x, z, surface = 'ground') {
+      if (!config.species[speciesId]) return null;
+      if (st.myceliumNodes.length >= config.sim.maxNodes) return null;
+      const pt = projectToSurface(x, z, surface);
+      const id = `ino_${st.nextId++}`;
+      const nodeId = `node_${st.nextId++}`;
+      st.inoculations.push({ id, speciesId, x: pt.x, y: pt.y, z: pt.z, surface: pt.surface });
+      st.myceliumNodes.push({
+        id: nodeId,
+        speciesId,
+        x: pt.x,
+        y: pt.y,
+        z: pt.z,
+        nx: pt.nx,
+        ny: pt.ny,
+        nz: pt.nz,
+        surface: pt.surface,
+        energy: 0.45,
+        ageHours: 0,
+        dormant: false,
+        branches: 0,
+        parentId: null
+      });
+      return { id, nodeId, pt };
+    }
+
+    function updateSimulation(st, dtSec, options = {}) {
+      const safeDt = clamp(dtSec, 0, 0.1);
+      const scale = options.forceScale !== undefined ? options.forceScale : (st.paused ? 0 : st.timeScale);
+      if (scale <= 0 || safeDt <= 0) return { newMushrooms: 0, newNodes: 0, sporulating: 0 };
+
+      const hours = safeDt * config.sim.baseHoursPerSec * scale;
+      st.simTimeHours += hours;
+
+      const sub = config.substrates[st.substrateId] || config.substrates.carvalho;
+      const env = st.environment;
+
+      // Humidity drifts gently toward target, modulated by substrate retention
+      const relaxRate = 0.08 * hours;
+      env.humidity += (env.targetHumidity - env.humidity) * clamp(relaxRate, 0, 1);
+      // Slight natural evaporation if humidity is above substrate equilibrium
+      const naturalEq = 42 + sub.retention * 40;
+      if (env.humidity > naturalEq) {
+        env.humidity -= sub.evapRate * 0.12 * hours;
+      }
+      env.humidity = clamp(env.humidity, 20, 98);
+
+      let newNodes = 0;
+      let newMushrooms = 0;
+      let sporulating = 0;
+
+      const nodes = st.myceliumNodes;
+      const edges = st.myceliumEdges;
+      const mushrooms = st.mushrooms;
+      const grid = env.nutrientGrid;
+
+      // 1. Update mycelium nodes & graph branching
+      const currentCount = nodes.length;
+      for (let i = 0; i < currentCount; i++) {
+        const node = nodes[i];
+        const sp = config.species[node.speciesId];
+        if (!sp) continue;
+
+        node.ageHours += hours;
+        const cell = worldToGrid(node.x, node.z);
+        const localNut = grid[cell.idx];
+
+        // Humidity suitability curve
+        const hDiff = env.humidity - sp.optHumidity;
+        const hFactor = Math.exp(-(hDiff * hDiff) / (2 * sp.humidityTol * sp.humidityTol));
+        const substrateBonus = sp.preferredSubstrate === st.substrateId ? 1.25 : 0.85;
+
+        if (env.humidity < sp.minHumidity || localNut < 0.04) {
+          node.dormant = true;
+          continue;
+        }
+
+        node.dormant = false;
+        const uptake = 0.125 * sp.growthRate * hFactor * substrateBonus * hours;
+        const absorbed = Math.min(localNut - 0.03, uptake * 0.22);
+        if (absorbed > 0) {
+          grid[cell.idx] = clamp(localNut - absorbed, 0.03, 1.0);
+        }
+        node.energy += uptake * (0.45 + 0.55 * localNut);
+
+        // Hyphal branching in 3D along terrain/log surface
+        if (node.energy >= sp.branchEnergy && node.branches < 3 && nodes.length < config.sim.maxNodes && edges.length < config.sim.maxEdges) {
+          const angle = nextRandom(st) * Math.PI * 2;
+          const stepLen = 0.024 + nextRandom(st) * 0.022;
+          const candX = node.x + Math.cos(angle) * stepLen;
+          const candZ = node.z + Math.sin(angle) * stepLen;
+
+          // Keep inside terrarium bounds
+          const halfX = config.world.width * 0.42;
+          const halfZ = config.world.depth * 0.40;
+          if (Math.abs(candX) <= halfX && Math.abs(candZ) <= halfZ) {
+            // Allow transitioning between log and ground near log edges
+            let targetSurface = node.surface;
+            if (targetSurface === 'log' && (Math.abs(candX) > 0.20 || nextRandom(st) < 0.14)) {
+              targetSurface = 'ground';
+            } else if (targetSurface === 'ground' && Math.abs(candX) < 0.19 && Math.abs(candZ) < 0.055 && nextRandom(st) < 0.35) {
+              targetSurface = 'log';
+            }
+            const pt = projectToSurface(candX, candZ, targetSurface);
+
+            // Avoid overcrowding existing nodes
+            let tooClose = false;
+            for (let j = 0; j < nodes.length; j++) {
+              const other = nodes[j];
+              const dx = other.x - pt.x;
+              const dy = other.y - pt.y;
+              const dz = other.z - pt.z;
+              if (dx * dx + dy * dy + dz * dz < 0.00032) {
+                tooClose = true;
+                break;
+              }
+            }
+
+            if (!tooClose) {
+              const childId = `node_${st.nextId++}`;
+              nodes.push({
+                id: childId,
+                speciesId: node.speciesId,
+                x: pt.x,
+                y: pt.y,
+                z: pt.z,
+                nx: pt.nx,
+                ny: pt.ny,
+                nz: pt.nz,
+                surface: pt.surface,
+                energy: 0.22,
+                ageHours: 0,
+                dormant: false,
+                branches: 0,
+                parentId: node.id
+              });
+              edges.push({
+                id: `edge_${st.nextId++}`,
+                fromId: node.id,
+                toId: childId,
+                speciesId: node.speciesId
+              });
+              node.branches += 1;
+              node.energy -= sp.branchEnergy * 0.65;
+              newNodes += 1;
+            }
+          }
+        }
+
+        // Fruiting body (mushroom) emergence
+        if (node.energy >= sp.fruitEnergy * 0.62 && node.ageHours >= 3.5 && hFactor > 0.42 && mushrooms.length < config.sim.maxMushrooms) {
+          let blocked = false;
+          const minSq = sp.minSpacing * sp.minSpacing;
+          for (let m = 0; m < mushrooms.length; m++) {
+            const mush = mushrooms[m];
+            const dx = mush.x - node.x;
+            const dz = mush.z - node.z;
+            if (dx * dx + dz * dz < minSq) {
+              blocked = true;
+              break;
+            }
+          }
+          if (!blocked) {
+            mushrooms.push({
+              id: `mush_${st.nextId++}`,
+              nodeId: node.id,
+              speciesId: node.speciesId,
+              x: node.x,
+              y: node.y,
+              z: node.z,
+              nx: node.nx,
+              ny: node.ny,
+              nz: node.nz,
+              stage: 0,
+              maturity: 0.06,
+              rotY: nextRandom(st) * Math.PI * 2,
+              tilt: (nextRandom(st) - 0.5) * 0.22,
+              sizeJitter: 0.82 + nextRandom(st) * 0.36,
+              sporulating: false
+            });
+            node.energy -= sp.fruitEnergy * 0.52;
+            newMushrooms += 1;
+          }
+        }
+      }
+
+      // 2. Update mushroom life-cycle stages
+      for (let i = 0; i < mushrooms.length; i++) {
+        const m = mushrooms[i];
+        const sp = config.species[m.speciesId];
+        if (!sp) continue;
+        const hDiff = env.humidity - sp.optHumidity;
+        const hFactor = Math.exp(-(hDiff * hDiff) / (2 * sp.humidityTol * sp.humidityTol));
+
+        if (env.humidity >= sp.minHumidity * 0.85 && m.maturity < 1.32) {
+          m.maturity += 0.048 * sp.growthRate * (0.35 + 0.65 * hFactor) * hours;
+        }
+
+        if (m.maturity < 0.22) m.stage = 0;       // Primórdio
+        else if (m.maturity < 0.50) m.stage = 1;  // Botão
+        else if (m.maturity < 0.78) m.stage = 2;  // Jovem
+        else if (m.maturity < 1.08) m.stage = 3;  // Maduro
+        else m.stage = 4;                         // Senescente
+
+        m.sporulating = m.stage === 3 && env.humidity >= sp.minHumidity;
+        if (m.sporulating) sporulating += 1;
+
+        // Senescent mushrooms gently recycle nutrients back to substrate
+        if (m.stage === 4 && m.maturity < 1.32) {
+          const cell = worldToGrid(m.x, m.z);
+          grid[cell.idx] = clamp(grid[cell.idx] + 0.008 * hours, 0.03, 1.0);
+        }
+      }
+
+      return { newMushrooms, newNodes, sporulating };
+    }
+
+    function advanceDeterministicHours(st, totalHours) {
+      const stepSec = config.sim.fixedDt;
+      const hoursPerStep = stepSec * config.sim.baseHoursPerSec * 12;
+      const steps = Math.min(2000, Math.ceil(totalHours / hoursPerStep));
+      for (let i = 0; i < steps; i++) {
+        updateSimulation(st, stepSec, { forceScale: 12 });
+      }
+    }
+
+    function buildPresetState(presetId) {
+      const preset = config.presets.find((p) => p.id === presetId) || config.presets[0];
+      const st = createEmptyState({
+        substrateId: preset.substrateId,
+        humidity: preset.humidity,
+        lightPreset: preset.lightPreset,
+        seed: preset.seed
+      });
+      for (const ino of preset.inoculations) {
+        addInoculationToState(st, ino.speciesId, ino.x, ino.z, ino.surface);
+      }
+      if (preset.preSimHours > 0) {
+        advanceDeterministicHours(st, preset.preSimHours);
+      }
+      return st;
+    }
+
+    function computeMetrics(st) {
+      const grid = st.environment.nutrientGrid;
+      let nutSum = 0;
+      for (let i = 0; i < grid.length; i++) nutSum += grid[i];
+      const avgNutrient = grid.length ? (nutSum / grid.length) * 100 : 0;
+
+      let matureCount = 0;
+      let dormantCount = 0;
+      const matureSpecies = new Set();
+      for (const n of st.myceliumNodes) {
+        if (n.dormant) dormantCount++;
+      }
+      for (const m of st.mushrooms) {
+        if (m.stage >= 3) {
+          matureCount++;
+          matureSpecies.add(m.speciesId);
+        }
+      }
+      const day = Math.floor(st.simTimeHours / 24) + 1;
+      const hour = Math.floor(st.simTimeHours % 24);
+      const min = Math.floor((st.simTimeHours % 1) * 60);
+      return {
+        avgNutrient: Math.round(avgNutrient),
+        nodeCount: st.myceliumNodes.length,
+        edgeCount: st.myceliumEdges.length,
+        mushroomCount: st.mushrooms.length,
+        matureCount,
+        dormantCount,
+        matureSpeciesCount: matureSpecies.size,
+        day,
+        timeStr: `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+      };
+    }
+
+    // =========================================================================
+    // 5. ÁUDIO PROCEDURAL (WEB AUDIO API — CRIADO SÓ APÓS GESTO)
+    // =========================================================================
+    const audio = {
+      ctx: null,
+      masterGain: null,
+      compressor: null,
+      enabled: false,
+      ensureInit() {
+        if (this.ctx) {
+          if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+          return true;
+        }
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return false;
+          this.ctx = new AudioCtx();
+          this.compressor = this.ctx.createDynamicsCompressor();
+          this.compressor.threshold.value = -16;
+          this.compressor.ratio.value = 6;
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = this.enabled ? 0.32 : 0.0001;
+          this.compressor.connect(this.masterGain);
+          this.masterGain.connect(this.ctx.destination);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      setEnabled(flag) {
+        this.enabled = !!flag;
+        if (this.enabled) this.ensureInit();
+        if (this.ctx && this.masterGain) {
+          const now = this.ctx.currentTime;
+          this.masterGain.gain.cancelScheduledValues(now);
+          this.masterGain.gain.setTargetAtTime(this.enabled ? 0.32 : 0.0001, now, 0.04);
+        }
+      },
+      playSubstrate() {
+        if (!this.enabled || !this.ensureInit()) return;
+        const ctx = this.ctx;
+        const now = ctx.currentTime;
+        const len = Math.floor(ctx.sampleRate * 0.22);
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.35));
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(420, now);
+        filter.Q.value = 1.4;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        src.connect(filter).connect(gain).connect(this.compressor);
+        src.start(now);
+      },
+      playInoculate() {
+        if (!this.enabled || !this.ensureInit()) return;
+        const ctx = this.ctx;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(340, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.09);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.22, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.connect(gain).connect(this.compressor);
+        osc.start(now);
+        osc.stop(now + 0.17);
+      },
+      playMist() {
+        if (!this.enabled || !this.ensureInit()) return;
+        const ctx = this.ctx;
+        const now = ctx.currentTime;
+        const len = Math.floor(ctx.sampleRate * 0.36);
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) {
+          const env = Math.sin((i / len) * Math.PI);
+          data[i] = (Math.random() * 2 - 1) * env;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(2400, now);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+        src.connect(filter).connect(gain).connect(this.compressor);
+        src.start(now);
+      },
+      playSprout() {
+        if (!this.enabled || !this.ensureInit()) return;
+        const ctx = this.ctx;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(480, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.12);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain).connect(this.compressor);
+        osc.start(now);
+        osc.stop(now + 0.19);
+      },
+      dispose() {
+        if (this.ctx) {
+          this.ctx.close().catch(() => {});
+          this.ctx = null;
+        }
+      }
+    };
+
+    // =========================================================================
+    // 6. CENA 3D THREE.JS r160 (CARREGAMENTO DINÂMICO COM FALLBACK REAL)
+    // =========================================================================
+    let THREE = null;
+    let OrbitControls = null;
+    let RoomEnvironment = null;
+    let EffectComposer = null;
+    let RenderPass = null;
+    let UnrealBloomPass = null;
+    let OutputPass = null;
+
+    const sceneCtx = {
+      renderer: null,
+      composer: null,
+      bloomPass: null,
+      scene: null,
+      camera: null,
+      controls: null,
+      pmrem: null,
+      envRT: null,
+      lights: {},
+      meshes: {
+        interactive: [],
+        ground: null,
+        log: null,
+        mossGroup: null,
+        glassPanes: [],
+        condensationOverlay: null,
+        hygroNeedle: null,
+        placementRing: null,
+        hyphaeLines: null,
+        hyphaNodesInst: null,
+        speciesInst: {},
+        sporePoints: null,
+        mistPoints: null
+      },
+      textures: {},
+      materials: {},
+      cameraTargetPos: null,
+      cameraTargetLook: null,
+      cameraLerpActive: false,
+      mistParticles: [],
+      sporeParticles: [],
+      lastFrameTime: 0,
+      simAccumulator: 0,
+      fpsSamples: [],
+      currentFps: 60,
+      rafId: null,
+      disposed: false,
+      reducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      needsShadowRefresh: true
+    };
+
+    // Procedural noise & textures (CanvasTexture: sRGB albedo + linear normal/roughness)
+    function hash2D(ix, iy, seed) {
+      let n = Math.imul(ix, 374761393) + Math.imul(iy, 668265263) + Math.imul(seed, 1442695041);
+      n = (n ^ (n >>> 13)) * 1274126177;
+      return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
+    }
+
+    function valueNoise2D(x, y, period, seed) {
+      const ix = Math.floor(x);
+      const iy = Math.floor(y);
+      const fx = x - ix;
+      const fy = y - iy;
+      const ux = fx * fx * (3 - 2 * fx);
+      const uy = fy * fy * (3 - 2 * fy);
+      const x0 = ((ix % period) + period) % period;
+      const x1 = (x0 + 1) % period;
+      const y0 = ((iy % period) + period) % period;
+      const y1 = (y0 + 1) % period;
+      const a = hash2D(x0, y0, seed);
+      const b = hash2D(x1, y0, seed);
+      const c = hash2D(x0, y1, seed);
+      const d = hash2D(x1, y1, seed);
+      return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+    }
+
+    function createProceduralPBRSet(seed, palette, mode = 'soil', size = 256) {
+      const heightData = new Float32Array(size * size);
+      const colCanvas = document.createElement('canvas');
+      colCanvas.width = size;
+      colCanvas.height = size;
+      const colCtx = colCanvas.getContext('2d');
+      const colImg = colCtx.createImageData(size, size);
+
+      const roughCanvas = document.createElement('canvas');
+      roughCanvas.width = size;
+      roughCanvas.height = size;
+      const roughCtx = roughCanvas.getContext('2d');
+      const roughImg = roughCtx.createImageData(size, size);
+
+      const c0 = new THREE.Color(palette[0]);
+      const c1 = new THREE.Color(palette[1]);
+      const c2 = new THREE.Color(palette[2]);
+      const tmp = new THREE.Color();
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const u = x / size;
+          const v = y / size;
+          let h = 0;
+          if (mode === 'bark') {
+            h =
+              0.55 * valueNoise2D(u * 16, v * 4, 16, seed) +
+              0.30 * valueNoise2D(u * 32, v * 8, 32, seed + 7) +
+              0.15 * valueNoise2D(u * 64, v * 16, 64, seed + 19);
+            h = Math.pow(h, 1.15);
+          } else if (mode === 'moss') {
+            h =
+              0.45 * valueNoise2D(u * 12, v * 12, 12, seed) +
+              0.35 * valueNoise2D(u * 28, v * 28, 28, seed + 11) +
+              0.20 * valueNoise2D(u * 56, v * 56, 56, seed + 23);
+          } else {
+            h =
+              0.50 * valueNoise2D(u * 10, v * 10, 10, seed) +
+              0.30 * valueNoise2D(u * 24, v * 24, 24, seed + 5) +
+              0.20 * valueNoise2D(u * 48, v * 48, 48, seed + 17);
+          }
+          heightData[y * size + x] = h;
+
+          if (h < 0.5) tmp.copy(c2).lerp(c0, h * 2);
+          else tmp.copy(c0).lerp(c1, (h - 0.5) * 2);
+
+          const idx = (y * size + x) * 4;
+          colImg.data[idx] = Math.round(tmp.r * 255);
+          colImg.data[idx + 1] = Math.round(tmp.g * 255);
+          colImg.data[idx + 2] = Math.round(tmp.b * 255);
+          colImg.data[idx + 3] = 255;
+
+          const rVal = Math.round(clamp(0.55 + (1 - h) * 0.4, 0.35, 0.98) * 255);
+          roughImg.data[idx] = rVal;
+          roughImg.data[idx + 1] = rVal;
+          roughImg.data[idx + 2] = rVal;
+          roughImg.data[idx + 3] = 255;
+        }
+      }
+      colCtx.putImageData(colImg, 0, 0);
+      roughCtx.putImageData(roughImg, 0, 0);
+
+      // Central-difference normal map (linear)
+      const normCanvas = document.createElement('canvas');
+      normCanvas.width = size;
+      normCanvas.height = size;
+      const normCtx = normCanvas.getContext('2d');
+      const normImg = normCtx.createImageData(size, size);
+      const strength = mode === 'bark' ? 3.2 : 2.1;
+
+      for (let y = 0; y < size; y++) {
+        const ym = (y - 1 + size) % size;
+        const yp = (y + 1) % size;
+        for (let x = 0; x < size; x++) {
+          const xm = (x - 1 + size) % size;
+          const xp = (x + 1) % size;
+          const dx = (heightData[y * size + xp] - heightData[y * size + xm]) * strength;
+          const dy = (heightData[yp * size + x] - heightData[ym * size + x]) * strength;
+          const nz = 1.0;
+          const len = Math.hypot(-dx, -dy, nz) || 1;
+          const idx = (y * size + x) * 4;
+          normImg.data[idx] = Math.round(((-dx / len) * 0.5 + 0.5) * 255);
+          normImg.data[idx + 1] = Math.round(((-dy / len) * 0.5 + 0.5) * 255);
+          normImg.data[idx + 2] = Math.round(((nz / len) * 0.5 + 0.5) * 255);
+          normImg.data[idx + 3] = 255;
+        }
+      }
+      normCtx.putImageData(normImg, 0, 0);
+
+      const map = new THREE.CanvasTexture(colCanvas);
+      map.colorSpace = THREE.SRGBColorSpace;
+      map.wrapS = map.wrapT = THREE.RepeatWrapping;
+
+      const normalMap = new THREE.CanvasTexture(normCanvas);
+      normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+
+      const roughnessMap = new THREE.CanvasTexture(roughCanvas);
+      roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
+
+      return { map, normalMap, roughnessMap };
+    }
+
+    function createRadialTexture(innerColor, outerColor, size = 128) {
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(size / 2, size / 2, 2, size / 2, size / 2, size / 2);
+      grad.addColorStop(0, innerColor);
+      grad.addColorStop(0.55, outerColor);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    function createCondensationTexture(size = 256) {
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, size, size);
+      // Soft mist band near lower/middle glass + tiny droplets
+      const grad = ctx.createLinearGradient(0, size, 0, 0);
+      grad.addColorStop(0, 'rgba(215, 238, 228, 0.34)');
+      grad.addColorStop(0.45, 'rgba(215, 238, 228, 0.12)');
+      grad.addColorStop(1, 'rgba(215, 238, 228, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+
+      for (let i = 0; i < 160; i++) {
+        const x = hash2D(i, 3, 91) * size;
+        const y = size * (0.25 + hash2D(i, 9, 91) * 0.72);
+        const r = 1 + hash2D(i, 15, 91) * 2.4;
+        ctx.fillStyle = 'rgba(235, 250, 245, 0.42)';
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    // Build custom mushroom cap & stipe geometries per fictional species
+    function buildSpeciesGeometries(speciesId) {
+      const capPoints = [];
+      if (speciesId === 'lumenaria') {
+        // Delicate campanulate bell cap
+        capPoints.push(
+          new THREE.Vector2(0.0, 0.85),
+          new THREE.Vector2(0.18, 0.82),
+          new THREE.Vector2(0.42, 0.62),
+          new THREE.Vector2(0.56, 0.25),
+          new THREE.Vector2(0.62, 0.02),
+          new THREE.Vector2(0.48, 0.0),
+          new THREE.Vector2(0.12, 0.14)
+        );
+      } else if (speciesId === 'rubropilus') {
+        // Flared coral-chalice cap
+        capPoints.push(
+          new THREE.Vector2(0.0, 0.36),
+          new THREE.Vector2(0.24, 0.32),
+          new THREE.Vector2(0.55, 0.48),
+          new THREE.Vector2(0.76, 0.40),
+          new THREE.Vector2(0.80, 0.24),
+          new THREE.Vector2(0.50, 0.12),
+          new THREE.Vector2(0.14, 0.05)
+        );
+      } else if (speciesId === 'umbraculum') {
+        // Broad velvety umbonate parasol cap
+        capPoints.push(
+          new THREE.Vector2(0.0, 0.56),
+          new THREE.Vector2(0.20, 0.50),
+          new THREE.Vector2(0.52, 0.38),
+          new THREE.Vector2(0.86, 0.18),
+          new THREE.Vector2(0.95, 0.04),
+          new THREE.Vector2(0.82, -0.02),
+          new THREE.Vector2(0.16, 0.04)
+        );
+      } else {
+        // Crystallina: faceted teardrop/gem dome
+        capPoints.push(
+          new THREE.Vector2(0.0, 0.72),
+          new THREE.Vector2(0.26, 0.64),
+          new THREE.Vector2(0.48, 0.42),
+          new THREE.Vector2(0.54, 0.14),
+          new THREE.Vector2(0.42, 0.0),
+          new THREE.Vector2(0.10, 0.06)
+        );
+      }
+      const capGeo = new THREE.LatheGeometry(capPoints, speciesId === 'crystallina' ? 10 : 18);
+      capGeo.translate(0, 0.92, 0);
+      capGeo.computeVertexNormals();
+
+      // Organic tapered stipe with subtle base bulb
+      const stipePoints = [
+        new THREE.Vector2(0.0, 0.0),
+        new THREE.Vector2(0.18, 0.03),
+        new THREE.Vector2(0.15, 0.16),
+        new THREE.Vector2(0.11, 0.52),
+        new THREE.Vector2(0.09, 0.88),
+        new THREE.Vector2(0.13, 0.98)
+      ];
+      const stipeGeo = new THREE.LatheGeometry(stipePoints, 12);
+      stipeGeo.computeVertexNormals();
+      return { capGeo, stipeGeo };
+    }
+
+    function buildTerrariumScene() {
+      const container = document.getElementById('canvas-container');
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+        preserveDrawingBuffer: false
+      });
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+      sceneCtx.renderer = renderer;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#141e18');
+      scene.fog = new THREE.FogExp2('#141e18', 0.42);
+      sceneCtx.scene = scene;
+
+      // Lightweight PMREM Environment
+      if (RoomEnvironment) {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+        scene.environment = envRT.texture;
+        sceneCtx.pmrem = pmrem;
+        sceneCtx.envRT = envRT;
+      }
+
+      const camera = new THREE.PerspectiveCamera(38, w / h, 0.02, 12);
+      camera.position.set(0.68, 0.52, 0.78);
+      sceneCtx.camera = camera;
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.07;
+      controls.target.set(0, 0.16, 0);
+      controls.minDistance = 0.34;
+      controls.maxDistance = 1.65;
+      controls.maxPolarAngle = Math.PI * 0.49;
+      controls.minPolarAngle = 0.16;
+      controls.enablePan = false;
+      sceneCtx.controls = controls;
+
+      // Lights
+      const hemi = new THREE.HemisphereLight('#cde8d5', '#2a241c', 0.55);
+      scene.add(hemi);
+
+      const keyLight = new THREE.DirectionalLight('#fff2db', 2.2);
+      keyLight.position.set(0.95, 1.55, 0.85);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(1024, 1024);
+      keyLight.shadow.camera.near = 0.3;
+      keyLight.shadow.camera.far = 3.5;
+      keyLight.shadow.camera.left = -0.55;
+      keyLight.shadow.camera.right = 0.55;
+      keyLight.shadow.camera.top = 0.55;
+      keyLight.shadow.camera.bottom = -0.55;
+      keyLight.shadow.bias = -0.0006;
+      scene.add(keyLight);
+
+      const rimLight = new THREE.DirectionalLight('#7ecfc0', 0.7);
+      rimLight.position.set(-0.9, 0.65, -0.75);
+      scene.add(rimLight);
+
+      const bioLight = new THREE.PointLight('#52e0cf', 0.0, 0.85, 1.8);
+      bioLight.position.set(-0.04, 0.20, 0.02);
+      scene.add(bioLight);
+
+      sceneCtx.lights = { hemi, keyLight, rimLight, bioLight };
+
+      // Procedural Textures Cache
+      sceneCtx.textures.substrates = {};
+      for (const key of Object.keys(config.substrates)) {
+        const sub = config.substrates[key];
+        sceneCtx.textures.substrates[key] = createProceduralPBRSet(
+          key === 'carvalho' ? 101 : key === 'musgo' ? 202 : 303,
+          sub.soilColors,
+          key === 'musgo' ? 'moss' : 'soil',
+          256
+        );
+      }
+      sceneCtx.textures.bark = createProceduralPBRSet(404, ['#4b3624', '#634832', '#2b1d12'], 'bark', 256);
+      sceneCtx.textures.moss = createProceduralPBRSet(505, ['#396336', '#568545', '#213a21'], 'moss', 128);
+      sceneCtx.textures.table = createProceduralPBRSet(606, ['#262320', '#332e29', '#1a1816'], 'bark', 256);
+      sceneCtx.textures.contactAO = createRadialTexture('rgba(0,0,0,0.68)', 'rgba(0,0,0,0.22)', 128);
+      sceneCtx.textures.particle = createRadialTexture('rgba(255,255,255,0.95)', 'rgba(220,255,245,0.35)', 64);
+      sceneCtx.textures.condensation = createCondensationTexture(256);
+
+      // Botanical Bench Surface + Contact Shadow
+      const tableGeo = new THREE.PlaneGeometry(4.5, 4.5);
+      const tableMat = new THREE.MeshStandardMaterial({
+        map: sceneCtx.textures.table.map,
+        normalMap: sceneCtx.textures.table.normalMap,
+        roughness: 0.86,
+        metalness: 0.04
+      });
+      sceneCtx.textures.table.map.repeat.set(4, 4);
+      sceneCtx.textures.table.normalMap.repeat.set(4, 4);
+      const table = new THREE.Mesh(tableGeo, tableMat);
+      table.rotation.x = -Math.PI / 2;
+      table.receiveShadow = true;
+      scene.add(table);
+
+      const aoPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.92, 0.72),
+        new THREE.MeshBasicMaterial({ map: sceneCtx.textures.contactAO, transparent: true, depthWrite: false })
+      );
+      aoPlane.rotation.x = -Math.PI / 2;
+      aoPlane.position.y = 0.0015;
+      scene.add(aoPlane);
+
+      // Terrarium Base Plinth (Oiled Walnut & Aged Brass)
+      const W = config.world.width;
+      const D = config.world.depth;
+      const H = config.world.height;
+
+      const plinthMat = new THREE.MeshStandardMaterial({ color: '#271e17', roughness: 0.62, metalness: 0.08 });
+      const brassMat = new THREE.MeshStandardMaterial({ color: '#9c8353', roughness: 0.34, metalness: 0.82 });
+
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(W + 0.026, 0.032, D + 0.026), plinthMat);
+      plinth.position.y = 0.018;
+      plinth.castShadow = true;
+      plinth.receiveShadow = true;
+      scene.add(plinth);
+
+      // Brass corner feet
+      const footGeo = new THREE.CylinderGeometry(0.014, 0.016, 0.008, 12);
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          const foot = new THREE.Mesh(footGeo, brassMat);
+          foot.position.set(sx * (W * 0.46), 0.004, sz * (D * 0.44));
+          scene.add(foot);
+        }
+      }
+
+      // Brass Glass Frame
+      const postGeo = new THREE.BoxGeometry(0.009, H, 0.009);
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          const post = new THREE.Mesh(postGeo, brassMat);
+          post.position.set(sx * (W * 0.5), 0.034 + H * 0.5, sz * (D * 0.5));
+          post.castShadow = true;
+          scene.add(post);
+        }
+      }
+      const railXGeo = new THREE.BoxGeometry(W + 0.01, 0.009, 0.009);
+      const railZGeo = new THREE.BoxGeometry(0.009, 0.009, D + 0.01);
+      for (const ry of [0.036, 0.034 + H]) {
+        for (const sz of [-1, 1]) {
+          const r = new THREE.Mesh(railXGeo, brassMat);
+          r.position.set(0, ry, sz * (D * 0.5));
+          scene.add(r);
+        }
+        for (const sx of [-1, 1]) {
+          const r = new THREE.Mesh(railZGeo, brassMat);
+          r.position.set(sx * (W * 0.5), ry, 0);
+          scene.add(r);
+        }
+      }
+
+      // Miniature Analog Brass Hygrometer mounted on right inner wall
+      const hygroGroup = new THREE.Group();
+      hygroGroup.position.set(W * 0.5 - 0.012, 0.28, -0.06);
+      hygroGroup.rotation.y = -Math.PI / 2;
+      const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.028, 0.01, 24), brassMat);
+      bezel.rotation.x = Math.PI / 2;
+      hygroGroup.add(bezel);
+      const dialFace = new THREE.Mesh(
+        new THREE.CircleGeometry(0.022, 24),
+        new THREE.MeshStandardMaterial({ color: '#e9e4d5', roughness: 0.7 })
+      );
+      dialFace.position.z = 0.0056;
+      hygroGroup.add(dialFace);
+      const needlePivot = new THREE.Group();
+      needlePivot.position.z = 0.0068;
+      const needle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.0022, 0.017, 0.0012),
+        new THREE.MeshStandardMaterial({ color: '#b53a2d', roughness: 0.4 })
+      );
+      needle.position.y = 0.006;
+      needlePivot.add(needle);
+      hygroGroup.add(needlePivot);
+      scene.add(hygroGroup);
+      sceneCtx.meshes.hygroNeedle = needlePivot;
+
+      // Drainage pebble skirt (visible through lower glass walls)
+      const skirtMat = new THREE.MeshStandardMaterial({ color: '#262422', roughness: 0.92 });
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(W - 0.012, 0.044, D - 0.012), skirtMat);
+      skirt.position.y = 0.056;
+      scene.add(skirt);
+
+      // Displaced Organic Substrate Mesh (Interactive Raycast Target)
+      const segX = 44;
+      const segZ = 32;
+      const groundGeo = new THREE.PlaneGeometry(W - 0.016, D - 0.016, segX, segZ);
+      groundGeo.rotateX(-Math.PI / 2);
+      const posAttr = groundGeo.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        const vx = posAttr.getX(i);
+        const vz = posAttr.getZ(i);
+        posAttr.setY(i, getGroundHeight(vx, vz));
+      }
+      groundGeo.computeVertexNormals();
+
+      const subTex = sceneCtx.textures.substrates.carvalho;
+      const groundMat = new THREE.MeshStandardMaterial({
+        map: subTex.map,
+        normalMap: subTex.normalMap,
+        roughnessMap: subTex.roughnessMap,
+        roughness: 0.85,
+        metalness: 0.02
+      });
+      const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+      groundMesh.receiveShadow = true;
+      groundMesh.userData = { surface: 'ground' };
+      scene.add(groundMesh);
+      sceneCtx.meshes.ground = groundMesh;
+      sceneCtx.materials.ground = groundMat;
+      sceneCtx.meshes.interactive.push(groundMesh);
+
+      // Hero Fallen Moist Oak Log (Curved Tube with Bark PBR)
+      const logCurvePts = [];
+      for (let i = 0; i <= 10; i++) {
+        const x = -0.22 + (i / 10) * 0.44;
+        const c = getLogCenterAtX(x);
+        logCurvePts.push(new THREE.Vector3(c.x, c.y, c.z));
+      }
+      const logCurve = new THREE.CatmullRomCurve3(logCurvePts);
+      const logGeo = new THREE.TubeGeometry(logCurve, 32, 0.044, 16, false);
+      // Taper slightly along X for organic silhouette
+      const lPos = logGeo.attributes.position;
+      for (let i = 0; i < lPos.count; i++) {
+        const px = lPos.getX(i);
+        const c = getLogCenterAtX(px);
+        const dy = lPos.getY(i) - c.y;
+        const dz = lPos.getZ(i) - c.z;
+        const factor = c.r / 0.044;
+        lPos.setY(i, c.y + dy * factor);
+        lPos.setZ(i, c.z + dz * factor);
+      }
+      logGeo.computeVertexNormals();
+
+      const logMat = new THREE.MeshStandardMaterial({
+        map: sceneCtx.textures.bark.map,
+        normalMap: sceneCtx.textures.bark.normalMap,
+        roughnessMap: sceneCtx.textures.bark.roughnessMap,
+        roughness: 0.78,
+        metalness: 0.03
+      });
+      sceneCtx.textures.bark.map.repeat.set(3, 1.5);
+      sceneCtx.textures.bark.normalMap.repeat.set(3, 1.5);
+      const logMesh = new THREE.Mesh(logGeo, logMat);
+      logMesh.castShadow = true;
+      logMesh.receiveShadow = true;
+      logMesh.userData = { surface: 'log' };
+      scene.add(logMesh);
+      sceneCtx.meshes.log = logMesh;
+      sceneCtx.materials.log = logMat;
+      sceneCtx.meshes.interactive.push(logMesh);
+
+      // End caps of the log
+      const endMat = new THREE.MeshStandardMaterial({ color: '#6b4f35', roughness: 0.82 });
+      for (const endX of [-0.22, 0.22]) {
+        const c = getLogCenterAtX(endX);
+        const cap = new THREE.Mesh(new THREE.CircleGeometry(c.r * 0.96, 16), endMat);
+        cap.position.set(c.x, c.y, c.z);
+        cap.rotation.y = endX < 0 ? -Math.PI / 2 : Math.PI / 2;
+        scene.add(cap);
+      }
+
+      // Moss Cushions & Small River Stones (Contextual micro-ecosystem)
+      const mossGroup = new THREE.Group();
+      const mossMat = new THREE.MeshStandardMaterial({
+        map: sceneCtx.textures.moss.map,
+        normalMap: sceneCtx.textures.moss.normalMap,
+        roughness: 0.94,
+        metalness: 0.0
+      });
+      const mossSpots = [
+        [-0.21, 0.11, 0.068, 0.026],
+        [-0.14, -0.11, 0.058, 0.022],
+        [0.18, 0.10, 0.064, 0.025],
+        [0.16, -0.12, 0.052, 0.020],
+        [-0.03, 0.12, 0.050, 0.018],
+        [0.04, -0.11, 0.056, 0.021],
+        [-0.24, -0.04, 0.046, 0.020],
+        [0.23, 0.01, 0.048, 0.019]
+      ];
+      const mossSphere = new THREE.SphereGeometry(1, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55);
+      for (const [mx, mz, rad, hh] of mossSpots) {
+        const m = new THREE.Mesh(mossSphere, mossMat);
+        m.position.set(mx, getGroundHeight(mx, mz) - 0.004, mz);
+        m.scale.set(rad, hh, rad * 0.85);
+        m.receiveShadow = true;
+        m.castShadow = true;
+        mossGroup.add(m);
+      }
+      scene.add(mossGroup);
+      sceneCtx.meshes.mossGroup = mossGroup;
+
+      const stoneMat = new THREE.MeshStandardMaterial({ color: '#585c5a', roughness: 0.76, metalness: 0.06 });
+      const stoneGeo = new THREE.DodecahedronGeometry(1, 1);
+      const stoneSpots = [
+        [-0.19, 0.04, 0.020],
+        [0.14, 0.07, 0.016],
+        [0.06, 0.13, 0.014],
+        [-0.08, -0.12, 0.018],
+        [0.22, -0.07, 0.015]
+      ];
+      for (const [sx, sz, sr] of stoneSpots) {
+        const stMesh = new THREE.Mesh(stoneGeo, stoneMat);
+        stMesh.position.set(sx, getGroundHeight(sx, sz) + sr * 0.25, sz);
+        stMesh.scale.set(sr * 1.2, sr * 0.65, sr);
+        stMesh.rotation.set(sx * 4, sz * 7, 0.2);
+        stMesh.castShadow = true;
+        stMesh.receiveShadow = true;
+        scene.add(stMesh);
+      }
+
+      // 3D Placement Reticle (for Inocular tool hover feedback)
+      const ringGeo = new THREE.RingGeometry(0.015, 0.022, 28);
+      ringGeo.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: '#6fd49e',
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85,
+        depthTest: false
+      });
+      const placementRing = new THREE.Mesh(ringGeo, ringMat);
+      placementRing.visible = false;
+      placementRing.renderOrder = 10;
+      scene.add(placementRing);
+      sceneCtx.meshes.placementRing = placementRing;
+
+      // Mycelium Graph Rendering: Pre-allocated LineSegments + Instanced Node Tips
+      const maxEdgeVerts = config.sim.maxEdges * 2;
+      const edgePositions = new Float32Array(maxEdgeVerts * 3);
+      const edgeColors = new Float32Array(maxEdgeVerts * 3);
+      const hyphaeGeo = new THREE.BufferGeometry();
+      hyphaeGeo.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
+      hyphaeGeo.setAttribute('color', new THREE.BufferAttribute(edgeColors, 3));
+      hyphaeGeo.setDrawRange(0, 0);
+      const hyphaeMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.88
+      });
+      const hyphaeLines = new THREE.LineSegments(hyphaeGeo, hyphaeMat);
+      hyphaeLines.frustumCulled = false;
+      scene.add(hyphaeLines);
+      sceneCtx.meshes.hyphaeLines = hyphaeLines;
+
+      const nodeTipGeo = new THREE.SphereGeometry(0.0032, 6, 6);
+      const nodeTipMat = new THREE.MeshStandardMaterial({
+        color: '#ffffff',
+        roughness: 0.4,
+        emissive: '#3b8c74',
+        emissiveIntensity: 0.25
+      });
+      const hyphaNodesInst = new THREE.InstancedMesh(nodeTipGeo, nodeTipMat, config.sim.maxNodes);
+      hyphaNodesInst.count = 0;
+      hyphaNodesInst.frustumCulled = false;
+      scene.add(hyphaNodesInst);
+      sceneCtx.meshes.hyphaNodesInst = hyphaNodesInst;
+
+      // InstancedMesh per Fictional Species (Cap + Stipe)
+      for (const spKey of Object.keys(config.species)) {
+        const sp = config.species[spKey];
+        const { capGeo, stipeGeo } = buildSpeciesGeometries(spKey);
+        const capMat = new THREE.MeshStandardMaterial({
+          color: '#ffffff',
+          roughness: spKey === 'lumenaria' ? 0.32 : 0.62,
+          metalness: 0.02,
+          emissive: new THREE.Color(sp.emissiveColor),
+          emissiveIntensity: sp.emissiveStrength * 0.45
+        });
+        const stipeMat = new THREE.MeshStandardMaterial({
+          color: sp.stipeColor,
+          roughness: 0.72,
+          metalness: 0.0
+        });
+        const capInst = new THREE.InstancedMesh(capGeo, capMat, config.sim.maxMushrooms);
+        const stipeInst = new THREE.InstancedMesh(stipeGeo, stipeMat, config.sim.maxMushrooms);
+        capInst.count = 0;
+        stipeInst.count = 0;
+        capInst.castShadow = true;
+        capInst.receiveShadow = true;
+        stipeInst.castShadow = true;
+        capInst.frustumCulled = false;
+        stipeInst.frustumCulled = false;
+        scene.add(capInst);
+        scene.add(stipeInst);
+        sceneCtx.meshes.speciesInst[spKey] = { capInst, stipeInst, capMat };
+      }
+
+      // Pooled Spore & Mist Particle Systems
+      const sporeGeo = new THREE.BufferGeometry();
+      sporeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(config.sim.maxSpores * 3), 3));
+      sporeGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(config.sim.maxSpores * 3), 3));
+      const sporeMat = new THREE.PointsMaterial({
+        size: 0.011,
+        map: sceneCtx.textures.particle,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.78,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const sporePoints = new THREE.Points(sporeGeo, sporeMat);
+      sporePoints.frustumCulled = false;
+      scene.add(sporePoints);
+      sceneCtx.meshes.sporePoints = sporePoints;
+
+      const mistGeo = new THREE.BufferGeometry();
+      mistGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(config.sim.maxMist * 3), 3));
+      const mistMat = new THREE.PointsMaterial({
+        size: 0.032,
+        map: sceneCtx.textures.particle,
+        color: '#dff6f0',
+        transparent: true,
+        opacity: 0.46,
+        depthWrite: false
+      });
+      const mistPoints = new THREE.Points(mistGeo, mistMat);
+      mistPoints.frustumCulled = false;
+      scene.add(mistPoints);
+      sceneCtx.meshes.mistPoints = mistPoints;
+
+      // Glass Panes (rendered cleanly after interior)
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: '#d8efe6',
+        transparent: true,
+        opacity: 0.13,
+        roughness: 0.07,
+        metalness: 0.05,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.08,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const paneSpecs = [
+        { size: [W, H], pos: [0, 0.034 + H * 0.5, D * 0.5], rot: [0, 0, 0] },
+        { size: [W, H], pos: [0, 0.034 + H * 0.5, -D * 0.5], rot: [0, 0, 0] },
+        { size: [D, H], pos: [-W * 0.5, 0.034 + H * 0.5, 0], rot: [0, Math.PI / 2, 0] },
+        { size: [D, H], pos: [W * 0.5, 0.034 + H * 0.5, 0], rot: [0, Math.PI / 2, 0] }
+      ];
+      for (const spec of paneSpecs) {
+        const pane = new THREE.Mesh(new THREE.PlaneGeometry(spec.size[0], spec.size[1]), glassMat);
+        pane.position.set(...spec.pos);
+        pane.rotation.set(...spec.rot);
+        pane.renderOrder = 4;
+        scene.add(pane);
+        sceneCtx.meshes.glassPanes.push(pane);
+      }
+
+      // Slightly ajar glass lid on top
+      const lid = new THREE.Mesh(new THREE.PlaneGeometry(W, D), glassMat);
+      lid.rotation.x = -Math.PI / 2 - 0.06;
+      lid.position.set(0, 0.038 + H + 0.012, -0.005);
+      lid.renderOrder = 4;
+      scene.add(lid);
+
+      // Condensation Overlay on Front & Back Glass
+      const condMat = new THREE.MeshBasicMaterial({
+        map: sceneCtx.textures.condensation,
+        transparent: true,
+        opacity: 0.28,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+      const condFront = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.01, H - 0.01), condMat);
+      condFront.position.set(0, 0.034 + H * 0.5, D * 0.5 - 0.002);
+      condFront.renderOrder = 5;
+      scene.add(condFront);
+      sceneCtx.meshes.condensationOverlay = condMat;
+
+      // Optional Cinema Bloom Composer (never double tone-mapped)
+      if (EffectComposer && RenderPass && UnrealBloomPass && OutputPass) {
+        try {
+          const composer = new EffectComposer(renderer);
+          composer.addPass(new RenderPass(scene, camera));
+          const bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.24, 0.45, 0.78);
+          composer.addPass(bloom);
+          composer.addPass(new OutputPass());
+          sceneCtx.composer = composer;
+          sceneCtx.bloomPass = bloom;
+        } catch {
+          sceneCtx.composer = null;
+        }
+      }
+    }
+
+    // =========================================================================
+    // 7. SINCRONIZAÇÃO CENA <- ESTADO (syncScene)
+    // =========================================================================
+    const _dummy = { pos: null, quat: null, scale: null, mat: null, up: null, norm: null, col: null };
+
+    function ensureMathScratch() {
+      if (!_dummy.pos) {
+        _dummy.pos = new THREE.Vector3();
+        _dummy.quat = new THREE.Quaternion();
+        _dummy.scale = new THREE.Vector3();
+        _dummy.mat = new THREE.Matrix4();
+        _dummy.up = new THREE.Vector3(0, 1, 0);
+        _dummy.norm = new THREE.Vector3();
+        _dummy.col = new THREE.Color();
+      }
+    }
+
+    function applySubstrateVisuals() {
+      if (!sceneCtx.materials.ground) return;
+      const sub = config.substrates[state.substrateId] || config.substrates.carvalho;
+      const tex = sceneCtx.textures.substrates[state.substrateId];
+      if (tex) {
+        sceneCtx.materials.ground.map = tex.map;
+        sceneCtx.materials.ground.normalMap = tex.normalMap;
+        sceneCtx.materials.ground.roughnessMap = tex.roughnessMap;
+        sceneCtx.materials.ground.needsUpdate = true;
+      }
+      if (sceneCtx.meshes.mossGroup) {
+        sceneCtx.meshes.mossGroup.children.forEach((child, idx) => {
+          const visible = (idx / sceneCtx.meshes.mossGroup.children.length) < sub.mossDensity;
+          child.visible = visible;
+        });
+      }
+    }
+
+    function applyLightingPreset() {
+      if (!sceneCtx.scene || !sceneCtx.lights.keyLight) return;
+      const isTwilight = state.lightPreset === 'crepusculo';
+      const { hemi, keyLight, rimLight, bioLight } = sceneCtx.lights;
+
+      if (isTwilight) {
+        sceneCtx.scene.background.set('#0a1116');
+        sceneCtx.scene.fog.color.set('#0a1116');
+        hemi.color.set('#5a80a8');
+        hemi.groundColor.set('#11191d');
+        hemi.intensity = 0.34;
+        keyLight.color.set('#9ec4f5');
+        keyLight.intensity = 0.95;
+        rimLight.color.set('#4de0cc');
+        rimLight.intensity = 0.85;
+        bioLight.intensity = 0.55;
+      } else {
+        sceneCtx.scene.background.set('#16211b');
+        sceneCtx.scene.fog.color.set('#16211b');
+        hemi.color.set('#d2ebd9');
+        hemi.groundColor.set('#2c261d');
+        hemi.intensity = 0.62;
+        keyLight.color.set('#fff3de');
+        keyLight.intensity = 2.25;
+        rimLight.color.set('#7fd4c2');
+        rimLight.intensity = 0.65;
+        bioLight.intensity = 0.08;
+      }
+
+      for (const spKey of Object.keys(sceneCtx.meshes.speciesInst)) {
+        const sp = config.species[spKey];
+        const inst = sceneCtx.meshes.speciesInst[spKey];
+        inst.capMat.emissiveIntensity = isTwilight ? sp.emissiveStrength * 1.65 : sp.emissiveStrength * 0.38;
+      }
+    }
+
+    function applyQualityProfile(mode) {
+      if (!sceneCtx.renderer) return;
+      const effective = mode === 'auto' ? (sceneCtx.currentFps < 34 ? 'leve' : sceneCtx.currentFps > 54 ? 'equilibrado' : 'equilibrado') : mode;
+      const dpr = window.devicePixelRatio || 1;
+      if (effective === 'cinema') {
+        sceneCtx.renderer.setPixelRatio(Math.min(dpr, 2.0));
+        sceneCtx.lights.keyLight.castShadow = true;
+      } else if (effective === 'leve') {
+        sceneCtx.renderer.setPixelRatio(Math.min(dpr, 0.85));
+        sceneCtx.lights.keyLight.castShadow = false;
+      } else {
+        sceneCtx.renderer.setPixelRatio(Math.min(dpr, 1.35));
+        sceneCtx.lights.keyLight.castShadow = true;
+      }
+      const container = document.getElementById('canvas-container');
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      sceneCtx.renderer.setSize(w, h, false);
+      if (sceneCtx.composer) sceneCtx.composer.setSize(w, h);
+    }
+
+    function setCameraPreset(preset, instant = false) {
+      state.cameraPreset = preset;
+      const presets = {
+        geral: { pos: new THREE.Vector3(0.68, 0.50, 0.76), look: new THREE.Vector3(0, 0.16, 0) },
+        closeup: { pos: new THREE.Vector3(0.24, 0.28, 0.38), look: new THREE.Vector3(-0.02, 0.14, 0.01) },
+        topo: { pos: new THREE.Vector3(0.02, 0.86, 0.24), look: new THREE.Vector3(0, 0.11, 0) }
+      };
+      const target = presets[preset] || presets.geral;
+      if (instant || sceneCtx.reducedMotion) {
+        sceneCtx.camera.position.copy(target.pos);
+        sceneCtx.controls.target.copy(target.look);
+        sceneCtx.controls.update();
+        sceneCtx.cameraLerpActive = false;
+      } else {
+        sceneCtx.cameraTargetPos = target.pos.clone();
+        sceneCtx.cameraTargetLook = target.look.clone();
+        sceneCtx.cameraLerpActive = true;
+      }
+      const btn = document.getElementById('btn-cam');
+      if (btn) {
+        const labels = { geral: 'Geral', closeup: 'Close-up', topo: 'Topo' };
+        btn.textContent = `Câmera: ${labels[preset] || 'Geral'}`;
+      }
+    }
+
+    function spawnMistBurst(count = 55) {
+      if (sceneCtx.reducedMotion) count = Math.min(count, 16);
+      for (let i = 0; i < count; i++) {
+        if (sceneCtx.mistParticles.length >= config.sim.maxMist) {
+          sceneCtx.mistParticles.shift();
+        }
+        sceneCtx.mistParticles.push({
+          x: (Math.random() - 0.5) * 0.48,
+          y: 0.34 + Math.random() * 0.07,
+          z: (Math.random() - 0.5) * 0.30,
+          vx: (Math.random() - 0.5) * 0.06,
+          vy: -0.07 - Math.random() * 0.05,
+          vz: (Math.random() - 0.5) * 0.06,
+          life: 1.0
+        });
+      }
+    }
+
+    function syncScene() {
+      if (!sceneCtx.scene || !state) return;
+      ensureMathScratch();
+
+      const hum = state.environment.humidity;
+      const humNorm = clamp((hum - 20) / 78, 0, 1);
+
+      // Update wood/soil wet sheen & glass condensation from humidity
+      if (sceneCtx.materials.log) {
+        sceneCtx.materials.log.roughness = 0.88 - humNorm * 0.42;
+      }
+      if (sceneCtx.materials.ground) {
+        sceneCtx.materials.ground.roughness = 0.94 - humNorm * 0.34;
+      }
+      if (sceneCtx.meshes.condensationOverlay) {
+        sceneCtx.meshes.condensationOverlay.opacity = clamp((hum - 45) / 110, 0.03, 0.52);
+      }
+      if (sceneCtx.meshes.hygroNeedle) {
+        // Map 20..98% to +1.15..-1.15 radians
+        sceneCtx.meshes.hygroNeedle.rotation.z = 1.15 - humNorm * 2.3;
+      }
+
+      // Sync Mycelium Graph Lines & Node Tips
+      const nodeMap = new Map();
+      const nodeInst = sceneCtx.meshes.hyphaNodesInst;
+      for (let i = 0; i < state.myceliumNodes.length; i++) {
+        const n = state.myceliumNodes[i];
+        nodeMap.set(n.id, n);
+        const sp = config.species[n.speciesId] || config.species.lumenaria;
+        _dummy.pos.set(n.x, n.y + 0.0025, n.z);
+        const s = n.dormant ? 0.65 : 1.0;
+        _dummy.scale.set(s, s, s);
+        _dummy.quat.identity();
+        _dummy.mat.compose(_dummy.pos, _dummy.quat, _dummy.scale);
+        nodeInst.setMatrixAt(i, _dummy.mat);
+        _dummy.col.set(sp.hyphaColor);
+        if (n.dormant) _dummy.col.multiplyScalar(0.45);
+        nodeInst.setColorAt(i, _dummy.col);
+      }
+      nodeInst.count = state.myceliumNodes.length;
+      nodeInst.instanceMatrix.needsUpdate = true;
+      if (nodeInst.instanceColor) nodeInst.instanceColor.needsUpdate = true;
+
+      const lineGeo = sceneCtx.meshes.hyphaeLines.geometry;
+      const posArr = lineGeo.attributes.position.array;
+      const colArr = lineGeo.attributes.color.array;
+      let vertIdx = 0;
+      for (let i = 0; i < state.myceliumEdges.length; i++) {
+        const e = state.myceliumEdges[i];
+        const a = nodeMap.get(e.fromId);
+        const b = nodeMap.get(e.toId);
+        if (!a || !b) continue;
+        const sp = config.species[e.speciesId] || config.species.lumenaria;
+        _dummy.col.set(sp.hyphaColor);
+        if (a.dormant || b.dormant) _dummy.col.multiplyScalar(0.42);
+
+        const o = vertIdx * 3;
+        posArr[o] = a.x; posArr[o + 1] = a.y + 0.0028; posArr[o + 2] = a.z;
+        posArr[o + 3] = b.x; posArr[o + 4] = b.y + 0.0028; posArr[o + 5] = b.z;
+        colArr[o] = _dummy.col.r; colArr[o + 1] = _dummy.col.g; colArr[o + 2] = _dummy.col.b;
+        colArr[o + 3] = _dummy.col.r; colArr[o + 4] = _dummy.col.g; colArr[o + 5] = _dummy.col.b;
+        vertIdx += 2;
+      }
+      lineGeo.setDrawRange(0, vertIdx);
+      lineGeo.attributes.position.needsUpdate = true;
+      lineGeo.attributes.color.needsUpdate = true;
+
+      // Sync Mushrooms (InstancedMesh per species with stage-driven scale, tilt & color)
+      const counts = { lumenaria: 0, rubropilus: 0, umbraculum: 0, crystallina: 0 };
+      for (let i = 0; i < state.mushrooms.length; i++) {
+        const m = state.mushrooms[i];
+        const sp = config.species[m.speciesId];
+        const inst = sceneCtx.meshes.speciesInst[m.speciesId];
+        if (!sp || !inst) continue;
+
+        const idx = counts[m.speciesId]++;
+        const growthCurve = clamp(Math.pow(clamp(m.maturity, 0.05, 1.05), 0.85), 0.16, 1.05);
+        const senescentDroop = m.stage === 4 ? clamp((m.maturity - 1.08) * 1.4, 0, 0.42) : 0;
+        const baseScale = sp.maxScale * m.sizeJitter * growthCurve;
+
+        _dummy.pos.set(m.x, m.y - 0.001, m.z);
+        // Align gently between surface normal and world Up (phototropism)
+        _dummy.norm.set(m.nx * 0.38, m.ny * 0.38 + 0.62, m.nz * 0.38).normalize();
+        _dummy.quat.setFromUnitVectors(_dummy.up, _dummy.norm);
+        const rotQ = new THREE.Quaternion().setFromAxisAngle(_dummy.up, m.rotY);
+        const tiltQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), m.tilt + senescentDroop);
+        _dummy.quat.multiply(rotQ).multiply(tiltQ);
+
+        // Cap opens wider in later stages
+        const capFlare = m.stage === 0 ? 0.58 : m.stage === 1 ? 0.78 : 1.0;
+        _dummy.scale.set(baseScale * capFlare, baseScale, baseScale * capFlare);
+        _dummy.mat.compose(_dummy.pos, _dummy.quat, _dummy.scale);
+        inst.capInst.setMatrixAt(idx, _dummy.mat);
+
+        _dummy.scale.set(baseScale, baseScale, baseScale);
+        _dummy.mat.compose(_dummy.pos, _dummy.quat, _dummy.scale);
+        inst.stipeInst.setMatrixAt(idx, _dummy.mat);
+
+        _dummy.col.set(sp.capColor);
+        if (m.stage === 0) _dummy.col.lerp(new THREE.Color('#d8d8c8'), 0.45);
+        if (m.stage === 4) _dummy.col.multiplyScalar(0.55);
+        inst.capInst.setColorAt(idx, _dummy.col);
+      }
+
+      for (const spKey of Object.keys(sceneCtx.meshes.speciesInst)) {
+        const inst = sceneCtx.meshes.speciesInst[spKey];
+        inst.capInst.count = counts[spKey];
+        inst.stipeInst.count = counts[spKey];
+        inst.capInst.instanceMatrix.needsUpdate = true;
+        inst.stipeInst.instanceMatrix.needsUpdate = true;
+        if (inst.capInst.instanceColor) inst.capInst.instanceColor.needsUpdate = true;
+      }
+    }
+
+    function updateParticles(dt) {
+      if (!sceneCtx.meshes.sporePoints || !sceneCtx.meshes.mistPoints) return;
+      const capFactor = state.qualityMode === 'leve' ? 0.4 : 1.0;
+
+      // Spawn gentle spores from mature sporulating mushrooms
+      if (!state.paused && !sceneCtx.reducedMotion && state.mushrooms.length > 0) {
+        const maxSpores = Math.floor(config.sim.maxSpores * capFactor);
+        for (let i = 0; i < state.mushrooms.length; i++) {
+          const m = state.mushrooms[i];
+          if (!m.sporulating) continue;
+          if (sceneCtx.sporeParticles.length < maxSpores && Math.random() < dt * 2.2) {
+            const sp = config.species[m.speciesId];
+            const c = new THREE.Color(sp.capColor);
+            sceneCtx.sporeParticles.push({
+              x: m.x + (Math.random() - 0.5) * 0.02,
+              y: m.y + sp.maxScale * 0.85,
+              z: m.z + (Math.random() - 0.5) * 0.02,
+              vx: (Math.random() - 0.5) * 0.014,
+              vy: 0.012 + Math.random() * 0.014,
+              vz: (Math.random() - 0.5) * 0.014,
+              r: c.r, g: c.g, b: c.b,
+              life: 1.0
+            });
+          }
+        }
+      }
+
+      // Advance spores
+      const spPos = sceneCtx.meshes.sporePoints.geometry.attributes.position.array;
+      const spCol = sceneCtx.meshes.sporePoints.geometry.attributes.color.array;
+      for (let i = sceneCtx.sporeParticles.length - 1; i >= 0; i--) {
+        const p = sceneCtx.sporeParticles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.z += p.vz * dt;
+        p.vy -= 0.004 * dt; // gentle buoyant settling
+        p.life -= dt * 0.26;
+        if (p.life <= 0 || p.y < 0.05 || p.y > 0.44) {
+          sceneCtx.sporeParticles.splice(i, 1);
+        }
+      }
+      for (let i = 0; i < sceneCtx.sporeParticles.length; i++) {
+        const p = sceneCtx.sporeParticles[i];
+        spPos[i * 3] = p.x; spPos[i * 3 + 1] = p.y; spPos[i * 3 + 2] = p.z;
+        spCol[i * 3] = p.r * p.life; spCol[i * 3 + 1] = p.g * p.life; spCol[i * 3 + 2] = p.b * p.life;
+      }
+      sceneCtx.meshes.sporePoints.geometry.setDrawRange(0, sceneCtx.sporeParticles.length);
+      sceneCtx.meshes.sporePoints.geometry.attributes.position.needsUpdate = true;
+      sceneCtx.meshes.sporePoints.geometry.attributes.color.needsUpdate = true;
+
+      // Advance mist droplets
+      const mPos = sceneCtx.meshes.mistPoints.geometry.attributes.position.array;
+      for (let i = sceneCtx.mistParticles.length - 1; i >= 0; i--) {
+        const p = sceneCtx.mistParticles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.z += p.vz * dt;
+        p.life -= dt * 0.85;
+        if (p.life <= 0 || p.y < 0.07) {
+          sceneCtx.mistParticles.splice(i, 1);
+        }
+      }
+      for (let i = 0; i < sceneCtx.mistParticles.length; i++) {
+        const p = sceneCtx.mistParticles[i];
+        mPos[i * 3] = p.x; mPos[i * 3 + 1] = p.y; mPos[i * 3 + 2] = p.z;
+      }
+      sceneCtx.meshes.mistPoints.geometry.setDrawRange(0, sceneCtx.mistParticles.length);
+      sceneCtx.meshes.mistPoints.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // =========================================================================
+    // 8. AÇÕES DO USUÁRIO (actions)
+    // =========================================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    const actions = {
+      setTool(toolId) {
+        state.activeTool = state.activeTool === toolId ? null : toolId;
+        const container = document.getElementById('canvas-container');
+        container.classList.toggle('cursor-inocular', state.activeTool === 'inocular');
+        if (sceneCtx.meshes.placementRing && state.activeTool !== 'inocular') {
+          sceneCtx.meshes.placementRing.visible = false;
+        }
+        renderUI();
+      },
+      exitTool() {
+        state.activeTool = null;
+        document.getElementById('canvas-container').classList.remove('cursor-inocular');
+        if (sceneCtx.meshes.placementRing) sceneCtx.meshes.placementRing.visible = false;
+        renderUI();
+      },
+      setSubstrate(substrateId) {
+        if (!config.substrates[substrateId] || state.substrateId === substrateId) return;
+        pushUndoSnapshot();
+        state.substrateId = substrateId;
+        state.stats.substrateChanges += 1;
+        const sub = config.substrates[substrateId];
+        // Refresh nutrient richness smoothly toward new substrate
+        const grid = state.environment.nutrientGrid;
+        for (let i = 0; i < grid.length; i++) {
+          grid[i] = Number(clamp((grid[i] * 0.35 + sub.baseNutrient * 0.65), 0.15, 1.0).toFixed(4));
+        }
+        applySubstrateVisuals();
+        syncScene();
+        audio.playSubstrate();
+        showToast(`Substrato alterado para ${sub.name}.`);
+        if (state.mode === 'guiado' && state.tutorialStep === 0) state.tutorialStep = 1;
+        renderUI();
+      },
+      selectSpecies(speciesId) {
+        if (!config.species[speciesId]) return;
+        state.selectedSpeciesId = speciesId;
+        if (sceneCtx.meshes.placementRing) {
+          sceneCtx.meshes.placementRing.material.color.set(config.species[speciesId].capColor);
+        }
+        renderUI();
+      },
+      inoculateAt(x, z, surface = 'ground') {
+        if (state.myceliumNodes.length >= config.sim.maxNodes) {
+          showToast('Capacidade máxima da rede de micélio atingida neste terrário.');
+          return false;
+        }
+        pushUndoSnapshot();
+        const res = addInoculationToState(state, state.selectedSpeciesId, x, z, surface);
+        if (!res) return false;
+        syncScene();
+        audio.playInoculate();
+        const sp = config.species[state.selectedSpeciesId];
+        showToast(`${sp.name} inoculada em ${surface === 'log' ? 'madeira úmida' : 'substrato'}.`);
+        if (state.mode === 'guiado' && state.tutorialStep === 1) state.tutorialStep = 2;
+        renderUI();
+        return true;
+      },
+      inoculateSuggested() {
+        const sp = config.species[state.selectedSpeciesId];
+        const useLog = sp.preferredSubstrate === 'carvalho' && nextRandom(state) < 0.65;
+        const x = useLog ? (nextRandom(state) - 0.5) * 0.34 : (nextRandom(state) - 0.5) * 0.44;
+        const z = useLog ? (nextRandom(state) - 0.5) * 0.04 : (nextRandom(state) - 0.5) * 0.26;
+        return this.inoculateAt(x, z, useLog ? 'log' : 'ground');
+      },
+      setTargetHumidity(val) {
+        const clamped = clamp(Number(val) || 70, 20, 98);
+        state.environment.targetHumidity = clamped;
+        // Immediate partial response for observable feedback
+        state.environment.humidity = clamp(state.environment.humidity * 0.35 + clamped * 0.65, 20, 98);
+        syncScene();
+        if (state.mode === 'guiado' && state.tutorialStep === 2) state.tutorialStep = 3;
+        renderUI();
+      },
+      sprayMist() {
+        state.environment.humidity = clamp(state.environment.humidity + 8, 20, 98);
+        state.environment.targetHumidity = clamp(Math.max(state.environment.targetHumidity, state.environment.humidity), 20, 98);
+        state.stats.totalSprays += 1;
+        spawnMistBurst(55);
+        audio.playMist();
+        syncScene();
+        showToast(`Névoa aplicada · Umidade em ${Math.round(state.environment.humidity)}% UR.`);
+        if (state.mode === 'guiado' && state.tutorialStep === 2) state.tutorialStep = 3;
+        renderUI();
+      },
+      setTimeScale(scale) {
+        const s = Number(scale);
+        if (s === 0) {
+          state.paused = true;
+        } else {
+          state.paused = false;
+          state.timeScale = clamp(s, 1, 12);
+        }
+        renderUI();
+      },
+      stepHours(hours) {
+        pushUndoSnapshot();
+        const prevM = state.mushrooms.length;
+        advanceDeterministicHours(state, hours);
+        syncScene();
+        if (state.mushrooms.length > prevM) audio.playSprout();
+        showToast(`Tempo avançado +${hours}h (Dia ${computeMetrics(state).day}).`);
+        renderUI();
+      },
+      loadPreset(presetId) {
+        pushUndoSnapshot();
+        const prevSnaps = state.snapshots || [];
+        const prevMode = state.mode;
+        state = buildPresetState(presetId);
+        state.snapshots = prevSnaps;
+        state.mode = prevMode;
+        applySubstrateVisuals();
+        applyLightingPreset();
+        syncScene();
+        audio.playSubstrate();
+        const preset = config.presets.find((p) => p.id === presetId);
+        showToast(`Cenário carregado: ${preset ? preset.name : presetId}.`);
+        renderUI();
+      },
+      saveSnapshot() {
+        const m = computeMetrics(state);
+        const label = `Versão ${state.snapshots.length + 1} · Dia ${m.day}`;
+        const copy = cloneSerializableState(state);
+        copy.snapshots = [];
+        state.snapshots.unshift({
+          id: `snap_${Date.now()}`,
+          label,
+          substrateName: config.substrates[state.substrateId].name,
+          humidity: Math.round(state.environment.humidity),
+          nodes: m.nodeCount,
+          mushrooms: m.mushroomCount,
+          mature: m.matureCount,
+          data: copy
+        });
+        if (state.snapshots.length > 6) state.snapshots.pop();
+        showToast(`${label} salva para comparação.`);
+        renderUI();
+      },
+      restoreSnapshot(snapId) {
+        const found = state.snapshots.find((s) => s.id === snapId);
+        if (!found) return;
+        pushUndoSnapshot();
+        const keepSnaps = state.snapshots;
+        state = cloneSerializableState(found.data);
+        state.snapshots = keepSnaps;
+        applySubstrateVisuals();
+        applyLightingPreset();
+        syncScene();
+        showToast(`Restaurado: ${found.label}.`);
+        renderUI();
+      },
+      deleteSnapshot(snapId) {
+        state.snapshots = state.snapshots.filter((s) => s.id !== snapId);
+        renderUI();
+      },
+      undo() {
+        if (!undoStack.length) {
+          showToast('Nada para desfazer.');
+          return;
+        }
+        const keepSnaps = state.snapshots;
+        const curr = cloneSerializableState(state);
+        curr.snapshots = [];
+        redoStack.push(curr);
+        state = undoStack.pop();
+        state.snapshots = keepSnaps;
+        applySubstrateVisuals();
+        applyLightingPreset();
+        syncScene();
+        showToast('Ação desfeita.');
+        renderUI();
+      },
+      redo() {
+        if (!redoStack.length) {
+          showToast('Nada para refazer.');
+          return;
+        }
+        const keepSnaps = state.snapshots;
+        const curr = cloneSerializableState(state);
+        curr.snapshots = [];
+        undoStack.push(curr);
+        state = redoStack.pop();
+        state.snapshots = keepSnaps;
+        applySubstrateVisuals();
+        applyLightingPreset();
+        syncScene();
+        showToast('Ação refeita.');
+        renderUI();
+      },
+      saveLocal() {
+        try {
+          localStorage.setItem(STORAGE_KEY, serialize(state));
+          showToast('Terrário salvo no navegador.');
+        } catch {
+          showToast('Armazenamento local indisponível. Use Exportar JSON.');
+        }
+      },
+      loadLocal() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            showToast('Nenhum salvamento encontrado neste navegador.');
+            return;
+          }
+          const parsed = validateImportedState(JSON.parse(raw));
+          if (!parsed.ok) {
+            showToast(parsed.error);
+            return;
+          }
+          pushUndoSnapshot();
+          state = parsed.data;
+          applySubstrateVisuals();
+          applyLightingPreset();
+          syncScene();
+          showToast('Terrário reaberto com sucesso.');
+          renderUI();
+        } catch {
+          showToast('Não foi possível ler o salvamento local.');
+        }
+      },
+      exportJSON() {
+        try {
+          const blob = new Blob([serialize(state)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `jardim-dos-fungos-dia-${computeMetrics(state).day}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          showToast('JSON exportado.');
+        } catch {
+          showToast('Falha ao exportar JSON.');
+        }
+      },
+      importJSONText(text) {
+        try {
+          const parsed = validateImportedState(JSON.parse(text));
+          if (!parsed.ok) {
+            showToast(`Erro na importação: ${parsed.error}`);
+            return;
+          }
+          pushUndoSnapshot();
+          state = parsed.data;
+          applySubstrateVisuals();
+          applyLightingPreset();
+          syncScene();
+          showToast('Terrário importado via JSON.');
+          renderUI();
+        } catch {
+          showToast('Arquivo JSON inválido ou malformado.');
+        }
+      },
+      exportPNG() {
+        if (!sceneCtx.renderer || !sceneCtx.scene || !sceneCtx.camera) {
+          showToast('Renderizador indisponível para captura.');
+          return;
+        }
+        try {
+          // Render and capture in the exact same frame
+          sceneCtx.renderer.render(sceneCtx.scene, sceneCtx.camera);
+          const dataUrl = sceneCtx.renderer.domElement.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `jardim-dos-fungos-dia-${computeMetrics(state).day}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          showToast('Captura PNG salva.');
+        } catch {
+          showToast('Captura PNG bloqueada neste navegador; use Exportar JSON.');
+        }
+      },
+      toggleLight() {
+        state.lightPreset = state.lightPreset === 'estufa' ? 'crepusculo' : 'estufa';
+        applyLightingPreset();
+        renderUI();
+      },
+      cycleCamera() {
+        const order = ['geral', 'closeup', 'topo'];
+        const next = order[(order.indexOf(state.cameraPreset) + 1) % order.length];
+        setCameraPreset(next);
+      },
+      reset(toEmpty = false) {
+        pushUndoSnapshot();
+        const keepSnaps = state.snapshots || [];
+        state = buildPresetState(toEmpty ? 'vazio' : 'demo');
+        state.snapshots = keepSnaps;
+        applySubstrateVisuals();
+        applyLightingPreset();
+        syncScene();
+        showToast(toEmpty ? 'Terrário reiniciado vazio.' : 'Demonstração inicial restaurada.');
+        renderUI();
+      }
+    };
+
+    // =========================================================================
+    // 9. RENDERIZAÇÃO DA INTERFACE (renderUI)
+    // =========================================================================
+    function renderUI() {
+      if (!state) return;
+      const m = computeMetrics(state);
+
+      // HUD metrics
+      const toolLabels = {
+        substrato: 'Substrato',
+        inocular: 'Inocular',
+        clima: 'Umidade & Tempo',
+        opcoes: 'Opções & Versões'
+      };
+      document.getElementById('hud-tool').textContent = state.activeTool ? `Ferramenta: ${toolLabels[state.activeTool]}` : 'Explorar cena';
+      document.getElementById('hud-day').textContent = `Dia ${m.day} · ${m.timeStr}${state.paused ? ' (Pausado)' : ''}`;
+      document.getElementById('m-humidity').textContent = `${Math.round(state.environment.humidity)}%`;
+      document.getElementById('m-nutrients').textContent = `${m.avgNutrient}%`;
+      document.getElementById('m-nodes').textContent = String(m.nodeCount);
+      document.getElementById('m-mushrooms').textContent = String(m.mushroomCount);
+
+      const subName = config.substrates[state.substrateId]?.name || state.substrateId;
+      const ecoStatus = m.nodeCount === 0
+        ? `Substrato: ${subName} · Sem colônias`
+        : m.dormantCount > m.nodeCount * 0.6
+          ? `${subName} · Dormência (umidade baixa)`
+          : `${subName} · ${m.matureCount} maduro(s)`;
+      document.getElementById('hud-eco-state').textContent = ecoStatus;
+
+      // Top bar states
+      document.getElementById('btn-mode-livre').classList.toggle('active', state.mode === 'livre');
+      document.getElementById('btn-mode-guiado').classList.toggle('active', state.mode === 'guiado');
+      document.getElementById('btn-light').textContent = state.lightPreset === 'crepusculo' ? 'Luz: Crepúsculo' : 'Luz: Estufa';
+      document.getElementById('btn-audio').textContent = audio.enabled ? 'Som: On' : 'Som: Off';
+      document.getElementById('btn-audio').setAttribute('aria-pressed', String(audio.enabled));
+
+      // Guided panel
+      const guideEl = document.getElementById('guide-panel');
+      if (state.mode === 'guiado') {
+        const idx = clamp(state.tutorialStep, 0, config.tutorialSteps.length - 1);
+        const step = config.tutorialSteps[idx];
+        guideEl.style.display = 'block';
+        document.getElementById('guide-step-tag').textContent = `Passo ${idx + 1} de ${config.tutorialSteps.length}`;
+        document.getElementById('guide-title').textContent = step.title;
+        document.getElementById('guide-body').textContent = step.body;
+        document.getElementById('guide-result').textContent = step.result;
+        document.getElementById('btn-guide-action').textContent = step.actionLabel;
+        document.getElementById('btn-guide-next').textContent = idx === config.tutorialSteps.length - 1 ? 'Concluir' : 'Próximo';
+      } else {
+        guideEl.style.display = 'none';
+      }
+
+      // Dock buttons
+      document.querySelectorAll('.dock-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tool === state.activeTool);
+      });
+
+      // Contextual panel visibility
+      const panel = document.getElementById('context-panel');
+      if (!state.activeTool) {
+        panel.classList.remove('open');
+        return;
+      }
+      panel.classList.add('open');
+      document.getElementById('panel-title').textContent = toolLabels[state.activeTool] || 'Ferramenta';
+      document.querySelectorAll('.tool-view').forEach((v) => { v.style.display = 'none'; });
+      const activeView = document.getElementById(`view-${state.activeTool}`);
+      if (activeView) activeView.style.display = 'block';
+
+      // Populate Tool 1: Substrates
+      if (state.activeTool === 'substrato') {
+        const wrap = document.getElementById('substrate-cards');
+        wrap.innerHTML = '';
+        for (const sub of Object.values(config.substrates)) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `choice-card${state.substrateId === sub.id ? ' selected' : ''}`;
+          btn.innerHTML = `
+            <span class="choice-head"><span>${sub.name}</span><span class="swatch" style="background:${sub.colorHex}"></span></span>
+            <span class="choice-meta">${sub.shortDesc}</span>
+            <span class="choice-tags">Retenção: ${Math.round(sub.retention * 100)}% · Nutrientes: ${Math.round(sub.baseNutrient * 100)}%</span>
+          `;
+          btn.addEventListener('click', () => actions.setSubstrate(sub.id));
+          wrap.appendChild(btn);
+        }
+      }
+
+      // Populate Tool 2: Species
+      if (state.activeTool === 'inocular') {
+        const wrap = document.getElementById('species-cards');
+        wrap.innerHTML = '';
+        for (const sp of Object.values(config.species)) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `choice-card${state.selectedSpeciesId === sp.id ? ' selected' : ''}`;
+          const prefName = config.substrates[sp.preferredSubstrate]?.name || sp.preferredSubstrate;
+          btn.innerHTML = `
+            <span class="choice-head"><span><em>${sp.name}</em></span><span class="swatch" style="background:${sp.capColor}"></span></span>
+            <span class="choice-meta">${sp.shortDesc}</span>
+            <span class="choice-tags">Ideal: ${sp.optHumidity}% UR · ${prefName}</span>
+          `;
+          btn.addEventListener('click', () => actions.selectSpecies(sp.id));
+          wrap.appendChild(btn);
+        }
+      }
+
+      // Populate Tool 3: Climate & Time
+      if (state.activeTool === 'clima') {
+        const slider = document.getElementById('slider-humidity');
+        const lbl = document.getElementById('lbl-humidity-val');
+        slider.value = String(Math.round(state.environment.targetHumidity));
+        lbl.textContent = `${Math.round(state.environment.humidity)}% UR (alvo ${Math.round(state.environment.targetHumidity)}%)`;
+        document.querySelectorAll('.speed-btn').forEach((b) => {
+          const s = Number(b.dataset.speed);
+          const isAct = (s === 0 && state.paused) || (!state.paused && s === state.timeScale);
+          b.classList.toggle('active', isAct);
+        });
+      }
+
+      // Populate Secondary Options
+      if (state.activeTool === 'opcoes') {
+        document.querySelectorAll('.subtab').forEach((t) => {
+          t.classList.toggle('active', t.dataset.subtab === state.secondaryTab);
+        });
+        document.querySelectorAll('.subtab-body').forEach((b) => {
+          b.style.display = b.id === `subtab-${state.secondaryTab}` ? 'block' : 'none';
+        });
+
+        if (state.secondaryTab === 'presets') {
+          const wrap = document.getElementById('preset-cards');
+          wrap.innerHTML = '';
+          for (const p of config.presets) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'choice-card';
+            btn.innerHTML = `
+              <span class="choice-head"><span>${p.name}</span></span>
+              <span class="choice-meta">${p.desc}</span>
+              <span class="choice-tags">${config.substrates[p.substrateId].name} · ${p.humidity}% UR</span>
+            `;
+            btn.addEventListener('click', () => actions.loadPreset(p.id));
+            wrap.appendChild(btn);
+          }
+        } else if (state.secondaryTab === 'comparar') {
+          const wrap = document.getElementById('snapshots-container');
+          if (!state.snapshots.length) {
+            wrap.innerHTML = '<p style="font-size:0.78rem;color:var(--text-muted);margin:6px 0;">Nenhuma versão salva ainda. Clique em "Salvar versão atual" para comparar evoluções lado a lado.</p>';
+          } else {
+            let html = `<table class="compare-table"><thead><tr><th>Versão</th><th>Substrato</th><th>UR</th><th>Micélio</th><th>Fungos</th><th>Ação</th></tr></thead><tbody>`;
+            for (const s of state.snapshots) {
+              html += `<tr>
+                <td>${s.label}</td>
+                <td>${s.substrateName}</td>
+                <td>${s.humidity}%</td>
+                <td>${s.nodes}</td>
+                <td>${s.mushrooms} (${s.mature} mad.)</td>
+                <td>
+                  <button class="btn-ghost" data-restore="${s.id}" type="button" style="padding:3px 8px;font-size:0.72rem;">Abrir</button>
+                  <button class="btn-ghost" data-del="${s.id}" type="button" style="padding:3px 7px;font-size:0.72rem;">×</button>
+                </td>
+              </tr>`;
+            }
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+            wrap.querySelectorAll('[data-restore]').forEach((b) => {
+              b.addEventListener('click', () => actions.restoreSnapshot(b.dataset.restore));
+            });
+            wrap.querySelectorAll('[data-del]').forEach((b) => {
+              b.addEventListener('click', () => actions.deleteSnapshot(b.dataset.del));
+            });
+          }
+        } else if (state.secondaryTab === 'desafios') {
+          const wrap = document.getElementById('challenges-container');
+          const goals = [
+            {
+              title: 'Despertar a Rede',
+              desc: 'Alcançar 45 nós ativos na rede de micélio.',
+              pct: clamp((m.nodeCount / 45) * 100, 0, 100),
+              done: m.nodeCount >= 45
+            },
+            {
+              title: 'Jardim Diverso',
+              desc: 'Cultivar 3 espécies fictícias maduras ao mesmo tempo.',
+              pct: clamp((m.matureSpeciesCount / 3) * 100, 0, 100),
+              done: m.matureSpeciesCount >= 3
+            },
+            {
+              title: 'Ciclo Completo de Esporulação',
+              desc: 'Obter ao menos 8 corpos frutíferos maduros no terrário.',
+              pct: clamp((m.matureCount / 8) * 100, 0, 100),
+              done: m.matureCount >= 8
+            }
+          ];
+          wrap.innerHTML = goals.map((g) => `
+            <div class="challenge-item${g.done ? ' done' : ''}">
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:0.82rem;">${g.title} ${g.done ? '✓' : ''}</div>
+                <div style="font-size:0.74rem;color:var(--text-secondary);">${g.desc}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(g.pct)}%"></div></div>
+              </div>
+              <span style="font-size:0.76rem;color:var(--accent-moss);font-weight:600;">${Math.round(g.pct)}%</span>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    // =========================================================================
+    // 10. INTERAÇÃO 3D (POINTER EVENTS + RAYCAST SÓ EM MESHES INTERATIVOS)
+    // =========================================================================
+    function bindCanvasInteraction() {
+      const dom = sceneCtx.renderer.domElement;
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let downPos = null;
+
+      function updateRay(ev) {
+        const rect = dom.getBoundingClientRect();
+        pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, sceneCtx.camera);
+        return raycaster.intersectObjects(sceneCtx.meshes.interactive, false);
+      }
+
+      dom.addEventListener('pointermove', (ev) => {
+        if (state.activeTool !== 'inocular') return;
+        const hits = updateRay(ev);
+        const ring = sceneCtx.meshes.placementRing;
+        if (hits.length > 0) {
+          const hit = hits[0];
+          ring.position.copy(hit.point);
+          ring.position.y += 0.004;
+          ring.visible = true;
+        } else {
+          ring.visible = false;
+        }
+      });
+
+      dom.addEventListener('pointerdown', (ev) => {
+        downPos = { x: ev.clientX, y: ev.clientY, time: performance.now() };
+        if (state.activeTool === 'inocular') {
+          const hits = updateRay(ev);
+          if (hits.length > 0) {
+            sceneCtx.controls.enabled = false;
+          }
+        }
+      });
+
+      dom.addEventListener('pointerup', (ev) => {
+        sceneCtx.controls.enabled = true;
+        if (!downPos) return;
+        const dist = Math.hypot(ev.clientX - downPos.x, ev.clientY - downPos.y);
+        downPos = null;
+        if (state.activeTool === 'inocular' && dist < 8) {
+          const hits = updateRay(ev);
+          if (hits.length > 0) {
+            const hit = hits[0];
+            const surface = hit.object.userData.surface || 'ground';
+            actions.inoculateAt(hit.point.x, hit.point.z, surface);
+          }
+        }
+      });
+
+      dom.addEventListener('pointercancel', () => {
+        sceneCtx.controls.enabled = true;
+        downPos = null;
+      });
+
+      // WebGL context loss recovery
+      dom.addEventListener('webglcontextlost', (ev) => {
+        ev.preventDefault();
+        showFallback('O contexto WebGL foi perdido (driver gráfico reiniciado ou memória insuficiente). Clique em Tentar novamente.');
+      });
+    }
+
+    // =========================================================================
+    // 11. LOOP PRINCIPAL (FIXED TIMESTEP + PAUSA EM ABA OCULTA)
+    // =========================================================================
+    let uiSyncTimer = 0;
+
+    function animate(now) {
+      if (sceneCtx.disposed) return;
+      sceneCtx.rafId = requestAnimationFrame(animate);
+      if (document.hidden) {
+        sceneCtx.lastFrameTime = now;
+        return;
+      }
+
+      const rawDt = sceneCtx.lastFrameTime ? (now - sceneCtx.lastFrameTime) / 1000 : 1 / 60;
+      sceneCtx.lastFrameTime = now;
+      const dt = Math.min(rawDt, 0.1);
+
+      // FPS tracking
+      if (rawDt > 0.001) {
+        sceneCtx.fpsSamples.push(1 / rawDt);
+        if (sceneCtx.fpsSamples.length > 24) sceneCtx.fpsSamples.shift();
+        const avg = sceneCtx.fpsSamples.reduce((a, b) => a + b, 0) / sceneCtx.fpsSamples.length;
+        sceneCtx.currentFps = Math.round(avg);
+      }
+
+      // Fixed-step simulation
+      sceneCtx.simAccumulator += dt;
+      let steps = 0;
+      let changed = false;
+      let sprouted = false;
+      while (sceneCtx.simAccumulator >= config.sim.fixedDt && steps < 4) {
+        const res = updateSimulation(state, config.sim.fixedDt);
+        if (res.newNodes > 0 || res.newMushrooms > 0 || !state.paused) changed = true;
+        if (res.newMushrooms > 0) sprouted = true;
+        sceneCtx.simAccumulator -= config.sim.fixedDt;
+        steps++;
+      }
+
+      if (changed) syncScene();
+      if (sprouted && state.timeScale <= 4) audio.playSprout();
+
+      updateParticles(dt);
+
+      // Smooth camera transition
+      if (sceneCtx.cameraLerpActive && sceneCtx.cameraTargetPos && sceneCtx.cameraTargetLook) {
+        const alpha = 1 - Math.exp(-dt * 6.5);
+        sceneCtx.camera.position.lerp(sceneCtx.cameraTargetPos, alpha);
+        sceneCtx.controls.target.lerp(sceneCtx.cameraTargetLook, alpha);
+        if (sceneCtx.camera.position.distanceTo(sceneCtx.cameraTargetPos) < 0.004) {
+          sceneCtx.cameraLerpActive = false;
+        }
+      }
+
+      sceneCtx.controls.update();
+
+      // Render: Bloom composer only in Cinema, direct render otherwise
+      if (state.qualityMode === 'cinema' && sceneCtx.composer) {
+        sceneCtx.composer.render();
+      } else {
+        sceneCtx.renderer.render(sceneCtx.scene, sceneCtx.camera);
+      }
+
+      // Periodic lightweight HUD refresh (4 Hz)
+      uiSyncTimer += dt;
+      if (uiSyncTimer >= 0.25) {
+        uiSyncTimer = 0;
+        const m = computeMetrics(state);
+        document.getElementById('hud-day').textContent = `Dia ${m.day} · ${m.timeStr}${state.paused ? ' (Pausado)' : ''}`;
+        document.getElementById('m-humidity').textContent = `${Math.round(state.environment.humidity)}%`;
+        document.getElementById('m-nutrients').textContent = `${m.avgNutrient}%`;
+        document.getElementById('m-nodes').textContent = String(m.nodeCount);
+        document.getElementById('m-mushrooms').textContent = String(m.mushroomCount);
+        document.getElementById('hud-fps').textContent = `${sceneCtx.currentFps} fps`;
+      }
+    }
+
+    // =========================================================================
+    // 12. AUTODIAGNÓSTICO NÃO DESTRUTIVO (runSelfDiagnostics)
+    // =========================================================================
+    function runSelfDiagnostics() {
+      const results = [];
+      function assert(name, cond, detail = '') {
+        results.push({ name, pass: Boolean(cond), detail });
+      }
+
+      // 1. Determinismo temporal por seed
+      const a = buildPresetState('demo');
+      const b = buildPresetState('demo');
+      advanceDeterministicHours(a, 12);
+      advanceDeterministicHours(b, 12);
+      assert(
+        'Avanço temporal reproduzível (mesma seed)',
+        a.myceliumNodes.length === b.myceliumNodes.length && a.mushrooms.length === b.mushrooms.length,
+        `A=${a.myceliumNodes.length} nós/${a.mushrooms.length} fungos, B=${b.myceliumNodes.length}/${b.mushrooms.length}`
+      );
+
+      // 2. Mudança ambiental altera crescimento (umidade baixa vs ótima)
+      const dry = createEmptyState({ substrateId: 'carvalho', humidity: 25, seed: 999 });
+      const wet = createEmptyState({ substrateId: 'carvalho', humidity: 84, seed: 999 });
+      addInoculationToState(dry, 'lumenaria', 0, 0, 'log');
+      addInoculationToState(wet, 'lumenaria', 0, 0, 'log');
+      advanceDeterministicHours(dry, 30);
+      advanceDeterministicHours(wet, 30);
+      assert(
+        'Umidade altera crescimento do micélio',
+        wet.myceliumNodes.length > dry.myceliumNodes.length && dry.myceliumNodes[0].dormant === true,
+        `Seco(25%)=${dry.myceliumNodes.length} nós (dormência=${dry.myceliumNodes[0].dormant}), Úmido(84%)=${wet.myceliumNodes.length} nós`
+      );
+
+      // 3. Serialização e validação JSON
+      const jsonStr = serialize(wet);
+      const parsed = validateImportedState(JSON.parse(jsonStr));
+      assert('Serialização e validação JSON (schemaVersion=1)', parsed.ok && parsed.data.myceliumNodes.length === wet.myceliumNodes.length);
+
+      // 4. Sem NaN ou extrapolação de limites
+      const noNaN = wet.myceliumNodes.every((n) => Number.isFinite(n.x) && Number.isFinite(n.y) && Number.isFinite(n.z)) &&
+        wet.environment.nutrientGrid.every((v) => Number.isFinite(v) && v >= 0 && v <= 1);
+      assert('Integridade numérica (zero NaN e limites respeitados)', noNaN && wet.myceliumNodes.length <= config.sim.maxNodes);
+
+      // 5. Métricas de render (se WebGL ativo)
+      if (sceneCtx.renderer) {
+        const info = sceneCtx.renderer.info.render;
+        assert('Orçamento WebGL ativo', info.calls >= 0 && info.triangles >= 0, `drawCalls=${info.calls}, triangles=${info.triangles}`);
+      }
+
+      const passed = results.filter((r) => r.pass).length;
+      return { passed, total: results.length, results };
+    }
+    window.runSelfDiagnostics = runSelfDiagnostics;
+
+    // =========================================================================
+    // 13. EVENTOS DE INTERFACE, TECLADO E INICIALIZAÇÃO
+    // =========================================================================
+    function showFallback(reason) {
+      document.getElementById('fallback-reason').textContent = reason;
+      document.getElementById('fallback-screen').classList.add('visible');
+    }
+
+    function bindUIEvents() {
+      // Dock tools
+      document.querySelectorAll('.dock-btn').forEach((btn) => {
+        btn.addEventListener('click', () => actions.setTool(btn.dataset.tool));
+      });
+      document.getElementById('btn-exit-tool').addEventListener('click', () => actions.exitTool());
+
+      // Mode buttons
+      document.getElementById('btn-mode-livre').addEventListener('click', () => {
+        state.mode = 'livre';
+        renderUI();
+      });
+      document.getElementById('btn-mode-guiado').addEventListener('click', () => {
+        state.mode = 'guiado';
+        state.tutorialStep = 0;
+        renderUI();
+      });
+
+      // Guided actions
+      document.getElementById('btn-guide-skip').addEventListener('click', () => {
+        state.mode = 'livre';
+        renderUI();
+      });
+      document.getElementById('btn-guide-action').addEventListener('click', () => {
+        const step = config.tutorialSteps[state.tutorialStep];
+        if (!step) return;
+        if (state.tutorialStep === 3) {
+          actions.stepHours(24);
+        } else {
+          state.activeTool = step.tool;
+          document.getElementById('canvas-container').classList.toggle('cursor-inocular', state.activeTool === 'inocular');
+          renderUI();
+        }
+      });
+      document.getElementById('btn-guide-next').addEventListener('click', () => {
+        if (state.tutorialStep >= config.tutorialSteps.length - 1) {
+          state.mode = 'livre';
+          showToast('Demonstração guiada concluída! Explore livremente.');
+        } else {
+          state.tutorialStep += 1;
+        }
+        renderUI();
+      });
+
+      // Top bar actions
+      document.getElementById('btn-cam').addEventListener('click', () => actions.cycleCamera());
+      document.getElementById('btn-light').addEventListener('click', () => actions.toggleLight());
+      document.getElementById('select-quality').addEventListener('change', (ev) => {
+        state.qualityMode = ev.target.value;
+        applyQualityProfile(state.qualityMode);
+        showToast(`Perfil gráfico: ${ev.target.options[ev.target.selectedIndex].text}.`);
+      });
+      document.getElementById('btn-audio').addEventListener('click', () => {
+        audio.setEnabled(!audio.enabled);
+        if (audio.enabled) audio.playInoculate();
+        renderUI();
+      });
+      document.getElementById('btn-help').addEventListener('click', () => {
+        document.getElementById('modal-help').classList.add('open');
+      });
+      document.getElementById('btn-close-help').addEventListener('click', () => {
+        document.getElementById('modal-help').classList.remove('open');
+      });
+      document.getElementById('btn-restart-guide').addEventListener('click', () => {
+        document.getElementById('modal-help').classList.remove('open');
+        state.mode = 'guiado';
+        state.tutorialStep = 0;
+        renderUI();
+      });
+      document.getElementById('btn-fullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.().catch(() => showToast('Tela cheia indisponível neste navegador.'));
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
+      });
+      document.getElementById('btn-toggle-ui').addEventListener('click', () => {
+        document.body.classList.toggle('ui-hidden');
+      });
+
+      // Tool 2 & 3 controls
+      document.getElementById('btn-inoculate-auto').addEventListener('click', () => actions.inoculateSuggested());
+      document.getElementById('slider-humidity').addEventListener('input', (ev) => actions.setTargetHumidity(ev.target.value));
+      document.getElementById('btn-spray').addEventListener('click', () => actions.sprayMist());
+      document.querySelectorAll('.speed-btn').forEach((b) => {
+        b.addEventListener('click', () => actions.setTimeScale(b.dataset.speed));
+      });
+      document.getElementById('btn-step-6h').addEventListener('click', () => actions.stepHours(6));
+      document.getElementById('btn-step-24h').addEventListener('click', () => actions.stepHours(24));
+
+      // Secondary subtabs
+      document.querySelectorAll('.subtab').forEach((t) => {
+        t.addEventListener('click', () => {
+          state.secondaryTab = t.dataset.subtab;
+          renderUI();
+        });
+      });
+
+      // Data & Snapshots
+      document.getElementById('btn-save-snapshot').addEventListener('click', () => actions.saveSnapshot());
+      document.getElementById('btn-undo').addEventListener('click', () => actions.undo());
+      document.getElementById('btn-redo').addEventListener('click', () => actions.redo());
+      document.getElementById('btn-save-local').addEventListener('click', () => actions.saveLocal());
+      document.getElementById('btn-load-local').addEventListener('click', () => actions.loadLocal());
+      document.getElementById('btn-export-json').addEventListener('click', () => actions.exportJSON());
+      document.getElementById('btn-import-json').addEventListener('click', () => {
+        document.getElementById('input-import-json').click();
+      });
+      document.getElementById('input-import-json').addEventListener('change', (ev) => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => actions.importJSONText(String(reader.result || ''));
+        reader.readAsText(file);
+        ev.target.value = '';
+      });
+      document.getElementById('btn-export-png').addEventListener('click', () => actions.exportPNG());
+      document.getElementById('btn-run-diag').addEventListener('click', () => {
+        const out = document.getElementById('diag-output');
+        const report = runSelfDiagnostics();
+        out.style.display = 'block';
+        out.textContent = `Autodiagnóstico: ${report.passed}/${report.total} aprovados\n` +
+          report.results.map((r) => `[${r.pass ? 'OK' : 'FALHA'}] ${r.name}${r.detail ? ' — ' + r.detail : ''}`).join('\n');
+      });
+
+      // Reset modal
+      document.getElementById('btn-reset-request').addEventListener('click', () => {
+        document.getElementById('modal-reset').classList.add('open');
+      });
+      document.getElementById('btn-reset-cancel').addEventListener('click', () => {
+        document.getElementById('modal-reset').classList.remove('open');
+      });
+      document.getElementById('btn-reset-empty').addEventListener('click', () => {
+        document.getElementById('modal-reset').classList.remove('open');
+        actions.reset(true);
+      });
+      document.getElementById('btn-reset-demo').addEventListener('click', () => {
+        document.getElementById('modal-reset').classList.remove('open');
+        actions.reset(false);
+      });
+
+      document.getElementById('btn-fallback-retry').addEventListener('click', () => window.location.reload());
+
+      // Keyboard shortcuts
+      window.addEventListener('keydown', (ev) => {
+        if (ev.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(ev.target.tagName)) return;
+        if (ev.key === 'Escape') {
+          document.getElementById('modal-help').classList.remove('open');
+          document.getElementById('modal-reset').classList.remove('open');
+          if (state.activeTool) actions.exitTool();
+        } else if (ev.key === 'h' || ev.key === 'H') {
+          document.body.classList.toggle('ui-hidden');
+        } else if (ev.key === '1') {
+          actions.setTool('substrato');
+        } else if (ev.key === '2') {
+          actions.setTool('inocular');
+        } else if (ev.key === '3') {
+          actions.setTool('clima');
+        } else if (ev.key === ' ') {
+          ev.preventDefault();
+          state.paused = !state.paused;
+          renderUI();
+        } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') {
+          ev.preventDefault();
+          actions.undo();
+        } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'y') {
+          ev.preventDefault();
+          actions.redo();
+        }
+      });
+
+      // Responsive Resize
+      window.addEventListener('resize', () => {
+        if (!sceneCtx.renderer || !sceneCtx.camera) return;
+        const container = document.getElementById('canvas-container');
+        const w = container.clientWidth || window.innerWidth;
+        const h = container.clientHeight || window.innerHeight;
+        sceneCtx.camera.aspect = w / h;
+        sceneCtx.camera.updateProjectionMatrix();
+        sceneCtx.renderer.setSize(w, h);
+        if (sceneCtx.composer) sceneCtx.composer.setSize(w, h);
+      });
+
+      // Clean disposal on unload
+      window.addEventListener('beforeunload', () => {
+        sceneCtx.disposed = true;
+        if (sceneCtx.rafId) cancelAnimationFrame(sceneCtx.rafId);
+        audio.dispose();
+        if (sceneCtx.envRT) sceneCtx.envRT.dispose();
+        if (sceneCtx.pmrem) sceneCtx.pmrem.dispose();
+        if (sceneCtx.renderer) sceneCtx.renderer.dispose();
+      });
+    }
+
+    async function bootstrap() {
+      // Load initial demonstration state
+      state = buildPresetState('demo');
+      bindUIEvents();
+      renderUI();
+
+      try {
+        THREE = await import('three');
+        const orbitMod = await import('three/addons/controls/OrbitControls.js');
+        OrbitControls = orbitMod.OrbitControls;
+        try {
+          const envMod = await import('three/addons/environments/RoomEnvironment.js');
+          RoomEnvironment = envMod.RoomEnvironment;
+        } catch {
+          RoomEnvironment = null;
+        }
+        try {
+          const compMod = await import('three/addons/postprocessing/EffectComposer.js');
+          const rpMod = await import('three/addons/postprocessing/RenderPass.js');
+          const bloomMod = await import('three/addons/postprocessing/UnrealBloomPass.js');
+          const outMod = await import('three/addons/postprocessing/OutputPass.js');
+          EffectComposer = compMod.EffectComposer;
+          RenderPass = rpMod.RenderPass;
+          UnrealBloomPass = bloomMod.UnrealBloomPass;
+          OutputPass = outMod.OutputPass;
+        } catch {
+          EffectComposer = null;
+        }
+      } catch (err) {
+        showFallback(`Falha ao carregar Three.js r160 via CDN (${err?.message || 'rede indisponível'}).`);
+        return;
+      }
+
+      try {
+        buildTerrariumScene();
+        applySubstrateVisuals();
+        applyLightingPreset();
+        applyQualityProfile(state.qualityMode);
+        setCameraPreset('geral', true);
+        syncScene();
+        bindCanvasInteraction();
+        sceneCtx.rafId = requestAnimationFrame(animate);
+      } catch (err) {
+        showFallback(`Erro ao inicializar WebGL: ${err?.message || err}`);
+      }
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

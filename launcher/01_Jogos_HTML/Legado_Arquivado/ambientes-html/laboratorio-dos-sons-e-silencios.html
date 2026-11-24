@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Laboratório dos Sons e Silêncios — Experiência 3D Interativa</title>
+
+  <!-- Tailwind CSS & Three.js CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Barra Imersiva Compartilhada do Workspace -->
+  <link rel="stylesheet" href="shared/imersivo.css?v=3" />
+
+  <style>
+    :root {
+      --cor-som: #10b981;
+      --cor-ressonancia: #06b6d4;
+      --cor-madeira: #2b1810;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #06110f;
+      color: #f0fdf4;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    .glass-acoustic {
+      background: rgba(8, 28, 24, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+    }
+
+    .btn-sound {
+      transition: all 200ms cubic-bezier(.2,.6,.3,1);
+    }
+    .btn-sound:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+    }
+
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -15px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: toastFade 3.2s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 9999px; }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- Canvas WebGL 3D -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI Superior -->
+  <header id="ui-top-bar" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <a href="/index.html" class="glass-acoustic px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-emerald-950/40 flex items-center space-x-2 text-emerald-200/90 transition" title="Voltar ao Launcher">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Launcher</span>
+      </a>
+      <div class="glass-acoustic px-4 py-2 rounded-xl flex flex-col">
+        <span class="text-xs uppercase tracking-wider text-emerald-400 font-bold">Ambiente 14 · Reconstrução Fiel</span>
+        <h1 class="text-sm font-semibold text-white/95">Laboratório dos Sons e Silêncios</h1>
+      </div>
+    </div>
+
+    <!-- Botão Mestre de Silêncio Imediato (Pausa Sensorial) -->
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <button id="btn-master-silence" class="btn-sound px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 shadow-lg flex items-center space-x-2 border border-red-400/40" title="Eliminar Todos os Sons Imediatamente (Pausa Sensorial)">
+        <span>🤫</span>
+        <span>Silêncio Total (Espaço)</span>
+      </button>
+
+      <button id="btn-sound-toggle" class="glass-acoustic p-2.5 rounded-xl hover:bg-emerald-950/40 text-emerald-300 transition" title="Alternar Ambiência (M)">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12 0l-6-6m6 0l-6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Dock Inferior com Câmeras e Instrumentos Acústicos -->
+  <footer id="ui-bottom-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2.5 z-20 pointer-events-auto">
+    <div class="glass-acoustic p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="cam-studio" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition active">Estúdio Geral</button>
+      <button id="cam-chimes" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition">Carrilhão</button>
+      <button id="cam-fork" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition">Diapasão 432Hz</button>
+      <button id="cam-bowls" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition">Taças de Cristal</button>
+    </div>
+
+    <div class="glass-acoustic p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="btn-strike-chimes" class="btn-sound px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 flex items-center space-x-1.5 transition">
+        <span>🎐</span>
+        <span>Tocar Carrilhão</span>
+      </button>
+
+      <button id="btn-strike-fork" class="btn-sound px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 flex items-center space-x-1.5 transition">
+        <span>🔱</span>
+        <span>Vibrar Diapasão</span>
+      </button>
+
+      <button id="btn-drawer-toggle" class="btn-sound px-3.5 py-1.5 rounded-xl text-xs font-medium text-emerald-200 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 flex items-center space-x-1.5 transition">
+        <span>🌿</span>
+        <span>Guia Sensorial</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Dica de Interação -->
+  <div id="hint-bubble" class="absolute bottom-20 left-1/2 -translate-x-1/2 glass-acoustic px-4 py-2 rounded-full text-xs font-medium text-emerald-200/90 pointer-events-none transition-all duration-300 z-10 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+    <span>Clique nos tubos do carrilhão, no diapasão ou nas taças de cristal para criar ressonâncias</span>
+  </div>
+
+  <!-- Gaveta Lateral: Regulação Sensorial & Escuta Consciente -->
+  <aside id="info-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full glass-acoustic border-l border-emerald-500/30 z-30 translate-x-full transition-transform duration-300 flex flex-col p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-emerald-500/20">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">🌿</span>
+        <h2 class="text-base font-bold text-emerald-100">Regulação Acústica</h2>
+      </div>
+      <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-300 transition">✕</button>
+    </div>
+
+    <div class="space-y-4 pt-4 text-xs text-emerald-200/90 leading-relaxed">
+      <section class="bg-emerald-950/40 p-3.5 rounded-xl border border-emerald-500/20">
+        <h3 class="font-bold text-emerald-300 mb-1 text-sm">O Poder do Som e do Silêncio</h3>
+        <p>
+          O sistema nervoso responde profundamente aos estímulos sonoros. Para muitas pessoas, especialmente
+          com sensibilidade sensorial ou sobrecarga cognitiva, ter a liberdade de criar sons puros e,
+          com um único toque, cessar todos os ruídos é uma poderosa experiência de controle e segurança.
+        </p>
+      </section>
+
+      <section class="bg-black/30 p-3.5 rounded-xl border border-emerald-500/20">
+        <h3 class="font-bold text-emerald-300 mb-1">Diário de Percepção Auditiva</h3>
+        <textarea id="acoustic-notes" rows="4" class="w-full bg-black/60 border border-emerald-500/30 rounded-lg p-2.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-400 placeholder-emerald-500/40" placeholder="Qual ressonância acalmou mais o seu ritmo hoje? O que você experimenta quando escolhe o silêncio?"></textarea>
+        <button id="btn-save-note" class="mt-2 w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold rounded-lg shadow transition">Salvar Percepção</button>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center space-y-2"></div>
+
+  <!-- Script Principal 3D -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+       * 1. ÁUDIO PROCEDURAL ACÚSTICO (Web Audio API)
+       * ========================================================== */
+      class AcousticAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.activeSources = [];
+          this.roomDroneGain = null;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          this.ctx = new AudioContext();
+
+          // Ressonância suave do estúdio em 144Hz
+          const osc = this.ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = 144;
+
+          const gain = this.ctx.createGain();
+          gain.gain.value = 0.05;
+
+          this.roomDroneGain = this.ctx.createGain();
+          this.roomDroneGain.gain.value = 0.15;
+
+          osc.connect(gain);
+          gain.connect(this.roomDroneGain);
+          this.roomDroneGain.connect(this.ctx.destination);
+          osc.start();
+        }
+
+        playChime(noteFreq = 528) {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(noteFreq, now);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 3.25);
+        }
+
+        playTuningFork(freq = 432) {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.8);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 4.85);
+        }
+
+        playCrystalBowl(freq = 288) {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          [freq, freq * 1.5].forEach((f, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now);
+
+            gain.gain.setValueAtTime(0.25 / (idx + 1), now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 5.05);
+          });
+        }
+
+        silenceAll() {
+          if (this.ctx && this.roomDroneGain) {
+            this.roomDroneGain.gain.setValueAtTime(this.roomDroneGain.gain.value, this.ctx.currentTime);
+            this.roomDroneGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.1);
+          }
+          this.enabled = false;
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.roomDroneGain && this.ctx) {
+            this.roomDroneGain.gain.value = this.enabled ? 0.15 : 0;
+          }
+          return this.enabled;
+        }
+      }
+
+      const audio = new AcousticAudioEngine();
+
+      /* ==========================================================
+       * 2. CENÁRIO THREE.JS (Estúdio Acústico em Madeira & Difusores)
+       * ========================================================== */
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x06110f);
+      scene.fog = new THREE.FogExp2(0x06110f, 0.035);
+
+      const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 50);
+      camera.position.set(0, 2.2, 4.4);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.05;
+      controls.minDistance = 1.2;
+      controls.maxDistance = 10;
+      controls.target.set(0, 1.2, 0);
+
+      /* ==========================================================
+       * 3. MATERIAIS PBR
+       * ========================================================== */
+      const matWoodFloor = new THREE.MeshStandardMaterial({ color: 0x22150e, roughness: 0.85 });
+      const matWoodDiffuser = new THREE.MeshStandardMaterial({ color: 0x452311, roughness: 0.75 });
+      const matChimeMetal = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.25, metalness: 0.95 });
+      const matForkSteel  = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.2, metalness: 0.9 });
+      const matCrystal    = new THREE.MeshPhysicalMaterial({ color: 0xa7f3d0, transmission: 0.88, roughness: 0.15, transparent: true, opacity: 0.9 });
+
+      /* ==========================================================
+       * 4. ILUMINAÇÃO TRANQUILA
+       * ========================================================== */
+      const ambLight = new THREE.AmbientLight(0x0d2822, 0.9);
+      scene.add(ambLight);
+
+      const warmSpot = new THREE.PointLight(0xa7f3d0, 2.0, 7);
+      warmSpot.position.set(0, 3.2, 0.5);
+      warmSpot.castShadow = true;
+      scene.add(warmSpot);
+
+      /* ==========================================================
+       * 5. CENOGRAFIA: ESTÚDIO COM DIFUSORES E INSTRUMENTOS
+       * ========================================================== */
+      const studioGroup = new THREE.Group();
+
+      // Piso de Carvalho Escuro
+      const floorGeo = new THREE.BoxGeometry(8, 0.2, 8);
+      floorGeo.translate(0, -0.1, 0);
+      const floor = new THREE.Mesh(floorGeo, matWoodFloor);
+      floor.receiveShadow = true;
+      studioGroup.add(floor);
+
+      // Parede de Fundo com Painéis Difusores Acústicos
+      const wallGeo = new THREE.PlaneGeometry(8, 5);
+      const matWall = new THREE.MeshStandardMaterial({ color: 0x0c1e19, roughness: 0.95 });
+      const wall = new THREE.Mesh(wallGeo, matWall);
+      wall.position.set(0, 2.5, -2.4);
+      studioGroup.add(wall);
+
+      // Painéis difusores de ripas de madeira
+      for (let i = -6; i <= 6; i++) {
+        const slatGeo = new THREE.BoxGeometry(0.12, 3.6, 0.08);
+        const slat = new THREE.Mesh(slatGeo, matWoodDiffuser);
+        slat.position.set(i * 0.45, 2.2, -2.34);
+        studioGroup.add(slat);
+      }
+
+      // 1. Carrilhão Tubular Suspenso (Chimes) à esquerda
+      const chimeGroup = new THREE.Group();
+      chimeGroup.position.set(-1.4, 1.8, -0.2);
+
+      const crossbarGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.9, 8);
+      crossbarGeo.rotateZ(Math.PI / 2);
+      const crossbar = new THREE.Mesh(crossbarGeo, matWoodDiffuser);
+      chimeGroup.add(crossbar);
+
+      const chimes = [];
+      const chimeFreqs = [528, 594, 660, 792, 880];
+      for (let c = 0; c < 5; c++) {
+        const h = 0.5 + c * 0.12;
+        const tubeGeo = new THREE.CylinderGeometry(0.025, 0.025, h, 12);
+        const tube = new THREE.Mesh(tubeGeo, matChimeMetal);
+        tube.position.set(-0.35 + c * 0.18, -h / 2, 0);
+        tube.userData = { freq: chimeFreqs[c] };
+        chimeGroup.add(tube);
+        chimes.push(tube);
+      }
+      studioGroup.add(chimeGroup);
+
+      // 2. Diapasão Ressonante Central sobre Caixa Acústica
+      const forkGroup = new THREE.Group();
+      forkGroup.position.set(0, 0.6, 0);
+
+      const soundboxGeo = new THREE.BoxGeometry(0.8, 0.35, 0.5);
+      soundboxGeo.translate(0, 0.18, 0);
+      const soundbox = new THREE.Mesh(soundboxGeo, matWoodDiffuser);
+      forkGroup.add(soundbox);
+
+      // Haste do diapasão
+      const forkStemGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.25, 10);
+      forkStemGeo.translate(0, 0.45, 0);
+      const forkStem = new THREE.Mesh(forkStemGeo, matForkSteel);
+      forkGroup.add(forkStem);
+
+      // Braços do diapasão (em U)
+      [-0.08, 0.08].forEach(fx => {
+        const tineGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.6, 10);
+        tineGeo.translate(fx, 0.85, 0);
+        const tine = new THREE.Mesh(tineGeo, matForkSteel);
+        forkGroup.add(tine);
+      });
+
+      // Anéis de onda sonora visual (expansão)
+      const waveGeo = new THREE.RingGeometry(0.2, 0.24, 32);
+      waveGeo.rotateX(-Math.PI / 2);
+      const matWave = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0 });
+      const waveMesh = new THREE.Mesh(waveGeo, matWave);
+      waveMesh.position.set(0, 1.2, 0);
+      forkGroup.add(waveMesh);
+
+      studioGroup.add(forkGroup);
+
+      // 3. Taças de Cristal de Quartzo à direita
+      const bowlsGroup = new THREE.Group();
+      bowlsGroup.position.set(1.4, 0.15, -0.2);
+
+      const bowl1Geo = new THREE.SphereGeometry(0.28, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      bowl1Geo.rotateX(Math.PI);
+      const bowl1 = new THREE.Mesh(bowl1Geo, matCrystal);
+      bowl1.position.set(-0.25, 0.28, 0);
+      bowlsGroup.add(bowl1);
+
+      const bowl2Geo = new THREE.SphereGeometry(0.22, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      bowl2Geo.rotateX(Math.PI);
+      const bowl2 = new THREE.Mesh(bowl2Geo, matCrystal);
+      bowl2.position.set(0.3, 0.22, 0);
+      bowlsGroup.add(bowl2);
+
+      studioGroup.add(bowlsGroup);
+
+      scene.add(studioGroup);
+
+      /* ==========================================================
+       * 6. CÂMERAS PRESET
+       * ========================================================== */
+      const camPresets = {
+        studio: { pos: new THREE.Vector3(0, 2.2, 4.4), target: new THREE.Vector3(0, 1.2, 0) },
+        chimes: { pos: new THREE.Vector3(-1.4, 1.8, 1.6), target: new THREE.Vector3(-1.4, 1.5, -0.2) },
+        fork:   { pos: new THREE.Vector3(0, 1.6, 1.8), target: new THREE.Vector3(0, 1.1, 0) },
+        bowls:  { pos: new THREE.Vector3(1.4, 1.4, 1.6), target: new THREE.Vector3(1.4, 0.6, -0.2) }
+      };
+
+      let targetCamPos = camPresets.studio.pos.clone();
+      let targetCamLook = camPresets.studio.target.clone();
+
+      function setCameraPreset(key) {
+        const p = camPresets[key];
+        targetCamPos.copy(p.pos);
+        targetCamLook.copy(p.target);
+
+        document.querySelectorAll('.btn-cam').forEach(b => b.classList.remove('active', 'bg-emerald-500/20', 'text-white'));
+        const activeBtn = document.getElementById(`cam-${key}`);
+        if (activeBtn) activeBtn.classList.add('active', 'bg-emerald-500/20', 'text-white');
+      }
+
+      /* ==========================================================
+       * 7. LÓGICA DE SONS & PAUSA SENSORIAL
+       * ========================================================== */
+      let waveScale = 1;
+      let waveActive = false;
+
+      function showToast(text) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'glass-acoustic px-4 py-2.5 rounded-xl text-xs text-emerald-200 border border-emerald-400/40 shadow-xl toast-anim';
+        t.textContent = text;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      function strikeFork() {
+        audio.playTuningFork(432);
+        waveActive = true;
+        waveScale = 1;
+        matWave.opacity = 0.8;
+        showToast('🔱 Diapasão em 432Hz vibrando com pureza e ressonância natural.');
+      }
+
+      function strikeChimes() {
+        chimes.forEach((ch, idx) => {
+          setTimeout(() => {
+            audio.playChime(ch.userData.freq);
+            ch.rotation.z = (Math.random() - 0.5) * 0.15;
+            setTimeout(() => { ch.rotation.z = 0; }, 300);
+          }, idx * 120);
+        });
+        showToast('🎐 Carrilhão de tubos de prata entoando escala pentatônica harmônica.');
+      }
+
+      function applyMasterSilence() {
+        audio.silenceAll();
+        waveActive = false;
+        matWave.opacity = 0;
+        showToast('🤫 Silêncio Total ativado! Pausa sensorial completa para restauração da mente.');
+      }
+
+      /* ==========================================================
+       * 8. LISTENERS DA UI
+       * ========================================================== */
+      document.getElementById('btn-master-silence').addEventListener('click', applyMasterSilence);
+      document.getElementById('btn-strike-fork').addEventListener('click', strikeFork);
+      document.getElementById('btn-strike-chimes').addEventListener('click', strikeChimes);
+
+      document.getElementById('cam-studio').addEventListener('click', () => setCameraPreset('studio'));
+      document.getElementById('cam-chimes').addEventListener('click', () => setCameraPreset('chimes'));
+      document.getElementById('cam-fork').addEventListener('click', () => setCameraPreset('fork'));
+      document.getElementById('cam-bowls').addEventListener('click', () => setCameraPreset('bowls'));
+
+      // Drawer
+      const drawer = document.getElementById('info-drawer');
+      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        drawer.classList.add('translate-x-full');
+      });
+      document.getElementById('btn-save-note').addEventListener('click', () => {
+        const val = document.getElementById('acoustic-notes').value;
+        if (val.trim()) {
+          showToast('💾 Percepção sensorial arquivada com serenidade.');
+        } else {
+          showToast('✏️ Escreva uma reflexão antes de salvar.');
+        }
+      });
+
+      // Som
+      const btnSound = document.getElementById('btn-sound-toggle');
+      btnSound.addEventListener('click', () => {
+        const on = audio.toggle();
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+        showToast(on ? '🔊 Sons acústicos ativados' : '🔇 Áudio silenciado');
+      });
+
+      // Teclado
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.code === 'Space') {
+          e.preventDefault();
+          applyMasterSilence();
+        } else if (e.key.toLowerCase() === 'f') {
+          strikeFork();
+        } else if (e.key.toLowerCase() === 'c') {
+          strikeChimes();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ==========================================================
+       * 9. LOOP DE ANIMAÇÃO
+       * ========================================================== */
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = clock.getDelta();
+
+        // 1. Câmera
+        camera.position.lerp(targetCamPos, 0.04);
+        controls.target.lerp(targetCamLook, 0.04);
+        controls.update();
+
+        // 2. Ondas Visuais do Diapasão
+        if (waveActive) {
+          waveScale += delta * 1.8;
+          waveMesh.scale.set(waveScale, waveScale, waveScale);
+          matWave.opacity = Math.max(0, 0.8 - (waveScale - 1) * 0.3);
+          if (waveScale > 3.6) {
+            waveActive = false;
+            matWave.opacity = 0;
+          }
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      setTimeout(() => {
+        const hint = document.getElementById('hint-bubble');
+        if (hint) {
+          hint.style.opacity = '0';
+          setTimeout(() => hint.remove(), 500);
+        }
+      }, 6500);
+
+    })();
+  </script>
+
+  <!-- Script Compartilhado de Barra Imersiva e Atalhos -->
+  <script src="shared/imersivo.js?v=3"></script>
+  <script>
+    if (window.Imersivo) {
+      Imersivo.init({
+        ambienteId: 'laboratorio-dos-sons-e-silencios',
+        titulo: 'Laboratório dos Sons e Silêncios',
+        tema: 'acustica'
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Oficina de Bonsais · Pátio de Cultivo e Contemplação Zen 3D</title>
+  <meta name="description" content="Ambiente 3D contemplativo de arte e cultivo de bonsais tradicionais japoneses com poda física, aramação, ciclo de estações, áudio zen procedural, modo foto e diário botânico.">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #252b22;
+      --muted: #676c5e;
+      --paper: #f8f5ed;
+      --green: #37533c;
+      --green-dark: #273d2b;
+      --gold: #c49a55;
+      --line: #dedacc;
+      --shadow: 0 16px 40px rgba(18, 28, 19, 0.16);
+      --hanko: #a63f2c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #cfd4c2;
+      overflow: hidden;
+      width: 100vw;
+      height: 100dvh;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    button, select, input, textarea {
+      font: inherit;
+      color: inherit;
+    }
+    button, select {
+      border: 1px solid var(--line);
+      background: #fffdf7;
+      border-radius: 9px;
+      min-height: 44px;
+      padding: 9px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+    button:hover {
+      background: #eeeee0;
+      border-color: #cac5b2;
+    }
+    button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 2px;
+    }
+    button[aria-pressed="true"], button.primary {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green-dark);
+      box-shadow: 0 2px 8px rgba(39,61,43,0.3);
+    }
+    button[aria-pressed="true"]:hover, button.primary:hover {
+      background: var(--green-dark);
+    }
+    button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    #world {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #cbd5c1;
+    }
+    #world canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Botão Launcher no topo esquerdo */
+    .launcher-btn {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 15px;
+      border-radius: 999px;
+      background: rgba(22, 28, 22, 0.85);
+      border: 1px solid rgba(220, 200, 160, 0.3);
+      color: #f6efe2;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .launcher-btn:hover {
+      background: rgba(38, 48, 38, 0.95);
+      border-color: var(--gold);
+      transform: translateY(-1px);
+    }
+
+    /* Cabeçalho e Marca */
+    header {
+      position: absolute;
+      z-index: 5;
+      left: 140px;
+      right: 20px;
+      top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+    header > * { pointer-events: auto; }
+
+    .brand, .top, .panel, .dock, .info, .guide, .notice, .dialog {
+      background: rgba(248, 245, 237, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+    }
+    .seal {
+      background: var(--hanko);
+      color: #fff8eb;
+      font: bold 22px "Times New Roman", Georgia, serif;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+    }
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    h1 {
+      font: 23px/1.15 Georgia, serif;
+      letter-spacing: -0.3px;
+    }
+
+    .top {
+      display: flex;
+      gap: 5px;
+      padding: 5px;
+      align-items: center;
+    }
+    .top button, .top select {
+      border: 0;
+      background: transparent;
+      padding: 7px 11px;
+      min-height: 38px;
+      font-size: 13px;
+    }
+    .top button:hover {
+      background: rgba(0,0,0,0.06);
+    }
+
+    /* Cartão de Informações Botânicas */
+    .info {
+      position: absolute;
+      top: 86px;
+      left: 20px;
+      padding: 14px 18px;
+      max-width: 260px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .info h2 {
+      font: 22px Georgia, serif;
+      margin: 4px 0 2px;
+    }
+    .tag {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .stats {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.4;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      padding-top: 6px;
+    }
+
+    /* Painel Lateral de Ferramentas */
+    .panel {
+      position: absolute;
+      right: 20px;
+      top: 86px;
+      width: 290px;
+      padding: 18px;
+      max-height: calc(100dvh - 200px);
+      overflow-y: auto;
+      z-index: 6;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s;
+    }
+    .panel h2 {
+      font: 22px Georgia, serif;
+      margin: 3px 0 10px;
+    }
+    .panel p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+    .panel .full {
+      width: 100%;
+      margin: 5px 0;
+    }
+    .panel label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 12px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .panel input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+    }
+    .row {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+    .row > * {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Dock Inferior */
+    .dock {
+      position: absolute;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 6;
+      padding: 7px 10px;
+      max-width: calc(100vw - 24px);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .dock::-webkit-scrollbar { display: none; }
+    .dock button {
+      min-width: 74px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+      border: 0;
+      padding: 8px 10px;
+      background: transparent;
+    }
+    .dock button:hover {
+      background: rgba(0,0,0,0.06);
+    }
+    .dock button[aria-pressed="true"] {
+      background: var(--green);
+      color: #fff;
+    }
+    .dock svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .dock .kbd-hint {
+      font-size: 9px;
+      opacity: 0.65;
+      font-weight: 500;
+    }
+
+    /* Dicas e Avisos */
+    .guide {
+      position: absolute;
+      bottom: 96px;
+      left: 20px;
+      max-width: 320px;
+      padding: 14px 18px;
+      z-index: 4;
+    }
+    .guide p {
+      margin: 6px 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .notice {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 96px;
+      max-width: 90%;
+      padding: 9px 18px;
+      font-size: 13px;
+      z-index: 8;
+      text-align: center;
+      pointer-events: none;
+      color: #fff;
+      background: rgba(28, 38, 29, 0.92);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transition: opacity 0.25s;
+    }
+    .hint {
+      position: absolute;
+      bottom: 98px;
+      right: 22px;
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 2px 10px rgba(0,0,0,0.5);
+      pointer-events: none;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 4;
+    }
+
+    .hidden, [hidden] { display: none !important; }
+    .swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+    }
+    .close {
+      float: right;
+      min-height: 32px;
+      padding: 2px 8px;
+      font-size: 16px;
+      border: 0;
+      background: transparent;
+    }
+
+    /* Modal Diário do Bonsai */
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 24, 18, 0.55);
+      backdrop-filter: blur(6px);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .dialog {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+      border-radius: 18px;
+      background: #fbf8f0;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+    .dialog h2 {
+      font: 26px Georgia, serif;
+      margin-bottom: 6px;
+    }
+    .dialog-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .journal-entry {
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 10px 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* Responsividade Mobile */
+    @media (max-width: 768px) {
+      .launcher-btn {
+        top: 10px;
+        left: 10px;
+        padding: 5px 12px;
+        font-size: 11px;
+      }
+      header {
+        left: 10px;
+        right: 10px;
+        top: 50px;
+      }
+      .brand {
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .seal { width: 34px; height: 34px; font-size: 18px; }
+      h1 { font-size: 17px; }
+      .brand .eyebrow { font-size: 8px; letter-spacing: 1px; }
+      .top button, .top select { padding: 5px 8px; font-size: 11px; min-height: 36px; }
+      .info {
+        top: 114px;
+        left: 10px;
+        max-width: 190px;
+        padding: 10px 14px;
+      }
+      .info h2 { font-size: 17px; }
+      .dock {
+        bottom: max(10px, env(safe-area-inset-bottom));
+        padding: 5px 6px;
+      }
+      .dock button { min-width: 60px; padding: 6px 7px; font-size: 10px; }
+      .panel {
+        left: 10px;
+        right: 10px;
+        top: auto;
+        bottom: 84px;
+        width: auto;
+        max-height: 38dvh;
+        padding: 14px;
+      }
+      .guide {
+        left: 10px;
+        bottom: 84px;
+        max-width: calc(100vw - 20px);
+      }
+      .hint { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="world" aria-label="Bancada tridimensional de jardinagem e cultivo de bonsai"></div>
+
+  <!-- Botão padronizado de retorno ao Launcher -->
+  <a href="/" class="launcher-btn" title="Voltar ao Launcher Principal">&larr; Launcher</a>
+
+  <!-- Cabeçalho -->
+  <header id="header">
+    <div class="brand">
+      <span class="seal" aria-hidden="true">盆栽</span>
+      <div>
+        <div class="eyebrow">Pátio Zen & Contemplação</div>
+        <h1>Oficina de Bonsais</h1>
+      </div>
+    </div>
+    <div class="top">
+      <button id="helpBtn" title="Guia e atalhos (?)">? Guia</button>
+      <button id="soundBtn" aria-pressed="false" title="Ligar/Desligar som (M)">🔊 Som: off</button>
+      <select id="qualitySelect" aria-label="Qualidade gráfica">
+        <option value="Equilibrado">Equilibrado</option>
+        <option value="Cinema">Cinema</option>
+        <option value="Leve">Leve</option>
+      </select>
+      <button id="cameraBtn" title="Alternar enquadramento">Close</button>
+      <button id="photoBtn" title="Modo Foto e Captura HD (F)">📷 Foto</button>
+      <button id="fullscreenBtn" title="Tela cheia">⛶</button>
+      <button id="hideBtn" title="Recolher controles (H)">−</button>
+    </div>
+  </header>
+
+  <!-- Painel de Informações Botânicas -->
+  <aside class="info" id="info">
+    <div class="eyebrow" id="seasonLabel">Primavera / Ano 6</div>
+    <h2 id="speciesLabel">Pinheiro negro</h2>
+    <div id="styleLabel" class="tag">Moyogi · ereto informal</div>
+    <div class="stats" id="stats">14 segmentos · 0 aramados</div>
+  </aside>
+
+  <!-- Guia Passo a Passo -->
+  <div id="guide" class="guide" hidden></div>
+
+  <!-- Painel Lateral de Ferramenta -->
+  <aside id="panel" class="panel" hidden></aside>
+
+  <!-- Dica de Navegação -->
+  <div class="hint" id="hint">Arraste para orbitar · Role para aproximar · [F] Modo Foto</div>
+
+  <!-- Alerta / Notificação -->
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+  <!-- Dock Inferior com Teclas de Atalho -->
+  <nav class="dock" id="dock" aria-label="Ferramentas de jardinagem"></nav>
+
+  <!-- Modal Diário do Bonsai -->
+  <div id="journalModal" class="dialog-backdrop" hidden>
+    <div class="dialog">
+      <button class="close" id="closeJournalBtn" aria-label="Fechar diário">×</button>
+      <div class="eyebrow">Registro Contemplativo</div>
+      <h2 id="journalTitle">Diário do Bonsai</h2>
+      <div class="dialog-meta" id="journalMeta">Pinheiro negro · 6 anos de cultivo</div>
+      <div id="journalContent">
+        <div class="journal-entry" id="journalStatsBox"></div>
+        <div class="journal-entry" style="font-style: italic; color: #525a4a;">
+          "O bonsai não se conclui; ele ensina a arte da paciência e da escuta com a natureza viva."
+        </div>
+      </div>
+      <div class="row" style="margin-top: 16px;">
+        <button id="exportJournalTxt" class="full">Exportar Diário (.txt)</button>
+        <button id="exportBonsaiJson" class="full primary">Exportar Projeto (.json)</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="application/json,.json" hidden>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // Utilitários auxiliares
+    const $ = id => document.getElementById(id);
+    const clone = x => JSON.parse(JSON.stringify(x));
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const TAU = Math.PI * 2;
+
+    const config = {
+      schemaVersion: 1,
+      maxNodes: 190,
+      history: 40,
+      baseY: 1.37,
+      step: 1 / 60
+    };
+
+    // Espécies botânicas tradicionais japonesas
+    const species = [
+      {
+        name: 'Pinheiro negro',
+        latin: 'Pinus thunbergii',
+        style: 'Moyogi · ereto informal',
+        seed: 71,
+        green: [0x2e4220, 0x475828, 0x627339],
+        bark: 0x584738,
+        leaves: 'pine'
+      },
+      {
+        name: 'Ácer japonês',
+        latin: 'Acer palmatum',
+        style: 'Hokidachi · copa em vassoura',
+        seed: 219,
+        green: [0x5d783d, 0x829445, 0x405f2f],
+        bark: 0x7a6956,
+        leaves: 'deciduous'
+      },
+      {
+        name: 'Junípero',
+        latin: 'Juniperus chinensis',
+        style: 'Shakan · inclinado zen',
+        seed: 410,
+        green: [0x2f5442, 0x41694a, 0x65885e],
+        bark: 0x67493c,
+        leaves: 'needle'
+      }
+    ];
+
+    const pots = [
+      { name: 'Cerâmica celadon', color: 0x6e8a77, shape: 'round', glaze: 'celadon' },
+      { name: 'Grés escuro oxidado', color: 0x3d3933, shape: 'rect', glaze: 'rough' },
+      { name: 'Terracota artesanal', color: 0x9e6249, shape: 'round', glaze: 'matte' },
+      { name: 'Porcelana marfim', color: 0xc4bca5, shape: 'rect', glaze: 'smooth' }
+    ];
+
+    const seasons = ['Primavera', 'Verão', 'Outono', 'Inverno'];
+
+    function rng(seed) {
+      let n = seed >>> 0;
+      return () => {
+        n = (Math.imul(n, 1664525) + 1013904223) >>> 0;
+        return n / 4294967296;
+      };
+    }
+
+    // Gerador de Árvore Procedural em Grafo
+    function makeTree(type = 0, empty = false) {
+      const r = rng(species[type].seed);
+      const nodes = [];
+      let id = 0;
+      function add(parent, len, az, elev, radius, bend = 0.1) {
+        const n = { id: id++, parent, len, az, elev, radius, bend, wire: false };
+        nodes.push(n);
+        return n.id;
+      }
+      const t0 = add(-1, 0.40, 0.2, 1.30, 0.095, 0.10);
+      const t1 = add(t0, 0.37, type === 2 ? 0.45 : 2.8, type === 2 ? 0.82 : 1.21, 0.070, 0.12);
+      const t2 = add(t1, 0.33, type === 2 ? 0.25 : 0.1, 1.10, 0.047, -0.11);
+      const t3 = add(t2, 0.30, 2.2, 1.32, 0.027, 0.10);
+
+      if (!empty) {
+        for (let i = 0; i < 8; i++) {
+          const p = [t0, t1, t2, t3][Math.min(3, Math.floor(i / 2))];
+          const a = i * 2.399 + type * 0.55;
+          const l = (0.56 - i * 0.035) * (type === 1 ? 0.83 : 1);
+          const b = add(p, l, a, type === 1 ? 0.60 : 0.17 + r() * 0.23, 0.027 - i * 0.0017, 0.12 * (i % 2 ? 1 : -1));
+          for (let j = 0; j < 3; j++) {
+            const c = add(b, 0.17 + r() * 0.14, a + (j - 1) * 0.9, 0.30 + r() * 0.55, 0.010, 0.08);
+            for (let k = 0; k < 2; k++) {
+              add(c, 0.10 + r() * 0.10, a + (j - 1) * 0.9 + (k - 0.5) * 1.2, 0.35 + r() * 0.65, 0.0035, 0.03);
+            }
+          }
+        }
+      }
+
+      return {
+        schemaVersion: 1,
+        species: type,
+        pot: 0,
+        season: 0,
+        age: 6,
+        pruneCount: 0,
+        wireCount: 0,
+        next: id,
+        nodes
+      };
+    }
+
+    let state = makeTree();
+    let undo = [], redo = [];
+    let selected = 4;
+    let tool = 'orbit';
+    let guided = -1;
+    let dirty = false;
+    let quality = 'Equilibrado';
+    let viewClose = false;
+    let hideUI = false;
+    let noticeTimer;
+    let adapter = null;
+
+    // Motor de Áudio Zen Procedural
+    class ZenAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.master = null;
+        this.muted = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          this.ctx = new AC();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = this.muted ? 0 : 0.65;
+          this.master.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+      }
+      setMuted(m) {
+        this.muted = m;
+        if (this.master && this.ctx) {
+          this.master.gain.setTargetAtTime(m ? 0 : 0.65, this.ctx.currentTime, 0.05);
+        }
+      }
+      playShears() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        // Ruído metálico afiado da lâmina
+        const bSize = Math.floor(this.ctx.sampleRate * 0.08);
+        const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bSize; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bSize * 0.25));
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buf;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2600, now);
+        filter.Q.setValueAtTime(3.8, now);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.24, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        // Estalo do corte da fibra do galho
+        const snap = this.ctx.createOscillator();
+        snap.type = 'triangle';
+        snap.frequency.setValueAtTime(450, now);
+        snap.frequency.exponentialRampToValueAtTime(120, now + 0.04);
+        const snapGain = this.ctx.createGain();
+        snapGain.gain.setValueAtTime(0.35, now);
+        snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+        noise.connect(filter).connect(gain).connect(this.master);
+        snap.connect(snapGain).connect(this.master);
+        noise.start(now);
+        snap.start(now);
+        snap.stop(now + 0.05);
+      }
+      playWire() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(540 + Math.random() * 70, now);
+        osc.frequency.exponentialRampToValueAtTime(380, now + 0.16);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.14, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+        osc.connect(gain).connect(this.master);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+      playChime(freq = 528) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [1, 2.01, 3.02].forEach((h, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq * h, now);
+          const dur = 2.4 / (i + 1);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.2 / (i + 1), now + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+          osc.connect(gain).connect(this.master);
+          osc.start(now);
+          osc.stop(now + dur + 0.05);
+        });
+      }
+      playTap() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(290, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain).connect(this.master);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      }
+    }
+    const audio = new ZenAudioEngine();
+
+    function validate(s) {
+      if (!s || s.schemaVersion !== 1 || !species[s.species] || !pots[s.pot] || !seasons[s.season]) {
+        throw Error('Arquivo de projeto inválido');
+      }
+      if (!Array.isArray(s.nodes) || s.nodes.length < 1 || s.nodes.length > config.maxNodes) {
+        throw Error('Número de segmentos fora do limite seguro');
+      }
+      const ids = new Set();
+      for (const n of s.nodes) {
+        if (ids.has(n.id) || !['len', 'az', 'elev', 'radius', 'bend'].every(k => Number.isFinite(n[k]))) {
+          throw Error('Inconsistência geométrica no ramo');
+        }
+        ids.add(n.id);
+      }
+      return clone(s);
+    }
+
+    const serialize = () => JSON.stringify(state, null, 2);
+
+    function descendants(nodes, id) {
+      const ids = new Set([id]);
+      for (const n of nodes) if (ids.has(n.parent)) ids.add(n.id);
+      return ids;
+    }
+
+    function prune(s, id) {
+      if (!s.nodes.some(n => n.id === id && n.parent >= 0)) return false;
+      const ids = descendants(s.nodes, id);
+      s.nodes = s.nodes.filter(n => !ids.has(n.id));
+      s.pruneCount = (s.pruneCount || 0) + 1;
+      return true;
+    }
+
+    function grow(s) {
+      s.season = (s.season + 1) % 4;
+      if (s.season === 0) s.age = Math.min(999, s.age + 1);
+      if (s.season === 0 || s.season === 1) {
+        const r = rng(s.next + s.age * 71);
+        const parents = new Set(s.nodes.map(n => n.parent));
+        const tips = s.nodes.filter(n => !parents.has(n.id));
+        for (const n of tips) {
+          n.len = Math.min(0.70, n.len * 1.055);
+          if (s.nodes.length < config.maxNodes && s.next < 99999 && r() < 0.38) {
+            s.nodes.push({
+              id: s.next++,
+              parent: n.id,
+              len: 0.09 + r() * 0.11,
+              az: (n.az + (r() - 0.5) * 1.7 + Math.PI * 20) % TAU,
+              elev: clamp(n.elev + (r() - 0.5) * 0.7, -0.5, 1.5),
+              radius: 0.0028,
+              bend: 0.04,
+              wire: false
+            });
+          }
+        }
+      }
+    }
+
+    function commit(fn, msg, soundType = 'tap') {
+      const prev = clone(state);
+      if (fn(state) === false) return;
+      undo.push(prev);
+      if (undo.length > config.history) undo.shift();
+      redo = [];
+      dirty = true;
+      syncScene();
+      renderUI();
+      notify(msg);
+      if (soundType === 'shears') audio.playShears();
+      else if (soundType === 'wire') audio.playWire();
+      else if (soundType === 'chime') audio.playChime(528);
+      else audio.playTap();
+    }
+
+    function resetTree(type = state.species, empty = false) {
+      if (dirty && !confirm('Substituir o bonsai atual? Você poderá desfazer a alteração com Ctrl+Z.')) return;
+      commit(() => {
+        state = makeTree(type, empty);
+        selected = 4;
+      }, 'Novo bonsai preparado no pátio.', 'chime');
+    }
+
+    function history(back) {
+      const src = back ? undo : redo;
+      const dst = back ? redo : undo;
+      if (!src.length) return;
+      dst.push(clone(state));
+      state = src.pop();
+      dirty = true;
+      syncScene();
+      renderUI();
+      notify(back ? 'Ação desfeita.' : 'Ação refeita.');
+      audio.playTap();
+    }
+
+    function notify(msg) {
+      const el = $('notice');
+      el.textContent = msg;
+      el.hidden = false;
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => { el.hidden = true; }, 2800);
+    }
+
+    const addV = (a, b) => a.map((v, i) => v + b[i]);
+    const mul = (a, k) => a.map(v => v * k);
+
+    function graph(s) {
+      const out = new Map();
+      for (const n of s.nodes) {
+        const parent = out.get(n.parent);
+        const a = parent ? parent.end : [0, config.baseY, 0];
+        const inherited = parent ? parent.turn * 0.55 : 0;
+        const az = n.az + inherited;
+        const elev = n.elev;
+        const dir = [Math.cos(az) * Math.cos(elev), Math.sin(elev), Math.sin(az) * Math.cos(elev)];
+        const side = [-Math.sin(az), 0, Math.cos(az)];
+        const end = addV(a, addV(mul(dir, n.len), mul(side, n.bend * n.len)));
+        const mid = addV(a, addV(mul(dir, n.len * 0.5), mul(side, n.bend * n.len * 0.12)));
+        out.set(n.id, { n, a, mid, end, turn: inherited + n.bend * 1.2 });
+      }
+      return out;
+    }
+
+    const actions = {
+      prune: () => {
+        if (!state.nodes.some(n => n.id === selected && n.parent >= 0)) {
+          notify('Selecione um galho para podar.');
+          return;
+        }
+        // Ativar animação de desprendimento físico
+        adapter?.triggerBranchFall?.(selected);
+        commit(s => {
+          const ok = prune(s, selected);
+          selected = -1;
+          return ok;
+        }, 'Ramo podado com corte limpo.', 'shears');
+      },
+      wire: (delta) => {
+        if (!state.nodes.some(n => n.id === selected && n.parent >= 0)) {
+          notify('Selecione um galho para aramar.');
+          return;
+        }
+        commit(s => {
+          const n = s.nodes.find(n => n.id === selected);
+          n.bend = clamp(n.bend + delta, -0.65, 0.65);
+          if (!n.wire) {
+            n.wire = true;
+            s.wireCount = (s.wireCount || 0) + 1;
+          }
+        }, 'Curvatura e tensão do arame ajustadas.', 'wire');
+      },
+      unwire: () => commit(s => {
+        const n = s.nodes.find(n => n.id === selected);
+        if (!n || !n.wire) return false;
+        n.wire = false;
+      }, 'Arame retirado; forma preservada.', 'wire'),
+      season: () => commit(grow, `A estação avançou para ${seasons[(state.season + 1) % 4]}.`, 'chime'),
+      pot: (i) => commit(s => { s.pot = i; }, `Vaso alterado para ${pots[i].name}.`, 'tap')
+    };
+
+    function syncScene() {
+      if (!state.nodes.some(n => n.id === selected)) {
+        selected = state.nodes.find(n => n.parent >= 0)?.id ?? -1;
+      }
+      adapter?.sync();
+    }
+
+    const icons = {
+      orbit: '<circle cx="12" cy="12" r="8"/><path d="M2 12h20M12 4c6 5 6 11 0 16M12 4c-6 5-6 11 0 16"/>',
+      species: '<path d="M12 21v-9M12 15C3 16 3 8 4 4c6 0 9 3 8 11M12 12c0-6 4-9 8-9 1 6-2 11-8 12"/>',
+      prune: '<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="m8 15 11-12M16 15 5 3M12 11l2 2"/>',
+      wire: '<path d="M4 20 20 4M7 19c-4-4 2-8 5-4s9 0 5-4-4-8 0-8"/>',
+      pot: '<path d="M4 8h16l-3 12H7L4 8ZM3 8h18M9 20v2m6-2v2"/>',
+      season: '<circle cx="12" cy="12" r="4"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4M4 4l3 3m10 10 3 3M20 4l-3 3M7 17l-3 3"/>',
+      journal: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>',
+      save: '<path d="M4 3h13l3 3v15H4zM8 3v7h8V3M8 21v-7h8v7"/>'
+    };
+
+    const labels = {
+      orbit: 'Explorar',
+      species: 'Espécie',
+      prune: 'Podar',
+      wire: 'Aramar',
+      pot: 'Vaso',
+      season: 'Estações',
+      journal: 'Diário',
+      save: 'Projeto'
+    };
+
+    const kbdMap = {
+      orbit: '1', species: '2', prune: '3', wire: '4', pot: '5', season: '6', journal: '7', save: '8'
+    };
+
+    const guideSteps = [
+      ['species', '1. Escolha a Espécie', 'Selecione entre o austero Pinheiro negro, o delicado Ácer japonês ou o expressivo Junípero.'],
+      ['prune', '2. Poda e Equilíbrio', 'Abra espaço na copa removendo galhos concorrentes. O corte remove o ramo e seus descendentes.'],
+      ['wire', '3. Orientação com Arame', 'Guie a curvatura dos galhos com o arame de cobre para compor a silhueta desejada.'],
+      ['pot', '4. Harmonia com o Vaso', 'Experimente cerâmica celadon esmaltada ou grés rústico para valorizar a base da árvore.'],
+      ['season', '5. O Ciclo do Tempo', 'Avance pelas estações e contemple novas agulhas, folhas de outono e a passagem dos anos.']
+    ];
+
+    function setTool(t) {
+      if (t === 'journal') {
+        openJournal();
+        return;
+      }
+      tool = t;
+      adapter?.mode?.();
+      renderUI();
+    }
+
+    function openJournal() {
+      const sp = species[state.species];
+      $('journalTitle').textContent = `Bonsai · ${sp.name}`;
+      $('journalMeta').textContent = `${sp.style} · ${seasons[state.season]} do Ano ${state.age}`;
+      const wiredCount = state.nodes.filter(n => n.wire).length;
+      $('journalStatsBox').innerHTML = `
+        <strong>Ficha Botânica & Histórico:</strong><br>
+        • Nome científico: <em>${sp.latin}</em><br>
+        • Estrutura viva: ${state.nodes.length} galhos e ramificações<br>
+        • Intervenções de poda realizadas: ${state.pruneCount || 0}<br>
+        • Galhos atualmente aramados: ${wiredCount}<br>
+        • Recipiente atual: ${pots[state.pot].name}
+      `;
+      $('journalModal').hidden = false;
+    }
+
+    function renderUI() {
+      const sp = species[state.species];
+      $('speciesLabel').textContent = sp.name;
+      $('styleLabel').textContent = `${sp.style} · ${sp.latin}`;
+      $('seasonLabel').textContent = `${seasons[state.season]} / Ano ${state.age}`;
+      $('stats').textContent = `${state.nodes.length} segmentos · ${state.nodes.filter(n => n.wire).length} aramados`;
+
+      $('dock').innerHTML = Object.keys(labels).map(t => `
+        <button data-tool="${t}" aria-pressed="${tool === t}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">${icons[t]}</svg>
+          <span>${labels[t]}</span>
+          <span class="kbd-hint">[${kbdMap[t]}]</span>
+        </button>
+      `).join('');
+      $('dock').querySelectorAll('button').forEach(b => {
+        b.onclick = () => setTool(b.dataset.tool);
+      });
+
+      const p = $('panel');
+      p.hidden = tool === 'orbit' || hideUI;
+      let body = '';
+      const node = state.nodes.find(n => n.id === selected);
+      const list = `
+        <label for="branch">Ramo selecionado na copa</label>
+        <select class="full" id="branch">
+          ${state.nodes.filter(n => n.parent >= 0).map(n => `
+            <option value="${n.id}" ${n.id === selected ? 'selected' : ''}>
+              Ramo ${n.id} · ${(n.len * 100).toFixed(0)} cm ${n.wire ? '⚡ (com arame)' : ''}
+            </option>
+          `).join('')}
+        </select>
+      `;
+
+      if (tool === 'species') {
+        body = `
+          <p>Escolha uma arquitetura vegetal clássica. Alternar espécie inicia uma nova árvore no pátio.</p>
+          ${species.map((s, i) => `
+            <button class="full" data-species="${i}" aria-pressed="${state.species === i}">
+              ${s.name} <span class="tag" style="margin-left:auto;">${s.style.split('·')[0]}</span>
+            </button>
+          `).join('')}
+          <button class="full" id="emptyBtn">Começar com muda jovem</button>
+        `;
+      } else if (tool === 'prune') {
+        body = `
+          <p>Selecione um galho diretamente na cena ou pela lista. A poda remove o ramo e seus brotos.</p>
+          ${list}
+          <button id="cutBtn" class="full primary" ${!node || node.parent < 0 ? 'disabled' : ''}>
+            ✂ Podar ramo selecionado [P]
+          </button>
+        `;
+      } else if (tool === 'wire') {
+        body = `
+          <p>Selecione um galho e ajuste a curvatura. O arame de cobre fixa a nova direção.</p>
+          ${list}
+          <label>Curvatura angular aproximada: ${Math.round((node?.bend ?? 0) * 90)}°</label>
+          <div class="row">
+            <button id="wireLeft">↶ Flexionar para esquerda</button>
+            <button id="wireRight">↷ Flexionar para direita</button>
+          </div>
+          <button class="full" id="unwireBtn" ${!node?.wire ? 'disabled' : ''}>Remover arame do ramo</button>
+        `;
+      } else if (tool === 'pot') {
+        body = `
+          <p>Escolha a matéria, o acabamento e a geometria do recipiente tradicional.</p>
+          ${pots.map((s, i) => `
+            <button class="full" data-pot="${i}" aria-pressed="${i === state.pot}">
+              <span class="swatch" style="background:#${s.color.toString(16).padStart(6, '0')}"></span>
+              ${s.name}
+            </button>
+          `).join('')}
+        `;
+      } else if (tool === 'season') {
+        body = `
+          <p>Ciclo das 4 estações: <strong>${seasons[state.season]}</strong> do ano ${state.age}.</p>
+          <button class="full primary" id="advanceSeasonBtn">Avançar estação [E] →</button>
+          <p style="margin-top: 10px;">Observe o crescimento gradativo das brotações, o tom das folhas e as sombras solares sazonais.</p>
+        `;
+      } else if (tool === 'save') {
+        body = `
+          <div class="row">
+            <button id="undoBtn" ${undo.length ? '' : 'disabled'}>Desfazer (Ctrl+Z)</button>
+            <button id="redoBtn" ${redo.length ? '' : 'disabled'}>Refazer</button>
+          </div>
+          <button class="full primary" id="storeBtn">Salvar no navegador</button>
+          <button class="full" id="restoreBtn">Reabrir salvo</button>
+          <button class="full" id="exportBtn">Exportar arquivo .JSON</button>
+          <button class="full" id="importBtn">Importar arquivo .JSON</button>
+          <button class="full" id="diagBtn">Autodiagnóstico do sistema</button>
+          <button class="full" id="resetBtn">Reiniciar demonstração</button>
+        `;
+      }
+
+      p.innerHTML = `
+        <button class="close" id="closePanelBtn" aria-label="Fechar painel">×</button>
+        <div class="eyebrow">Ferramenta Ativa</div>
+        <h2>${labels[tool]}</h2>
+        ${body}
+        <div id="guideNav"></div>
+      `;
+
+      // Eventos dos botões do painel
+      const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+      on('closePanelBtn', () => setTool('orbit'));
+      p.querySelectorAll('[data-species]').forEach(b => {
+        b.onclick = () => resetTree(+b.dataset.species);
+      });
+      p.querySelectorAll('[data-pot]').forEach(b => {
+        b.onclick = () => actions.pot(+b.dataset.pot);
+      });
+      if ($('branch')) {
+        $('branch').onchange = (e) => {
+          selected = +e.target.value;
+          syncScene();
+          renderUI();
+        };
+      }
+      on('emptyBtn', () => resetTree(state.species, true));
+      on('cutBtn', actions.prune);
+      on('wireLeft', () => actions.wire(-0.08));
+      on('wireRight', () => actions.wire(0.08));
+      on('unwireBtn', actions.unwire);
+      on('advanceSeasonBtn', actions.season);
+      on('undoBtn', () => history(true));
+      on('redoBtn', () => history(false));
+      on('storeBtn', () => {
+        try {
+          localStorage.setItem('bonsai.v1', serialize());
+          dirty = false;
+          notify('Bonsai salvo com sucesso neste navegador.');
+        } catch {
+          notify('Armazenamento local indisponível. Exporte o arquivo JSON.');
+        }
+      });
+      on('restoreBtn', () => {
+        try {
+          const raw = localStorage.getItem('bonsai.v1');
+          if (!raw) return notify('Nenhum projeto salvo anteriormente.');
+          loadTree(JSON.parse(raw));
+        } catch {
+          notify('Não foi possível carregar o projeto salvo.');
+        }
+      });
+      on('exportBtn', () => downloadFile(new Blob([serialize()], { type: 'application/json' }), 'meu-bonsai.json'));
+      on('importBtn', () => $('fileInput').click());
+      on('diagBtn', () => notify(diagnostic()));
+      on('resetBtn', () => resetTree());
+
+      // Guia passo a passo
+      const g = $('guide');
+      g.hidden = guided < 0 || hideUI || tool !== 'orbit';
+      if (guided >= 0) {
+        const [t, title, desc] = guideSteps[guided];
+        g.innerHTML = `
+          <div class="eyebrow">Guia Contemplativo · ${guided + 1}/5</div>
+          <strong style="display:block; margin: 4px 0;">${title}</strong>
+          <p>${desc}</p>
+          <div class="row">
+            <button id="guideOpenBtn" class="primary">Abrir etapa</button>
+            <button id="guideSkipBtn">Sair do guia</button>
+          </div>
+        `;
+        on('guideOpenBtn', () => setTool(t));
+        on('guideSkipBtn', () => { guided = -1; renderUI(); });
+
+        if (tool !== 'orbit') {
+          $('guideNav').innerHTML = `
+            <hr style="border:0; border-top: 1px solid var(--line); margin: 14px 0 10px;">
+            <div class="tag">Passo ${guided + 1} de 5 — ${title}</div>
+            <div class="row" style="margin-top: 8px;">
+              <button id="guideEndBtn">Encerrar guia</button>
+              <button id="guideNextBtn" class="primary">${guided === 4 ? 'Concluir' : 'Próximo →'}</button>
+            </div>
+          `;
+          on('guideEndBtn', () => { guided = -1; renderUI(); });
+          on('guideNextBtn', () => {
+            guided++;
+            if (guided >= 5) {
+              guided = -1;
+              setTool('orbit');
+              notify('Guia concluído. Continue sua criação livremente.');
+            } else {
+              setTool(guideSteps[guided][0]);
+            }
+          });
+        }
+      }
+    }
+
+    function loadTree(s) {
+      const next = validate(s);
+      if (dirty && !confirm('Carregar outro projeto? O trabalho atual poderá ser recuperado com Desfazer.')) return;
+      commit(() => {
+        state = next;
+        selected = -1;
+      }, 'Projeto de bonsai carregado.', 'chime');
+      dirty = false;
+    }
+
+    function downloadFile(blob, name) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    $('fileInput').onchange = async (e) => {
+      try {
+        const f = e.target.files[0];
+        if (f) {
+          if (f.size > 300000) throw Error('Arquivo excede o tamanho seguro');
+          loadTree(JSON.parse(await f.text()));
+        }
+      } catch (err) {
+        notify('Falha ao importar: ' + err.message);
+      }
+      e.target.value = '';
+    };
+
+    // Autodiagnóstico de Regras Lógicas
+    function diagnostic() {
+      try {
+        for (let i = 0; i < 3; i++) {
+          const a = makeTree(i);
+          const b = validate(a);
+          const id = b.nodes[4].id;
+          const d = descendants(b.nodes, id);
+          const count = b.nodes.length;
+          if (!prune(b, id) || b.nodes.length !== count - d.size) throw Error('falha na poda');
+          validate(b);
+          for (let k = 0; k < 20; k++) grow(b);
+          validate(b);
+          const gr = graph(b);
+          if ([...gr.values()].some(x => x.end.some(v => !Number.isFinite(v)))) throw Error('inconsistência no grafo');
+          const serialized = JSON.stringify(b);
+          const r = validate(JSON.parse(serialized));
+          if (JSON.stringify(r) !== serialized) throw Error('falha na serialização');
+        }
+        return 'Autodiagnóstico aprovado: Grafo, poda, física e JSON 100% íntegros.';
+      } catch (err) {
+        return 'Diagnóstico: ' + err.message;
+      }
+    }
+    window.bonsaiDiagnostics = diagnostic;
+    window.bonsaiState = () => clone(state);
+
+    // Eventos de topo e atalhos
+    $('helpBtn').onclick = () => { guided = 0; setTool('species'); };
+    $('soundBtn').onclick = () => {
+      audio.init();
+      audio.setMuted(!audio.muted);
+      $('soundBtn').textContent = audio.muted ? '🔇 Som: off' : '🔊 Som: on';
+      $('soundBtn').setAttribute('aria-pressed', !audio.muted);
+      if (!audio.muted) audio.playChime(440);
+    };
+    $('qualitySelect').onchange = (e) => {
+      quality = e.target.value;
+      adapter?.quality?.();
+    };
+    $('cameraBtn').onclick = () => {
+      viewClose = !viewClose;
+      $('cameraBtn').textContent = viewClose ? 'Geral' : 'Close';
+      adapter?.camera?.();
+    };
+    $('photoBtn').onclick = () => {
+      adapter?.photoMode?.();
+    };
+    $('fullscreenBtn').onclick = async () => {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch {
+        notify('Tela cheia não suportada ou bloqueada.');
+      }
+    };
+
+    function toggleUI() {
+      hideUI = !hideUI;
+      for (const id of ['dock', 'info', 'hint', 'header']) {
+        $(id)?.classList.toggle('hidden', hideUI);
+      }
+      $('hideBtn').textContent = hideUI ? '+' : '−';
+      renderUI();
+    }
+    $('hideBtn').onclick = toggleUI;
+
+    // Exportação do Diário em texto
+    $('closeJournalBtn').onclick = () => { $('journalModal').hidden = true; };
+    $('exportBonsaiJson').onclick = () => {
+      downloadFile(new Blob([serialize()], { type: 'application/json' }), 'meu-bonsai.json');
+    };
+    $('exportJournalTxt').onclick = () => {
+      const sp = species[state.species];
+      const text = [
+        '========================================',
+        '      DIÁRIO DO BONSAI · 盆栽 REGISTRO',
+        '========================================',
+        `Espécie: ${sp.name} (${sp.latin})`,
+        `Estilo: ${sp.style}`,
+        `Tempo de cultivo: ${state.age} anos (${seasons[state.season]})`,
+        `Estrutura: ${state.nodes.length} segmentos e ramificações`,
+        `Podas realizadas: ${state.pruneCount || 0}`,
+        `Galhos aramados: ${state.nodes.filter(n => n.wire).length}`,
+        `Recipiente: ${pots[state.pot].name}`,
+        '----------------------------------------',
+        'Registro gerado no Pátio Zen dos Ambientes 3D.',
+        new Date().toLocaleDateString('pt-BR')
+      ].join('\n');
+      downloadFile(new Blob([text], { type: 'text/plain;charset=utf-8' }), 'diario-do-bonsai.txt');
+    };
+
+    // Mapeamento global de atalhos de teclado
+    document.addEventListener('keydown', (e) => {
+      if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+      const key = e.key.toLowerCase();
+      if (key === 'escape') {
+        $('journalModal').hidden = true;
+        setTool('orbit');
+        guided = -1;
+        renderUI();
+      }
+      if (key === 'h') toggleUI();
+      if (key === 'f') adapter?.photoMode?.();
+      if (key === 'm') $('soundBtn').click();
+      if (key === 'p') setTool('prune');
+      if (key === 'w') setTool('wire');
+      if (key === 'v') setTool('pot');
+      if (key === 'e') actions.season();
+      if (key === 'd') openJournal();
+      if (key >= '1' && key <= '8') {
+        const toolsList = ['orbit', 'species', 'prune', 'wire', 'pot', 'season', 'journal', 'save'];
+        setTool(toolsList[+key - 1]);
+      }
+      if ((e.ctrlKey || e.metaKey) && key === 'z') {
+        e.preventDefault();
+        history(!e.shiftKey);
+      }
+      if ((e.ctrlKey || e.metaKey) && key === 'y') {
+        e.preventDefault();
+        history(false);
+      }
+    });
+
+    function leafColor(s, n) {
+      if (s.species === 1 && s.season === 2) {
+        // Outono do Ácer com variações carmim e âmbar
+        return [0xb83a22, 0xd4682d, 0xdf993b];
+      }
+      return species[s.species].green;
+    }
+
+    // Geração de Texturas Procedurais Ricas com Normal Maps
+    function createProceduralTexture(type, baseColorHex, seed = 42) {
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const r = rng(seed);
+
+      ctx.fillStyle = baseColorHex;
+      ctx.fillRect(0, 0, size, size);
+
+      if (type === 'bark') {
+        // Casca com veios longitudinais e fissuras
+        for (let i = 0; i < 28000; i++) {
+          const a = r() * size;
+          const b = r() * size;
+          const dark = r() > 0.45;
+          ctx.fillStyle = dark ? `rgba(18, 12, 8, ${0.12 + r() * 0.25})` : `rgba(235, 215, 190, ${0.06 + r() * 0.12})`;
+          ctx.fillRect(a, b, 1 + r() * 2.5, 12 + r() * 55);
+        }
+        for (let i = 0; i < 60; i++) {
+          ctx.strokeStyle = 'rgba(15, 10, 6, 0.22)';
+          ctx.lineWidth = 1 + r() * 2;
+          ctx.beginPath();
+          const startX = r() * size;
+          ctx.moveTo(startX, 0);
+          ctx.bezierCurveTo(startX + 18, size * 0.35, startX - 14, size * 0.7, startX + 6, size);
+          ctx.stroke();
+        }
+      } else if (type === 'wood') {
+        // Madeira envernizada de cedro para a bancada
+        for (let i = 0; i < 22000; i++) {
+          const a = r() * size;
+          const b = r() * size;
+          ctx.fillStyle = r() > 0.5 ? `rgba(255, 255, 255, ${r() * 0.08})` : `rgba(25, 15, 8, ${r() * 0.14})`;
+          ctx.fillRect(a, b, 1 + r() * 3, 20 + r() * 80);
+        }
+        for (let i = 0; i < 45; i++) {
+          ctx.strokeStyle = 'rgba(65, 38, 20, 0.18)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          const startX = r() * size;
+          ctx.moveTo(startX, 0);
+          ctx.bezierCurveTo(startX + 15, size * 0.4, startX - 10, size * 0.75, startX + 5, size);
+          ctx.stroke();
+        }
+      } else if (type === 'stone') {
+        // Pedra de granito japonês salpicada
+        for (let i = 0; i < 35000; i++) {
+          const a = r() * size;
+          const b = r() * size;
+          const dark = r() > 0.5;
+          ctx.fillStyle = dark ? `rgba(20, 24, 22, ${r() * 0.28})` : `rgba(240, 245, 240, ${r() * 0.22})`;
+          ctx.fillRect(a, b, 1.5 + r() * 3, 1.5 + r() * 3);
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.anisotropy = 4;
+      return tex;
+    }
+
+    // Inicialização do Mundo 3D
+    async function make3D() {
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      $('world').replaceChildren(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xcbd4c2);
+      scene.fog = new THREE.Fog(0xcbd4c2, 6.5, 18);
+
+      const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 50);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 1.6;
+      controls.maxDistance = 8.0;
+      controls.minPolarAngle = 0.35;
+      controls.maxPolarAngle = 1.55;
+      controls.enablePan = false;
+
+      const target = new THREE.Vector3(0, 1.95, 0);
+      const dest = new THREE.Vector3(3.0, 2.7, 5.6);
+      camera.position.copy(dest);
+      controls.target.copy(target);
+      controls.update();
+
+      // Iluminação Realista de Pátio Zen
+      const hemi = new THREE.HemisphereLight(0xe8f0e0, 0x5a5445, 1.9);
+      const sun = new THREE.DirectionalLight(0xffedd2, 3.2);
+      sun.position.set(-3.2, 5.8, 3.8);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      Object.assign(sun.shadow.camera, { left: -3.8, right: 3.8, top: 3.8, bottom: -3.8, near: 0.2, far: 15 });
+      sun.shadow.normalBias = 0.02;
+      sun.shadow.bias = -0.00015;
+      scene.add(hemi, sun, sun.target);
+
+      const fillLight = new THREE.DirectionalLight(0xd9e5f5, 0.55);
+      fillLight.position.set(4, 3, -3);
+      scene.add(fillLight);
+
+      // Materiais PBR
+      const woodTex = createProceduralTexture('wood', '#a47c54', 12);
+      const darkWoodTex = createProceduralTexture('wood', '#69553f', 7);
+      const stoneTex = createProceduralTexture('stone', '#9fa198', 88);
+      const barkTex = createProceduralTexture('bark', '#76624c', 99);
+
+      const wood = new THREE.MeshStandardMaterial({ color: 0xe5c59f, roughness: 0.78, map: woodTex });
+      const darkWood = new THREE.MeshStandardMaterial({ color: 0x9e886c, roughness: 0.86, map: darkWoodTex });
+      const stone = new THREE.MeshStandardMaterial({ color: 0x9b9d90, roughness: 0.94, map: stoneTex });
+      const gravelMat = new THREE.MeshStandardMaterial({ color: 0xbdb7a8, roughness: 0.98, map: stoneTex });
+      gravelMat.map.repeat.set(30, 30);
+      const soilMat = new THREE.MeshStandardMaterial({ color: 0x483a2b, roughness: 0.96 });
+      const barkMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, map: barkTex });
+      const bambooMat = new THREE.MeshStandardMaterial({ color: 0x7e8c56, roughness: 0.72 });
+      const plasterMat = new THREE.MeshStandardMaterial({ color: 0xd8ceb8, roughness: 0.96, map: stoneTex });
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0xb5bcb5, roughness: 0.32, metalness: 0.82 });
+      const wireMat = new THREE.MeshStandardMaterial({ color: 0xb87d40, roughness: 0.42, metalness: 0.75 });
+      const selectedMat = new THREE.MeshStandardMaterial({ color: 0xe2a857, roughness: 0.65, emissive: 0x221500 });
+
+      const env = new THREE.Group();
+      const tree = new THREE.Group();
+      const potGroup = new THREE.Group();
+      const fallingGroup = new THREE.Group();
+      scene.add(env, tree, potGroup, fallingGroup);
+
+      function mesh(g, m, p, pos, shadow = true) {
+        const o = new THREE.Mesh(g, m);
+        o.position.set(...pos);
+        o.castShadow = shadow;
+        o.receiveShadow = true;
+        p.add(o);
+        return o;
+      }
+      function box(p, x, y, z, a, b, c, m, shadow = true) {
+        return mesh(new THREE.BoxGeometry(a, b, c), m, p, [x, y, z], shadow);
+      }
+      function cyl(p, x, y, z, rt, rb, h, m, segments = 24) {
+        return mesh(new THREE.CylinderGeometry(rt, rb, h, segments), m, p, [x, y, z]);
+      }
+      function ell(p, x, y, z, a, b, c, m) {
+        const o = mesh(new THREE.IcosahedronGeometry(1, 2), m, p, [x, y, z]);
+        o.scale.set(a, b, c);
+        return o;
+      }
+
+      // Chão do Pátio de Cascalho e Parede de Fundo
+      const ground = mesh(new THREE.PlaneGeometry(36, 36), gravelMat, env, [0, 0, 0], false);
+      ground.rotation.x = -Math.PI / 2;
+
+      // Base e mureta com painéis shoji
+      box(env, 0, 0.16, -3.0, 11, 0.32, 0.55, stone);
+      box(env, 0, 1.35, -3.1, 11, 2.1, 0.16, plasterMat, false);
+      for (let x = -5; x <= 5; x += 1) {
+        box(env, x, 1.43, -2.98, 0.075, 2.22, 0.12, darkWood);
+        for (let k = 1; k < 5; k++) {
+          box(env, x - 0.5 + k * 0.2, 1.55, -2.98, 0.025, 1.7, 0.05, darkWood, false);
+        }
+      }
+      for (const y of [0.45, 1.03, 1.73, 2.43]) box(env, 0, y, -2.94, 11, 0.075, 0.13, darkWood);
+      box(env, 0, 2.55, -3.08, 11, 0.12, 0.54, darkWood);
+
+      // Bancada de Madeira de Cultivo
+      const bench = new THREE.Group();
+      env.add(bench);
+      for (let i = 0; i < 5; i++) box(bench, 0, 1.0, -0.48 + i * 0.24, 3.15, 0.11, 0.233, wood);
+      for (const x of [-1.34, 1.34]) {
+        for (const z of [-0.48, 0.48]) box(bench, x, 0.5, z, 0.13, 1, 0.13, darkWood);
+      }
+      for (const z of [-0.5, 0.5]) box(bench, 0, 0.78, z, 2.9, 0.10, 0.12, darkWood);
+      for (const x of [-1.34, 1.34]) box(bench, x, 0.33, 0, 0.10, 0.09, 1.05, darkWood);
+
+      // Sombra de contato suave radial sob o vaso na bancada
+      const contactShadowCanvas = document.createElement('canvas');
+      contactShadowCanvas.width = contactShadowCanvas.height = 128;
+      const cctx = contactShadowCanvas.getContext('2d');
+      const grad = cctx.createRadialGradient(64, 64, 10, 64, 64, 60);
+      grad.addColorStop(0, 'rgba(12, 10, 8, 0.65)');
+      grad.addColorStop(0.6, 'rgba(12, 10, 8, 0.25)');
+      grad.addColorStop(1, 'rgba(12, 10, 8, 0)');
+      cctx.fillStyle = grad;
+      cctx.fillRect(0, 0, 128, 128);
+      const contactTex = new THREE.CanvasTexture(contactShadowCanvas);
+      const contactShadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.2, 0.9),
+        new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false })
+      );
+      contactShadow.rotation.x = -Math.PI / 2;
+      contactShadow.position.set(0, 1.056, 0);
+      env.add(contactShadow);
+
+      // Seixos instanciados no solo
+      const rPebbles = rng(92);
+      const pebbles = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), stone, 1400);
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < 1400; i++) {
+        dummy.position.set((rPebbles() - 0.5) * 9.5, 0.012, (rPebbles() - 0.5) * 6.5);
+        dummy.scale.set(0.018 + rPebbles() * 0.035, 0.009 + rPebbles() * 0.01, 0.018 + rPebbles() * 0.035);
+        dummy.rotation.set(0, rPebbles() * TAU, 0);
+        dummy.updateMatrix();
+        pebbles.setMatrixAt(i, dummy.matrix);
+        pebbles.setColorAt(i, new THREE.Color().setHSL(0.12, 0.08, 0.40 + rPebbles() * 0.28));
+      }
+      pebbles.receiveShadow = true;
+      env.add(pebbles);
+
+      // Pedras de jardim e lanterna de pedra clássica
+      for (let i = 0; i < 8; i++) ell(env, -2.55 + Math.sin(i) * 0.14, 0.05, -1.8 + i * 0.55, 0.37, 0.10, 0.26, stone);
+      const lx = 2.25, lz = -1.18;
+      cyl(env, lx, 0.12, lz, 0.27, 0.30, 0.24, stone, 8);
+      cyl(env, lx, 0.43, lz, 0.095, 0.13, 0.45, stone, 8);
+      box(env, lx, 0.71, lz, 0.38, 0.12, 0.38, stone);
+      for (const x of [-0.12, 0.12]) {
+        for (const z of [-0.12, 0.12]) box(env, lx + x, 0.88, lz + z, 0.065, 0.25, 0.065, stone);
+      }
+      const roof = cyl(env, lx, 1.08, lz, 0.03, 0.32, 0.19, stone, 4);
+      roof.rotation.y = Math.PI / 4;
+      ell(env, lx, 1.22, lz, 0.065, 0.09, 0.065, stone);
+
+      // Ferramentas de bancada: Tesoura e Carretel de Arame
+      function rod(p, a, b, r, m) {
+        const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b);
+        const o = mesh(new THREE.CylinderGeometry(r, r, va.distanceTo(vb), 10), m, p, va.clone().add(vb).multiplyScalar(0.5).toArray());
+        o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.sub(va).normalize());
+        return o;
+      }
+      const toolGroup = new THREE.Group();
+      toolGroup.position.set(-1.02, 1.07, 0.28);
+      toolGroup.rotation.y = -0.3;
+      env.add(toolGroup);
+      for (const side of [-1, 1]) {
+        const tor = mesh(new THREE.TorusGeometry(0.057, 0.012, 8, 24), metalMat, toolGroup, [side * 0.066, 0.025, 0.09]);
+        tor.rotation.x = Math.PI / 2;
+        rod(toolGroup, [side * 0.05, 0.025, 0.04], [0, 0.026, -0.05], 0.014, metalMat);
+        rod(toolGroup, [0, 0.026, -0.05], [-side * 0.057, 0.026, -0.19], 0.012, metalMat);
+      }
+      cyl(toolGroup, 0, 0.032, -0.05, 0.018, 0.018, 0.025, metalMat);
+
+      const spool = new THREE.Group();
+      spool.position.set(1.1, 1.07, -0.26);
+      env.add(spool);
+      cyl(spool, 0, 0.035, 0, 0.105, 0.105, 0.07, darkWood);
+      for (let i = 0; i < 12; i++) {
+        const o = mesh(new THREE.TorusGeometry(0.087, 0.004, 6, 36), wireMat, spool, [0, 0.055 + i * 0.006, 0]);
+        o.rotation.x = Math.PI / 2;
+      }
+
+      // Bambuzal ao fundo
+      const bambooLeaves = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 7, 4), new THREE.MeshStandardMaterial({ color: 0x768f56 }), 600);
+      let bi = 0;
+      const rB = rng(105);
+      for (let i = 0; i < 17; i++) {
+        const x = (i < 9 ? -3.5 : 3.6) + (rB() - 0.5) * 1.1;
+        const z = -2.1 + rB() * 0.5;
+        const h = 2.2 + rB() * 1.4;
+        cyl(env, x, h / 2, z, 0.018, 0.028, h, bambooMat, 8);
+        for (let j = 0; j < 7; j++) {
+          cyl(env, x, (j + 1) * h / 8, z, 0.030, 0.030, 0.015, darkWood, 8);
+          for (let k = 0; k < 4; k++) {
+            dummy.position.set(x + (rB() - 0.5) * 0.8, (j + 1) * h / 8 + 0.1 + rB() * 0.25, z + (rB() - 0.5) * 0.7);
+            dummy.scale.set(0.07 + rB() * 0.11, 0.012, 0.025);
+            dummy.rotation.set(rB(), rB() * TAU, rB());
+            dummy.updateMatrix();
+            bambooLeaves.setMatrixAt(bi++, dummy.matrix);
+          }
+        }
+      }
+      bambooLeaves.count = bi;
+      env.add(bambooLeaves);
+
+      // Partículas de poeira solar flutuante no feixe de luz
+      const dustCount = 80;
+      const dustGeo = new THREE.BufferGeometry();
+      const dustPos = new Float32Array(dustCount * 3);
+      const dustVel = [];
+      const rD = rng(450);
+      for (let i = 0; i < dustCount; i++) {
+        dustPos[i * 3] = (rD() - 0.5) * 3.5;
+        dustPos[i * 3 + 1] = 1.0 + rD() * 2.2;
+        dustPos[i * 3 + 2] = (rD() - 0.5) * 3.0;
+        dustVel.push({
+          x: (rD() - 0.5) * 0.003,
+          y: -0.001 - rD() * 0.002,
+          z: (rD() - 0.5) * 0.003,
+          phase: rD() * TAU
+        });
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+      const dustMat = new THREE.PointsMaterial({
+        color: 0xfff6dc,
+        size: 0.024,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending
+      });
+      const dustPoints = new THREE.Points(dustGeo, dustMat);
+      scene.add(dustPoints);
+
+      // Vasos com Modelagem PBR autêntica
+      let potMaterial = null;
+      function clearGroup(g) {
+        for (const o of [...g.children]) {
+          g.remove(o);
+          o.geometry?.dispose();
+          if (o.isInstancedMesh) o.dispose?.();
+        }
+      }
+
+      function buildPot() {
+        clearGroup(potGroup);
+        potMaterial?.dispose();
+        const p = pots[state.pot];
+        potMaterial = new THREE.MeshPhysicalMaterial({
+          color: p.color,
+          roughness: p.glaze === 'celadon' ? 0.28 : p.glaze === 'rough' ? 0.88 : 0.45,
+          clearcoat: p.glaze === 'celadon' ? 0.55 : 0.0,
+          clearcoatRoughness: 0.18
+        });
+
+        if (p.shape === 'round') {
+          const profile = [
+            [0.31, 1.08], [0.34, 1.10], [0.42, 1.25],
+            [0.51, 1.34], [0.51, 1.37], [0.46, 1.37],
+            [0.45, 1.32], [0.36, 1.16], [0.30, 1.12]
+          ];
+          mesh(new THREE.LatheGeometry(profile.map(v => new THREE.Vector2(...v)), 64), potMaterial, potGroup, [0, 0, 0]);
+          cyl(potGroup, 0, 1.337, 0, 0.46, 0.44, 0.055, soilMat, 48);
+          for (const a of [0, 2.1, 4.2]) {
+            box(potGroup, Math.cos(a) * 0.25, 1.07, Math.sin(a) * 0.25, 0.14, 0.045, 0.13, potMaterial);
+          }
+        } else {
+          box(potGroup, 0, 1.1, 0, 0.84, 0.08, 0.61, potMaterial);
+          for (const z of [-0.32, 0.32]) box(potGroup, 0, 1.24, z, 1.02, 0.26, 0.07, potMaterial);
+          for (const x of [-0.48, 0.48]) box(potGroup, x, 1.24, 0, 0.07, 0.26, 0.64, potMaterial);
+          for (const z of [-0.35, 0.35]) box(potGroup, 0, 1.36, z, 1.10, 0.055, 0.08, potMaterial);
+          for (const x of [-0.52, 0.52]) box(potGroup, x, 1.36, 0, 0.08, 0.055, 0.64, potMaterial);
+          box(potGroup, 0, 1.33, 0, 0.91, 0.05, 0.60, soilMat);
+          for (const x of [-0.34, 0.34]) {
+            for (const z of [-0.22, 0.22]) box(potGroup, x, 1.055, z, 0.16, 0.055, 0.13, potMaterial);
+          }
+        }
+
+        // Substrato Akadama e almofadas de musgo zen
+        const rM = rng(881);
+        const mossMat = new THREE.MeshStandardMaterial({ color: 0x4f6b3b, roughness: 0.92 });
+        const moss = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), mossMat, 100);
+        for (let i = 0; i < 100; i++) {
+          const a = rM() * TAU;
+          const rad = 0.10 + rM() * 0.22;
+          dummy.position.set(Math.cos(a) * rad, 1.36, Math.sin(a) * rad);
+          dummy.scale.set(0.02 + rM() * 0.035, 0.009 + rM() * 0.014, 0.02 + rM() * 0.035);
+          dummy.rotation.set(0, rM() * TAU, 0);
+          dummy.updateMatrix();
+          moss.setMatrixAt(i, dummy.matrix);
+        }
+        potGroup.add(moss);
+      }
+
+      function curvedTube(curve, r0, r1) {
+        const g = new THREE.TubeGeometry(curve, 8, r0, 7, false);
+        const p = g.attributes.position;
+        for (let i = 0; i <= 8; i++) {
+          const center = curve.getPointAt(i / 8);
+          const scale = 1 - (1 - r1 / r0) * i / 8;
+          for (let j = 0; j <= 7; j++) {
+            const k = i * 8 + j;
+            p.setXYZ(k, center.x + (p.getX(k) - center.x) * scale,
+                        center.y + (p.getY(k) - center.y) * scale,
+                        center.z + (p.getZ(k) - center.z) * scale);
+          }
+        }
+        g.computeVertexNormals();
+        return g;
+      }
+
+      const picks = [];
+      const pineGeo = new THREE.ConeGeometry(1, 1, 3);
+      const leafGeo = new THREE.SphereGeometry(1, 7, 4);
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.84 });
+      let leafInstancedMesh = null;
+
+      function sync() {
+        clearGroup(tree);
+        picks.length = 0;
+        buildPot();
+
+        const sp = species[state.species];
+        const r = rng(sp.seed);
+        const g = graph(state);
+        const parents = new Set(state.nodes.map(n => n.parent));
+        const leavesData = [];
+
+        barkMat.color.setHex(sp.bark).multiplyScalar(1.4);
+
+        for (const { n, a, mid, end } of g.values()) {
+          const curve = new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3(...a),
+            new THREE.Vector3(...mid),
+            new THREE.Vector3(...end)
+          );
+          const isSel = selected === n.id && ['prune', 'wire'].includes(tool);
+          const o = mesh(curvedTube(curve, n.radius, n.radius * 0.62), isSel ? selectedMat : barkMat, tree, [0, 0, 0], n.radius > 0.006);
+          o.userData.id = n.id;
+          o.userData.curve = curve;
+          picks.push(o);
+
+          // Espiral de arame de cobre
+          if (n.wire) {
+            const frames = curve.computeFrenetFrames(26, false);
+            const ps = [];
+            for (let j = 0; j <= 26; j++) {
+              const t = j / 26;
+              const angle = t * TAU * 4.5;
+              const p = curve.getPointAt(t);
+              const rr = n.radius * (1 - 0.38 * t) + 0.0055;
+              p.addScaledVector(frames.normals[j], Math.cos(angle) * rr);
+              p.addScaledVector(frames.binormals[j], Math.sin(angle) * rr);
+              ps.push(p);
+            }
+            mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ps), 48, 0.0035, 5, false), wireMat, tree, [0, 0, 0], false);
+          }
+
+          // Folhagem densa e agulhas
+          if (!parents.has(n.id) && !(state.species === 1 && state.season === 3)) {
+            let count = state.species === 0 ? 130 : state.species === 1 ? 68 : 90;
+            if (state.season === 3) count = Math.round(count * 0.7);
+            const colors = leafColor(state, n);
+            for (let i = 0; i < count; i++) {
+              const angle = r() * TAU;
+              const rr = Math.sqrt(r()) * (state.species === 1 ? 0.13 : 0.15);
+              const yy = (r() - 0.5) * (state.species === 1 ? 0.16 : 0.08);
+              leavesData.push({
+                basePos: [end[0] + Math.cos(angle) * rr, end[1] + yy, end[2] + Math.sin(angle) * rr],
+                rot: [r() * 2, r() * TAU, r() * 2],
+                size: state.species === 0 ? [0.004, 0.045 + r() * 0.035, 0.004] : state.species === 1 ? [0.024, 0.007, 0.017] : [0.015, 0.008, 0.024],
+                color: colors[i % 3],
+                phase: r() * TAU
+              });
+            }
+          }
+        }
+
+        // InstancedMesh de folhagem com micro-animação
+        if (leavesData.length) {
+          const geo = (state.species === 0 ? pineGeo : leafGeo).clone();
+          leafInstancedMesh = new THREE.InstancedMesh(geo, leafMat, leavesData.length);
+          leafInstancedMesh.userData.leavesData = leavesData;
+
+          for (let i = 0; i < leavesData.length; i++) {
+            const l = leavesData[i];
+            dummy.position.set(...l.basePos);
+            dummy.rotation.set(...l.rot);
+            dummy.scale.set(...l.size);
+            dummy.updateMatrix();
+            leafInstancedMesh.setMatrixAt(i, dummy.matrix);
+            leafInstancedMesh.setColorAt(i, new THREE.Color(l.color).multiplyScalar(0.85 + r() * 0.35));
+          }
+          leafInstancedMesh.castShadow = quality !== 'Leve';
+          leafInstancedMesh.receiveShadow = true;
+          tree.add(leafInstancedMesh);
+        }
+
+        // Raízes visíveis (Nebari)
+        for (let i = 0; i < 6; i++) {
+          const a = i * TAU / 6;
+          rod(tree, [0, 1.40, 0], [Math.cos(a) * 0.17, 1.355, Math.sin(a) * 0.17], 0.015, barkMat);
+        }
+
+        // Calibração sazonal da luz do sol
+        sun.color.setHex([0xfff0db, 0xffe6bd, 0xffd2a4, 0xdfebff][state.season]);
+        sun.intensity = [3.2, 3.6, 2.9, 2.2][state.season];
+        renderer.shadowMap.needsUpdate = true;
+      }
+
+      // Animação de Desprendimento Físico do Galho Podado
+      const fallingItems = [];
+      function triggerBranchFall(branchId) {
+        const found = picks.find(p => p.userData.id === branchId);
+        if (!found) return;
+
+        const cloneGeo = found.geometry.clone();
+        const fallingMesh = new THREE.Mesh(cloneGeo, new THREE.MeshStandardMaterial({
+          color: 0x8a6f56,
+          roughness: 0.9,
+          transparent: true,
+          opacity: 1
+        }));
+        fallingMesh.position.copy(found.position);
+        fallingGroup.add(fallingMesh);
+
+        fallingItems.push({
+          mesh: fallingMesh,
+          vy: 0.02,
+          vx: (Math.random() - 0.5) * 0.02,
+          vz: (Math.random() - 0.5) * 0.02,
+          rotSpeed: (Math.random() - 0.5) * 0.08,
+          life: 1.0
+        });
+      }
+
+      function updateFallingBranches(dt) {
+        for (let i = fallingItems.length - 1; i >= 0; i--) {
+          const item = fallingItems[i];
+          item.vy -= 9.8 * 0.02 * dt;
+          item.mesh.position.y += item.vy;
+          item.mesh.position.x += item.vx;
+          item.mesh.position.z += item.vz;
+          item.mesh.rotation.x += item.rotSpeed;
+          item.mesh.rotation.z += item.rotSpeed;
+
+          // Colisão com a bancada
+          if (item.mesh.position.y < 1.06) {
+            item.mesh.position.y = 1.06;
+            item.vy = -item.vy * 0.25;
+            item.vx *= 0.7;
+            item.vz *= 0.7;
+          }
+
+          item.life -= dt * 0.35;
+          item.mesh.material.opacity = Math.max(0, item.life);
+          if (item.life <= 0) {
+            fallingGroup.remove(item.mesh);
+            item.mesh.geometry.dispose();
+            item.mesh.material.dispose();
+            fallingItems.splice(i, 1);
+          }
+        }
+      }
+
+      function resize() {
+        const w = $('world').clientWidth;
+        const h = $('world').clientHeight;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        if (w / h < 0.8 && !viewClose) {
+          camera.position.copy(controls.target).add(new THREE.Vector3(2.5, 1.05, 5.2).multiplyScalar(1.18));
+          controls.update();
+        }
+      }
+
+      function applyQuality() {
+        renderer.setPixelRatio(Math.min(devicePixelRatio, quality === 'Cinema' ? 2 : quality === 'Leve' ? 0.85 : 1.35));
+        renderer.shadowMap.enabled = quality !== 'Leve';
+        sun.shadow.mapSize.set(quality === 'Cinema' ? 2048 : 1024, quality === 'Cinema' ? 2048 : 1024);
+        sun.shadow.map?.dispose();
+        sun.shadow.map = null;
+        resize();
+        renderer.shadowMap.needsUpdate = true;
+      }
+
+      // Raycasting Inteligente com Tolerância para Mobile
+      const ray = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let dragStart = null;
+
+      function hit(e) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.set(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        ray.setFromCamera(pointer, camera);
+        const hits = ray.intersectObjects(picks, false).filter(x => x.object.userData.id !== 0);
+        if (hits.length) {
+          selected = hits[0].object.userData.id;
+          sync();
+          renderUI();
+          return true;
+        }
+        return false;
+      }
+
+      const canvas = renderer.domElement;
+      canvas.addEventListener('pointerdown', (e) => {
+        if (!['wire', 'prune'].includes(tool)) return;
+        if (hit(e)) {
+          dragStart = { x: e.clientX };
+          canvas.setPointerCapture(e.pointerId);
+        }
+      });
+      canvas.addEventListener('pointerup', (e) => {
+        if (dragStart && tool === 'wire' && Math.abs(e.clientX - dragStart.x) > 8) {
+          actions.wire(clamp((e.clientX - dragStart.x) * 0.003, -0.25, 0.25));
+        }
+        dragStart = null;
+      });
+      canvas.addEventListener('pointercancel', () => { dragStart = null; });
+
+      function mode() {
+        controls.enabled = !['wire', 'prune'].includes(tool);
+        canvas.style.cursor = controls.enabled ? 'grab' : 'crosshair';
+        sync();
+      }
+
+      function cameraView() {
+        const mobile = innerWidth / innerHeight < 0.8;
+        controls.target.set(0, mobile ? (viewClose ? 1.83 : 1.65) : (viewClose ? 2.07 : 1.95), 0);
+        camera.position.copy(controls.target).add(
+          new THREE.Vector3(viewClose ? 1.45 : 2.8, viewClose ? 0.55 : 1.05, viewClose ? 2.6 : 5.1)
+            .multiplyScalar(mobile ? 1.22 : 1)
+        );
+        controls.update();
+      }
+
+      // Modo Foto Dedicado com Render Nítido e Selo Hanko
+      async function triggerPhotoMode() {
+        notify('Modo Foto ativado. Capturando em alta definição...');
+        const prevUI = hideUI;
+        hideUI = true;
+        for (const id of ['dock', 'info', 'hint', 'header', 'panel']) $(id)?.classList.add('hidden');
+        document.querySelector('.launcher-btn')?.classList.add('hidden');
+
+        await new Promise(r => requestAnimationFrame(r));
+        renderer.render(scene, camera);
+
+        const expCanvas = document.createElement('canvas');
+        expCanvas.width = canvas.width;
+        expCanvas.height = canvas.height;
+        const ectx = expCanvas.getContext('2d');
+        ectx.drawImage(canvas, 0, 0);
+
+        // Selo tradicional Hanko no canto inferior direito
+        const sealSize = Math.max(54, Math.floor(expCanvas.width * 0.045));
+        const margin = Math.max(26, Math.floor(expCanvas.width * 0.022));
+        const sx = expCanvas.width - margin - sealSize;
+        const sy = expCanvas.height - margin - sealSize;
+
+        ectx.fillStyle = 'rgba(166, 63, 44, 0.9)';
+        ectx.beginPath();
+        ectx.roundRect(sx, sy, sealSize, sealSize, Math.floor(sealSize * 0.16));
+        ectx.fill();
+
+        ectx.fillStyle = '#fff8eb';
+        ectx.font = `bold ${Math.floor(sealSize * 0.48)}px Georgia, serif`;
+        ectx.textAlign = 'center';
+        ectx.textBaseline = 'middle';
+        ectx.fillText('盆栽', sx + sealSize / 2, sy + sealSize / 2);
+
+        expCanvas.toBlob(blob => {
+          if (blob) downloadFile(blob, `bonsai-${species[state.species].name.toLowerCase().replace(/\s+/g, '-')}.png`);
+        }, 'image/png');
+
+        hideUI = prevUI;
+        for (const id of ['dock', 'info', 'hint', 'header']) $(id)?.classList.toggle('hidden', hideUI);
+        document.querySelector('.launcher-btn')?.classList.remove('hidden');
+        renderUI();
+      }
+
+      // Loop Principal de Renderização com Animação de Vento
+      let raf, lastTime = 0;
+      function loop(time) {
+        raf = requestAnimationFrame(loop);
+        if (document.hidden) {
+          lastTime = time;
+          return;
+        }
+        const dt = Math.min(0.05, (time - lastTime) / 1000 || 0);
+        lastTime = time;
+
+        controls.update();
+
+        // 1. Micro-animação de Vento nas Folhas
+        if (leafInstancedMesh && leafInstancedMesh.userData.leavesData) {
+          const lData = leafInstancedMesh.userData.leavesData;
+          const tSec = time * 0.001;
+          for (let i = 0; i < lData.length; i += 3) {
+            const l = lData[i];
+            const sway = Math.sin(tSec * 2.2 + l.phase) * 0.005;
+            dummy.position.set(l.basePos[0] + sway, l.basePos[1], l.basePos[2] + sway * 0.5);
+            dummy.rotation.set(l.rot[0] + sway * 2, l.rot[1], l.rot[2]);
+            dummy.scale.set(...l.size);
+            dummy.updateMatrix();
+            leafInstancedMesh.setMatrixAt(i, dummy.matrix);
+          }
+          leafInstancedMesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // 2. Partículas Solares flutuantes
+        const posAttr = dustGeo.attributes.position;
+        const pArr = posAttr.array;
+        for (let i = 0; i < dustCount; i++) {
+          pArr[i * 3 + 1] += dustVel[i].y;
+          pArr[i * 3] += Math.sin(time * 0.001 + dustVel[i].phase) * 0.0015;
+          if (pArr[i * 3 + 1] < 1.02) {
+            pArr[i * 3 + 1] = 3.2;
+          }
+        }
+        posAttr.needsUpdate = true;
+
+        // 3. Queda de Galhos Podados
+        if (fallingItems.length) updateFallingBranches(dt);
+
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        cancelAnimationFrame(raf);
+        notify('Contexto WebGL interrompido.');
+      });
+
+      applyQuality();
+      cameraView();
+      sync();
+      raf = requestAnimationFrame(loop);
+
+      return {
+        sync,
+        mode,
+        camera: cameraView,
+        quality: applyQuality,
+        photoMode: triggerPhotoMode,
+        triggerBranchFall
+      };
+    }
+
+    // Inicialização
+    renderUI();
+    try {
+      adapter = await make3D();
+      adapter.mode();
+    } catch (err) {
+      console.error('Erro na inicialização 3D:', err);
+      notify('3D indisponível. Verifique suporte a WebGL no navegador.');
+    }
+  </script>
+</body>
+</html>

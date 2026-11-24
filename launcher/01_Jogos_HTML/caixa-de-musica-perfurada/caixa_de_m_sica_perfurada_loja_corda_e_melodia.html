@@ -1,0 +1,3865 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Caixa de Música Perfurada — Loja Corda e Melodia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Importmap Three.js r160 (bloco único — troque por ./vendor/ para uso 100% offline) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --cor-primaria: #c9a255;
+      --cor-primaria-clara: #e5ca87;
+      --cor-primaria-escura: #8a6827;
+      --cor-secundaria: #1c462f;
+      --cor-fundo: #18110c;
+      --cor-texto: #f6efe2;
+      --cor-texto-suave: rgba(246, 239, 226, 0.84);
+      --cor-destaque: #e8c77b;
+      --cor-papel: #f4ecdc;
+      --cor-papel-borda: #d6c7a9;
+      --cor-papel-tinta: #382a1e;
+      --fonte-titulo: 'Playfair Display', Georgia, 'Times New Roman', serif;
+      --fonte-texto: 'Work Sans', system-ui, -apple-system, sans-serif;
+      --sombra-suave: 0 14px 36px rgba(10, 6, 3, 0.45);
+      --sombra-papel: 0 12px 28px rgba(10, 6, 3, 0.36);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 60% 35%, #2b1e14 0%, var(--cor-fundo) 78%);
+      color: var(--cor-texto);
+      font-family: var(--fonte-texto);
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 3D Canvas Container */
+    #scene-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      touch-action: none;
+      cursor: grab;
+    }
+    #scene-container.is-grabbing { cursor: grabbing; }
+    #scene-container.is-punch-hover { cursor: crosshair; }
+    #scene-container.is-crank-hover { cursor: grab; }
+    #scene-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Subtle photographic vignette to match mockup warmth */
+    .scene-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 75% 70% at 62% 52%, transparent 45%, rgba(12, 7, 4, 0.5) 100%),
+        linear-gradient(90deg, rgba(16, 10, 6, 0.44) 0%, rgba(16, 10, 6, 0.14) 36%, transparent 58%);
+    }
+
+    /* Clean static 2D fallback (zero duplicated UI text) if WebGL fails */
+    #webgl-fallback {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: none;
+      background:
+        radial-gradient(circle at 38% 18%, rgba(255, 210, 130, 0.28) 0%, transparent 45%),
+        radial-gradient(ellipse 70% 55% at 62% 56%, #1f4d33 0%, #13301f 55%, #17100a 100%);
+    }
+    #webgl-fallback.is-visible { display: flex; align-items: center; justify-content: flex-end; padding-right: 10vw; }
+    .fallback-box-svg {
+      width: min(56vw, 560px);
+      height: auto;
+      filter: drop-shadow(0 28px 36px rgba(0, 0, 0, 0.6));
+    }
+    .fallback-banner {
+      position: fixed;
+      top: 76px;
+      right: 24px;
+      z-index: 22;
+      background: rgba(24, 17, 12, 0.86);
+      border: 1px solid rgba(229, 202, 135, 0.4);
+      color: var(--cor-texto);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      max-width: 300px;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Top Navigation Bar (hidden in ?embed=1) */
+    .topbar {
+      position: fixed;
+      top: 14px;
+      left: 20px;
+      right: 20px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 9px 18px 9px 22px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(48, 36, 26, 0.56) 0%, rgba(30, 22, 16, 0.48) 100%);
+      border: 1px solid rgba(236, 214, 169, 0.24);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28);
+    }
+    body.is-embed .topbar-demo { display: none !important; }
+
+    .embed-cta-bar {
+      position: fixed;
+      top: 14px;
+      right: 18px;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    body.is-embed .embed-cta-bar { display: flex; }
+
+    .brand-logo {
+      font-family: var(--fonte-titulo);
+      font-size: 1.38rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--cor-texto);
+      text-decoration: none;
+      white-space: nowrap;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .nav-link {
+      background: none;
+      border: none;
+      color: var(--cor-texto-suave);
+      font-family: var(--fonte-texto);
+      font-size: 0.92rem;
+      font-weight: 400;
+      padding: 6px 2px;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .nav-link:hover, .nav-link.is-active { color: #ffffff; }
+    .nav-link.is-active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1.5px;
+      background: var(--cor-destaque);
+      border-radius: 2px;
+    }
+
+    .nav-utils {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Brushed Brass Pill Buttons */
+    .btn-brass {
+      appearance: none;
+      border: 1px solid rgba(252, 234, 184, 0.72);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #dfc27c 0%, #bf994c 48%, #9b7731 100%);
+      color: #24180b;
+      font-family: var(--fonte-texto);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 9px 20px;
+      min-height: 40px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      box-shadow:
+        inset 0 1px 1px rgba(255, 248, 224, 0.8),
+        inset 0 -2px 3px rgba(72, 48, 12, 0.38),
+        0 4px 12px rgba(0, 0, 0, 0.34);
+      transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .btn-brass:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    .btn-brass:active {
+      transform: translateY(0.5px) scale(0.985);
+      filter: brightness(0.96);
+    }
+    .btn-brass.is-active {
+      background: linear-gradient(180deg, #f3dca0 0%, #d5b05f 50%, #b58d3e 100%);
+      box-shadow:
+        0 0 0 2px rgba(246, 224, 160, 0.55),
+        inset 0 1px 2px rgba(255, 252, 238, 0.9),
+        0 6px 16px rgba(0, 0, 0, 0.42);
+    }
+
+    .icon-pill {
+      appearance: none;
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(236, 214, 169, 0.32);
+      background: rgba(26, 18, 12, 0.52);
+      color: var(--cor-texto);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .icon-pill:hover {
+      background: rgba(54, 39, 25, 0.78);
+      border-color: rgba(236, 214, 169, 0.65);
+    }
+    .icon-pill.is-muted { opacity: 0.65; }
+
+    .mobile-menu-btn { display: none; }
+
+    /* Focus visible accessibility */
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2.5px solid #f7dfa0;
+      outline-offset: 2px;
+    }
+
+    /* Hero Left Overlay */
+    .hero-overlay {
+      position: fixed;
+      top: 102px;
+      left: 52px;
+      z-index: 18;
+      max-width: 390px;
+      pointer-events: none;
+    }
+    .hero-title {
+      margin: 0 0 12px 0;
+      font-family: var(--fonte-titulo);
+      font-size: clamp(2.5rem, 4.7vw, 4.35rem);
+      font-weight: 500;
+      line-height: 1.04;
+      letter-spacing: -0.015em;
+      color: #fbf6ec;
+      text-shadow: 0 6px 26px rgba(0, 0, 0, 0.55);
+    }
+    .hero-subtitle {
+      margin: 0 0 24px 0;
+      font-size: clamp(0.95rem, 1.15vw, 1.08rem);
+      line-height: 1.48;
+      color: var(--cor-texto-suave);
+      max-width: 340px;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Perforated Sheet-Music Step Card */
+    .steps-card-wrap {
+      pointer-events: auto;
+      display: inline-block;
+      position: relative;
+    }
+    .steps-card {
+      position: relative;
+      width: 248px;
+      background: linear-gradient(180deg, #f7f1e3 0%, #eee4cf 100%);
+      color: var(--cor-papel-tinta);
+      border-radius: 10px;
+      padding: 12px 14px 12px 30px;
+      box-shadow: var(--sombra-papel);
+      border: 1px solid rgba(255, 251, 240, 0.85);
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .steps-card::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 11px;
+      bottom: 11px;
+      width: 8px;
+      background-image: radial-gradient(circle, #211912 3.2px, transparent 3.6px);
+      background-size: 8px 18px;
+      background-repeat: repeat-y;
+      opacity: 0.86;
+    }
+    .steps-toggle {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid var(--cor-papel-borda);
+      background: #f6eedc;
+      color: #4b3928;
+      font-size: 0.85rem;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.24);
+    }
+    .steps-toggle:hover { background: #fff9ec; }
+
+    .steps-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .step-item {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(112, 90, 62, 0.16);
+      padding: 9px 10px;
+      font-family: var(--fonte-texto);
+      font-size: 0.88rem;
+      color: rgba(56, 42, 30, 0.62);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-item:hover { color: #2b1e14; background: rgba(255, 255, 255, 0.45); }
+    .step-item.is-active {
+      background: #fffcf5;
+      color: #24190f;
+      font-weight: 600;
+      box-shadow: 0 3px 10px rgba(42, 28, 12, 0.14);
+      border-bottom-color: transparent;
+      margin: 2px 0;
+    }
+    .step-item.is-done { color: #35583f; }
+    .step-item .step-check {
+      margin-left: auto;
+      font-size: 0.78rem;
+      opacity: 0;
+    }
+    .step-item.is-done .step-check { opacity: 1; }
+
+    .steps-card.is-collapsed {
+      width: auto;
+      padding: 8px 16px 8px 26px;
+    }
+    .steps-card.is-collapsed .steps-list { display: none; }
+    .steps-collapsed-label {
+      display: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #382a1e;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .steps-card.is-collapsed .steps-collapsed-label { display: inline-block; }
+
+    /* Floating "Toque e experimente" badge near music box */
+    .touch-hint {
+      position: fixed;
+      right: 25%;
+      bottom: 18%;
+      z-index: 16;
+      background: rgba(250, 245, 234, 0.94);
+      color: #2c2015;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 999px;
+      padding: 7px 15px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.34);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .touch-hint.is-hidden {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    /* Interaction Card: "Gire a manivela" */
+    .crank-card {
+      position: fixed;
+      right: 26px;
+      bottom: 96px;
+      z-index: 24;
+      width: 292px;
+      background: linear-gradient(180deg, rgba(247, 240, 224, 0.96) 0%, rgba(235, 223, 198, 0.95) 100%);
+      color: var(--cor-papel-tinta);
+      border-radius: 14px;
+      border: 1px solid rgba(255, 249, 235, 0.85);
+      padding: 14px 16px 14px 26px;
+      box-shadow: var(--sombra-suave);
+      display: none;
+    }
+    .crank-card.is-open { display: block; animation: crankCardIn 0.22s ease; }
+    .crank-card::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 12px;
+      bottom: 12px;
+      width: 7px;
+      background-image: radial-gradient(circle, #2a1e14 2.6px, transparent 3px);
+      background-size: 7px 16px;
+      background-repeat: repeat-y;
+      opacity: 0.72;
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .card-title {
+      font-family: var(--fonte-titulo);
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin: 0;
+      color: #281b10;
+    }
+    .card-close {
+      background: transparent;
+      border: none;
+      color: #5b4531;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-close:hover { background: rgba(56, 42, 30, 0.1); }
+
+    .crank-dial-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .crank-pad {
+      width: 76px;
+      height: 76px;
+      min-width: 76px;
+      border-radius: 50%;
+      border: 2px solid #b08b42;
+      background: radial-gradient(circle at 35% 30%, #fffaf0 0%, #e7d4a7 65%, #c5a15a 100%);
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+      box-shadow: inset 0 2px 6px rgba(64, 42, 14, 0.25), 0 4px 10px rgba(0, 0, 0, 0.16);
+    }
+    .crank-pad:active { cursor: grabbing; }
+    .crank-pad-arm {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 28px;
+      height: 5px;
+      background: linear-gradient(90deg, #7d5b1f, #d4af60);
+      border-radius: 3px;
+      transform-origin: 0% 50%;
+      transform: translateY(-50%) rotate(0deg);
+    }
+    .crank-pad-knob {
+      position: absolute;
+      right: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #8a5b36, #3d2211);
+      border: 1.5px solid #e7c982;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+    .crank-pad-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #6c4d19;
+      border: 1px solid #f5dca0;
+    }
+    .crank-readout {
+      flex: 1;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: #4c3927;
+    }
+    .crank-readout strong {
+      display: block;
+      color: #26190d;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
+    }
+
+    .slider-row { margin-bottom: 12px; }
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin-bottom: 5px;
+      color: #3d2d1e;
+    }
+    .brass-range {
+      width: 100%;
+      accent-color: #9e782e;
+      cursor: pointer;
+      height: 6px;
+    }
+
+    .crank-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+    }
+    .btn-paper {
+      appearance: none;
+      border: 1px solid #c7b490;
+      border-radius: 8px;
+      background: #fbf7ee;
+      color: #322316;
+      font-family: var(--fonte-texto);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 8px 8px;
+      min-height: 40px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: background 0.16s, border-color 0.16s;
+    }
+    .btn-paper:hover { background: #ffffff; border-color: #9e782e; }
+    .btn-paper.is-active {
+      background: linear-gradient(180deg, #e2c57e, #be9849);
+      color: #211509;
+      border-color: #8b6824;
+    }
+
+    /* 2D Perforated Strip Editor Drawer (15 notes x 32 steps) */
+    .punch-panel {
+      position: fixed;
+      left: 50%;
+      bottom: 96px;
+      transform: translateX(-50%);
+      z-index: 26;
+      width: min(92vw, 860px);
+      background: linear-gradient(180deg, rgba(248, 241, 226, 0.97) 0%, rgba(235, 224, 198, 0.97) 100%);
+      color: var(--cor-papel-tinta);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 250, 238, 0.92);
+      padding: 14px 18px 16px 28px;
+      box-shadow: 0 22px 54px rgba(0, 0, 0, 0.56);
+      display: none;
+    }
+    .punch-panel.is-open { display: block; animation: cardIn 0.22s ease; }
+    .punch-panel::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 14px;
+      bottom: 14px;
+      width: 8px;
+      background-image: radial-gradient(circle, #2a1e14 3px, transparent 3.4px);
+      background-size: 8px 18px;
+      background-repeat: repeat-y;
+      opacity: 0.72;
+    }
+    .punch-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .punch-meta { font-size: 0.8rem; color: #5a4632; }
+    .punch-grid-scroll {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 290px;
+      border: 1px solid #cbb994;
+      border-radius: 10px;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(110, 88, 56, 0.08) 0px,
+          rgba(110, 88, 56, 0.08) 1px,
+          transparent 1px,
+          transparent 18px
+        ),
+        #f8f1e2;
+      padding: 8px;
+    }
+    .punch-grid {
+      display: grid;
+      grid-template-columns: 44px repeat(32, minmax(20px, 1fr));
+      gap: 2px;
+      min-width: 720px;
+      align-items: center;
+    }
+    .punch-step-hdr {
+      font-size: 0.68rem;
+      text-align: center;
+      color: #7c6549;
+      padding-bottom: 4px;
+      font-weight: 600;
+    }
+    .punch-step-hdr.is-current {
+      color: #8f5c0d;
+      background: rgba(212, 166, 70, 0.25);
+      border-radius: 4px;
+    }
+    .punch-note-lbl {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #4f3b28;
+      padding-right: 6px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .punch-cell {
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(140, 114, 78, 0.22);
+      background: rgba(255, 252, 244, 0.55);
+      cursor: pointer;
+      position: relative;
+      padding: 0;
+      transition: background 0.1s, transform 0.1s;
+    }
+    .punch-cell.is-bar-start { border-left: 1.5px solid rgba(122, 94, 54, 0.45); }
+    .punch-cell.is-playhead { background: rgba(226, 184, 88, 0.28); }
+    .punch-cell:hover { background: rgba(212, 174, 92, 0.36); }
+    .punch-cell.is-punched::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle at 40% 35%, #4a3522, #1b120a 75%);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+    .punch-cell.is-punched.is-playhead::after {
+      box-shadow: 0 0 8px #e5b74d, inset 0 1px 2px #000;
+    }
+
+    /* Melodies & Download Popovers */
+    .popover-panel {
+      position: fixed;
+      left: 50%;
+      bottom: 96px;
+      transform: translateX(-50%);
+      z-index: 27;
+      width: min(92vw, 440px);
+      background: linear-gradient(180deg, rgba(248, 241, 226, 0.98) 0%, rgba(235, 224, 198, 0.98) 100%);
+      color: var(--cor-papel-tinta);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 250, 238, 0.9);
+      padding: 16px 18px 16px 28px;
+      box-shadow: 0 22px 54px rgba(0, 0, 0, 0.56);
+      display: none;
+    }
+    .popover-panel.is-open { display: block; animation: cardIn 0.2s ease; }
+    .popover-panel::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 14px;
+      bottom: 14px;
+      width: 8px;
+      background-image: radial-gradient(circle, #2a1e14 2.8px, transparent 3.2px);
+      background-size: 8px 17px;
+      background-repeat: repeat-y;
+      opacity: 0.7;
+    }
+
+    .melody-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .melody-item {
+      width: 100%;
+      text-align: left;
+      background: #fdf9f0;
+      border: 1px solid #d1c09d;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: background 0.16s, border-color 0.16s, transform 0.14s;
+    }
+    .melody-item:hover { background: #ffffff; border-color: #a67f31; transform: translateY(-1px); }
+    .melody-item strong { display: block; font-size: 0.92rem; color: #25190e; }
+    .melody-item span { font-size: 0.76rem; color: #6b543c; }
+    .melody-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: #efe3c5;
+      color: #5e4416;
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .download-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .download-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #c9b58d;
+      background: #fcf8ef;
+      color: #271a0e;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background 0.16s, border-color 0.16s;
+    }
+    .download-btn:hover { background: #fff; border-color: #9e782e; }
+    .download-btn strong { display: block; font-size: 0.92rem; }
+    .download-btn small { display: block; font-size: 0.76rem; color: #67523c; margin-top: 2px; }
+
+    /* Bottom Floating Dock */
+    .dock-wrap {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + var(--safe-bottom));
+      transform: translateX(-50%);
+      z-index: 28;
+      max-width: calc(100vw - 24px);
+    }
+    .dock {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(46, 35, 25, 0.66) 0%, rgba(24, 17, 12, 0.76) 100%);
+      border: 1px solid rgba(235, 212, 165, 0.34);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .dock::-webkit-scrollbar { display: none; }
+    .dock .btn-brass {
+      min-height: 44px;
+      padding: 9px 18px;
+      font-size: 0.87rem;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(10, 6, 3, 0.68);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.is-open { display: flex; }
+    .modal-dialog {
+      position: relative;
+      width: min(94vw, 540px);
+      max-height: 86vh;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #f8f2e4 0%, #ede1c9 100%);
+      color: var(--cor-papel-tinta);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 250, 238, 0.9);
+      padding: 22px 24px 22px 34px;
+      box-shadow: 0 26px 64px rgba(0, 0, 0, 0.6);
+    }
+    .modal-dialog::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 18px;
+      bottom: 18px;
+      width: 8px;
+      background-image: radial-gradient(circle, #2a1e14 3px, transparent 3.4px);
+      background-size: 8px 20px;
+      background-repeat: repeat-y;
+      opacity: 0.72;
+    }
+    .modal-dialog h2 {
+      font-family: var(--fonte-titulo);
+      margin: 0 0 10px 0;
+      font-size: 1.45rem;
+      color: #24180d;
+    }
+    .modal-dialog p {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      margin: 0 0 12px 0;
+      color: #463525;
+    }
+    .modal-section {
+      border-top: 1px solid rgba(122, 95, 58, 0.22);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .modal-section h3 {
+      font-family: var(--fonte-titulo);
+      font-size: 1rem;
+      margin: 0 0 8px 0;
+      color: #2e1f11;
+    }
+    .option-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kbd-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 12px;
+      font-size: 0.82rem;
+      color: #4c3a28;
+    }
+    kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 5px;
+      border: 1px solid #bda882;
+      background: #fffaf0;
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: #2d1f12;
+      margin-right: 4px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 78px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      z-index: 45;
+      background: rgba(26, 18, 12, 0.9);
+      color: #fbf5e8;
+      border: 1px solid rgba(229, 202, 135, 0.45);
+      border-radius: 999px;
+      padding: 9px 18px;
+      font-size: 0.85rem;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .toast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .toast-action {
+      background: var(--cor-destaque);
+      color: #24180b;
+      border: none;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translate(-50%, 10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    @keyframes crankCardIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Mobile Layout (portrait phone) */
+    @media (max-width: 860px) {
+      .topbar {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 7px 10px 7px 14px;
+        gap: 8px;
+      }
+      .brand-logo { font-size: 1.06rem; }
+      .nav-links { display: none; }
+      .nav-right { gap: 8px; }
+      .mobile-menu-btn { display: inline-flex; }
+      .btn-brass.nav-cta {
+        padding: 8px 13px;
+        font-size: 0.8rem;
+        min-height: 40px;
+      }
+
+      .hero-overlay {
+        top: auto;
+        left: 14px;
+        right: 14px;
+        bottom: calc(92px + var(--safe-bottom));
+        max-width: none;
+      }
+      .hero-title { font-size: 2.05rem; margin-bottom: 6px; }
+      .hero-subtitle { font-size: 0.86rem; margin-bottom: 10px; max-width: 100%; }
+      .steps-card { width: auto; max-width: 100%; }
+      .touch-hint {
+        right: 50%;
+        transform: translateX(50%);
+        bottom: auto;
+        top: 76px;
+      }
+
+      .crank-card {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        bottom: calc(82px + var(--safe-bottom));
+      }
+      .punch-panel, .popover-panel {
+        bottom: calc(82px + var(--safe-bottom));
+        width: calc(100vw - 20px);
+      }
+
+      .dock-wrap {
+        left: 10px;
+        right: 10px;
+        bottom: calc(10px + var(--safe-bottom));
+        transform: none;
+        max-width: none;
+      }
+      .dock {
+        border-radius: 18px;
+        padding: 7px 8px;
+        gap: 8px;
+      }
+      .dock .btn-brass {
+        min-height: 48px;
+        padding: 10px 15px;
+        font-size: 0.84rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 3D Viewport -->
+  <div id="scene-container" role="application" aria-label="Caixa de música perfurada interativa em 3D. Clique na fita para perfurar notas ou arraste a manivela para tocar."></div>
+  <div class="scene-vignette" aria-hidden="true"></div>
+
+  <!-- Clean 2D Fallback (no duplicated UI) if WebGL is unavailable -->
+  <div id="webgl-fallback" aria-hidden="true">
+    <svg class="fallback-box-svg" viewBox="0 0 600 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="fbWood" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#6b4428" />
+          <stop offset="100%" stop-color="#3a2212" />
+        </linearGradient>
+        <linearGradient id="fbBrass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e5c77e" />
+          <stop offset="100%" stop-color="#9e7830" />
+        </linearGradient>
+      </defs>
+      <polygon points="110,160 440,110 530,220 200,280" fill="url(#fbWood)" stroke="#845836" stroke-width="3" />
+      <polygon points="200,280 530,220 530,320 200,385" fill="#442916" stroke="#6c4527" stroke-width="2" />
+      <polygon points="110,160 200,280 200,385 110,255" fill="#59361e" stroke="#7c5130" stroke-width="2" />
+      <path d="M220,230 C235,125 385,105 405,200 L295,250 Z" fill="#efe3ca" stroke="#cbb892" stroke-width="2" />
+      <rect x="240" y="212" width="160" height="44" rx="6" fill="#bfc5cc" transform="rotate(-11 320 234)" />
+      <path d="M495,285 L555,275 L565,335" stroke="url(#fbBrass)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+      <ellipse cx="570" cy="342" rx="18" ry="12" fill="#6d4324" stroke="#d9b76a" stroke-width="2" />
+    </svg>
+    <div class="fallback-banner">
+      Modo 2D ativado. Você pode perfurar a fita, ouvir o som da caixa de música e baixar sua melodia normalmente.
+    </div>
+  </div>
+
+  <!-- Top Demo Navigation Bar (hidden when ?embed=1) -->
+  <header class="topbar topbar-demo" role="banner">
+    <button type="button" class="brand-logo" id="brand-logo-btn">Loja Corda e Melodia</button>
+    <div class="nav-right">
+      <nav class="nav-links" aria-label="Navegação principal">
+        <button type="button" class="nav-link is-active" id="nav-inicio">Início</button>
+        <button type="button" class="nav-link" id="nav-servicos">Serviços</button>
+        <button type="button" class="nav-link" id="nav-sobre">Sobre</button>
+        <button type="button" class="nav-link" id="nav-contato">Contato</button>
+      </nav>
+      <div class="nav-utils">
+        <button type="button" class="icon-pill" id="btn-sound" aria-label="Alternar som" title="Som (S)">
+          <svg id="icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+          <svg id="icon-sound-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button type="button" class="icon-pill mobile-menu-btn" id="btn-mobile-menu" aria-label="Abrir menu e opções" title="Sobre e opções">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+        </button>
+        <button type="button" class="btn-brass nav-cta" id="btn-cta-main">Ver presentes</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Minimal Embed Bar (visible only in ?embed=1) -->
+  <div class="embed-cta-bar">
+    <button type="button" class="icon-pill" id="btn-sound-embed" aria-label="Alternar som" title="Som (S)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+    </button>
+    <button type="button" class="icon-pill" id="btn-about-embed" aria-label="Sobre esta experiência" title="Sobre">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    </button>
+    <button type="button" class="btn-brass" id="btn-cta-embed">Ver presentes</button>
+  </div>
+
+  <!-- Hero Title & Perforated Step Card -->
+  <section class="hero-overlay" aria-label="Introdução e passos guiados">
+    <h1 class="hero-title" id="hero-title">Perfure.<br />Gire. Ouça.</h1>
+    <p class="hero-subtitle" id="hero-subtitle">Crie, personalize e sinta a nostalgia em cada nota com nossas caixas de música interativas.</p>
+
+    <div class="steps-card-wrap">
+      <div class="steps-card" id="steps-card">
+        <button type="button" class="steps-toggle" id="btn-toggle-steps" aria-expanded="true" aria-label="Recolher cartão de passos" title="Recolher ou expandir passos">−</button>
+        <span class="steps-collapsed-label" id="steps-collapsed-label">Passos (1/4)</span>
+        <ol class="steps-list" id="steps-list">
+          <li><button type="button" class="step-item is-active" data-step="0"><span>1 · Perfure as notas</span><span class="step-check">✓</span></button></li>
+          <li><button type="button" class="step-item" data-step="1"><span>2. Gire a manivela</span><span class="step-check">✓</span></button></li>
+          <li><button type="button" class="step-item" data-step="2"><span>3. Ajuste o tempo</span><span class="step-check">✓</span></button></li>
+          <li><button type="button" class="step-item" data-step="3"><span>4. Salve sua melodia</span><span class="step-check">✓</span></button></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- Floating Hint Badge near Music Box -->
+  <div class="touch-hint" id="touch-hint" aria-hidden="true">
+    <span>Toque e experimente</span>
+    <span aria-hidden="true">👆</span>
+  </div>
+
+  <!-- Interaction Card: Gire a manivela & Velocidade -->
+  <aside class="crank-card" id="crank-card" aria-label="Controle da manivela e velocidade">
+    <div class="card-head">
+      <h2 class="card-title">Gire a manivela</h2>
+      <button type="button" class="card-close" id="close-crank-card" aria-label="Fechar controle da manivela">×</button>
+    </div>
+    <div class="crank-dial-row">
+      <div class="crank-pad" id="crank-pad" role="slider" tabindex="0" aria-label="Arraste em círculo para girar a manivela" aria-valuemin="0" aria-valuemax="32" aria-valuenow="0">
+        <div class="crank-pad-arm" id="crank-pad-arm"><div class="crank-pad-knob"></div></div>
+        <div class="crank-pad-center"></div>
+      </div>
+      <div class="crank-readout">
+        <strong id="crank-status-label">Pronta para girar</strong>
+        <span id="crank-pos-label">Passo 1 de 32 · Arraste em círculo ou use o giro automático.</span>
+      </div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <label for="speed-slider">Velocidade</label>
+        <span id="speed-value">1,0×</span>
+      </div>
+      <input type="range" id="speed-slider" class="brass-range" min="0.3" max="2.5" step="0.1" value="1.0" />
+    </div>
+    <div class="crank-actions">
+      <button type="button" class="btn-paper" id="btn-auto-crank">▶ Girar</button>
+      <button type="button" class="btn-paper" id="btn-rewind">↺ Voltar</button>
+      <button type="button" class="btn-paper is-active" id="btn-loop" aria-pressed="true">↻ Repetir</button>
+    </div>
+  </aside>
+
+  <!-- 2D Punch Grid Panel (15 notes x 32 steps) -->
+  <aside class="punch-panel" id="punch-panel" aria-label="Grade da fita perfurada">
+    <div class="punch-toolbar">
+      <div>
+        <h2 class="card-title">Grade da fita perfurada (15 notas × 32 passos)</h2>
+        <div class="punch-meta" id="punch-count-meta">Clique na grade ou diretamente na fita 3D para perfurar ou fechar furos.</div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button type="button" class="btn-paper" id="btn-punch-preview">▶ Ouvir</button>
+        <button type="button" class="card-close" id="close-punch-panel" aria-label="Fechar grade de perfuração">×</button>
+      </div>
+    </div>
+    <div class="punch-grid-scroll">
+      <div class="punch-grid" id="punch-grid"></div>
+    </div>
+  </aside>
+
+  <!-- Melodies Popover (Public Domain Only) -->
+  <aside class="popover-panel" id="melodies-panel" aria-label="Melodias prontas de domínio público">
+    <div class="card-head">
+      <h2 class="card-title">Melodias prontas</h2>
+      <button type="button" class="card-close" id="close-melodies-panel" aria-label="Fechar melodias prontas">×</button>
+    </div>
+    <p style="margin:0 0 8px 0; font-size:0.82rem; color:#5a4632;">Acervo exclusivo de melodias em domínio público, adaptadas para o pente de 15 notas (escala de Dó maior).</p>
+    <div class="melody-list" id="melody-list"></div>
+  </aside>
+
+  <!-- Download Popover (JSON & WAV) -->
+  <aside class="popover-panel" id="download-panel" aria-label="Baixar melodia">
+    <div class="card-head">
+      <h2 class="card-title">Guardar sua melodia</h2>
+      <button type="button" class="card-close" id="close-download-panel" aria-label="Fechar opções de download">×</button>
+    </div>
+    <p style="margin:0 0 6px 0; font-size:0.82rem; color:#5a4632;">Tudo é gerado localmente no seu aparelho, sem envio para servidores.</p>
+    <div class="download-actions">
+      <button type="button" class="download-btn" id="btn-export-wav">
+        <div>
+          <strong>Baixar Áudio (WAV)</strong>
+          <small>Renderiza a fita com síntese modal de pente de aço em alta qualidade.</small>
+        </div>
+        <span class="melody-badge">WAV</span>
+      </button>
+      <button type="button" class="download-btn" id="btn-export-json">
+        <div>
+          <strong>Baixar Fita Perfurada (JSON)</strong>
+          <small>Salva os furos e o andamento para recarregar ou compartilhar.</small>
+        </div>
+        <span class="melody-badge">JSON</span>
+      </button>
+      <button type="button" class="download-btn" id="btn-import-json">
+        <div>
+          <strong>Carregar Fita (JSON)</strong>
+          <small>Importe um arquivo de fita salvo anteriormente.</small>
+        </div>
+        <span class="melody-badge">Abrir</span>
+      </button>
+      <input type="file" id="input-import-json" accept=".json,application/json" style="display:none" />
+    </div>
+  </aside>
+
+  <!-- Floating Bottom Brass Dock -->
+  <nav class="dock-wrap" aria-label="Controles da caixa de música">
+    <div class="dock">
+      <button type="button" class="btn-brass" id="dock-perfurar" aria-expanded="false">Perfurar</button>
+      <button type="button" class="btn-brass" id="dock-girar" aria-pressed="false">Girar manivela</button>
+      <button type="button" class="btn-brass" id="dock-velocidade" aria-expanded="false">Velocidade</button>
+      <button type="button" class="btn-brass" id="dock-apagar">Apagar</button>
+      <button type="button" class="btn-brass" id="dock-melodias" aria-expanded="false">Melodias prontas</button>
+      <button type="button" class="btn-brass" id="dock-baixar" aria-expanded="false">Baixar</button>
+    </div>
+  </nav>
+
+  <!-- Modal: Sobre esta experiência -->
+  <div class="modal-backdrop" id="modal-sobre" role="dialog" aria-modal="true" aria-labelledby="modal-sobre-title">
+    <div class="modal-dialog">
+      <div class="card-head">
+        <h2 id="modal-sobre-title">Sobre esta experiência</h2>
+        <button type="button" class="card-close" data-close-modal="modal-sobre" aria-label="Fechar modal">×</button>
+      </div>
+      <p>
+        A <strong>Caixa de Música Perfurada</strong> é um ambiente 3D interativo em tempo real. Cada furo na fita de papel aciona um dente de aço com síntese modal física (parciais inarmônicas, decaimento metálico, catraca da manivela e atrito do papel), guiado pela posição exata da fita.
+      </p>
+      <div class="modal-section">
+        <h3>Qualidade gráfica</h3>
+        <div class="option-row" id="quality-options">
+          <button type="button" class="btn-paper" data-quality="alta">Alta (Bloom + Sombras)</button>
+          <button type="button" class="btn-paper" data-quality="equilibrada">Equilibrada</button>
+          <button type="button" class="btn-paper" data-quality="leve">Leve (Celular)</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Preset de Marca (Re-skin em tempo real)</h3>
+        <div class="option-row" id="brand-preset-options">
+          <button type="button" class="btn-paper is-active" data-preset="cordaEMelodia">Loja Corda e Melodia</button>
+          <button type="button" class="btn-paper" data-preset="neutro">Preset Neutro (Ateliê Sonoro)</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Atalhos de teclado</h3>
+        <div class="kbd-grid">
+          <div><kbd>Espaço</kbd> Girar / pausar</div>
+          <div><kbd>←</kbd> <kbd>→</kbd> Avançar / voltar</div>
+          <div><kbd>P</kbd> Grade de perfuração</div>
+          <div><kbd>M</kbd> Melodias prontas</div>
+          <div><kbd>S</kbd> Ligar / silenciar som</div>
+          <div><kbd>R</kbd> Recentralizar câmera</div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Privacidade e créditos</h3>
+        <p style="font-size:0.82rem; margin-bottom:0;">
+          Nenhum rastreamento, cookie de terceiros ou coleta de dados pessoais. Apenas suas preferências de som, qualidade e melodia ficam salvas localmente no navegador (<code>amb3d_caixa-de-musica-perfurada_v1</code>). Todas as melodias prontas pertencem ao domínio público.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Serviços / Contato / Presentes -->
+  <div class="modal-backdrop" id="modal-info" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
+    <div class="modal-dialog">
+      <div class="card-head">
+        <h2 id="modal-info-title">Presentes personalizados</h2>
+        <button type="button" class="card-close" data-close-modal="modal-info" aria-label="Fechar modal">×</button>
+      </div>
+      <div id="modal-info-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast & Screen Reader Announcer -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span id="toast-msg"></span>
+    <button type="button" class="toast-action" id="toast-action" style="display:none">Desfazer</button>
+  </div>
+  <div id="aria-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module">
+    /* =========================================================================
+       1. CONFIGURAÇÃO DE MARCA (RE-SKIN POR OBJETO)
+       ========================================================================= */
+    const PRESETS_MARCA = {
+      cordaEMelodia: {
+        id: 'cordaEMelodia',
+        nome: 'Loja Corda e Melodia',
+        logoTexto: 'Loja Corda e Melodia',
+        cores: {
+          primaria: '#c9a255',
+          secundaria: '#1c462f',
+          fundo: '#18110c',
+          texto: '#f6efe2',
+          destaque: '#e8c77b',
+          feltro3D: '#1a452d',
+          madeira3D: '#643f26',
+          laton3D: '#d8b464',
+          luzAcento3D: '#ffd494',
+          particula3D: '#ffe08a'
+        },
+        fontes: {
+          titulo: "'Playfair Display', Georgia, serif",
+          texto: "'Work Sans', system-ui, sans-serif"
+        },
+        cta: {
+          texto: 'Ver presentes',
+          link: '#presentes'
+        },
+        textos: {
+          titulo: 'Perfure.\nGire. Ouça.',
+          fraseApoio: 'Crie, personalize e sinta a nostalgia em cada nota com nossas caixas de música interativas.',
+          passos: [
+            '1 · Perfure as notas',
+            '2. Gire a manivela',
+            '3. Ajuste o tempo',
+            '4. Salve sua melodia'
+          ]
+        },
+        catalogo: {
+          servicos: [
+            { nome: 'Gravação a laser na tampa', detalhe: 'Iniciais, datas especiais ou dedicatória interna em nogueira maciça.' },
+            { nome: 'Fitas extras perfuradas sob medida', detalhe: 'Transformamos sua melodia criada aqui em cartões físicos de papel algodão.' },
+            { nome: 'Embalagem de presente artesanal', detalhe: 'Caixa rígida com lacre de cera e cartão pautado.' }
+          ],
+          contato: 'Ateliê demonstrativo · Rua das Cordas, 142 · atendimento@cordaemelodia.exemplo'
+        }
+      },
+      neutro: {
+        id: 'neutro',
+        nome: 'Ateliê Sonoro',
+        logoTexto: 'Ateliê Sonoro',
+        cores: {
+          primaria: '#b9b4a8',
+          secundaria: '#243447',
+          fundo: '#11151c',
+          texto: '#f3f4f6',
+          destaque: '#d8d2c5',
+          feltro3D: '#223346',
+          madeira3D: '#4e4138',
+          laton3D: '#ccc5b4',
+          luzAcento3D: '#ffe4bc',
+          particula3D: '#f4e7c6'
+        },
+        fontes: {
+          titulo: "'Playfair Display', Georgia, serif",
+          texto: "'Work Sans', system-ui, sans-serif"
+        },
+        cta: {
+          texto: 'Conhecer coleção',
+          link: '#colecao'
+        },
+        textos: {
+          titulo: 'Componha.\nGire. Escute.',
+          fraseApoio: 'Experimente o mecanismo de uma caixa de música de fita perfurada em tempo real.',
+          passos: [
+            '1 · Perfure as notas',
+            '2. Gire a manivela',
+            '3. Ajuste o ritmo',
+            '4. Guarde a melodia'
+          ]
+        },
+        catalogo: {
+          servicos: [
+            { nome: 'Personalização de marca (white-label)', detalhe: 'Adapte cores, logotipo, materiais 3D e botão de ação por configuração.' },
+            { nome: 'Modo incorporado (?embed=1)', detalhe: 'Integre em lojas, escolas de música, convites e campanhas interativas.' }
+          ],
+          contato: 'Demonstração neutra pronta para personalização · contato@ateliesonoro.exemplo'
+        }
+      }
+    };
+
+    let MARCA = structuredClone(PRESETS_MARCA.cordaEMelodia);
+    window.MARCA = MARCA;
+
+    /* =========================================================================
+       2. CONSTANTES MUSICAIS & MELODIAS DE DOMÍNIO PÚBLICO
+       ========================================================================= */
+    const NUM_NOTES = 15;
+    const NUM_STEPS = 32;
+    const STORAGE_KEY = 'amb3d_caixa-de-musica-perfurada_v1';
+
+    const NOTE_NAMES = [
+      'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4',
+      'C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5', 'C6'
+    ];
+    const NOTE_LABELS_PT = [
+      'Dó 4', 'Ré 4', 'Mi 4', 'Fá 4', 'Sol 4', 'Lá 4', 'Si 4',
+      'Dó 5', 'Ré 5', 'Mi 5', 'Fá 5', 'Sol 5', 'Lá 5', 'Si 5', 'Dó 6'
+    ];
+    const NOTE_FREQS = [
+      261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88,
+      523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50
+    ];
+
+    const PUBLIC_DOMAIN_MELODIES = [
+      {
+        id: 'brilha',
+        titulo: 'Brilha, brilha, estrelinha',
+        subtitulo: 'Tradicional francesa (Ah! vous dirai-je, maman, 1761) · Domínio público',
+        notas: [
+          [0, 0], [0, 7], [2, 7], [4, 11], [4, 4], [6, 11],
+          [8, 12], [8, 5], [10, 12], [12, 11], [12, 4],
+          [16, 10], [16, 3], [18, 10], [20, 9], [20, 2], [22, 9],
+          [24, 8], [24, 1], [26, 8], [28, 7], [28, 0], [30, 4]
+        ]
+      },
+      {
+        id: 'ode',
+        titulo: 'Ode à Alegria',
+        subtitulo: 'Ludwig van Beethoven (Sinfonia nº 9, 1824) · Domínio público',
+        notas: [
+          [0, 9], [0, 0], [2, 9], [4, 10], [6, 11], [6, 4],
+          [8, 11], [10, 10], [12, 9], [12, 2], [14, 8],
+          [16, 7], [16, 0], [18, 7], [20, 8], [22, 9], [22, 2],
+          [24, 9], [24, 4], [27, 8], [28, 8], [28, 1]
+        ]
+      },
+      {
+        id: 'acalanto',
+        titulo: 'Acalanto (Canção de Ninar)',
+        subtitulo: 'Johannes Brahms (Wiegenlied, Op. 49 nº 4, 1868) · Domínio público',
+        notas: [
+          [0, 9], [2, 9], [4, 11], [4, 0], [8, 9], [10, 9], [12, 11], [12, 4],
+          [16, 9], [18, 11], [20, 14], [20, 7], [23, 13], [25, 12], [25, 5], [28, 12], [30, 11]
+        ]
+      },
+      {
+        id: 'frere',
+        titulo: 'Frère Jacques (Irmão Jorge)',
+        subtitulo: 'Canção popular francesa (séc. XVIII) · Domínio público',
+        notas: [
+          [0, 7], [0, 0], [2, 8], [4, 9], [6, 7],
+          [8, 7], [8, 4], [10, 8], [12, 9], [14, 7],
+          [16, 9], [16, 2], [18, 10], [20, 11], [20, 4],
+          [24, 9], [24, 2], [26, 10], [28, 11], [28, 4]
+        ]
+      },
+      {
+        id: 'minueto',
+        titulo: 'Minueto em Dó (inspirado em Petzold)',
+        subtitulo: 'Caderno de Anna Magdalena Bach (1725) · Domínio público',
+        notas: [
+          [0, 11], [0, 0], [4, 7], [6, 8], [8, 9], [10, 10],
+          [12, 11], [12, 4], [16, 7], [20, 7],
+          [24, 12], [24, 5], [26, 10], [28, 11], [30, 9]
+        ]
+      }
+    ];
+
+    /* =========================================================================
+       3. ESTADO CENTRAL
+       ========================================================================= */
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEmbed = urlParams.get('embed') === '1';
+    if (isEmbed) document.body.classList.add('is-embed');
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobileViewport = () => window.innerWidth <= 860;
+
+    function detectDefaultQuality() {
+      const cores = navigator.hardwareConcurrency || 4;
+      const mem = navigator.deviceMemory || 4;
+      if (isMobileViewport() || cores <= 4 || mem <= 2) return 'leve';
+      if (cores >= 8 && mem >= 6) return 'alta';
+      return 'equilibrada';
+    }
+
+    const state = {
+      grid: Array.from({ length: NUM_NOTES }, () => Array(NUM_STEPS).fill(false)),
+      stripPos: 0,
+      lastStepInt: -1,
+      crankAngle: 0,
+      angularVelocity: 0,
+      autoCrank: false,
+      direction: 1,
+      loop: true,
+      speed: 1.0,
+      soundEnabled: true,
+      audioUnlocked: false,
+      quality: detectDefaultQuality(),
+      presetId: 'cordaEMelodia',
+      activeStep: 0,
+      completedSteps: [false, false, false, false],
+      hasInteracted: false,
+      previousGridSnapshot: null,
+      hoverCell: null,
+      tineEnergy: new Float32Array(NUM_NOTES),
+      tinePhase: new Float32Array(NUM_NOTES)
+    };
+
+    function clearGridInternal() {
+      for (let n = 0; n < NUM_NOTES; n++) {
+        for (let s = 0; s < NUM_STEPS; s++) state.grid[n][s] = false;
+      }
+    }
+
+    function countPunchedHoles() {
+      let c = 0;
+      for (let n = 0; n < NUM_NOTES; n++) {
+        for (let s = 0; s < NUM_STEPS; s++) if (state.grid[n][s]) c++;
+      }
+      return c;
+    }
+
+    function loadMelodyById(id, announceIt = false) {
+      const m = PUBLIC_DOMAIN_MELODIES.find((item) => item.id === id) || PUBLIC_DOMAIN_MELODIES[0];
+      clearGridInternal();
+      for (const [step, note] of m.notas) {
+        if (step >= 0 && step < NUM_STEPS && note >= 0 && note < NUM_NOTES) {
+          state.grid[note][step] = true;
+        }
+      }
+      state.stripPos = 0;
+      state.lastStepInt = -1;
+      syncAllViews();
+      saveLocalPrefs();
+      if (announceIt) {
+        announce(`Melodia "${m.titulo}" carregada na fita.`);
+        showToast(`Melodia carregada: ${m.titulo}`);
+      }
+    }
+
+    function loadLocalPrefs() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) { loadMelodyById('brilha', false); return; }
+        const saved = JSON.parse(raw);
+        if (saved && Array.isArray(saved.grid) && saved.grid.length === NUM_NOTES) {
+          state.grid = saved.grid.map((row) =>
+            Array.isArray(row) && row.length === NUM_STEPS ? row.map(Boolean) : Array(NUM_STEPS).fill(false)
+          );
+        } else {
+          loadMelodyById('brilha', false);
+        }
+        if (typeof saved.speed === 'number') state.speed = Math.min(2.5, Math.max(0.3, saved.speed));
+        if (typeof saved.loop === 'boolean') state.loop = saved.loop;
+        if (typeof saved.soundEnabled === 'boolean') state.soundEnabled = saved.soundEnabled;
+        if (['alta', 'equilibrada', 'leve'].includes(saved.quality)) state.quality = saved.quality;
+        if (saved.presetId && PRESETS_MARCA[saved.presetId]) state.presetId = saved.presetId;
+      } catch {
+        loadMelodyById('brilha', false);
+      }
+    }
+
+    function saveLocalPrefs() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          grid: state.grid,
+          speed: state.speed,
+          loop: state.loop,
+          soundEnabled: state.soundEnabled,
+          quality: state.quality,
+          presetId: state.presetId
+        }));
+      } catch {}
+    }
+
+    /* =========================================================================
+       4. MOTOR DE ÁUDIO PROCEDURAL (WEB AUDIO API)
+       ========================================================================= */
+    class MusicBoxAudio {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.compressor = null;
+        this.paperGain = null;
+        this.activeVoices = [];
+        this.maxPolyphony = 10;
+        this.lastRatchetBucket = 0;
+      }
+
+      unlock() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          this.ctx = new AudioCtx();
+
+          this.compressor = this.ctx.createDynamicsCompressor();
+          this.compressor.threshold.value = -20;
+          this.compressor.knee.value = 18;
+          this.compressor.ratio.value = 8;
+          this.compressor.attack.value = 0.003;
+          this.compressor.release.value = 0.14;
+
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = state.soundEnabled ? 0.24 : 0.0;
+
+          this.compressor.connect(this.masterGain);
+          this.masterGain.connect(this.ctx.destination);
+          this._initPaperFriction();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+        state.audioUnlocked = true;
+      }
+
+      _initPaperFriction() {
+        const sr = this.ctx.sampleRate;
+        const len = sr * 2;
+        const buf = this.ctx.createBuffer(1, len, sr);
+        const data = buf.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < len; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.997 * b0 + white * 0.029;
+          b1 = 0.985 * b1 + white * 0.032;
+          b2 = 0.950 * b2 + white * 0.048;
+          data[i] = (b0 + b1 + b2 + white * 0.14) * 0.15;
+        }
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 2400;
+        filter.Q.value = 0.9;
+
+        this.paperGain = this.ctx.createGain();
+        this.paperGain.gain.value = 0;
+
+        src.connect(filter);
+        filter.connect(this.paperGain);
+        this.paperGain.connect(this.compressor);
+        src.start();
+      }
+
+      setMuted(muted) {
+        if (!this.ctx || !this.masterGain) return;
+        const now = this.ctx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(now);
+        this.masterGain.gain.setTargetAtTime(muted ? 0.0 : 0.24, now, 0.025);
+      }
+
+      updateFriction(absVelocity) {
+        if (!this.ctx || !this.paperGain || !state.soundEnabled) return;
+        const target = Math.min(0.11, absVelocity * 0.022);
+        this.paperGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.05);
+      }
+
+      maybePlayRatchet(crankAngle) {
+        if (!this.ctx || !state.soundEnabled) return;
+        const bucket = Math.floor(crankAngle / (Math.PI / 6));
+        if (bucket === this.lastRatchetBucket) return;
+        this.lastRatchetBucket = bucket;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1650 + Math.random() * 240, now);
+        osc.frequency.exponentialRampToValueAtTime(420, now + 0.018);
+
+        gain.gain.setValueAtTime(0.032, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
+
+        osc.connect(gain);
+        gain.connect(this.compressor);
+        osc.start(now);
+        osc.stop(now + 0.025);
+      }
+
+      playPunchClick(isPunching) {
+        this.unlock();
+        if (!this.ctx || !state.soundEnabled) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isPunching ? 310 : 210, now);
+        osc.frequency.exponentialRampToValueAtTime(75, now + 0.035);
+        gain.gain.setValueAtTime(0.11, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.042);
+        osc.connect(gain);
+        gain.connect(this.compressor);
+        osc.start(now);
+        osc.stop(now + 0.046);
+      }
+
+      playTine(noteIndex, velocity = 0.85, destCtx = null, destNode = null, startTime = null) {
+        const isOffline = Boolean(destCtx);
+        if (!isOffline) {
+          this.unlock();
+          if (!this.ctx || !state.soundEnabled) return;
+          while (this.activeVoices.length >= this.maxPolyphony) {
+            const oldest = this.activeVoices.shift();
+            try { oldest.stop(); } catch {}
+          }
+        }
+
+        const ctx = destCtx || this.ctx;
+        const out = destNode || this.compressor;
+        const now = startTime !== null ? startTime : ctx.currentTime;
+        const f0 = NOTE_FREQS[noteIndex] || 523.25;
+
+        const partials = [
+          { ratio: 1.0,   amp: 0.72, decay: 2.35 },
+          { ratio: 2.003, amp: 0.22, decay: 1.45 },
+          { ratio: 2.756, amp: 0.14, decay: 0.62 },
+          { ratio: 5.404, amp: 0.075, decay: 0.24 },
+          { ratio: 8.933, amp: 0.032, decay: 0.11 }
+        ];
+
+        const voiceGain = ctx.createGain();
+        voiceGain.gain.setValueAtTime(0.0001, now);
+        voiceGain.gain.linearRampToValueAtTime(0.36 * velocity, now + 0.0025);
+        voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+
+        if (typeof ctx.createStereoPanner === 'function') {
+          const panner = ctx.createStereoPanner();
+          panner.pan.value = ((noteIndex / (NUM_NOTES - 1)) - 0.5) * 0.55;
+          voiceGain.connect(panner);
+          panner.connect(out);
+        } else {
+          voiceGain.connect(out);
+        }
+
+        const oscs = [];
+        for (const p of partials) {
+          const freq = f0 * p.ratio;
+          if (freq > ctx.sampleRate * 0.45) continue;
+          const osc = ctx.createOscillator();
+          const pGain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.9985, now + 0.04);
+
+          pGain.gain.setValueAtTime(p.amp, now);
+          pGain.gain.exponentialRampToValueAtTime(0.0001, now + p.decay);
+
+          osc.connect(pGain);
+          pGain.connect(voiceGain);
+          osc.start(now);
+          osc.stop(now + p.decay + 0.05);
+          oscs.push(osc);
+        }
+
+        const clickOsc = ctx.createOscillator();
+        const clickGain = ctx.createGain();
+        clickOsc.type = 'triangle';
+        clickOsc.frequency.setValueAtTime(Math.min(5800, f0 * 6.2), now);
+        clickGain.gain.setValueAtTime(0.085 * velocity, now);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.014);
+        clickOsc.connect(clickGain);
+        clickGain.connect(voiceGain);
+        clickOsc.start(now);
+        clickOsc.stop(now + 0.018);
+        oscs.push(clickOsc);
+
+        if (!isOffline) {
+          const voiceHandle = {
+            stop: () => {
+              const t = ctx.currentTime;
+              voiceGain.gain.cancelScheduledValues(t);
+              voiceGain.gain.setTargetAtTime(0.0001, t, 0.02);
+              oscs.forEach((o) => { try { o.stop(t + 0.08); } catch {} });
+            }
+          };
+          this.activeVoices.push(voiceHandle);
+          setTimeout(() => {
+            const idx = this.activeVoices.indexOf(voiceHandle);
+            if (idx >= 0) this.activeVoices.splice(idx, 1);
+          }, 2600);
+        }
+      }
+
+      async renderWavBlob() {
+        const sampleRate = 44100;
+        const stepSec = 0.28 / state.speed;
+        const totalDuration = NUM_STEPS * stepSec + 2.8;
+        const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OfflineCtx) throw new Error('OfflineAudioContext indisponível');
+
+        const offline = new OfflineCtx(2, Math.ceil(sampleRate * totalDuration), sampleRate);
+        const comp = offline.createDynamicsCompressor();
+        comp.threshold.value = -16;
+        comp.ratio.value = 6;
+        const master = offline.createGain();
+        master.gain.value = 0.55;
+        comp.connect(master);
+        master.connect(offline.destination);
+
+        for (let s = 0; s < NUM_STEPS; s++) {
+          const t = 0.12 + s * stepSec;
+          for (let n = 0; n < NUM_NOTES; n++) {
+            if (state.grid[n][s]) this.playTine(n, 0.9, offline, comp, t);
+          }
+        }
+        const rendered = await offline.startRendering();
+        return encodeAudioBufferToWav(rendered);
+      }
+    }
+
+    function encodeAudioBufferToWav(buffer) {
+      const numChannels = buffer.numberOfChannels;
+      const sampleRate = buffer.sampleRate;
+      const length = buffer.length * numChannels * 2;
+      const arrayBuffer = new ArrayBuffer(44 + length);
+      const view = new DataView(arrayBuffer);
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + length, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * numChannels * 2, true);
+      view.setUint16(32, numChannels * 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, length, true);
+
+      const channels = [];
+      for (let c = 0; c < numChannels; c++) channels.push(buffer.getChannelData(c));
+      let offset = 44;
+      for (let i = 0; i < buffer.length; i++) {
+        for (let c = 0; c < numChannels; c++) {
+          const s = Math.max(-1, Math.min(1, channels[c][i]));
+          view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+          offset += 2;
+        }
+      }
+      return new Blob([arrayBuffer], { type: 'audio/wav' });
+    }
+
+    const audioEngine = new MusicBoxAudio();
+
+    /* =========================================================================
+       5. UTILITÁRIOS DE INTERFACE, PASSOS GUIADOS & RE-SKIN
+       ========================================================================= */
+    const $ = (id) => document.getElementById(id);
+
+    function announce(msg) {
+      const el = $('aria-live');
+      if (!el) return;
+      el.textContent = '';
+      requestAnimationFrame(() => { el.textContent = msg; });
+    }
+
+    let toastTimer = null;
+    function showToast(msg, actionLabel = null, onAction = null) {
+      const toast = $('toast');
+      $('toast-msg').textContent = msg;
+      const actBtn = $('toast-action');
+      if (actionLabel && onAction) {
+        actBtn.textContent = actionLabel;
+        actBtn.style.display = 'inline-block';
+        actBtn.onclick = () => { onAction(); toast.classList.remove('is-visible'); };
+      } else {
+        actBtn.style.display = 'none';
+        actBtn.onclick = null;
+      }
+      toast.classList.add('is-visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 4200);
+    }
+
+    function markFirstInteraction() {
+      if (!state.hasInteracted) {
+        state.hasInteracted = true;
+        $('touch-hint')?.classList.add('is-hidden');
+      }
+      audioEngine.unlock();
+    }
+
+    function advanceGuidedStep(completedIndex) {
+      state.completedSteps[completedIndex] = true;
+      const next = Math.min(3, completedIndex + 1);
+      if (state.activeStep <= completedIndex) state.activeStep = next;
+      renderStepsCard();
+    }
+
+    function setActiveStep(idx) {
+      state.activeStep = idx;
+      renderStepsCard();
+    }
+
+    function renderStepsCard() {
+      const items = document.querySelectorAll('#steps-list .step-item');
+      items.forEach((btn, i) => {
+        btn.classList.toggle('is-active', i === state.activeStep);
+        btn.classList.toggle('is-done', state.completedSteps[i] && i !== state.activeStep);
+        const span = btn.querySelector('span:first-child');
+        if (span && MARCA.textos.passos[i]) span.textContent = MARCA.textos.passos[i];
+      });
+      const lbl = $('steps-collapsed-label');
+      if (lbl) lbl.textContent = `Passos (${state.activeStep + 1}/4)`;
+    }
+
+    function applyBrandConfig(presetId) {
+      const preset = PRESETS_MARCA[presetId] || PRESETS_MARCA.cordaEMelodia;
+      MARCA = structuredClone(preset);
+      window.MARCA = MARCA;
+      state.presetId = MARCA.id;
+
+      const root = document.documentElement;
+      root.style.setProperty('--cor-primaria', MARCA.cores.primaria);
+      root.style.setProperty('--cor-secundaria', MARCA.cores.secundaria);
+      root.style.setProperty('--cor-fundo', MARCA.cores.fundo);
+      root.style.setProperty('--cor-texto', MARCA.cores.texto);
+      root.style.setProperty('--cor-destaque', MARCA.cores.destaque);
+      root.style.setProperty('--fonte-titulo', MARCA.fontes.titulo);
+      root.style.setProperty('--fonte-texto', MARCA.fontes.texto);
+
+      document.title = `Caixa de Música Perfurada — ${MARCA.nome}`;
+      $('brand-logo-btn').textContent = MARCA.logoTexto;
+      $('btn-cta-main').textContent = MARCA.cta.texto;
+      $('btn-cta-embed').textContent = MARCA.cta.texto;
+      $('hero-title').innerHTML = MARCA.textos.titulo.replace('\n', '<br />');
+      $('hero-subtitle').textContent = MARCA.textos.fraseApoio;
+      renderStepsCard();
+
+      document.querySelectorAll('#brand-preset-options .btn-paper').forEach((b) => {
+        b.classList.toggle('is-active', b.dataset.preset === MARCA.id);
+      });
+
+      if (sceneController) sceneController.applyBrandTo3D(MARCA);
+      saveLocalPrefs();
+    }
+
+    /* =========================================================================
+       6. SEQUENCIADOR GUIADO PELA POSIÇÃO DA FITA
+       ========================================================================= */
+    function triggerStepNotes(stepIdx) {
+      const wrapped = ((stepIdx % NUM_STEPS) + NUM_STEPS) % NUM_STEPS;
+      for (let n = 0; n < NUM_NOTES; n++) {
+        if (state.grid[n][wrapped]) {
+          audioEngine.playTine(n, 0.88);
+          state.tineEnergy[n] = 1.0;
+          state.tinePhase[n] = 0;
+          if (sceneController) sceneController.spawnNoteParticles(n);
+        }
+      }
+      updatePlayheadUI(wrapped);
+    }
+
+    function advanceStripByAngle(deltaRad) {
+      if (Math.abs(deltaRad) < 1e-6) return;
+      state.crankAngle += deltaRad;
+      audioEngine.maybePlayRatchet(state.crankAngle);
+
+      const STEPS_PER_RAD = 4 / (Math.PI * 2);
+      const prevPos = state.stripPos;
+      let nextPos = prevPos + deltaRad * STEPS_PER_RAD;
+
+      if (state.loop) {
+        nextPos = ((nextPos % NUM_STEPS) + NUM_STEPS) % NUM_STEPS;
+      } else {
+        if (nextPos >= NUM_STEPS) {
+          nextPos = NUM_STEPS - 0.001;
+          state.autoCrank = false;
+          updateCrankButtonsUI();
+        } else if (nextPos < 0) {
+          nextPos = 0;
+          state.autoCrank = false;
+          updateCrankButtonsUI();
+        }
+      }
+
+      const prevStep = Math.floor(prevPos);
+      const nextStep = Math.floor(nextPos);
+      state.stripPos = nextPos;
+
+      if (nextStep !== prevStep) {
+        triggerStepNotes(nextStep);
+        state.lastStepInt = nextStep;
+      }
+
+      updateCrankDialVisual();
+      if (sceneController) sceneController.requestRender();
+    }
+
+    function togglePunchHole(step, note, playPreview = true) {
+      if (step < 0 || step >= NUM_STEPS || note < 0 || note >= NUM_NOTES) return;
+      markFirstInteraction();
+      const nextVal = !state.grid[note][step];
+      state.grid[note][step] = nextVal;
+      audioEngine.playPunchClick(nextVal);
+      if (nextVal && playPreview) {
+        audioEngine.playTine(note, 0.72);
+        state.tineEnergy[note] = 0.85;
+        state.tinePhase[note] = 0;
+        if (sceneController) sceneController.spawnNoteParticles(note);
+      }
+      advanceGuidedStep(0);
+      syncAllViews();
+      saveLocalPrefs();
+      announce(`${nextVal ? 'Furo aberto' : 'Furo fechado'} na nota ${NOTE_LABELS_PT[note]}, passo ${step + 1}.`);
+    }
+
+    /* =========================================================================
+       7. GRADE 2D & PAINÉIS DE INTERAÇÃO
+       ========================================================================= */
+    function buildPunchGridUI() {
+      const container = $('punch-grid');
+      container.innerHTML = '';
+
+      const corner = document.createElement('div');
+      corner.className = 'punch-step-hdr';
+      corner.textContent = 'Nota';
+      container.appendChild(corner);
+
+      for (let s = 0; s < NUM_STEPS; s++) {
+        const hdr = document.createElement('div');
+        hdr.className = 'punch-step-hdr';
+        hdr.dataset.stepHdr = String(s);
+        hdr.textContent = (s % 4 === 0) ? String(s + 1) : '·';
+        container.appendChild(hdr);
+      }
+
+      for (let n = NUM_NOTES - 1; n >= 0; n--) {
+        const lbl = document.createElement('div');
+        lbl.className = 'punch-note-lbl';
+        lbl.textContent = NOTE_NAMES[n];
+        lbl.title = NOTE_LABELS_PT[n];
+        container.appendChild(lbl);
+
+        for (let s = 0; s < NUM_STEPS; s++) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'punch-cell' + (s % 4 === 0 ? ' is-bar-start' : '');
+          btn.dataset.note = String(n);
+          btn.dataset.step = String(s);
+          btn.setAttribute('aria-label', `${NOTE_LABELS_PT[n]}, passo ${s + 1}`);
+          btn.setAttribute('aria-pressed', state.grid[n][s] ? 'true' : 'false');
+          btn.addEventListener('click', () => togglePunchHole(s, n, true));
+          container.appendChild(btn);
+        }
+      }
+      syncPunchGridUI();
+    }
+
+    function syncPunchGridUI() {
+      const cells = document.querySelectorAll('#punch-grid .punch-cell');
+      cells.forEach((cell) => {
+        const n = Number(cell.dataset.note);
+        const s = Number(cell.dataset.step);
+        const punched = Boolean(state.grid[n][s]);
+        cell.classList.toggle('is-punched', punched);
+        cell.setAttribute('aria-pressed', punched ? 'true' : 'false');
+      });
+      const count = countPunchedHoles();
+      const meta = $('punch-count-meta');
+      if (meta) {
+        meta.textContent = `${count} ${count === 1 ? 'nota perfurada' : 'notas perfuradas'} · Clique na grade ou na fita 3D para editar.`;
+      }
+    }
+
+    function updatePlayheadUI(stepIdx) {
+      document.querySelectorAll('#punch-grid .punch-step-hdr').forEach((h) => {
+        h.classList.toggle('is-current', Number(h.dataset.stepHdr) === stepIdx);
+      });
+      document.querySelectorAll('#punch-grid .punch-cell').forEach((c) => {
+        c.classList.toggle('is-playhead', Number(c.dataset.step) === stepIdx);
+      });
+      const posLbl = $('crank-pos-label');
+      if (posLbl) {
+        posLbl.textContent = `Passo ${stepIdx + 1} de ${NUM_STEPS} · ${state.autoCrank ? (state.direction > 0 ? 'Giro automático' : 'Voltando fita') : 'Arraste em círculo para girar.'}`;
+      }
+      const pad = $('crank-pad');
+      if (pad) pad.setAttribute('aria-valuenow', String(stepIdx + 1));
+    }
+
+    function updateCrankDialVisual() {
+      const arm = $('crank-pad-arm');
+      if (arm) {
+        const deg = (state.crankAngle * 180) / Math.PI;
+        arm.style.transform = `translateY(-50%) rotate(${deg.toFixed(1)}deg)`;
+      }
+    }
+
+    function updateCrankButtonsUI() {
+      const dockPlay = $('dock-girar');
+      const cardPlay = $('btn-auto-crank');
+      const previewBtn = $('btn-punch-preview');
+      const statusLbl = $('crank-status-label');
+      const isPlaying = state.autoCrank;
+
+      dockPlay.classList.toggle('is-active', isPlaying);
+      dockPlay.setAttribute('aria-pressed', String(isPlaying));
+      dockPlay.textContent = isPlaying ? 'Pausar manivela' : 'Girar manivela';
+
+      if (cardPlay) {
+        cardPlay.classList.toggle('is-active', isPlaying && state.direction > 0);
+        cardPlay.textContent = isPlaying ? '❚❚ Pausar' : '▶ Girar';
+      }
+      if (previewBtn) previewBtn.textContent = isPlaying ? '❚❚ Pausar' : '▶ Ouvir';
+      if (statusLbl) {
+        statusLbl.textContent = isPlaying
+          ? (state.direction > 0 ? 'Tocando melodia...' : 'Voltando a fita...')
+          : 'Pronta para girar';
+      }
+      $('btn-rewind')?.classList.toggle('is-active', isPlaying && state.direction < 0);
+      $('btn-loop')?.classList.toggle('is-active', state.loop);
+      $('btn-loop')?.setAttribute('aria-pressed', String(state.loop));
+    }
+
+    function syncAllViews() {
+      syncPunchGridUI();
+      updateCrankButtonsUI();
+      updatePlayheadUI(Math.floor(state.stripPos) % NUM_STEPS);
+      if (sceneController) sceneController.redrawPaperStrip();
+    }
+
+    function closeAllFloatingPanels(exceptId = null) {
+      ['punch-panel', 'crank-card', 'melodies-panel', 'download-panel'].forEach((id) => {
+        if (id !== exceptId) $(id)?.classList.remove('is-open');
+      });
+      $('dock-perfurar')?.setAttribute('aria-expanded', String(exceptId === 'punch-panel' && $('punch-panel').classList.contains('is-open')));
+      $('dock-velocidade')?.setAttribute('aria-expanded', String(exceptId === 'crank-card' && $('crank-card').classList.contains('is-open')));
+      $('dock-melodias')?.setAttribute('aria-expanded', String(exceptId === 'melodies-panel' && $('melodies-panel').classList.contains('is-open')));
+      $('dock-baixar')?.setAttribute('aria-expanded', String(exceptId === 'download-panel' && $('download-panel').classList.contains('is-open')));
+    }
+
+    function toggleFloatingPanel(panelId) {
+      const panel = $(panelId);
+      const willOpen = !panel.classList.contains('is-open');
+      closeAllFloatingPanels(willOpen ? panelId : null);
+      panel.classList.toggle('is-open', willOpen);
+      closeAllFloatingPanels(willOpen ? panelId : null);
+    }
+
+    function buildMelodiesUI() {
+      const list = $('melody-list');
+      list.innerHTML = '';
+      PUBLIC_DOMAIN_MELODIES.forEach((m) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'melody-item';
+        btn.innerHTML = `
+          <div>
+            <strong>${m.titulo}</strong>
+            <span>${m.subtitulo}</span>
+          </div>
+          <span class="melody-badge">${m.notas.length} notas</span>
+        `;
+        btn.addEventListener('click', () => {
+          markFirstInteraction();
+          loadMelodyById(m.id, true);
+          closeAllFloatingPanels();
+          state.direction = 1;
+          state.autoCrank = true;
+          advanceGuidedStep(1);
+          updateCrankButtonsUI();
+          if (sceneController) sceneController.requestRender();
+        });
+        list.appendChild(btn);
+      });
+    }
+
+    /* =========================================================================
+       8. INTERAÇÃO CIRCULAR NO PAD DA MANIVELA (2D)
+       ========================================================================= */
+    function initCrankPadGesture() {
+      const pad = $('crank-pad');
+      let dragging = false;
+      let prevAngle = 0;
+
+      const getAngle = (ev) => {
+        const rect = pad.getBoundingClientRect();
+        return Math.atan2(ev.clientY - (rect.top + rect.height / 2), ev.clientX - (rect.left + rect.width / 2));
+      };
+
+      pad.addEventListener('pointerdown', (ev) => {
+        markFirstInteraction();
+        dragging = true;
+        state.autoCrank = false;
+        updateCrankButtonsUI();
+        prevAngle = getAngle(ev);
+        pad.setPointerCapture(ev.pointerId);
+      });
+
+      pad.addEventListener('pointermove', (ev) => {
+        if (!dragging) return;
+        const angle = getAngle(ev);
+        let delta = angle - prevAngle;
+        if (delta > Math.PI) delta -= Math.PI * 2;
+        if (delta < -Math.PI) delta += Math.PI * 2;
+        prevAngle = angle;
+        state.angularVelocity = delta * 36;
+        advanceStripByAngle(delta);
+        advanceGuidedStep(1);
+      });
+
+      const endDrag = () => {
+        dragging = false;
+        state.angularVelocity = 0;
+        audioEngine.updateFriction(0);
+      };
+      pad.addEventListener('pointerup', endDrag);
+      pad.addEventListener('pointercancel', endDrag);
+    }
+
+    /* =========================================================================
+       9. CARREGADOR THREE.JS (r160 ESM COM FALLBACK AUTOMÁTICO r128)
+       ========================================================================= */
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Falha ao carregar ' + src));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function loadThreeBundle() {
+      try {
+        const [
+          THREE,
+          { OrbitControls },
+          { RoomEnvironment },
+          { RoundedBoxGeometry },
+          { EffectComposer },
+          { RenderPass },
+          { UnrealBloomPass },
+          { OutputPass }
+        ] = await Promise.all([
+          import('three'),
+          import('three/addons/controls/OrbitControls.js'),
+          import('three/addons/environments/RoomEnvironment.js'),
+          import('three/addons/geometries/RoundedBoxGeometry.js'),
+          import('three/addons/postprocessing/EffectComposer.js'),
+          import('three/addons/postprocessing/RenderPass.js'),
+          import('three/addons/postprocessing/UnrealBloomPass.js'),
+          import('three/addons/postprocessing/OutputPass.js')
+        ]);
+        return {
+          THREE,
+          addons: { OrbitControls, RoomEnvironment, RoundedBoxGeometry, EffectComposer, RenderPass, UnrealBloomPass, OutputPass },
+          isModern: true
+        };
+      } catch {
+        // Fallback automático para Three.js r128 (cdnjs) caso o módulo ESM r160 esteja indisponível
+        if (!window.THREE) {
+          await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+        }
+        if (!window.THREE) throw new Error('Three.js indisponível');
+        return { THREE: window.THREE, addons: {}, isModern: false };
+      }
+    }
+
+    /* =========================================================================
+       10. CENA 3D FOTORREALISTA
+       ========================================================================= */
+    let sceneController = null;
+
+    async function initThreeScene() {
+      const container = $('scene-container');
+      try {
+        const { THREE, addons, isModern } = await loadThreeBundle();
+
+        const setSRGB = (tex) => {
+          if ('colorSpace' in tex && THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+          else if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+        };
+
+        const makeBevelBox = (w, h, d, r = 0.012) => {
+          if (addons.RoundedBoxGeometry) {
+            return new addons.RoundedBoxGeometry(w, h, d, 3, r);
+          }
+          const shape = new THREE.Shape();
+          const hw = w / 2 - r, hh = d / 2 - r;
+          shape.moveTo(-hw, -d / 2);
+          shape.lineTo(hw, -d / 2);
+          shape.quadraticCurveTo(w / 2, -d / 2, w / 2, -hh);
+          shape.lineTo(w / 2, hh);
+          shape.quadraticCurveTo(w / 2, d / 2, hw, d / 2);
+          shape.lineTo(-hw, d / 2);
+          shape.quadraticCurveTo(-w / 2, d / 2, -w / 2, hh);
+          shape.lineTo(-w / 2, -hh);
+          shape.quadraticCurveTo(-w / 2, -d / 2, -hw, -d / 2);
+          const geo = new THREE.ExtrudeGeometry(shape, {
+            depth: Math.max(0.004, h - r * 2),
+            bevelEnabled: true,
+            bevelThickness: r,
+            bevelSize: r,
+            bevelSegments: 2
+          });
+          geo.rotateX(Math.PI / 2);
+          geo.center();
+          return geo;
+        };
+
+        // --- Renderer ---
+        const renderer = new THREE.WebGLRenderer({
+          antialias: state.quality !== 'leve',
+          powerPreference: 'high-performance',
+          alpha: false
+        });
+        if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) {
+          renderer.outputColorSpace = THREE.SRGBColorSpace;
+        } else if (THREE.sRGBEncoding) {
+          renderer.outputEncoding = THREE.sRGBEncoding;
+        }
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.98;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#19120c');
+        scene.fog = new THREE.FogExp2('#1b130d', 0.085);
+
+        // PMREM RoomEnvironment (ou sala procedural equivalente em r128)
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        let envScene;
+        if (addons.RoomEnvironment) {
+          envScene = new addons.RoomEnvironment();
+        } else {
+          envScene = new THREE.Scene();
+          envScene.background = new THREE.Color('#2a2018');
+          const p1 = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ color: '#ffdfa8', side: THREE.DoubleSide }));
+          p1.position.set(-4, 4, -2); p1.lookAt(0, 0, 0);
+          const p2 = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshBasicMaterial({ color: '#ffecc8', side: THREE.DoubleSide }));
+          p2.position.set(5, 5, 4); p2.lookAt(0, 0, 0);
+          const p3 = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: '#1b3526', side: THREE.DoubleSide }));
+          p3.position.set(0, -4, 0); p3.rotation.x = -Math.PI / 2;
+          envScene.add(p1, p2, p3);
+        }
+        scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+
+        // Câmera no enquadramento do mockup
+        const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 30);
+        const DEFAULT_CAM_POS = new THREE.Vector3(-1.62, 2.52, 2.95);
+        const DEFAULT_TARGET = new THREE.Vector3(0.22, 0.32, 0.04);
+        camera.position.copy(DEFAULT_CAM_POS);
+
+        // OrbitControls (nativo r160 ou controlador leve equivalente)
+        let controls;
+        if (addons.OrbitControls) {
+          controls = new addons.OrbitControls(camera, renderer.domElement);
+          controls.target.copy(DEFAULT_TARGET);
+          controls.enableDamping = true;
+          controls.dampingFactor = 0.07;
+          controls.minDistance = 1.75;
+          controls.maxDistance = 5.4;
+          controls.minPolarAngle = 0.35;
+          controls.maxPolarAngle = Math.PI * 0.46;
+          controls.minAzimuthAngle = -1.25;
+          controls.maxAzimuthAngle = 0.95;
+          controls.enablePan = false;
+        } else {
+          const sph = new THREE.Spherical().setFromVector3(DEFAULT_CAM_POS.clone().sub(DEFAULT_TARGET));
+          const target = DEFAULT_TARGET.clone();
+          let orbitDrag = false, lx = 0, ly = 0;
+          controls = {
+            enabled: true,
+            target,
+            update: () => {
+              camera.position.setFromSpherical(sph).add(target);
+              camera.lookAt(target);
+              return false;
+            },
+            addEventListener: () => {}
+          };
+          renderer.domElement.addEventListener('pointerdown', (e) => {
+            if (!controls.enabled) return;
+            orbitDrag = true; lx = e.clientX; ly = e.clientY;
+          });
+          window.addEventListener('pointermove', (e) => {
+            if (!orbitDrag || !controls.enabled) return;
+            sph.theta = Math.max(-1.25, Math.min(0.95, sph.theta - (e.clientX - lx) * 0.005));
+            sph.phi = Math.max(0.35, Math.min(Math.PI * 0.46, sph.phi - (e.clientY - ly) * 0.005));
+            lx = e.clientX; ly = e.clientY;
+            requestRender();
+          });
+          window.addEventListener('pointerup', () => { orbitDrag = false; });
+          renderer.domElement.addEventListener('wheel', (e) => {
+            sph.radius = Math.max(1.75, Math.min(5.4, sph.radius + e.deltaY * 0.002));
+            requestRender();
+          }, { passive: true });
+          controls.update();
+        }
+
+        // Bloom contido só na qualidade Alta (r160)
+        let composer = null;
+        let bloomPass = null;
+        if (addons.EffectComposer && addons.RenderPass && addons.UnrealBloomPass && addons.OutputPass) {
+          composer = new addons.EffectComposer(renderer);
+          composer.addPass(new addons.RenderPass(scene, camera));
+          bloomPass = new addons.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.24, 0.55, 0.92);
+          composer.addPass(bloomPass);
+          composer.addPass(new addons.OutputPass());
+        }
+
+        /* ---------------------------------------------------------------------
+           TEXTURAS PROCEDURAIS PBR (CanvasTexture)
+           --------------------------------------------------------------------- */
+        function createWalnutTextures(baseHex = '#643f26') {
+          const w = 1024, h = 1024;
+          const cAlb = document.createElement('canvas'); cAlb.width = w; cAlb.height = h;
+          const ctx = cAlb.getContext('2d');
+          const cRough = document.createElement('canvas'); cRough.width = w; cRough.height = h;
+          const rCtx = cRough.getContext('2d');
+
+          const base = new THREE.Color(baseHex);
+          const dark = base.clone().multiplyScalar(0.54);
+          const light = base.clone().lerp(new THREE.Color('#a67548'), 0.28);
+
+          ctx.fillStyle = `#${base.getHexString()}`;
+          ctx.fillRect(0, 0, w, h);
+          rCtx.fillStyle = '#787878';
+          rCtx.fillRect(0, 0, w, h);
+
+          for (let i = 0; i < 420; i++) {
+            const y = (i / 420) * h;
+            const amp = 4 + Math.sin(i * 0.08) * 10;
+            const freq = 0.004 + (i % 7) * 0.0007;
+            const col = (i % 3 === 0) ? dark : (i % 5 === 0 ? light : base);
+            ctx.strokeStyle = `#${col.getHexString()}`;
+            ctx.globalAlpha = 0.18 + (i % 4) * 0.06;
+            ctx.lineWidth = 1.2 + (i % 5) * 0.9;
+            ctx.beginPath();
+            for (let x = 0; x <= w; x += 24) {
+              const yy = y + Math.sin(x * freq + i * 0.12) * amp;
+              if (x === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+            }
+            ctx.stroke();
+
+            rCtx.strokeStyle = i % 3 === 0 ? '#9c9c9c' : '#666666';
+            rCtx.globalAlpha = 0.22;
+            rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            for (let x = 0; x <= w; x += 32) {
+              const yy = y + Math.sin(x * freq + i * 0.12) * amp;
+              if (x === 0) rCtx.moveTo(x, yy); else rCtx.lineTo(x, yy);
+            }
+            rCtx.stroke();
+          }
+
+          ctx.globalAlpha = 0.14;
+          ctx.fillStyle = '#1e1008';
+          for (let p = 0; p < 2200; p++) {
+            ctx.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 14, 1);
+          }
+
+          const map = new THREE.CanvasTexture(cAlb);
+          setSRGB(map);
+          map.wrapS = map.wrapT = THREE.RepeatWrapping;
+          map.anisotropy = 8;
+
+          const roughMap = new THREE.CanvasTexture(cRough);
+          roughMap.wrapS = roughMap.wrapT = THREE.RepeatWrapping;
+          return { map, roughMap };
+        }
+
+        function createFeltTextures(baseHex = '#1a452d') {
+          const s = 512;
+          const c = document.createElement('canvas'); c.width = s; c.height = s;
+          const ctx = c.getContext('2d');
+          const cBump = document.createElement('canvas'); cBump.width = s; cBump.height = s;
+          const bCtx = cBump.getContext('2d');
+
+          const base = new THREE.Color(baseHex);
+          const hi = base.clone().multiplyScalar(1.25);
+          const lo = base.clone().multiplyScalar(0.75);
+
+          ctx.fillStyle = `#${base.getHexString()}`;
+          ctx.fillRect(0, 0, s, s);
+          bCtx.fillStyle = '#808080';
+          bCtx.fillRect(0, 0, s, s);
+
+          for (let i = 0; i < 12000; i++) {
+            const x = Math.random() * s;
+            const y = Math.random() * s;
+            const ang = Math.random() * Math.PI * 2;
+            const len = 3 + Math.random() * 7;
+            ctx.strokeStyle = i % 2 === 0 ? `#${hi.getHexString()}` : `#${lo.getHexString()}`;
+            ctx.globalAlpha = 0.22;
+            ctx.lineWidth = 0.9;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+            ctx.stroke();
+
+            bCtx.strokeStyle = i % 2 === 0 ? '#b0b0b0' : '#555555';
+            bCtx.globalAlpha = 0.28;
+            bCtx.beginPath();
+            bCtx.moveTo(x, y);
+            bCtx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+            bCtx.stroke();
+          }
+
+          const map = new THREE.CanvasTexture(c);
+          setSRGB(map);
+          map.wrapS = map.wrapT = THREE.RepeatWrapping;
+          map.repeat.set(4, 3);
+          map.anisotropy = 8;
+
+          const bumpMap = new THREE.CanvasTexture(cBump);
+          bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+          bumpMap.repeat.set(4, 3);
+          return { map, bumpMap };
+        }
+
+        function createBrushedMetalMap() {
+          const s = 512;
+          const c = document.createElement('canvas'); c.width = s; c.height = s;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#888888';
+          ctx.fillRect(0, 0, s, s);
+          for (let i = 0; i < 2000; i++) {
+            const y = Math.random() * s;
+            const v = 100 + Math.floor(Math.random() * 70);
+            ctx.fillStyle = `rgb(${v},${v},${v})`;
+            ctx.globalAlpha = 0.25;
+            ctx.fillRect(0, y, s, 1);
+          }
+          const tex = new THREE.CanvasTexture(c);
+          tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+          return tex;
+        }
+
+        function createContactShadowTex() {
+          const s = 256;
+          const c = document.createElement('canvas'); c.width = s; c.height = s;
+          const ctx = c.getContext('2d');
+          const g = ctx.createRadialGradient(s / 2, s / 2, s * 0.14, s / 2, s / 2, s * 0.5);
+          g.addColorStop(0, 'rgba(6, 4, 2, 0.72)');
+          g.addColorStop(0.65, 'rgba(6, 4, 2, 0.34)');
+          g.addColorStop(1, 'rgba(6, 4, 2, 0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, s, s);
+          return new THREE.CanvasTexture(c);
+        }
+
+        function createLinenLampTex() {
+          const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+          const ctx = c.getContext('2d');
+          const grad = ctx.createLinearGradient(0, 0, 0, 512);
+          grad.addColorStop(0, '#cfc1a8');
+          grad.addColorStop(0.55, '#ede0c8');
+          grad.addColorStop(1, '#fff1d0');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 512, 512);
+          ctx.strokeStyle = 'rgba(130, 108, 78, 0.12)';
+          for (let i = 0; i < 512; i += 4) {
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 512); ctx.stroke();
+          }
+          const tex = new THREE.CanvasTexture(c);
+          setSRGB(tex);
+          return tex;
+        }
+
+        // --- CanvasTexture Dinâmico da Fita de Papel Perfurada ---
+        const paperCanvas = document.createElement('canvas');
+        paperCanvas.width = 1024;
+        paperCanvas.height = 2048;
+        const paperCtx = paperCanvas.getContext('2d');
+        const paperTex = new THREE.CanvasTexture(paperCanvas);
+        setSRGB(paperTex);
+        paperTex.wrapS = THREE.ClampToEdgeWrapping;
+        paperTex.wrapT = THREE.RepeatWrapping;
+        paperTex.anisotropy = 8;
+
+        const paperBaseCanvas = document.createElement('canvas');
+        paperBaseCanvas.width = 1024;
+        paperBaseCanvas.height = 2048;
+        const pbCtx = paperBaseCanvas.getContext('2d');
+        pbCtx.fillStyle = '#efe3ca';
+        pbCtx.fillRect(0, 0, 1024, 2048);
+        for (let i = 0; i < 6500; i++) {
+          pbCtx.fillStyle = i % 2 === 0 ? 'rgba(145, 118, 82, 0.07)' : 'rgba(255, 250, 240, 0.12)';
+          pbCtx.fillRect(Math.random() * 1024, Math.random() * 2048, 2 + Math.random() * 5, 1 + Math.random() * 2);
+        }
+        const edgeL = pbCtx.createLinearGradient(0, 0, 70, 0);
+        edgeL.addColorStop(0, 'rgba(115, 92, 60, 0.24)');
+        edgeL.addColorStop(1, 'rgba(115, 92, 60, 0)');
+        pbCtx.fillStyle = edgeL; pbCtx.fillRect(0, 0, 70, 2048);
+        const edgeR = pbCtx.createLinearGradient(1024, 0, 954, 0);
+        edgeR.addColorStop(0, 'rgba(115, 92, 60, 0.24)');
+        edgeR.addColorStop(1, 'rgba(115, 92, 60, 0)');
+        pbCtx.fillStyle = edgeR; pbCtx.fillRect(954, 0, 70, 2048);
+
+        function redrawPaperStripTexture() {
+          const W = paperCanvas.width;
+          const H = paperCanvas.height;
+          paperCtx.drawImage(paperBaseCanvas, 0, 0);
+
+          const marginX = 112;
+          const usableW = W - marginX * 2;
+          const colW = usableW / (NUM_NOTES - 1);
+          const rowH = H / NUM_STEPS;
+
+          for (let n = 0; n < NUM_NOTES; n++) {
+            const x = marginX + n * colW;
+            const isStaffLine = (n % 2 === 0);
+            paperCtx.strokeStyle = isStaffLine ? 'rgba(92, 71, 46, 0.34)' : 'rgba(116, 92, 62, 0.16)';
+            paperCtx.lineWidth = isStaffLine ? 2.2 : 1.2;
+            paperCtx.beginPath();
+            paperCtx.moveTo(x, 0);
+            paperCtx.lineTo(x, H);
+            paperCtx.stroke();
+          }
+
+          for (let s = 0; s < NUM_STEPS; s++) {
+            const y = (s + 0.5) * rowH;
+            const isBar = (s % 4 === 0);
+            paperCtx.strokeStyle = isBar ? 'rgba(90, 68, 42, 0.32)' : 'rgba(115, 92, 60, 0.11)';
+            paperCtx.lineWidth = isBar ? 2.4 : 1.1;
+            paperCtx.beginPath();
+            paperCtx.moveTo(marginX - 24, y);
+            paperCtx.lineTo(W - marginX + 24, y);
+            paperCtx.stroke();
+
+            if (s % 2 === 0) {
+              for (const sx of [48, W - 48]) {
+                paperCtx.fillStyle = '#24180e';
+                paperCtx.beginPath();
+                paperCtx.ellipse(sx, y, 11, 6.5, 0, 0, Math.PI * 2);
+                paperCtx.fill();
+              }
+            }
+          }
+
+          for (let n = 0; n < NUM_NOTES; n++) {
+            const x = marginX + n * colW;
+            for (let s = 0; s < NUM_STEPS; s++) {
+              const y = (s + 0.5) * rowH;
+              if (state.grid[n][s]) {
+                paperCtx.fillStyle = 'rgba(255, 250, 236, 0.72)';
+                paperCtx.beginPath();
+                paperCtx.ellipse(x, y + 2.0, 15.5, 9.2, 0, 0, Math.PI * 2);
+                paperCtx.fill();
+
+                paperCtx.fillStyle = '#1d130b';
+                paperCtx.beginPath();
+                paperCtx.ellipse(x, y, 14.5, 8.6, 0, 0, Math.PI * 2);
+                paperCtx.fill();
+              }
+            }
+          }
+
+          if (state.hoverCell) {
+            const hx = marginX + state.hoverCell.note * colW;
+            const hy = (state.hoverCell.step + 0.5) * rowH;
+            paperCtx.strokeStyle = '#c28b2c';
+            paperCtx.lineWidth = 4;
+            paperCtx.beginPath();
+            paperCtx.arc(hx, hy, 22, 0, Math.PI * 2);
+            paperCtx.stroke();
+          }
+          paperTex.needsUpdate = true;
+        }
+
+        /* ---------------------------------------------------------------------
+           MATERIAIS PBR
+           --------------------------------------------------------------------- */
+        const brushedMap = createBrushedMetalMap();
+        const walnutTex = createWalnutTextures(MARCA.cores.madeira3D);
+        const feltTex = createFeltTextures(MARCA.cores.feltro3D);
+        const contactShadowTex = createContactShadowTex();
+
+        const matWalnut = new THREE.MeshStandardMaterial({
+          map: walnutTex.map,
+          roughnessMap: walnutTex.roughMap,
+          bumpMap: walnutTex.roughMap,
+          bumpScale: 0.008,
+          roughness: 0.50,
+          metalness: 0.04,
+          envMapIntensity: 0.45
+        });
+
+        const matWalnutDark = new THREE.MeshStandardMaterial({
+          map: walnutTex.map,
+          color: new THREE.Color('#6b5340'),
+          roughness: 0.68,
+          metalness: 0.02,
+          envMapIntensity: 0.35
+        });
+
+        const matDeskWood = new THREE.MeshStandardMaterial({
+          map: walnutTex.map,
+          color: new THREE.Color('#5a402c'),
+          roughness: 0.62,
+          metalness: 0.04,
+          envMapIntensity: 0.38
+        });
+
+        const matFelt = new THREE.MeshStandardMaterial({
+          map: feltTex.map,
+          bumpMap: feltTex.bumpMap,
+          bumpScale: 0.012,
+          roughness: 0.94,
+          metalness: 0.0,
+          envMapIntensity: 0.25
+        });
+
+        const matBrass = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(MARCA.cores.laton3D),
+          roughnessMap: brushedMap,
+          bumpMap: brushedMap,
+          bumpScale: 0.003,
+          metalness: 0.90,
+          roughness: 0.26,
+          envMapIntensity: 0.65
+        });
+
+        const matBrassAged = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#9e7c3a'),
+          roughnessMap: brushedMap,
+          metalness: 0.86,
+          roughness: 0.38,
+          envMapIntensity: 0.50
+        });
+
+        const matSteel = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#d2d7dd'),
+          roughnessMap: brushedMap,
+          metalness: 0.94,
+          roughness: 0.20,
+          envMapIntensity: 0.72
+        });
+
+        const matPaper = new THREE.MeshStandardMaterial({
+          map: paperTex,
+          roughness: 0.86,
+          metalness: 0.02,
+          side: THREE.DoubleSide,
+          envMapIntensity: 0.32
+        });
+
+        const matLampShade = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#fff2dc'),
+          map: createLinenLampTex(),
+          emissive: new THREE.Color('#ffc478'),
+          emissiveIntensity: 0.85,
+          roughness: 0.88,
+          side: THREE.DoubleSide,
+          envMapIntensity: 0.2
+        });
+
+        /* ---------------------------------------------------------------------
+           ILUMINAÇÃO MOTIVADA (CALIBRADA PARA r160 E r128)
+           --------------------------------------------------------------------- */
+        const hemiLight = new THREE.HemisphereLight('#ffe5c0', '#18241d', isModern ? 0.34 : 0.42);
+        scene.add(hemiLight);
+
+        const lampKeyLight = new THREE.SpotLight('#ffd18c', isModern ? 16.5 : 2.35, 11, Math.PI * 0.36, 0.65, isModern ? 1.4 : 1.0);
+        lampKeyLight.position.set(-1.35, 2.05, -0.95);
+        lampKeyLight.target.position.set(0.25, 0.25, 0.15);
+        lampKeyLight.castShadow = true;
+        lampKeyLight.shadow.mapSize.set(1024, 1024);
+        lampKeyLight.shadow.bias = -0.0005;
+        lampKeyLight.shadow.normalBias = 0.02;
+        lampKeyLight.shadow.radius = 3.5;
+        scene.add(lampKeyLight);
+        scene.add(lampKeyLight.target);
+
+        const lampBulbLight = new THREE.PointLight('#ffbd6b', isModern ? 3.4 : 0.95, 4.8, isModern ? 1.8 : 1.2);
+        lampBulbLight.position.set(-1.18, 1.25, -1.05);
+        scene.add(lampBulbLight);
+
+        const brassRimLight = new THREE.DirectionalLight(MARCA.cores.luzAcento3D, isModern ? 0.95 : 0.72);
+        brassRimLight.position.set(2.4, 2.6, 1.8);
+        scene.add(brassRimLight);
+
+        /* ---------------------------------------------------------------------
+           PEÇAS SEMÂNTICAS & SCENE_MANIFEST
+           --------------------------------------------------------------------- */
+        const SCENE_MANIFEST = [];
+        function registerPart(id, obj, materialName, funcao) {
+          obj.name = id;
+          SCENE_MANIFEST.push({
+            id,
+            pos: obj.position.toArray().map((v) => Number(v.toFixed(3))),
+            rot: [obj.rotation.x, obj.rotation.y, obj.rotation.z].map((v) => Number(v.toFixed(3))),
+            scale: obj.scale.toArray().map((v) => Number(v.toFixed(3))),
+            material: materialName,
+            funcao
+          });
+          return obj;
+        }
+
+        // 1. Mesa & Tapete de feltro verde
+        const deskGroup = new THREE.Group();
+        const deskTop = new THREE.Mesh(makeBevelBox(6.8, 0.16, 4.8, 0.02), matDeskWood);
+        deskTop.position.set(0, -0.09, 0);
+        deskTop.receiveShadow = true;
+        deskGroup.add(deskTop);
+        registerPart('mesa_madeira', deskTop, 'matDeskWood', 'Tampo da mesa de nogueira');
+
+        const feltMat = new THREE.Mesh(makeBevelBox(4.4, 0.016, 3.05, 0.005), matFelt);
+        feltMat.position.set(0.15, 0.0, 0.05);
+        feltMat.receiveShadow = true;
+        deskGroup.add(feltMat);
+        registerPart('tapete_feltro_verde', feltMat, 'matFelt', 'Tapete de feltro verde sob a caixa');
+        scene.add(deskGroup);
+
+        // 2. Abajur vintage ao fundo à esquerda
+        const lampGroup = new THREE.Group();
+        lampGroup.position.set(-0.92, 0.01, -1.16);
+
+        const baseProfile = [
+          new THREE.Vector2(0.0, 0.0),
+          new THREE.Vector2(0.28, 0.0),
+          new THREE.Vector2(0.28, 0.025),
+          new THREE.Vector2(0.23, 0.048),
+          new THREE.Vector2(0.12, 0.075),
+          new THREE.Vector2(0.045, 0.11),
+          new THREE.Vector2(0.026, 0.14)
+        ];
+        const lampBase = new THREE.Mesh(new THREE.LatheGeometry(baseProfile, 36), matBrassAged);
+        lampBase.castShadow = true;
+        lampBase.receiveShadow = true;
+        lampGroup.add(lampBase);
+
+        const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 1.05, 20), matBrassAged);
+        lampStem.position.y = 0.64;
+        lampStem.castShadow = true;
+        lampGroup.add(lampStem);
+
+        const shadeProfile = [
+          new THREE.Vector2(0.54, 0.0),
+          new THREE.Vector2(0.49, 0.22),
+          new THREE.Vector2(0.39, 0.48),
+          new THREE.Vector2(0.30, 0.66)
+        ];
+        const lampShade = new THREE.Mesh(new THREE.LatheGeometry(shadeProfile, 40), matLampShade);
+        lampShade.position.y = 0.98;
+        lampGroup.add(lampShade);
+
+        const bulbMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.09, 16, 16),
+          new THREE.MeshBasicMaterial({ color: '#fff3d4' })
+        );
+        bulbMesh.position.y = 1.18;
+        lampGroup.add(bulbMesh);
+
+        const lampShadow = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.86, 0.86),
+          new THREE.MeshBasicMaterial({ map: contactShadowTex, transparent: true, depthWrite: false, opacity: 0.72 })
+        );
+        lampShadow.rotation.x = -Math.PI / 2;
+        lampShadow.position.y = 0.002;
+        lampGroup.add(lampShadow);
+
+        scene.add(lampGroup);
+        registerPart('abajur_mesa', lampGroup, 'matBrassAged + matLampShade', 'Abajur quente que motiva a luz principal');
+
+        // 3. CAIXA DE MÚSICA DE NOGUEIRA
+        const musicBox = new THREE.Group();
+        musicBox.position.set(0.20, 0.01, 0.06);
+        musicBox.rotation.y = -0.14;
+        scene.add(musicBox);
+        registerPart('caixa_de_musica', musicBox, 'grupo_raiz', 'Raiz da caixa de música de nogueira');
+
+        const boxShadow = new THREE.Mesh(
+          new THREE.PlaneGeometry(2.35, 1.92),
+          new THREE.MeshBasicMaterial({ map: contactShadowTex, transparent: true, depthWrite: false, opacity: 0.88 })
+        );
+        boxShadow.rotation.x = -Math.PI / 2;
+        boxShadow.position.set(0.04, 0.003, 0.03);
+        musicBox.add(boxShadow);
+
+        const BW = 1.56, BD = 1.24, BH = 0.56, WT = 0.095;
+
+        const plinth = new THREE.Mesh(makeBevelBox(BW + 0.09, 0.075, BD + 0.09, 0.016), matWalnut);
+        plinth.position.y = 0.038;
+        plinth.castShadow = true;
+        plinth.receiveShadow = true;
+        musicBox.add(plinth);
+        registerPart('caixa_base_moldura', plinth, 'matWalnut', 'Base moldurada em nogueira');
+
+        const innerFloor = new THREE.Mesh(new THREE.BoxGeometry(BW - WT, 0.06, BD - WT), matWalnutDark);
+        innerFloor.position.y = 0.14;
+        innerFloor.receiveShadow = true;
+        musicBox.add(innerFloor);
+
+        const wallsGroup = new THREE.Group();
+        const frontWall = new THREE.Mesh(makeBevelBox(BW, BH, WT, 0.014), matWalnut);
+        frontWall.position.set(0, BH / 2 + 0.04, BD / 2 - WT / 2);
+        const backWall = new THREE.Mesh(makeBevelBox(BW, BH, WT, 0.014), matWalnut);
+        backWall.position.set(0, BH / 2 + 0.04, -BD / 2 + WT / 2);
+        const leftWall = new THREE.Mesh(makeBevelBox(WT, BH, BD - WT * 1.4, 0.014), matWalnut);
+        leftWall.position.set(-BW / 2 + WT / 2, BH / 2 + 0.04, 0);
+        const rightWall = new THREE.Mesh(makeBevelBox(WT, BH, BD - WT * 1.4, 0.014), matWalnut);
+        rightWall.position.set(BW / 2 - WT / 2, BH / 2 + 0.04, 0);
+
+        [frontWall, backWall, leftWall, rightWall].forEach((wMesh) => {
+          wMesh.castShadow = true;
+          wMesh.receiveShadow = true;
+          wallsGroup.add(wMesh);
+        });
+        musicBox.add(wallsGroup);
+        registerPart('caixa_corpo_nogueira', wallsGroup, 'matWalnut', 'Paredes de nogueira com chanfro');
+
+        // 4. Tampa aberta com dobradiças
+        const lidPivot = new THREE.Group();
+        lidPivot.position.set(0, BH + 0.04, -BD / 2 + WT * 0.5);
+        lidPivot.rotation.x = -1.78;
+
+        const lidDepth = BD;
+        const lidThick = 0.095;
+        const frameW = 0.11;
+
+        const lidTopRail = new THREE.Mesh(makeBevelBox(BW, lidThick, frameW, 0.012), matWalnut);
+        lidTopRail.position.set(0, lidThick / 2, lidDepth - frameW / 2);
+        const lidBotRail = new THREE.Mesh(makeBevelBox(BW, lidThick, frameW, 0.012), matWalnut);
+        lidBotRail.position.set(0, lidThick / 2, frameW / 2);
+        const lidLeftRail = new THREE.Mesh(makeBevelBox(frameW, lidThick, lidDepth - frameW * 1.5, 0.012), matWalnut);
+        lidLeftRail.position.set(-BW / 2 + frameW / 2, lidThick / 2, lidDepth / 2);
+        const lidRightRail = new THREE.Mesh(makeBevelBox(frameW, lidThick, lidDepth - frameW * 1.5, 0.012), matWalnut);
+        lidRightRail.position.set(BW / 2 - frameW / 2, lidThick / 2, lidDepth / 2);
+        const lidPanel = new THREE.Mesh(new THREE.BoxGeometry(BW - frameW * 1.7, 0.036, lidDepth - frameW * 1.7), matWalnut);
+        lidPanel.position.set(0, lidThick - 0.025, lidDepth / 2);
+
+        [lidTopRail, lidBotRail, lidLeftRail, lidRightRail, lidPanel].forEach((m) => {
+          m.castShadow = true;
+          m.receiveShadow = true;
+          lidPivot.add(m);
+        });
+        musicBox.add(lidPivot);
+        registerPart('tampa_nogueira', lidPivot, 'matWalnut', 'Tampa aberta articulada com painel rebaixado');
+
+        const hingesGroup = new THREE.Group();
+        for (const hx of [-0.46, 0.46]) {
+          const leaf = new THREE.Mesh(makeBevelBox(0.11, 0.022, 0.065, 0.004), matBrass);
+          leaf.position.set(hx, BH + 0.042, -BD / 2 + WT * 0.55);
+          const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.115, 12), matBrassAged);
+          pin.rotation.z = Math.PI / 2;
+          pin.position.set(hx, BH + 0.052, -BD / 2 + WT * 0.52);
+          hingesGroup.add(leaf, pin);
+        }
+        musicBox.add(hingesGroup);
+        registerPart('dobradicas_latao', hingesGroup, 'matBrass', 'Par de dobradiças de latão');
+
+        // 5. Mecanismo de latão interno
+        const mechGroup = new THREE.Group();
+        mechGroup.position.set(0, 0.34, 0);
+        musicBox.add(mechGroup);
+        registerPart('mecanismo_latao', mechGroup, 'matBrass', 'Chassi e engrenagens de latão');
+
+        const brassPlate = new THREE.Mesh(makeBevelBox(1.24, 0.042, 0.94, 0.008), matBrassAged);
+        brassPlate.castShadow = true;
+        brassPlate.receiveShadow = true;
+        mechGroup.add(brassPlate);
+
+        const drumProfile = [
+          new THREE.Vector2(0, 0),
+          new THREE.Vector2(0.19, 0),
+          new THREE.Vector2(0.19, 0.24),
+          new THREE.Vector2(0.175, 0.265),
+          new THREE.Vector2(0.05, 0.27),
+          new THREE.Vector2(0.05, 0.29),
+          new THREE.Vector2(0, 0.29)
+        ];
+        const brassDrum = new THREE.Mesh(new THREE.LatheGeometry(drumProfile, 32), matBrass);
+        brassDrum.position.set(-0.40, 0.02, -0.15);
+        brassDrum.castShadow = true;
+        mechGroup.add(brassDrum);
+
+        const bridgeBar = new THREE.Mesh(makeBevelBox(0.14, 0.035, 0.34, 0.008), matBrass);
+        bridgeBar.position.set(-0.42, 0.19, 0.14);
+        bridgeBar.castShadow = true;
+        mechGroup.add(bridgeBar);
+        const bridgePost1 = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.18, 16), matBrassAged);
+        bridgePost1.position.set(-0.42, 0.10, 0.26);
+        const bridgePost2 = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.18, 16), matBrassAged);
+        bridgePost2.position.set(-0.42, 0.10, 0.02);
+        mechGroup.add(bridgePost1, bridgePost2);
+
+        function createGearMesh(radius, teeth, thickness) {
+          const shape = new THREE.Shape();
+          const innerR = radius * 0.84;
+          for (let i = 0; i < teeth; i++) {
+            const a0 = (i / teeth) * Math.PI * 2;
+            const a1 = ((i + 0.35) / teeth) * Math.PI * 2;
+            const a2 = ((i + 0.5) / teeth) * Math.PI * 2;
+            const a3 = ((i + 0.85) / teeth) * Math.PI * 2;
+            if (i === 0) shape.moveTo(Math.cos(a0) * innerR, Math.sin(a0) * innerR);
+            else shape.lineTo(Math.cos(a0) * innerR, Math.sin(a0) * innerR);
+            shape.lineTo(Math.cos(a1) * radius, Math.sin(a1) * radius);
+            shape.lineTo(Math.cos(a2) * radius, Math.sin(a2) * radius);
+            shape.lineTo(Math.cos(a3) * innerR, Math.sin(a3) * innerR);
+          }
+          shape.closePath();
+          const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 2 });
+          geo.center();
+          return new THREE.Mesh(geo, matBrass);
+        }
+
+        const gearMain = createGearMesh(0.11, 18, 0.024);
+        gearMain.position.set(0.49, 0.15, 0.10);
+        gearMain.rotation.y = Math.PI / 2;
+        gearMain.castShadow = true;
+        mechGroup.add(gearMain);
+
+        const gearSecondary = createGearMesh(0.072, 12, 0.022);
+        gearSecondary.position.set(0.49, 0.15, -0.07);
+        gearSecondary.rotation.y = Math.PI / 2;
+        mechGroup.add(gearSecondary);
+
+        const feedRollerFront = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.78, 28), matBrass);
+        feedRollerFront.rotation.z = Math.PI / 2;
+        feedRollerFront.position.set(0.11, 0.21, -0.04);
+        feedRollerFront.castShadow = true;
+        mechGroup.add(feedRollerFront);
+        registerPart('rolo_alimentacao', feedRollerFront, 'matBrass', 'Rolo de alimentação da fita perfurada');
+
+        for (const rx of [-0.29, 0.51]) {
+          const bearing = new THREE.Mesh(makeBevelBox(0.045, 0.24, 0.22, 0.006), matBrassAged);
+          bearing.position.set(rx, 0.14, -0.04);
+          bearing.castShadow = true;
+          mechGroup.add(bearing);
+        }
+
+        // 6. Pente de aço + 15 dentes + 4 parafusos fendados
+        const combGroup = new THREE.Group();
+        combGroup.position.set(0.11, 0.15, 0.22);
+        mechGroup.add(combGroup);
+        registerPart('pente_de_aco', combGroup, 'matSteel', 'Pente de aço com 15 dentes graduados e 4 parafusos');
+
+        const combBase = new THREE.Mesh(makeBevelBox(0.74, 0.055, 0.14, 0.008), matSteel);
+        combBase.position.set(0, 0, 0.07);
+        combBase.castShadow = true;
+        combBase.receiveShadow = true;
+        combGroup.add(combBase);
+
+        for (let i = 0; i < 4; i++) {
+          const sx = -0.27 + i * 0.18;
+          const head = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.034, 0.026, 20), matSteel);
+          head.position.set(sx, 0.038, 0.07);
+          head.castShadow = true;
+          const slot = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.008, 0.008), matWalnutDark);
+          slot.position.set(sx, 0.051, 0.07);
+          slot.rotation.y = 0.25 * (i - 1.5);
+          combGroup.add(head, slot);
+        }
+
+        const tinePivots = [];
+        const tineSpan = 0.64;
+        for (let n = 0; n < NUM_NOTES; n++) {
+          const t = n / (NUM_NOTES - 1);
+          const x = -tineSpan / 2 + t * tineSpan;
+          const len = 0.28 - t * 0.095;
+
+          const pivot = new THREE.Group();
+          pivot.position.set(x, 0.022, 0.0);
+
+          const tineGeo = new THREE.BoxGeometry(0.024, 0.010, len);
+          tineGeo.translate(0, 0, -len / 2);
+          const tineMesh = new THREE.Mesh(tineGeo, matSteel);
+          tineMesh.castShadow = true;
+          pivot.add(tineMesh);
+
+          combGroup.add(pivot);
+          tinePivots.push({ pivot, tipLocalZ: -len, baseX: x });
+        }
+
+        // 7. Fita de papel creme perfurada em curva
+        function createCurvedStripGeometry() {
+          const segU = 18;
+          const segV = 72;
+          const stripWidth = 0.66;
+          const curvePts = [
+            new THREE.Vector3(0, 0.16, 0.15),
+            new THREE.Vector3(0, 0.24, 0.04),
+            new THREE.Vector3(0, 0.44, -0.04),
+            new THREE.Vector3(0, 0.68, -0.14),
+            new THREE.Vector3(0, 0.72, -0.34),
+            new THREE.Vector3(0, 0.56, -0.49),
+            new THREE.Vector3(0, 0.30, -0.46),
+            new THREE.Vector3(0, 0.16, -0.28)
+          ];
+          const curve = new THREE.CatmullRomCurve3(curvePts);
+          const positions = [];
+          const uvs = [];
+          const indices = [];
+
+          for (let iv = 0; iv <= segV; iv++) {
+            const v = iv / segV;
+            const pt = curve.getPoint(v);
+            for (let iu = 0; iu <= segU; iu++) {
+              const u = iu / segU;
+              positions.push((u - 0.5) * stripWidth, pt.y, pt.z);
+              uvs.push(u, v * 0.56);
+            }
+          }
+          for (let iv = 0; iv < segV; iv++) {
+            for (let iu = 0; iu < segU; iu++) {
+              const a = iv * (segU + 1) + iu;
+              const b = a + 1;
+              const c = a + (segU + 1);
+              const d = c + 1;
+              indices.push(a, c, b, b, c, d);
+            }
+          }
+
+          const geo = new THREE.BufferGeometry();
+          geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+          geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+          geo.setIndex(indices);
+          geo.computeVertexNormals();
+          return geo;
+        }
+
+        const paperStripMesh = new THREE.Mesh(createCurvedStripGeometry(), matPaper);
+        paperStripMesh.position.set(0.11, 0.04, 0.04);
+        paperStripMesh.castShadow = true;
+        paperStripMesh.receiveShadow = true;
+        mechGroup.add(paperStripMesh);
+        registerPart('fita_papel_perfurada', paperStripMesh, 'matPaper', 'Fita de papel creme perfurada clicável em 3D');
+
+        // 8. Manivela de latão com punho de madeira torneado
+        const crankPivot = new THREE.Group();
+        crankPivot.position.set(BW / 2, 0.34, 0.04);
+        musicBox.add(crankPivot);
+        registerPart('manivela_latao', crankPivot, 'matBrass + matWalnut', 'Manivela giratória interativa com punho de madeira');
+
+        const escutcheon = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.025, 24), matBrassAged);
+        escutcheon.rotation.z = Math.PI / 2;
+        escutcheon.position.set(0.012, 0, 0);
+        crankPivot.add(escutcheon);
+
+        const armCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0.0, 0.0, 0.0),
+          new THREE.Vector3(0.14, 0.0, 0.0),
+          new THREE.Vector3(0.19, -0.04, 0.0),
+          new THREE.Vector3(0.19, -0.26, 0.0),
+          new THREE.Vector3(0.24, -0.32, 0.0),
+          new THREE.Vector3(0.32, -0.32, 0.0)
+        ]);
+        const crankArm = new THREE.Mesh(new THREE.TubeGeometry(armCurve, 32, 0.022, 14, false), matBrass);
+        crankArm.castShadow = true;
+        crankPivot.add(crankArm);
+
+        const handleProfile = [
+          new THREE.Vector2(0.0, 0.0),
+          new THREE.Vector2(0.036, 0.01),
+          new THREE.Vector2(0.046, 0.06),
+          new THREE.Vector2(0.062, 0.16),
+          new THREE.Vector2(0.058, 0.24),
+          new THREE.Vector2(0.038, 0.29),
+          new THREE.Vector2(0.0, 0.31)
+        ];
+        const woodHandle = new THREE.Mesh(new THREE.LatheGeometry(handleProfile, 28), matWalnut);
+        woodHandle.rotation.z = -Math.PI / 2;
+        woodHandle.position.set(0.30, -0.32, 0);
+        woodHandle.castShadow = true;
+        crankPivot.add(woodHandle);
+
+        const handleTip = new THREE.Mesh(new THREE.SphereGeometry(0.026, 16, 16), matBrass);
+        handleTip.position.set(0.615, -0.32, 0);
+        crankPivot.add(handleTip);
+
+        const crankHitbox = new THREE.Mesh(
+          new THREE.SphereGeometry(0.42, 12, 12),
+          new THREE.MeshBasicMaterial({ visible: false })
+        );
+        crankHitbox.position.set(0.36, -0.20, 0);
+        crankPivot.add(crankHitbox);
+
+        // 9. Partículas de luz nas notas tocadas (InstancedMesh)
+        const MAX_PARTICLES = 90;
+        const particleGeo = new THREE.SphereGeometry(0.014, 8, 8);
+        const particleMat = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(MARCA.cores.particula3D),
+          transparent: true,
+          opacity: 0.92,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const particleInstanced = new THREE.InstancedMesh(particleGeo, particleMat, MAX_PARTICLES);
+        particleInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        scene.add(particleInstanced);
+        registerPart('particulas_notas', particleInstanced, 'particleMat', 'Partículas douradas emitidas ao tocar notas');
+
+        const particles = Array.from({ length: MAX_PARTICLES }, () => ({
+          active: false,
+          pos: new THREE.Vector3(),
+          vel: new THREE.Vector3(),
+          life: 0,
+          maxLife: 1
+        }));
+        const dummyObj = new THREE.Object3D();
+        let nextParticleIdx = 0;
+
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+          dummyObj.scale.setScalar(0);
+          dummyObj.updateMatrix();
+          particleInstanced.setMatrixAt(i, dummyObj.matrix);
+        }
+        particleInstanced.instanceMatrix.needsUpdate = true;
+
+        function spawnNoteParticles(noteIndex) {
+          if (prefersReducedMotion) return;
+          const info = tinePivots[noteIndex];
+          if (!info) return;
+          const worldPos = new THREE.Vector3(0, 0.02, info.tipLocalZ);
+          info.pivot.localToWorld(worldPos);
+
+          const burst = state.quality === 'leve' ? 3 : 7;
+          for (let b = 0; b < burst; b++) {
+            const p = particles[nextParticleIdx];
+            nextParticleIdx = (nextParticleIdx + 1) % MAX_PARTICLES;
+            p.active = true;
+            p.pos.copy(worldPos);
+            p.pos.x += (Math.random() - 0.5) * 0.03;
+            p.vel.set((Math.random() - 0.5) * 0.28, 0.38 + Math.random() * 0.42, (Math.random() - 0.5) * 0.28);
+            p.life = 0;
+            p.maxLife = 0.55 + Math.random() * 0.4;
+          }
+          requestRender();
+        }
+
+        /* ---------------------------------------------------------------------
+           INTERAÇÃO 3D: RAYCASTING NA FITA + ARRASTO CIRCULAR NA MANIVELA
+           --------------------------------------------------------------------- */
+        const raycaster = new THREE.Raycaster();
+        const pointerNDC = new THREE.Vector2();
+        let isDraggingCrank3D = false;
+        let crankPrevScreenAngle = 0;
+        let pointerDownPos = { x: 0, y: 0 };
+        let pointerMoved = false;
+
+        function updatePointerNDC(ev) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointerNDC.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+          pointerNDC.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        function getCrankPivotScreenPos() {
+          const p = new THREE.Vector3();
+          crankPivot.getWorldPosition(p);
+          p.project(camera);
+          const rect = renderer.domElement.getBoundingClientRect();
+          return {
+            x: rect.left + (p.x * 0.5 + 0.5) * rect.width,
+            y: rect.top + (-p.y * 0.5 + 0.5) * rect.height
+          };
+        }
+
+        function uvToGridCell(uv) {
+          const marginU = 112 / 1024;
+          const normU = (uv.x - marginU) / (1 - marginU * 2);
+          if (normU < -0.04 || normU > 1.04) return null;
+          const note = Math.max(0, Math.min(NUM_NOTES - 1, Math.round(normU * (NUM_NOTES - 1))));
+          const texV = ((uv.y + paperTex.offset.y) % 1 + 1) % 1;
+          const step = Math.floor(texV * NUM_STEPS) % NUM_STEPS;
+          return { step, note };
+        }
+
+        renderer.domElement.addEventListener('pointerdown', (ev) => {
+          pointerDownPos = { x: ev.clientX, y: ev.clientY };
+          pointerMoved = false;
+          updatePointerNDC(ev);
+          raycaster.setFromCamera(pointerNDC, camera);
+
+          const crankHit = raycaster.intersectObjects([crankHitbox, crankArm, woodHandle, handleTip], false);
+          if (crankHit.length > 0) {
+            markFirstInteraction();
+            isDraggingCrank3D = true;
+            controls.enabled = false;
+            state.autoCrank = false;
+            updateCrankButtonsUI();
+            const center = getCrankPivotScreenPos();
+            crankPrevScreenAngle = Math.atan2(ev.clientY - center.y, ev.clientX - center.x);
+            container.classList.add('is-grabbing');
+            renderer.domElement.setPointerCapture(ev.pointerId);
+          }
+        });
+
+        renderer.domElement.addEventListener('pointermove', (ev) => {
+          if (Math.hypot(ev.clientX - pointerDownPos.x, ev.clientY - pointerDownPos.y) > 6) pointerMoved = true;
+
+          if (isDraggingCrank3D) {
+            const center = getCrankPivotScreenPos();
+            const ang = Math.atan2(ev.clientY - center.y, ev.clientX - center.x);
+            let delta = ang - crankPrevScreenAngle;
+            if (delta > Math.PI) delta -= Math.PI * 2;
+            if (delta < -Math.PI) delta += Math.PI * 2;
+            crankPrevScreenAngle = ang;
+            state.angularVelocity = delta * 36;
+            advanceStripByAngle(delta);
+            advanceGuidedStep(1);
+            return;
+          }
+
+          updatePointerNDC(ev);
+          raycaster.setFromCamera(pointerNDC, camera);
+          const crankHit = raycaster.intersectObjects([crankHitbox, crankArm, woodHandle], false);
+          if (crankHit.length > 0) {
+            container.classList.add('is-crank-hover');
+            container.classList.remove('is-punch-hover');
+            if (state.hoverCell) {
+              state.hoverCell = null;
+              redrawPaperStripTexture();
+              requestRender();
+            }
+            return;
+          }
+          container.classList.remove('is-crank-hover');
+
+          const stripHit = raycaster.intersectObject(paperStripMesh, false);
+          if (stripHit.length > 0 && stripHit[0].uv) {
+            const cell = uvToGridCell(stripHit[0].uv);
+            container.classList.toggle('is-punch-hover', Boolean(cell));
+            const changed = (!state.hoverCell && cell) || (state.hoverCell && !cell) ||
+              (cell && state.hoverCell && (cell.step !== state.hoverCell.step || cell.note !== state.hoverCell.note));
+            if (changed) {
+              state.hoverCell = cell;
+              redrawPaperStripTexture();
+              requestRender();
+            }
+          } else {
+            container.classList.remove('is-punch-hover');
+            if (state.hoverCell) {
+              state.hoverCell = null;
+              redrawPaperStripTexture();
+              requestRender();
+            }
+          }
+        });
+
+        renderer.domElement.addEventListener('pointerup', (ev) => {
+          if (isDraggingCrank3D) {
+            isDraggingCrank3D = false;
+            controls.enabled = true;
+            container.classList.remove('is-grabbing');
+            state.angularVelocity = 0;
+            audioEngine.updateFriction(0);
+            return;
+          }
+          if (!pointerMoved) {
+            updatePointerNDC(ev);
+            raycaster.setFromCamera(pointerNDC, camera);
+            const stripHit = raycaster.intersectObject(paperStripMesh, false);
+            if (stripHit.length > 0 && stripHit[0].uv) {
+              const cell = uvToGridCell(stripHit[0].uv);
+              if (cell) togglePunchHole(cell.step, cell.note, true);
+            }
+          }
+        });
+
+        controls.addEventListener('change', () => requestRender());
+
+        /* ---------------------------------------------------------------------
+           QUALIDADE & RESIZE
+           --------------------------------------------------------------------- */
+        function applyQuality(q) {
+          state.quality = q;
+          const dpr = q === 'alta' ? Math.min(window.devicePixelRatio, 2)
+            : q === 'equilibrada' ? Math.min(window.devicePixelRatio, 1.5) : 1;
+          renderer.setPixelRatio(dpr);
+
+          lampKeyLight.castShadow = q !== 'leve';
+          const shadowSize = q === 'alta' ? 1024 : 512;
+          if (lampKeyLight.shadow.mapSize.x !== shadowSize) {
+            lampKeyLight.shadow.mapSize.set(shadowSize, shadowSize);
+            if (lampKeyLight.shadow.map) {
+              lampKeyLight.shadow.map.dispose();
+              lampKeyLight.shadow.map = null;
+            }
+          }
+          if (bloomPass) bloomPass.enabled = (q === 'alta');
+
+          document.querySelectorAll('#quality-options .btn-paper').forEach((b) => {
+            b.classList.toggle('is-active', b.dataset.quality === q);
+          });
+          onResize();
+          saveLocalPrefs();
+          requestRender();
+        }
+
+        function onResize() {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          camera.aspect = w / h;
+          if (isMobileViewport()) {
+            camera.setViewOffset(w, h, w * 0.04, h * 0.14, w, h);
+          } else {
+            camera.setViewOffset(w, h, -w * 0.11, h * 0.02, w, h);
+          }
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+          if (composer) composer.setSize(w, h);
+          requestRender();
+        }
+        window.addEventListener('resize', onResize);
+
+        /* ---------------------------------------------------------------------
+           RENDER SOB DEMANDA + LOOP DE ANIMAÇÃO FÍSICA
+           --------------------------------------------------------------------- */
+        let rafId = null;
+        let lastTime = performance.now();
+
+        function requestRender() {
+          if (!rafId) {
+            lastTime = performance.now();
+            rafId = requestAnimationFrame(tick);
+          }
+        }
+
+        function tick(now) {
+          rafId = null;
+          const dt = Math.min(0.05, (now - lastTime) / 1000);
+          lastTime = now;
+
+          let keepRunning = false;
+
+          if (state.autoCrank) {
+            const radPerSec = 5.4 * state.speed * state.direction;
+            state.angularVelocity = radPerSec;
+            advanceStripByAngle(radPerSec * dt);
+            audioEngine.updateFriction(Math.abs(radPerSec));
+            keepRunning = true;
+          } else if (!isDraggingCrank3D) {
+            audioEngine.updateFriction(0);
+          }
+
+          crankPivot.rotation.x = state.crankAngle;
+          gearMain.rotation.x = state.crankAngle;
+          gearSecondary.rotation.x = -state.crankAngle * 1.5;
+          feedRollerFront.rotation.x = state.crankAngle * 1.25;
+          paperTex.offset.y = -(state.stripPos / NUM_STEPS);
+
+          for (let n = 0; n < NUM_NOTES; n++) {
+            if (state.tineEnergy[n] > 0.004) {
+              state.tinePhase[n] += dt * (44 + n * 2.8);
+              const amp = state.tineEnergy[n] * (prefersReducedMotion ? 0.025 : 0.095);
+              tinePivots[n].pivot.rotation.x = Math.sin(state.tinePhase[n]) * amp;
+              state.tineEnergy[n] *= Math.pow(0.08, dt);
+              keepRunning = true;
+            } else if (tinePivots[n].pivot.rotation.x !== 0) {
+              tinePivots[n].pivot.rotation.x = 0;
+              state.tineEnergy[n] = 0;
+            }
+          }
+
+          let anyParticle = false;
+          for (let i = 0; i < MAX_PARTICLES; i++) {
+            const p = particles[i];
+            if (!p.active) continue;
+            p.life += dt;
+            if (p.life >= p.maxLife) {
+              p.active = false;
+              dummyObj.scale.setScalar(0);
+              dummyObj.updateMatrix();
+              particleInstanced.setMatrixAt(i, dummyObj.matrix);
+              anyParticle = true;
+              continue;
+            }
+            const t = p.life / p.maxLife;
+            p.pos.addScaledVector(p.vel, dt);
+            p.vel.y *= 0.97;
+            dummyObj.position.copy(p.pos);
+            dummyObj.scale.setScalar(Math.max(0.001, Math.sin(t * Math.PI) * (1 - t * 0.4)));
+            dummyObj.updateMatrix();
+            particleInstanced.setMatrixAt(i, dummyObj.matrix);
+            anyParticle = true;
+            keepRunning = true;
+          }
+          if (anyParticle) particleInstanced.instanceMatrix.needsUpdate = true;
+
+          if (controls.update()) keepRunning = true;
+
+          if (state.quality === 'alta' && composer) composer.render();
+          else renderer.render(scene, camera);
+
+          if (keepRunning) rafId = requestAnimationFrame(tick);
+        }
+
+        // Autoverificação SCENE_MANIFEST
+        redrawPaperStripTexture();
+        applyQuality(state.quality);
+        renderer.render(scene, camera);
+
+        let allValid = true;
+        for (const item of SCENE_MANIFEST) {
+          const found = scene.getObjectByName(item.id);
+          console.assert(Boolean(found), `[SCENE_MANIFEST] Objeto ausente: ${item.id}`);
+          if (!found) allValid = false;
+        }
+        window.SCENE_MANIFEST = SCENE_MANIFEST;
+        console.info(
+          `[Caixa de Música 3D] Manifest OK (${allValid}) · Peças: ${SCENE_MANIFEST.length} · Triângulos: ${renderer.info.render.triangles} · Draw calls: ${renderer.info.render.calls}`
+        );
+
+        sceneController = {
+          requestRender,
+          redrawPaperStrip: () => { redrawPaperStripTexture(); requestRender(); },
+          spawnNoteParticles,
+          applyQuality,
+          resetCamera: () => {
+            camera.position.copy(DEFAULT_CAM_POS);
+            controls.target.copy(DEFAULT_TARGET);
+            controls.update();
+            requestRender();
+          },
+          applyBrandTo3D: (marca) => {
+            const newWalnut = createWalnutTextures(marca.cores.madeira3D);
+            matWalnut.map.dispose(); matWalnut.roughnessMap.dispose();
+            matWalnut.map = newWalnut.map;
+            matWalnut.roughnessMap = newWalnut.roughMap;
+            matWalnut.bumpMap = newWalnut.roughMap;
+            matWalnut.needsUpdate = true;
+
+            const newFelt = createFeltTextures(marca.cores.feltro3D);
+            matFelt.map.dispose(); matFelt.bumpMap.dispose();
+            matFelt.map = newFelt.map;
+            matFelt.bumpMap = newFelt.bumpMap;
+            matFelt.needsUpdate = true;
+
+            matBrass.color.set(marca.cores.laton3D);
+            brassRimLight.color.set(marca.cores.luzAcento3D);
+            particleMat.color.set(marca.cores.particula3D);
+            scene.background.set(marca.cores.fundo);
+            scene.fog.color.set(marca.cores.fundo);
+            requestRender();
+          }
+        };
+      } catch (err) {
+        console.warn('[Caixa de Música] Fallback 2D ativado:', err);
+        $('webgl-fallback').classList.add('is-visible');
+      }
+    }
+
+    /* =========================================================================
+       11. EVENTOS DA INTERFACE, DOCK, MODAIS E ATALHOS
+       ========================================================================= */
+    function openInfoModal(title, htmlContent) {
+      $('modal-info-title').textContent = title;
+      $('modal-info-body').innerHTML = htmlContent;
+      $('modal-info').classList.add('is-open');
+    }
+
+    function handleCTA() {
+      markFirstInteraction();
+      try {
+        window.parent.postMessage({ tipo: 'cta', marca: MARCA.nome, link: MARCA.cta.link }, '*');
+      } catch {}
+      const listHtml = MARCA.catalogo.servicos
+        .map((s) => `<p><strong>${s.nome}</strong><br /><span style="color:#5c4833;">${s.detalhe}</span></p>`)
+        .join('');
+      openInfoModal(
+        MARCA.cta.texto,
+        `<p>Conheça as opções de presentes musicais personalizados de <strong>${MARCA.nome}</strong>:</p>${listHtml}<div class="modal-section"><p style="font-size:0.84rem; margin:0;">${MARCA.catalogo.contato}</p></div>`
+      );
+      announce(`Abrindo ${MARCA.cta.texto}.`);
+    }
+
+    function bindEvents() {
+      $('brand-logo-btn').addEventListener('click', () => {
+        if (sceneController) sceneController.resetCamera();
+        closeAllFloatingPanels();
+      });
+      $('nav-inicio').addEventListener('click', () => {
+        if (sceneController) sceneController.resetCamera();
+        closeAllFloatingPanels();
+        announce('Visão inicial restaurada.');
+      });
+      $('nav-servicos').addEventListener('click', handleCTA);
+      $('nav-sobre').addEventListener('click', () => $('modal-sobre').classList.add('is-open'));
+      $('btn-about-embed').addEventListener('click', () => $('modal-sobre').classList.add('is-open'));
+      $('btn-mobile-menu').addEventListener('click', () => $('modal-sobre').classList.add('is-open'));
+      $('nav-contato').addEventListener('click', () => {
+        openInfoModal('Contato', `<p>Fale com a equipe da <strong>${MARCA.nome}</strong> para encomendar caixas de música e fitas perfuradas personalizadas.</p><p><strong>Atendimento:</strong> ${MARCA.catalogo.contato}</p>`);
+      });
+
+      $('btn-cta-main').addEventListener('click', handleCTA);
+      $('btn-cta-embed').addEventListener('click', handleCTA);
+
+      const toggleSound = () => {
+        markFirstInteraction();
+        state.soundEnabled = !state.soundEnabled;
+        audioEngine.setMuted(!state.soundEnabled);
+        $('icon-sound-on').style.display = state.soundEnabled ? 'block' : 'none';
+        $('icon-sound-off').style.display = state.soundEnabled ? 'none' : 'block';
+        $('btn-sound').classList.toggle('is-muted', !state.soundEnabled);
+        $('btn-sound-embed').classList.toggle('is-muted', !state.soundEnabled);
+        saveLocalPrefs();
+        announce(state.soundEnabled ? 'Som ligado.' : 'Som silenciado.');
+      };
+      $('btn-sound').addEventListener('click', toggleSound);
+      $('btn-sound-embed').addEventListener('click', toggleSound);
+
+      const toggleSteps = () => {
+        const card = $('steps-card');
+        const collapsed = card.classList.toggle('is-collapsed');
+        const btn = $('btn-toggle-steps');
+        btn.textContent = collapsed ? '+' : '−';
+        btn.setAttribute('aria-expanded', String(!collapsed));
+      };
+      $('btn-toggle-steps').addEventListener('click', toggleSteps);
+      $('steps-collapsed-label').addEventListener('click', toggleSteps);
+
+      document.querySelectorAll('#steps-list .step-item').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const step = Number(btn.dataset.step);
+          setActiveStep(step);
+          if (step === 0) toggleFloatingPanel('punch-panel');
+          if (step === 1 || step === 2) toggleFloatingPanel('crank-card');
+          if (step === 3) toggleFloatingPanel('download-panel');
+        });
+      });
+
+      $('dock-perfurar').addEventListener('click', () => {
+        markFirstInteraction();
+        setActiveStep(0);
+        toggleFloatingPanel('punch-panel');
+      });
+
+      $('dock-girar').addEventListener('click', () => {
+        markFirstInteraction();
+        state.direction = 1;
+        state.autoCrank = !state.autoCrank;
+        if (state.autoCrank) {
+          advanceGuidedStep(1);
+          $('crank-card').classList.add('is-open');
+          closeAllFloatingPanels('crank-card');
+        }
+        updateCrankButtonsUI();
+        if (sceneController) sceneController.requestRender();
+        announce(state.autoCrank ? 'Girando a manivela.' : 'Manivela pausada.');
+      });
+
+      $('dock-velocidade').addEventListener('click', () => {
+        markFirstInteraction();
+        setActiveStep(2);
+        toggleFloatingPanel('crank-card');
+      });
+
+      $('dock-apagar').addEventListener('click', () => {
+        markFirstInteraction();
+        state.previousGridSnapshot = state.grid.map((r) => [...r]);
+        clearGridInternal();
+        state.autoCrank = false;
+        syncAllViews();
+        saveLocalPrefs();
+        announce('Todos os furos da fita foram apagados.');
+        showToast('Fita limpa.', 'Desfazer', () => {
+          if (state.previousGridSnapshot) {
+            state.grid = state.previousGridSnapshot;
+            state.previousGridSnapshot = null;
+            syncAllViews();
+            saveLocalPrefs();
+            announce('Furos restaurados.');
+          }
+        });
+      });
+
+      $('dock-melodias').addEventListener('click', () => {
+        markFirstInteraction();
+        toggleFloatingPanel('melodies-panel');
+      });
+
+      $('dock-baixar').addEventListener('click', () => {
+        markFirstInteraction();
+        setActiveStep(3);
+        toggleFloatingPanel('download-panel');
+      });
+
+      $('close-crank-card').addEventListener('click', () => closeAllFloatingPanels());
+      $('close-punch-panel').addEventListener('click', () => closeAllFloatingPanels());
+      $('close-melodies-panel').addEventListener('click', () => closeAllFloatingPanels());
+      $('close-download-panel').addEventListener('click', () => closeAllFloatingPanels());
+
+      $('btn-auto-crank').addEventListener('click', () => {
+        markFirstInteraction();
+        state.direction = 1;
+        state.autoCrank = !state.autoCrank;
+        if (state.autoCrank) advanceGuidedStep(1);
+        updateCrankButtonsUI();
+        if (sceneController) sceneController.requestRender();
+      });
+
+      $('btn-punch-preview').addEventListener('click', () => {
+        markFirstInteraction();
+        state.direction = 1;
+        state.autoCrank = !state.autoCrank;
+        updateCrankButtonsUI();
+        if (sceneController) sceneController.requestRender();
+      });
+
+      $('btn-rewind').addEventListener('click', () => {
+        markFirstInteraction();
+        if (state.autoCrank && state.direction < 0) {
+          state.autoCrank = false;
+        } else {
+          state.direction = -1;
+          state.autoCrank = true;
+        }
+        updateCrankButtonsUI();
+        if (sceneController) sceneController.requestRender();
+        announce(state.autoCrank ? 'Voltando a fita.' : 'Pausado.');
+      });
+
+      $('btn-loop').addEventListener('click', () => {
+        state.loop = !state.loop;
+        updateCrankButtonsUI();
+        saveLocalPrefs();
+        announce(state.loop ? 'Repetição ativada.' : 'Repetição desativada.');
+      });
+
+      $('speed-slider').addEventListener('input', (ev) => {
+        state.speed = Number(ev.target.value);
+        $('speed-value').textContent = `${state.speed.toFixed(1).replace('.', ',')}×`;
+        advanceGuidedStep(2);
+        saveLocalPrefs();
+      });
+
+      $('btn-export-wav').addEventListener('click', async () => {
+        markFirstInteraction();
+        if (countPunchedHoles() === 0) {
+          showToast('Perfure ao menos uma nota antes de baixar o áudio.');
+          return;
+        }
+        const btn = $('btn-export-wav');
+        btn.disabled = true;
+        showToast('Renderizando áudio WAV...');
+        try {
+          const blob = await audioEngine.renderWavBlob();
+          triggerBlobDownload(blob, 'caixa-de-musica-melodia.wav');
+          advanceGuidedStep(3);
+          showToast('Áudio WAV baixado!');
+          announce('Arquivo de áudio WAV baixado.');
+        } catch {
+          showToast('Não foi possível gerar o WAV neste navegador.');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      $('btn-export-json').addEventListener('click', () => {
+        const payload = {
+          formato: 'caixa-de-musica-perfurada-v1',
+          marca: MARCA.nome,
+          escala: NOTE_NAMES,
+          passos: NUM_STEPS,
+          velocidade: state.speed,
+          grade: state.grid
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        triggerBlobDownload(blob, 'caixa-de-musica-fita.json');
+        advanceGuidedStep(3);
+        showToast('Arquivo JSON da fita baixado!');
+        announce('Arquivo JSON da fita baixado.');
+      });
+
+      $('btn-import-json').addEventListener('click', () => $('input-import-json').click());
+      $('input-import-json').addEventListener('change', (ev) => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(String(reader.result));
+            const g = data.grade || data.grid;
+            if (!Array.isArray(g) || g.length !== NUM_NOTES) throw new Error('Formato inválido');
+            state.grid = g.map((r) => Array.isArray(r) && r.length === NUM_STEPS ? r.map(Boolean) : Array(NUM_STEPS).fill(false));
+            if (typeof data.velocidade === 'number') {
+              state.speed = Math.min(2.5, Math.max(0.3, data.velocidade));
+              $('speed-slider').value = String(state.speed);
+              $('speed-value').textContent = `${state.speed.toFixed(1).replace('.', ',')}×`;
+            }
+            syncAllViews();
+            saveLocalPrefs();
+            closeAllFloatingPanels();
+            showToast('Fita importada com sucesso!');
+          } catch {
+            showToast('Arquivo JSON incompatível com a fita de 15×32.');
+          }
+        };
+        reader.readAsText(file);
+        ev.target.value = '';
+      });
+
+      document.querySelectorAll('[data-close-modal]').forEach((btn) => {
+        btn.addEventListener('click', () => $(btn.dataset.closeModal).classList.remove('is-open'));
+      });
+      document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+        backdrop.addEventListener('click', (ev) => {
+          if (ev.target === backdrop) backdrop.classList.remove('is-open');
+        });
+      });
+
+      document.querySelectorAll('#quality-options .btn-paper').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (sceneController) sceneController.applyQuality(btn.dataset.quality);
+          showToast(`Qualidade ajustada para ${btn.dataset.quality}.`);
+        });
+      });
+      document.querySelectorAll('#brand-preset-options .btn-paper').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          applyBrandConfig(btn.dataset.preset);
+          showToast(`Preset aplicado: ${MARCA.nome}`);
+        });
+      });
+
+      window.addEventListener('keydown', (ev) => {
+        if (ev.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName)) return;
+        const k = ev.key.toLowerCase();
+        if (ev.code === 'Space') {
+          ev.preventDefault();
+          $('dock-girar').click();
+        } else if (ev.key === 'ArrowRight') {
+          ev.preventDefault();
+          markFirstInteraction();
+          advanceStripByAngle(0.45);
+        } else if (ev.key === 'ArrowLeft') {
+          ev.preventDefault();
+          markFirstInteraction();
+          advanceStripByAngle(-0.45);
+        } else if (k === 'p') {
+          $('dock-perfurar').click();
+        } else if (k === 'm') {
+          $('dock-melodias').click();
+        } else if (k === 's') {
+          toggleSound();
+        } else if (k === 'r') {
+          if (sceneController) sceneController.resetCamera();
+        } else if (ev.key === 'Escape') {
+          closeAllFloatingPanels();
+          document.querySelectorAll('.modal-backdrop.is-open').forEach((m) => m.classList.remove('is-open'));
+        }
+      });
+    }
+
+    function triggerBlobDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+    }
+
+    /* =========================================================================
+       12. INICIALIZAÇÃO
+       ========================================================================= */
+    loadLocalPrefs();
+    buildPunchGridUI();
+    buildMelodiesUI();
+    initCrankPadGesture();
+    bindEvents();
+
+    $('speed-slider').value = String(state.speed);
+    $('speed-value').textContent = `${state.speed.toFixed(1).replace('.', ',')}×`;
+    $('icon-sound-on').style.display = state.soundEnabled ? 'block' : 'none';
+    $('icon-sound-off').style.display = state.soundEnabled ? 'none' : 'block';
+    applyBrandConfig(state.presetId);
+    updateCrankButtonsUI();
+    initThreeScene();
+  </script>
+</body>
+</html>
