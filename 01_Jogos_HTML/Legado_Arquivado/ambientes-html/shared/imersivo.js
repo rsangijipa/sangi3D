@@ -207,7 +207,7 @@
     fs.addEventListener('click', function () {
       var d = document;
       if (d.fullscreenElement) d.exitFullscreen();
-      else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(function () {});
+      else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(function () { });
     });
     tools.appendChild(fs);
     var hideBtn = make('button', 'imv-btn', svg('hide') + '<span class="imv-label">Recolher</span>');
@@ -258,7 +258,7 @@
             imersivo: true
           }
         }, '*');
-      } catch (e) {}
+      } catch (e) { }
     }
 
     var destroyed = false;

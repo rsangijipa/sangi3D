@@ -71,9 +71,11 @@ export class ZenAudioEngine {
     this.volume = 0.7;
     this.windNode = null;
     this.windGain = null;
+    this._disposed = false;
   }
 
   ensureContext() {
+    if (this._disposed) return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return null;
@@ -259,6 +261,29 @@ export class ZenAudioEngine {
     this.windGain.connect(this.masterGain);
     this.windNode.start();
   }
+
+  dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
+    this.isMuted = true;
+    if (this.windNode) {
+      try { this.windNode.stop(); } catch {}
+      try { this.windNode.disconnect(); } catch {}
+      this.windNode = null;
+    }
+    if (this.windGain) {
+      try { this.windGain.disconnect(); } catch {}
+      this.windGain = null;
+    }
+    if (this.masterGain) {
+      try { this.masterGain.disconnect(); } catch {}
+      this.masterGain = null;
+    }
+    if (this.ctx) {
+      try { this.ctx.close(); } catch {}
+      this.ctx = null;
+    }
+  }
 }
 
 /**
@@ -331,17 +356,176 @@ export async function capturePhoto({
  * - Pausa render e som quando a aba fica em segundo plano.
  * - Detecta prefers-reduced-motion.
  */
-export function setupEnvironmentLifecycle({ onPause, onResume, onReducedMotionChange }) {
-  document.addEventListener('visibilitychange', () => {
+export function setupEnvironmentLifecycle({ onPause, onResume, onReducedMotionChange } = {}) {
+  const onVisibility = () => {
     if (document.hidden) {
       onPause?.();
     } else {
       onResume?.();
     }
-  });
+  };
+  document.addEventListener('visibilitychange', onVisibility);
 
-  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  motionQuery.addEventListener('change', (e) => {
+  const motionQuery = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
+  const onMotionChange = (e) => {
     onReducedMotionChange?.(e.matches);
-  });
+  };
+  motionQuery?.addEventListener?.('change', onMotionChange);
+
+  return () => {
+    document.removeEventListener('visibilitychange', onVisibility);
+    motionQuery?.removeEventListener?.('change', onMotionChange);
+  };
+}
+
+/**
+ * Protocolo e ponte de comunicação universal com o Launcher Sangi3D.
+ * Conecta eventos postMessage (READY, PAUSE, RESUME, MUTE, UNMUTE, RESET, SET_QUALITY, DISPOSE) e gerencia ciclo de vida.
+ */
+export function setupSangiBridge({
+  id = '',
+  capabilities = {},
+  onPause = null,
+  onResume = null,
+  onMute = null,
+  onUnmute = null,
+  onReset = null,
+  onQualityChange = null,
+  onDispose = null,
+} = {}) {
+  const isIframe = window.parent && window.parent !== window;
+
+  // Notifica o Launcher que o ambiente está pronto
+  if (isIframe) {
+    try {
+      window.parent.postMessage({
+        type: 'SANGI_APP_READY',
+        id,
+        capabilities: {
+          webgl2: Boolean(window.WebGL2RenderingContext),
+          touch: 'ontouchstart' in window,
+          ...capabilities,
+        },
+      }, '*');
+    } catch {}
+  }
+
+  let disposed = false;
+
+  const onMessage = (e) => {
+    if (disposed || !e.data || typeof e.data !== 'object') return;
+    let cmd = '';
+    let payload = e.data;
+    if (e.data.type === 'SANGI_COMMAND' && e.data.command) {
+      cmd = String(e.data.command).toUpperCase();
+      payload = e.data.payload && typeof e.data.payload === 'object' ? e.data.payload : {};
+    } else if (typeof e.data.type === 'string' && e.data.type.startsWith('SANGI_APP_')) {
+      cmd = e.data.type.slice('SANGI_APP_'.length).toUpperCase();
+    }
+    if (!cmd) return;
+    switch (cmd) {
+      case 'PAUSE':
+        onPause?.();
+        break;
+      case 'RESUME':
+        onResume?.();
+        break;
+      case 'MUTE':
+        onMute?.(typeof payload.muted === 'boolean' ? payload.muted : true);
+        break;
+      case 'UNMUTE':
+        if (typeof onUnmute === 'function') onUnmute();
+        else onMute?.(false);
+        break;
+      case 'RESET':
+        onReset?.(payload);
+        break;
+      case 'SET_QUALITY':
+        if (payload.quality) onQualityChange?.(payload.quality);
+        break;
+      case 'DISPOSE':
+        dispose();
+        onDispose?.();
+        break;
+    }
+  };
+
+  const onVisibility = () => {
+    if (disposed) return;
+    if (document.hidden) onPause?.();
+    else onResume?.();
+  };
+
+  window.addEventListener('message', onMessage);
+  document.addEventListener('visibilitychange', onVisibility);
+
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    window.removeEventListener('message', onMessage);
+    document.removeEventListener('visibilitychange', onVisibility);
+  }
+
+  return dispose;
+}
+
+/**
+ * Utilitário de descarte profundo e liberação de recursos Three.js / WebGL
+ */
+export function disposeScene(renderer, scene, { loseContext = true } = {}) {
+  if (scene) {
+    scene.traverse((obj) => {
+      if (obj.geometry) {
+        try { obj.geometry.dispose(); } catch {}
+      }
+      if (obj.material) {
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach((m) => disposeMaterial(m));
+        } else {
+          disposeMaterial(obj.material);
+        }
+      }
+    });
+    if (scene.environment && typeof scene.environment.dispose === 'function') {
+      try { scene.environment.dispose(); } catch {}
+    }
+    scene.environment = null;
+    if (scene.background && typeof scene.background.dispose === 'function') {
+      try { scene.background.dispose(); } catch {}
+    }
+    scene.background = null;
+    while (scene.children.length > 0) {
+      scene.remove(scene.children[0]);
+    }
+  }
+
+  if (renderer) {
+    try {
+      renderer.dispose();
+      if (loseContext && typeof renderer.forceContextLoss === 'function') {
+        renderer.forceContextLoss();
+      }
+      if (renderer.domElement && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+    } catch {}
+  }
+}
+
+function disposeMaterial(mat) {
+  if (!mat) return;
+  const textureKeys = [
+    'map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap', 'envMap',
+    'alphaMap', 'roughnessMap', 'metalnessMap', 'aoMap',
+    'emissiveMap', 'displacementMap', 'sheenColorMap', 'specularColorMap',
+    'transmissionMap', 'thicknessMap'
+  ];
+  for (const key of textureKeys) {
+    if (mat[key] && typeof mat[key].dispose === 'function') {
+      try { mat[key].dispose(); } catch {}
+    }
+  }
+  try { mat.dispose(); } catch {}
 }

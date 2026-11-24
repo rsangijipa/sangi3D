@@ -202,4 +202,17 @@ export class PhysicsSolver {
       this.rotators[i].step(dt);
     }
   }
+
+  reset() {
+    this.accumulator = 0;
+    this.lastTime = performance.now();
+  }
+
+  dispose() {
+    this.reset();
+    this.springs.length = 0;
+    this.verlets.length = 0;
+    this.heightfields.length = 0;
+    this.rotators.length = 0;
+  }
 }

@@ -2,12 +2,10 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { resolvePlaywright } from './lib/playwright-resolver.mjs';
 
-const { chromium } = process.env.SANGI_PLAYWRIGHT
-  ? await import(pathToFileURL(process.env.SANGI_PLAYWRIGHT).href)
-  : await import('playwright');
+const { chromium } = await resolvePlaywright();
 
 const port = Number(process.env.SANGI_TEST_PORT || 5296);
 const base = `http://127.0.0.1:${port}`;

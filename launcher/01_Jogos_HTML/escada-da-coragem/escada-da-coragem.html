@@ -1487,6 +1487,7 @@
         this.hoveredStep = -1;
         this.cameraAnim = null;
         this.isDisposed = false;
+        this.isPaused = false;
 
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2(-99, -99);
@@ -2631,7 +2632,7 @@
       }
 
       animate() {
-        if (this.isDisposed) return;
+        if (this.isDisposed || this.isPaused) return;
         requestAnimationFrame(() => this.animate());
 
         const dt = Math.min(this.clock.getDelta(), 0.05);
@@ -3172,6 +3173,59 @@
       setTimeout(() => {
         loadingOverlay.classList.add('hidden-fade');
       }, 350);
+
+      // Sangi3D Universal Bridge
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({
+            type: 'SANGI_APP_READY',
+            id: 'escada-da-coragem',
+            capabilities: { webgl2: true, touch: true, audio: true, stepProgress: true }
+          }, '*');
+        } catch {}
+      }
+
+      window.addEventListener('message', (e) => {
+        if (!e.data || typeof e.data !== 'object') return;
+        if (e.data.type === 'SANGI_APP_PAUSE') {
+          if (gardenScene) gardenScene.isPaused = true;
+          try { audioManager.setMuted(true); } catch {}
+        } else if (e.data.type === 'SANGI_APP_RESUME') {
+          if (gardenScene) {
+            gardenScene.isPaused = false;
+            gardenScene.clock.getDelta();
+            requestAnimationFrame(() => gardenScene.animate());
+          }
+          try { audioManager.setMuted(appState.soundMuted); } catch {}
+        } else if (e.data.type === 'SANGI_APP_MUTE') {
+          appState.soundMuted = Boolean(e.data.muted);
+          try { audioManager.setMuted(appState.soundMuted); } catch {}
+        } else if (e.data.type === 'SANGI_APP_DISPOSE') {
+          if (gardenScene) {
+            gardenScene.isDisposed = true;
+            try {
+              gardenScene.renderer.dispose();
+              gardenScene.renderer.forceContextLoss();
+              if (gardenScene.renderer.domElement?.parentNode) {
+                gardenScene.renderer.domElement.parentNode.removeChild(gardenScene.renderer.domElement);
+              }
+            } catch {}
+          }
+          try { audioManager.dispose(); } catch {}
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (gardenScene) gardenScene.isPaused = true;
+        } else {
+          if (gardenScene && !gardenScene.isDisposed) {
+            gardenScene.isPaused = false;
+            gardenScene.clock.getDelta();
+            requestAnimationFrame(() => gardenScene.animate());
+          }
+        }
+      });
     });
   </script>
 </body>

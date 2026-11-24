@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
-import { pathToFileURL } from 'node:url';
+import { resolvePlaywright } from './lib/playwright-resolver.mjs';
 
-const { chromium } = process.env.SANGI_PLAYWRIGHT
-  ? await import(pathToFileURL(process.env.SANGI_PLAYWRIGHT).href)
-  : await import('playwright');
+const { chromium } = await resolvePlaywright();
 const base = 'http://127.0.0.1:5294';
 const server = spawn(process.execPath, ['launcher/server.mjs', '--port', '5294', '--no-prebuild']);
 let browser;
@@ -37,7 +35,7 @@ try {
     }
   });
   const catalog = await fetch(base + '/api/apps').then(response => response.json());
-  const oficina = catalog.find(entry => /02_Projetos.+01-oficina-do-vitralista/i.test(entry.url) && entry.status === 'ready');
+  const oficina = catalog.find(entry => /02_Projetos.+01-oficina-do-vitralista/i.test(entry.direct || entry.url || '') && entry.status === 'ready');
   assert.ok(oficina, 'Oficina moderna ausente no catálogo');
   await page.goto(base);
   await page.locator('#q').fill('Oficina do Vitralista');

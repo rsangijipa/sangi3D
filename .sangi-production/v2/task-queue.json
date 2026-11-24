@@ -18,10 +18,13 @@
         "index.html",
         "test/**"
       ],
-      "status": "IN_PROGRESS",
+      "status": "READY_FOR_REVIEW",
       "gateStatus": {
         "G00": "PASSED",
-        "G01": "IN_PROGRESS"
+        "G01": "PASSED",
+        "G02": "PASSED",
+        "G03": "PASSED",
+        "G04": "PASSED"
       },
       "blockedBy": []
     },

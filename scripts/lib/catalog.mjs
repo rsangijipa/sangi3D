@@ -69,6 +69,15 @@ const CORREIO_ACTIVE_ID =
 const CORREIO_LEGACY_ID =
   '01_jogos_html-legado_arquivado-ambientes-html-correio-das-palavras-nao-ditas-html';
 
+const DISTINCT_ENTRY_IDS = new Set([
+  '02_projetos-01-oficina-do-vitralista',
+  '01_jogos_html-oficina-do-vitralista-index-html',
+  'kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz',
+  '01_jogos_html-observatorio-da-luz-index-html',
+  '01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html',
+  '01_jogos_html-terrario-de-vidro-terrario-de-vidro-atelier-expandido-html',
+]);
+
 export const idFor = (p) => String(p).replace(/[^\w-]+/g, '-').toLowerCase();
 
 export function splitTitle(t) {
@@ -204,6 +213,13 @@ export function applyCanonicalOverrides(apps) {
       app.subtitle = 'Exploração Sensorial de Iluminação';
       app.canonicalRole = 'variant';
       app.variantOf = 'kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz';
+    } else if (app.id === '01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html') {
+      app.canonicalRole = 'canonical';
+    } else if (app.id === '01_jogos_html-terrario-de-vidro-terrario-de-vidro-atelier-expandido-html') {
+      app.name = 'Terrário de Vidro (Ateliê Expandido)';
+      app.subtitle = 'Ateliê Expandido · Verde Miúdo Plantas';
+      app.canonicalRole = 'variant';
+      app.variantOf = '01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html';
     }
 
     if (app.collection === 'Legado arquivado') {
@@ -427,7 +443,10 @@ export async function scanCatalog({
       const title = normalizeTitle(e.fullTitle);
       if (title && implemented.some((t) => t.includes(title))) continue;
     }
-    const key = `${e.status}|${e.fullTitle.toLowerCase()}`;
+    const entryId = idFor(e.path);
+    const key = DISTINCT_ENTRY_IDS.has(entryId)
+      ? `${e.status}|id:${entryId}`
+      : `${e.status}|${e.fullTitle.toLowerCase()}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(e);
   }
