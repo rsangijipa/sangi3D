@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Teatro das Histórias Possíveis — Sangi3D</title>
+  <link rel="stylesheet" href="../14-estudio-dos-limites/stage.css">
+  <style>
+    .act { overflow: hidden; padding: 4px; min-width: 0; line-height: 1.2; }
+    .act img { display: block; width: 100%; height: 42px; object-fit: cover; border-radius: 4px; margin-bottom: 3px; }
+    .act img:not([src]) { display: none; }
+    #timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #actors { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #view canvas { cursor: grab; }
+    #cut-tools { font-size: .83rem; }
+    @media (max-width: 680px) and (orientation: portrait) {
+      #actors { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      #actors button { padding-inline: 2px; font-size: .76rem; }
+    }
+  </style>
+  <script src="/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <main>
+    <section id="view" aria-label="Palco dos fantoches">
+      <h1 class="plaque">Teatro das Histórias Possíveis</h1>
+      <p class="fallback" hidden>O palco 3D está indisponível. Você pode criar sua história pelo painel.</p>
+      <p class="caption" id="caption"></p>
+    </section>
+    <section class="panel" aria-labelledby="panel-title">
+      <header>
+        <h2 id="panel-title">Dar vida à história</h2>
+        <p class="hint">Arraste um fantoche no palco ou escolha como ele se move.</p>
+      </header>
+      <fieldset>
+        <legend>Cenas da história</legend>
+        <div id="timeline" class="triplet"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Fantoche em foco</legend>
+        <div id="actors" class="triplet"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Movimentos</legend>
+        <div class="pair" id="moves">
+          <button type="button" data-action="chegar">Chegar ao centro</button>
+          <button type="button" data-action="cumprimentar">Cumprimentar</button>
+          <button type="button" data-action="ajudar">Oferecer ajuda</button>
+          <button type="button" data-action="caminho">Mudar caminho</button>
+        </div>
+      </fieldset>
+      <details>
+        <summary>Cenário e mais movimentos</summary>
+        <label class="label" for="backdrop">Cenário</label>
+        <select id="backdrop">
+          <option value="forest">Floresta ao luar</option>
+          <option value="coast">Praia ao entardecer</option>
+          <option value="village">Vila ao amanhecer</option>
+        </select>
+        <label class="label" for="light" style="margin-top: 6px">Luz do palco</label>
+        <select id="light">
+          <option value="amber">Âmbar</option>
+          <option value="daylight">Dia</option>
+          <option value="moonlight">Luar</option>
+        </select>
+        <div class="pair" id="extra-moves">
+          <button type="button" data-action="esquerda">Mover à esquerda</button>
+          <button type="button" data-action="direita">Mover à direita</button>
+          <button type="button" data-action="olhar">Procurar</button>
+          <button type="button" data-action="esperar">Esperar</button>
+          <button type="button" data-action="sair">Despedir-se</button>
+          <button type="button" id="toggle-actor">Tirar do palco</button>
+        </div>
+      </details>
+      <details id="cut-tools">
+        <summary>Narração e montagem</summary>
+        <label class="label" for="narration">Narração da cena</label>
+        <textarea id="narration" maxlength="240" rows="2" placeholder="Escreva uma legenda, se quiser"></textarea>
+        <div class="pair">
+          <button type="button" id="add-scene">Adicionar cena</button>
+          <button type="button" id="undo">Desfazer movimento</button>
+          <button type="button" id="remove-scene">Excluir esta cena</button>
+          <button type="button" id="alternate">Duplicar para outro final</button>
+          <button type="button" id="export">Salvar roteiro JSON</button>
+        </div>
+      </details>
+      <p class="status" id="status" role="status"></p>
+      <div class="toolbar sticky">
+        <button class="primary" type="button" id="record">Gravar cena</button>
+        <button type="button" id="play">Assistir</button>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./theater.js"></script>
+</body>
+</html>

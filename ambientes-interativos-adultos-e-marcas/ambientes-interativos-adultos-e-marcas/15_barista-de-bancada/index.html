@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Barista de Bancada — Torra Norte Café | Sangi3D</title>
+  <style>
+    :root {
+      --bg: #1C1814;
+      --card-bg: rgba(28, 24, 20, 0.92);
+      --card-border: rgba(212, 175, 115, 0.25);
+      --text: #F7EFE8;
+      --text-muted: #BFAEA0;
+      --accent-crema: #E6B87D;
+      --accent-olive: #5B6846;
+      --accent-chrome: #DCDCDC;
+      --serif: "Bitter", Georgia, serif;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .nav-bar {
+      position: absolute; top: 0; left: 0; width: 100%; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 10;
+      background: linear-gradient(180deg, rgba(28,24,20,0.85) 0%, rgba(28,24,20,0) 100%);
+      pointer-events: none;
+    }
+    .brand-logo {
+      font-family: var(--serif); font-size: 19px; font-weight: 700; color: var(--accent-crema);
+      pointer-events: auto;
+    }
+    .cta-btn {
+      padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      background: var(--accent-crema); color: #1C1814; border: none; cursor: pointer;
+      pointer-events: auto; transition: transform 0.2s, background 0.2s;
+    }
+    .cta-btn:hover { background: #F2CA94; transform: translateY(-1px); }
+
+    .hud-panel {
+      position: absolute; top: 72px; right: 20px; width: 340px; max-height: calc(100dvh - 90px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--serif); font-size: 22px; font-weight: 700; color: #FFF; margin-bottom: 2px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+
+    .gauge-widget {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.35); padding: 12px 16px; border-radius: 10px;
+      border: 1px solid rgba(230,184,125,0.25);
+    }
+    .gauge-num {
+      font-size: 26px; font-weight: 700; color: var(--accent-crema); font-family: monospace;
+    }
+
+    .dock-controls {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .btn-dock {
+      padding: 10px 12px; font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--text); cursor: pointer; text-align: center;
+      transition: all 0.2s;
+    }
+    .btn-dock.active {
+      background: var(--accent-olive); border-color: var(--accent-crema); color: #FFF;
+    }
+    .btn-dock.primary {
+      background: #8D5C2C; border-color: var(--accent-crema); color: #FFF;
+    }
+
+    .status-card {
+      background: rgba(230,184,125,0.1); border: 1px solid rgba(230,184,125,0.3);
+      padding: 12px; border-radius: 8px; font-size: 12px; text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .hud-panel {
+        top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 50dvh;
+        border-radius: 16px 16px 0 0; padding: 16px 18px 24px;
+      }
+    }
+    .btn-dock { min-height: 44px; }
+    .btn-dock:disabled { opacity: .49; cursor: default; transform: none; }
+    .btn-dock:focus-visible, .cta-btn:focus-visible { outline: 2px solid #ffe3ac; outline-offset: 2px; }
+    #menu-dialog { padding: 22px; margin: auto; width: min(380px, 92vw); color: #eee7d5; background: #292720; border-radius: 13px; border: 1px solid #b59767; }
+    #menu-dialog::backdrop { background: #1a140db5; }
+    #menu-dialog dt { margin-top: 14px; font-weight: 600; } #menu-dialog dd { color: #d2c5ac; }
+    #menu-dialog button { margin-top: 15px; min-height: 44px; padding: 6px 12px; }
+    @media (max-width: 768px) {
+      #canvas-container { height: 58dvh; }
+      .hud-panel { max-height: 43.5dvh; padding: 10px 10px 12px; gap: 6px; }
+      .dock-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+      .btn-dock { font-size: 11px; padding: 4px; white-space: normal; }
+      .hud-header p { display: none; } .hud-header h1 { font-size: 20px; }
+      .status-card { padding: 5px 7px; } .gauge-widget { padding: 5px 9px; }
+    }
+  </style>
+  <script src="/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div class="nav-bar">
+    <div class="brand-logo">Torra Norte Café</div>
+    <button class="cta-btn" onclick="openMenu()">Ver cardápio</button>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Tire seu espresso.</h1>
+      <p>Moa, dose e prepare um espresso na máquina de alavanca.</p>
+    </div>
+
+    <div class="gauge-widget">
+      <div>
+        <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted);">Manômetro do Grupo</div>
+        <div class="gauge-num" id="pressure-val">0.0 bar</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted);">Volume na Xícara</div>
+        <div style="font-size:16px; font-weight:600; color:#FFF;" id="volume-val">0 ml</div>
+      </div>
+    </div>
+
+    <div class="dock-controls">
+      <button class="btn-dock" id="btn-grind" onclick="grindCoffee()">⚙️ Moer & Dosar</button>
+      <button class="btn-dock" id="btn-tamp" onclick="tampCoffee()">🔨 Compactar</button>
+      <button class="btn-dock" id="btn-dock-filter" onclick="dockFilter()">Encaixar porta-filtro</button>
+      <button class="btn-dock primary" id="btn-lever" onclick="pullLever()">⚡ Puxar Alavanca</button>
+      <button class="btn-dock" id="btn-steam" onclick="steamMilk()">💨 Vaporizar</button>
+      <button class="btn-dock" id="btn-latte" onclick="pourLatteArt()">☕ Latte Art</button>
+      <button class="btn-dock" id="btn-clean" onclick="resetCup()">↺ Nova Xícara</button>
+    </div>
+
+    <div class="status-card" id="status-card" role="status">
+      Passo 1: Moa o grão fresco na granulometria ideal para espresso.
+    </div>
+  </div>
+
+  <dialog id="menu-dialog" aria-labelledby="menu-title">
+    <form method="dialog">
+      <h2 id="menu-title">Cardápio da Torra Norte</h2>
+      <dl><dt>Espresso curto</dt><dd>18 g de café para 36 ml de extração.</dd><dt>Espresso com leite</dt><dd>Crema, leite vaporizado e latte art.</dd></dl>
+      <button>Voltar à bancada</button>
+    </form>
+  </dialog>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/shared/vendor/three.module.js",
+        "three/addons/": "/shared/vendor/addons/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { createStudioEnvironment } from '/shared/engine/studio-environment.js';
+
+    import { buildEspresso } from './espresso.js';
+    import { texture } from '/shared/engine/craft-workbench.js';
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+    let masterGain = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (audioCtx) return;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+      masterGain.connect(audioCtx.destination);
+    }
+
+    function playGrinderSound() {
+      if (!audioCtx || isMuted) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.linearRampToValueAtTime(180, now + 0.8);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+      osc.connect(gain); gain.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.95);
+    }
+
+    function playTampClick() {
+      if (!audioCtx || isMuted) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(480, now);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain); gain.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.09);
+    }
+
+    function playExtractionSound() {
+      if (!audioCtx || isMuted) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, now);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+      osc.connect(gain); gain.connect(masterGain);
+      osc.start(now); osc.stop(now + 2.1);
+    }
+
+    function playSteamHiss() {
+      if (!audioCtx || isMuted) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(gain); gain.connect(masterGain);
+      osc.start(now); osc.stop(now + 1.25);
+    }
+
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#7b7862');
+    const camera = new THREE.PerspectiveCamera(36, 1, .08, 35);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.03;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.shadowMap.autoUpdate = false;
+    renderer.shadowMap.needsUpdate = true;
+    const environment = createStudioEnvironment(renderer);
+    scene.environment = environment.texture;
+    scene.environmentIntensity = 1.03;
+    container.appendChild(renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    controls.enableDamping = !reduced;
+    controls.enablePan = false;
+    controls.minDistance = 2.07;
+    controls.maxDistance = 6.2;
+    controls.minPolarAngle = .38;
+    controls.maxPolarAngle = 1.50;
+    controls.minAzimuthAngle = -.75;
+    controls.maxAzimuthAngle = .78;
+    scene.add(new THREE.HemisphereLight('#e5ebde', '#76634e', 1.65));
+    const sun = new THREE.DirectionalLight('#ffe3bf', 2.7);
+    sun.position.set(-3.6, 4.2, 3.5);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -2.7, right: 2.7, top: 2.8, bottom: -2.7 });
+    sun.shadow.normalBias = .015;
+    sun.shadow.bias = -.0002;
+    sun.shadow.radius = 2.8;
+    scene.add(sun);
+    const fill = new THREE.DirectionalLight('#c4e2e5', .93);
+    fill.position.set(3, 3, -.8);
+    scene.add(fill);
+    const machine = buildEspresso(scene);
+    const status = document.getElementById('status-card');
+    const pressureUI = document.getElementById('pressure-val');
+    const volumeUI = document.getElementById('volume-val');
+    const grind = document.getElementById('btn-grind');
+    const tamp = document.getElementById('btn-tamp');
+    const dock = document.getElementById('btn-dock-filter');
+    const lever = document.getElementById('btn-lever');
+    const steam = document.getElementById('btn-steam');
+    const latte = document.getElementById('btn-latte');
+    const ray = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const cycle = [
+      'Moa os grãos para dosar o porta-filtro.',
+      'Compacte os 18 g de café com o tamper.',
+      'Encaixe o porta-filtro no grupo.',
+      'Puxe a alavanca para iniciar a pré-infusão.',
+      'Pré-infusão. Observe o fluxo e o manômetro.',
+      'Espresso extraído. Vaporize o leite na jarra.',
+      'Vapor em andamento. A microespuma está se formando.',
+      'Microespuma pronta. Despeje na xícara.',
+      'Despejando a microespuma sobre a crema.',
+      'Roseta com coração finalizada. Prepare outra xícara quando quiser.',
+    ];
+    let phase = 0;
+    let phaseTime = 0;
+    let elapsed = 0;
+    let frame = 0;
+    let disposed = false;
+    let paused = false;
+    let pressure = 0;
+    let volume = 0;
+    let tampAt = -1;
+    let formerMl = -1;
+    let shadowAt = 0;
+    let refreshUntil = 0;
+    const milkRest = machine.pitcher.position.clone();
+    const milkSteam = new THREE.Vector3(.631, .177, .594);
+    const milkPour = new THREE.Vector3(.29, .444, .48);
+    const tampRest = machine.tamp.position.clone();
+    const tampOverFilter = machine.filterRest.clone().add(new THREE.Vector3(0, .088, 0));
+    const cupHome = machine.cup.position.clone();
+    const cupAtFront = new THREE.Vector3(.08, .048, .89);
+    const upstream = new THREE.Vector3();
+    const downstream = new THREE.Vector3();
+    const flow = new THREE.Vector3();
+    const vertical = new THREE.Vector3(0, 1, 0);
+    const steamMap = texture(64, 64, ctx => {
+      const gradient = ctx.createRadialGradient(32, 32, 1, 32, 32, 31);
+      gradient.addColorStop(0, '#ffffff99');
+      gradient.addColorStop(1, '#ffffff00');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 64, 64);
+    });
+    const vapor = Array.from({ length: 10 }, (_, index) => {
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamMap, transparent: true, opacity: 0, depthWrite: false }));
+      sprite.visible = false;
+      scene.add(sprite);
+      return { sprite, phase: index / 10 };
+    });
+
+    function changePhase(next, message) {
+      phase = next;
+      phaseTime = elapsed;
+      refreshUntil = elapsed + 1;
+      status.textContent = message ?? cycle[next];
+      [[grind, 0], [tamp, 1], [dock, 2], [lever, 3], [steam, 5], [latte, 7]].forEach(([button, required]) => {
+        button.disabled = next !== required;
+        button.classList.toggle('primary', next === required);
+      });
+    }
+    changePhase(0);
+
+    function accept(required) {
+      if (phase === required) return true;
+      status.textContent = cycle[phase];
+      return false;
+    }
+    window.grindCoffee = function() {
+      if (!accept(0)) return;
+      initAudio();
+      playGrinderSound();
+      machine.grounds.visible = true;
+      machine.grounds.position.y = .067;
+      changePhase(1);
+    };
+    window.tampCoffee = function() {
+      if (!accept(1)) return;
+      initAudio();
+      playTampClick();
+      tampAt = elapsed;
+      machine.grounds.position.y = .054;
+      changePhase(2);
+    };
+    window.dockFilter = function() {
+      if (!accept(2)) return;
+      initAudio();
+      playTampClick();
+      changePhase(3);
+    };
+    window.pullLever = function() {
+      // Accept the original three-button flow as well as the dedicated docking control.
+      if (phase === 2) window.dockFilter();
+      if (!accept(3)) return;
+      initAudio();
+      playExtractionSound();
+      changePhase(4);
+    };
+    window.steamMilk = function() {
+      if (!accept(5)) return;
+      initAudio();
+      playSteamHiss();
+      changePhase(6);
+    };
+    window.pourLatteArt = function() {
+      if (!accept(7)) return;
+      initAudio();
+      playExtractionSound();
+      changePhase(8);
+    };
+    window.resetCup = function() {
+      machine.grounds.visible = false;
+      machine.art.material.opacity = 0;
+      machine.liquid.visible = false;
+      tampAt = -1;
+      volume = 0;
+      changePhase(0);
+    };
+    window.openMenu = function() {
+      document.getElementById('menu-dialog').showModal();
+      if (window.parent !== window) window.parent.postMessage({ type: 'cta', target: 'cardapio' }, location.origin);
+    };
+
+    let contactPoint;
+    renderer.domElement.addEventListener('pointerdown', event => {
+      contactPoint = [event.clientX, event.clientY];
+    });
+    renderer.domElement.addEventListener('pointerup', event => {
+      const point = contactPoint;
+      contactPoint = undefined;
+      if (!point || Math.hypot(event.clientX - point[0], event.clientY - point[1]) > 9) return;
+      const bounds = renderer.domElement.getBoundingClientRect();
+      pointer.set((event.clientX - bounds.left) / bounds.width * 2 - 1, 1 - (event.clientY - bounds.top) / bounds.height * 2);
+      ray.setFromCamera(pointer, camera);
+      const hit = ray.intersectObjects(machine.picks, false)[0]?.object;
+      const action = { lever: window.pullLever, steam: window.steamMilk, filter: window.dockFilter, tamp: window.tampCoffee, grind: window.grindCoffee };
+      action[hit?.userData.action]?.();
+    });
+
+    function resize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / Math.max(1, h);
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.65, Math.sqrt(2250000 / Math.max(1, w * h))));
+      renderer.setSize(w, h, false);
+    }
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+    const narrow = matchMedia('(max-width: 768px)');
+    function homeView() {
+      if (narrow.matches) {
+        camera.position.set(.42, 1.70, 4.36);
+        controls.target.set(-.18, .77, .02);
+      } else {
+        camera.position.set(1.67, 1.74, 3.52);
+        controls.target.set(.54, .72, .14);
+      }
+      controls.update();
+      resize();
+    }
+    homeView();
+    narrow.addEventListener('change', homeView);
+    window.addEventListener('sangi:pause', () => { paused = true; audioCtx?.suspend(); });
+    window.addEventListener('sangi:resume', () => { paused = false; });
+    window.addEventListener('sangi:mute', event => {
+      isMuted = event.detail?.muted ?? true;
+      if (masterGain && audioCtx) masterGain.gain.setTargetAtTime(isMuted ? 0 : .48, audioCtx.currentTime, .03);
+    });
+    window.addEventListener('sangi:dispose', () => {
+      disposed = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      narrow.removeEventListener('change', homeView);
+      controls.dispose();
+      if (audioCtx) { void audioCtx.close().catch(() => {}); audioCtx = null; }
+      environment.dispose();
+      renderer.dispose();
+    });
+
+    let lastTime = performance.now();
+    function animate(time) {
+      if (disposed) return;
+      frame = requestAnimationFrame(animate);
+      const dt = Math.min((time - lastTime) / 1000, .09);
+      lastTime = time;
+      if (paused || document.hidden) return;
+      elapsed += dt;
+      const age = elapsed - phaseTime;
+      const extraction = phase === 4;
+      const factor = reduced ? 1 : 1 - Math.exp(-dt * 8);
+      const pressureTarget = extraction ? (age < .72 ? 2.3 : 9.0 - Math.sin(age * 1.7) * .32) : 0;
+      pressure = THREE.MathUtils.damp(pressure, pressureTarget, 5.5, dt);
+      machine.needle.rotation.z = Math.PI * (1.25 - Math.min(12, pressure) * .125);
+      pressureUI.textContent = pressure.toFixed(1) + ' bar';
+      if (extraction) {
+        if (age > .66 && age < .8) status.textContent = 'Pressão no grupo. A crema começa a se formar.';
+        volume = Math.min(36, Math.max(0, (age - .52) * 12.3));
+        if (volume >= 36) changePhase(5);
+      }
+      const drawnVolume = Math.round(volume);
+      if (formerMl !== drawnVolume) { formerMl = drawnVolume; volumeUI.textContent = drawnVolume + ' ml'; }
+      machine.leverPivot.rotation.x = THREE.MathUtils.lerp(machine.leverPivot.rotation.x, extraction ? .83 : -.08, factor);
+      machine.streams.forEach((stream, index) => {
+        stream.visible = extraction && age > .50;
+        stream.scale.x = .72 + Math.sin(elapsed * 24 + index) * .18;
+        stream.scale.y = .246 - volume * .0012;
+        stream.position.y = .509 - stream.scale.y / 2;
+      });
+      machine.liquid.visible = volume > 0;
+      machine.liquid.position.y = .080 + Math.min(volume / 36, 1) * .100 + (phase >= 8 ? .037 : 0);
+      machine.liquid.scale.setScalar(.72 + Math.min(volume / 36, 1) * .28);
+      machine.filter.position.lerp(phase >= 3 ? machine.filterDock : machine.filterRest, factor);
+      machine.filter.rotation.y = THREE.MathUtils.lerp(machine.filter.rotation.y, phase >= 3 ? .48 : -.66, factor);
+      if (tampAt > 0) {
+        const progress = Math.min(1, (elapsed - tampAt) / .68);
+        machine.tamp.position.copy(tampRest).lerp(tampOverFilter, Math.sin(progress * Math.PI));
+        machine.tamp.position.y += Math.sin(progress * Math.PI * 2) * .045;
+        if (progress === 1) tampAt = -1;
+      }
+      const pouring = phase === 8;
+      const steaming = phase === 6;
+      machine.cup.position.lerp(phase >= 8 ? cupAtFront : cupHome, factor);
+      machine.pitcher.position.lerp(steaming ? milkSteam : pouring ? milkPour : milkRest, factor);
+      machine.pitcher.rotation.z = THREE.MathUtils.lerp(machine.pitcher.rotation.z, pouring ? 1.02 : steaming ? -.10 : 0, factor);
+      machine.pitcher.rotation.x = THREE.MathUtils.lerp(machine.pitcher.rotation.x, pouring ? -.28 : 0, factor);
+      if (steaming && age >= 2.1) changePhase(7);
+      if (pouring) {
+        machine.art.material.opacity = Math.min(1, Math.max(0, age - .58) * 1.25);
+        if (age >= 1.7) changePhase(9);
+      }
+      machine.pour.visible = pouring && age > .2 && age < 1.56;
+      if (machine.pour.visible) {
+        machine.spout.getWorldPosition(upstream);
+        downstream.copy(machine.cup.position).add(new THREE.Vector3(Math.sin(age * 9) * .026, .220, -.014));
+        machine.pour.position.copy(upstream).lerp(downstream, .5);
+        flow.copy(upstream).sub(downstream);
+        machine.pour.scale.y = flow.length();
+        machine.pour.quaternion.setFromUnitVectors(vertical, flow.normalize());
+      }
+      for (const wisp of vapor) {
+        const t = (elapsed * .89 + wisp.phase) % 1;
+        wisp.sprite.visible = steaming && !reduced;
+        if (!wisp.sprite.visible) continue;
+        wisp.sprite.position.set(.63 + Math.sin(t * 6 + wisp.phase) * .05, .41 + t * .43, .58 - t * .12);
+        wisp.sprite.material.opacity = Math.sin(t * Math.PI) * .32;
+        wisp.sprite.scale.setScalar(.063 + t * .18);
+      }
+      if ((elapsed <= refreshUntil || extraction || steaming || pouring) && elapsed >= shadowAt) {
+        renderer.shadowMap.needsUpdate = true;
+        shadowAt = elapsed + .125;
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    frame = requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

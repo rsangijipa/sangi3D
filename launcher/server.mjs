@@ -142,8 +142,12 @@ async function scan() {
     if (relDir) {
       const distIndex = join(dir, 'dist', 'index.html');
       const rootFolder = relDir.split(sep)[0];
+      const collectionEntry = /^\d{2}[-_]/.test(folder) && (
+        rootFolder === 'Kit_17_jogos_3D_mockups_e_prompts' ||
+        rootFolder === 'ambientes-interativos-adultos-e-marcas'
+      );
       const standalone = !files.includes('package.json') && (
-        rootFolder === '01_Jogos_HTML' || (rootFolder === '02_Projetos' && dirs.includes('assets'))
+        collectionEntry || rootFolder === '01_Jogos_HTML' || (rootFolder === '02_Projetos' && dirs.includes('assets'))
       );
       const htmls = files.filter((f) => f.toLowerCase().endsWith('.html') && (f !== 'index.html' || standalone));
       const mdFile = files.includes('PROMPT.md') ? 'PROMPT.md' : files.includes('PROMPT_IMPLEMENTACAO.md') ? 'PROMPT_IMPLEMENTACAO.md' : files.find((f) => f.endsWith('.md') && f.startsWith(folder));
@@ -179,7 +183,8 @@ async function scan() {
           const t = info.title ?? md.title ?? prettyFolder(folder);
           entries.push({ ...splitTitle(t), fullTitle: t, description: info.description ?? md.description,
             url: toUrl(abs), status: 'ready', kind: 'html', collection: collectionFor(t, relDir), thumb, order,
-            path: relative(ROOT, abs), mtime: (await stat(abs)).mtimeMs });
+            path: h === 'index.html' && collectionEntry ? relDir : relative(ROOT, abs),
+            mtime: (await stat(abs)).mtimeMs });
         }
         return;
       }

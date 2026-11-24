@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Explore o que três observadores veem, ouviram ou podem concluir em seis vitrines interativas.">
+<title>Museu dos Pontos de Vista — Sangi3D</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./museum.css">
+<script src="/shared/sangi-bridge.js"></script>
+</head>
+<body>
+<main>
+  <section id="canvas-container" aria-label="Vitrine 3D">
+    <a class="back" href="/">← Launcher</a>
+    <div class="exhibit"><span>MUSEU DOS PONTOS DE VISTA</span><strong id="view-label">Vista da galeria</strong></div>
+    <p id="scene-status" role="status" hidden></p>
+  </section>
+  <section class="hud" id="hud" aria-labelledby="museum-title">
+    <header><p id="progress">VITRINE 1 DE 6</p><h1 id="museum-title">O que cada um viu?</h1><p id="brief"></p></header>
+    <div class="people" role="group" aria-label="Observadores">
+      <button id="btn-p-1" data-person="0"><i></i>Mostarda</button>
+      <button id="btn-p-2" data-person="1"><i></i>Terracota</button>
+      <button id="btn-p-3" data-person="2"><i></i>Verde</button>
+    </div>
+    <button id="btn-pov" aria-pressed="false">Ver pelos olhos do observador</button>
+    <div class="tools">
+      <label for="sl-divider">Mover divisória <output id="lbl-divider">Centro</output></label>
+      <input id="sl-divider" type="range" min="-100" max="100" step="10" value="0">
+      <div class="events"><button id="move-box">Mover a caixa</button><button id="tell">Contar sobre a caixa</button></div>
+    </div>
+    <div class="question-card">
+      <p id="q-text"></p>
+      <div id="choices"></div>
+    </div>
+    <p id="result-msg" role="status"></p>
+    <div class="footer"><button id="mode">Explorar livremente</button><button id="next" class="primary" disabled>Próxima vitrine</button></div>
+  </section>
+</main>
+<script type="module" src="./museum.js"></script>
+</body>
+</html>
