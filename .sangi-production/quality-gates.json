@@ -1,0 +1,14 @@
+{
+  "gates": {
+    "GATE_01": "Planejamento e análise de mockup/prompt",
+    "GATE_02": "Assets essenciais PBR modelados procedurais ou licenciados",
+    "GATE_03": "Funcionalidade e interação mecânica completa",
+    "GATE_04": "Qualidade visual e iluminação cinematográfica",
+    "GATE_05": "Estabilidade da simulação física a 60 FPS",
+    "GATE_06": "Áudio Web Audio responsivo e sem vazamento",
+    "GATE_07": "Mobile touch e enquadramento responsivo seguro",
+    "GATE_08": "Performance e orçamento de draw calls",
+    "GATE_09": "Integração aos manifestos e sangi-bridge.js",
+    "GATE_10": "Aprovação final em verify-catalog e smoke-test"
+  }
+}

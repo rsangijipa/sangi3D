@@ -202,7 +202,7 @@ const HangingVinesFraming: React.FC = () => {
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const y = pos.getY(i);
-      const v = (y + 0.0575) / 0.115;
+      const v = THREE.MathUtils.clamp((y + 0.0575) / 0.115, 0, 1);
       const taper = Math.sin(Math.pow(v, 0.75) * Math.PI);
       pos.setX(i, x * taper);
       pos.setZ(i, Math.sin(v * Math.PI) * 0.015);

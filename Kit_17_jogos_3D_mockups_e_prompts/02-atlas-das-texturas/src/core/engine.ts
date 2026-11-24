@@ -26,7 +26,7 @@ if (THREE.ShaderChunk.opaque_fragment.includes(OPAQUE_OUT)) {
     OPAQUE_OUT,
     [
       'vec3 safeLight = clamp( outgoingLight, vec3( 0.0 ), vec3( 256.0 ) );',
-      'if ( any( isnan( outgoingLight ) ) || any( isinf( outgoingLight ) ) ) safeLight = vec3( 0.0 );',
+      'if ( !all( greaterThanEqual( outgoingLight, vec3( -65504.0 ) ) ) || !all( lessThanEqual( outgoingLight, vec3( 65504.0 ) ) ) ) safeLight = vec3( 0.0 );',
       'gl_FragColor = vec4( safeLight, diffuseColor.a );',
     ].join('\n'),
   );
@@ -117,7 +117,7 @@ class FinalPass extends Pass {
           #else
             vec3 hdr = texture2D(tDiffuse, vUv).rgb;
           #endif
-          if (any(isnan(hdr)) || any(isinf(hdr))) hdr = vec3(0.0);
+          if (!all(greaterThanEqual(hdr, vec3(0.0))) || !all(lessThanEqual(hdr, vec3(65504.0)))) hdr = vec3(0.0);
           vec3 col = ACESFilmicToneMapping(hdr);
           col = sRGBTransferOETF(vec4(col, 1.0)).rgb;
           float l = dot(col, vec3(0.2126, 0.7152, 0.0722));

@@ -3117,7 +3117,7 @@
         const fp = frondGeo.attributes.position;
         for (let i = 0; i < fp.count; i++) {
           const y = fp.getY(i) + 0.28; // 0..0.56
-          const t = y / 0.56;
+          const t = THREE.MathUtils.clamp(y / 0.56, 0, 1);
           const taper = Math.sin(t * Math.PI) * (1 - t * 0.28);
           fp.setX(i, fp.getX(i) * taper);
           fp.setY(i, y);

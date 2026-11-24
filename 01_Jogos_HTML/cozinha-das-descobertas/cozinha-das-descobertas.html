@@ -2966,11 +2966,11 @@
       if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
         const linkImersivo = document.createElement('link');
         linkImersivo.rel = 'stylesheet';
-        linkImersivo.href = 'shared/imersivo.css?v=3';
+        linkImersivo.href = '../Legado_Arquivado/ambientes-html/shared/imersivo.css?v=3';
         document.head.appendChild(linkImersivo);
 
         const scriptImersivo = document.createElement('script');
-        scriptImersivo.src = 'shared/imersivo.js?v=3';
+        scriptImersivo.src = '../../shared/imersivo.js?v=3';
         scriptImersivo.onload = function () {
           if (window.Imersivo) {
             window.Imersivo.init({

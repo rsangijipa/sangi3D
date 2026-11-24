@@ -1,0 +1,344 @@
+{
+  "queue": [
+    {
+      "taskId": "TASK-20",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz",
+      "batch": "batch1",
+      "assignedCell": "GAME-04",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/04-observatorio-da-luz/index.html"
+    },
+    {
+      "taskId": "TASK-21",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-05-oficina-do-tempo",
+      "batch": "batch1",
+      "assignedCell": "GAME-05",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/05-oficina-do-tempo/index.html"
+    },
+    {
+      "taskId": "TASK-22",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-06-torre-do-impulso",
+      "batch": "batch1",
+      "assignedCell": "GAME-06",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/06-torre-do-impulso/index.html"
+    },
+    {
+      "taskId": "TASK-23",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-07-ilha-das-pausas",
+      "batch": "batch1",
+      "assignedCell": "GAME-07",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/07-ilha-das-pausas/index.html"
+    },
+    {
+      "taskId": "TASK-25",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-09-estacao-das-trocas",
+      "batch": "batch1",
+      "assignedCell": "GAME-09",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/09-estacao-das-trocas/index.html"
+    },
+    {
+      "taskId": "TASK-29",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-13-museu-dos-pontos-de-vista",
+      "batch": "batch1",
+      "assignedCell": "GAME-13",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/13-museu-dos-pontos-de-vista/index.html"
+    },
+    {
+      "taskId": "TASK-30",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-14-estudio-dos-limites",
+      "batch": "batch1",
+      "assignedCell": "GAME-14",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/14-estudio-dos-limites/index.html"
+    },
+    {
+      "taskId": "TASK-32",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-16-teatro-das-historias-possiveis",
+      "batch": "batch1",
+      "assignedCell": "GAME-16",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "Kit_17_jogos_3D_mockups_e_prompts/16-teatro-das-historias-possiveis/index.html"
+    },
+    {
+      "taskId": "TASK-59",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-04_maquina-de-escrever-das-intencoes",
+      "batch": "batch2",
+      "assignedCell": "GAME-59",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/04_maquina-de-escrever-das-intencoes/index.html"
+    },
+    {
+      "taskId": "TASK-60",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-05_clepsidra-do-foco",
+      "batch": "batch2",
+      "assignedCell": "GAME-60",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/05_clepsidra-do-foco/index.html"
+    },
+    {
+      "taskId": "TASK-61",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-07_copos-musicais",
+      "batch": "batch2",
+      "assignedCell": "GAME-61",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/07_copos-musicais/index.html"
+    },
+    {
+      "taskId": "TASK-62",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-08_toca-discos-de-vinil",
+      "batch": "batch2",
+      "assignedCell": "GAME-62",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/08_toca-discos-de-vinil/index.html"
+    },
+    {
+      "taskId": "TASK-63",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-10_maquina-de-reacao-em-cadeia",
+      "batch": "batch2",
+      "assignedCell": "GAME-63",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/10_maquina-de-reacao-em-cadeia/index.html"
+    },
+    {
+      "taskId": "TASK-64",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-11_relogio-aberto",
+      "batch": "batch2",
+      "assignedCell": "GAME-64",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/11_relogio-aberto/index.html"
+    },
+    {
+      "taskId": "TASK-66",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-14_bancada-da-manicure",
+      "batch": "batch2",
+      "assignedCell": "GAME-66",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/14_bancada-da-manicure/index.html"
+    },
+    {
+      "taskId": "TASK-67",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-15_barista-de-bancada",
+      "batch": "batch2",
+      "assignedCell": "GAME-67",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/15_barista-de-bancada/index.html"
+    },
+    {
+      "taskId": "TASK-68",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-18_orgao-do-perfumista",
+      "batch": "batch2",
+      "assignedCell": "GAME-68",
+      "status": "APPROVED",
+      "gatesPassed": [
+        "GATE_01",
+        "GATE_02",
+        "GATE_03",
+        "GATE_04",
+        "GATE_05",
+        "GATE_06",
+        "GATE_07",
+        "GATE_08",
+        "GATE_09",
+        "GATE_10"
+      ],
+      "entry": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/18_orgao-do-perfumista/index.html"
+    }
+  ]
+}

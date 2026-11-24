@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Ilha das Pausas — Sangi3D</title>
+  <style>
+    :root {
+      --bg: #131c26;
+      --card-bg: rgba(20, 32, 44, 0.90);
+      --card-border: rgba(180, 210, 230, 0.25);
+      --text: #F2E4CC;
+      --text-muted: #8FA2B0;
+      --accent-green: #3B6E52;
+      --accent-amber: #D8AE66;
+      --accent-terracotta: #B96A46;
+      --serif: "Georgia", "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100dvh; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .hud-panel {
+      position: absolute; top: 16px; right: 16px; width: 340px; max-height: calc(100dvh - 32px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--serif); font-size: 20px; font-weight: 600; color: #FAF5E9; margin-bottom: 4px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+
+    .spot-selector {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    }
+    .spot-btn {
+      padding: 8px 10px; font-size: 11px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: var(--text);
+      cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 2px;
+      transition: all 0.2s;
+    }
+    .spot-btn.active {
+      background: var(--accent-terracotta); border-color: #D8AE66; color: #FFF;
+    }
+    .spot-btn span:last-child {
+      font-size: 10px; color: var(--text-muted);
+    }
+    .spot-btn.active span:last-child { color: rgba(255,255,255,0.85); }
+
+    .breathing-card {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.3); border-radius: 12px; padding: 16px; gap: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .breath-indicator {
+      width: 52px; height: 52px; border-radius: 50%; background: #D8AE66;
+      box-shadow: 0 0 24px #D8AE66; transition: transform 3.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .breath-indicator.inhale { transform: scale(1.4); }
+    .breath-label { font-size: 13px; font-weight: 600; color: #FAF5E9; }
+
+    .drawing-card {
+      display: none; flex-direction: column; gap: 8px;
+      background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px;
+    }
+    #draw-canvas {
+      width: 100%; height: 110px; background: #FAF5E9; border-radius: 8px; cursor: crosshair; touch-action: none;
+    }
+    .draw-tools { display: flex; justify-content: space-between; align-items: center; }
+    .color-palette { display: flex; gap: 6px; }
+    .color-dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid #FFF; }
+
+    .cairn-card {
+      display: none; flex-direction: column; gap: 6px;
+      background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px;
+    }
+    .btn-cairn {
+      padding: 6px 10px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px; color: var(--text); cursor: pointer; text-align: center;
+    }
+
+    .help-msg {
+      font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center;
+    }
+
+
+    .hud-panel { --text: #36291d; --text-muted: #66503b; background: #f2e4ce; border-color: #dabf98; }
+    .hud-header { margin: -20px -20px 0; padding: 20px; background: #294834; }
+    .hud-header p { color: #efe4ce; }
+    .spot-btn, .btn-cairn { background: #f8ecda; border-color: #b79b75; color: #3a2c20; }
+    .spot-btn.active, #btn-breathe { background: #365d44; color: #fff4e3; }
+    .breathing-card, .drawing-card, .cairn-card { background: #ead9bd; }
+    .breath-label, .cairn-card > div { color: #345440 !important; }
+    .breath-indicator { width: 32px; height: 32px; }
+    .color-dot { width: 28px; height: 28px; }
+    button:focus-visible { outline: 2px solid #875426; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { .breath-indicator { transition: none; transform: none !important; } }
+    @media (max-width: 768px) and (orientation: portrait) {
+      #canvas-container { height: 57dvh; }
+      .hud-header { margin: -16px -18px 0; padding: 14px 18px; }
+      .hud-panel {
+        top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 43dvh;
+        border-radius: 20px 20px 0 0; padding: 16px 18px 24px;
+      }
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/shared/vendor/three.module.js",
+      "three/addons/": "/shared/vendor/addons/"
+    }
+  }
+  </script>
+  <script src="/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Ilha das Pausas</h1>
+      <p>Cinco estações zen para desacelerar, respirar e contemplar a calmaria do mar.</p>
+    </div>
+
+    <div class="spot-selector">
+      <button class="spot-btn active" id="btn-spot-1" onclick="selectSpot(1)">
+        <span>🗼 Farol da Luz</span>
+        <span>Respiração</span>
+      </button>
+      <button class="spot-btn" id="btn-spot-2" onclick="selectSpot(2)">
+        <span>🎨 Mesa de Desenho</span>
+        <span>Traço livre</span>
+      </button>
+      <button class="spot-btn" id="btn-spot-3" onclick="selectSpot(3)">
+        <span>🪨 Banco & Pedras</span>
+        <span>Empilhamento</span>
+      </button>
+      <button class="spot-btn" id="btn-spot-4" onclick="selectSpot(4)">
+        <span>🏡 Cabana Serena</span>
+        <span>Silêncio</span>
+      </button>
+      <button class="spot-btn" id="btn-spot-5" onclick="selectSpot(5)" style="grid-column: span 2;">
+        <span>🌿 Rede entre Árvores</span>
+        <span>Balanço suave das folhas</span>
+      </button>
+    </div>
+
+    <!-- Estação 1: Farol de Respiração -->
+    <div class="breathing-card" id="breathing-card">
+      <div class="breath-indicator" id="breath-circle"></div>
+      <div class="breath-label" id="breath-text">No seu ritmo</div>
+      <button class="btn-cairn" id="btn-breathe" aria-pressed="false" onclick="toggleBreathing()">Começar</button>
+    </div>
+
+    <!-- Estação 2: Mini Prancheta de Desenho -->
+    <div class="drawing-card" id="drawing-card">
+      <canvas id="draw-canvas"></canvas>
+      <div class="draw-tools">
+        <div class="color-palette">
+          <button class="color-dot" type="button" aria-label="Verde" style="background: #254533;" onclick="setDrawColor('#254533')"></button>
+          <button class="color-dot" type="button" aria-label="Terracota" style="background: #B96A46;" onclick="setDrawColor('#B96A46')"></button>
+          <button class="color-dot" type="button" aria-label="Azul" style="background: #4A7A8C;" onclick="setDrawColor('#4A7A8C')"></button>
+          <button class="color-dot" type="button" aria-label="Âmbar" style="background: #D8AE66;" onclick="setDrawColor('#D8AE66')"></button>
+        </div>
+        <button onclick="clearDrawCanvas()" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid #CCC; background: transparent; color: var(--text); cursor: pointer;">Limpar</button>
+      </div>
+    </div>
+
+    <!-- Estação 3: Empilhamento de Pedras (Cairn) -->
+    <div class="cairn-card" id="cairn-card">
+      <div style="font-size: 11px; font-weight: 600; color: #FAF5E9;">Torre de Pedras Zen (Cairn)</div>
+      <div style="font-size: 11px; color: var(--text-muted);">Toque para empilhar pedras em equilíbrio sereno.</div>
+      <button class="btn-cairn" onclick="stackNextStone()">Empilhar Próxima Pedra</button>
+      <button class="btn-cairn" onclick="resetStones()" style="background: transparent;">Desarmar Pedras</button>
+    </div>
+
+    <div class="help-msg" id="help-msg">Respire no seu próprio tempo ou apenas contemple o oceano.</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    window.THREE = window.THREE || THREE;
+
+    import { injectLauncherButton } from '/shared/ambientes-kit.js';
+    import { EngineRenderer } from '/shared/engine/renderer.js';
+    import { MaterialFactory } from '/shared/engine/materials.js';
+    import { LightingRig } from '/shared/engine/lighting.js';
+    import { ResponsiveAudio } from '/shared/engine/audio.js';
+    import { LifecycleManager } from '/shared/engine/lifecycle.js';
+    import { beam, mesh } from '/shared/engine/scene-details.js';
+    import { buildLand, buildLighthouse, buildSea, buildShelter } from './coast.js';
+
+    injectLauncherButton({ label: '← Launcher', href: '/' });
+
+    const container = document.getElementById('canvas-container');
+    const audio = new ResponsiveAudio();
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a2634);
+    scene.fog = new THREE.FogExp2(0x1a2634, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(43, 1, .12, 120);
+    const engineRenderer = new EngineRenderer(null, {
+      shadowMap: true, toneMappingExposure: 1.06, environmentIntensity: .44,
+      maxPixelRatio: Math.min(devicePixelRatio || 1, 1.5)
+    });
+    container.appendChild(engineRenderer.canvas);
+    function frameScene() {
+      const { clientWidth: width, clientHeight: height } = container;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      engineRenderer.renderer.setSize(width, height, false);
+    }
+    frameScene();
+    window.addEventListener('resize', frameScene);
+
+    scene.fog = new THREE.FogExp2(0x9f8079, .022);
+    const lighting = new LightingRig(scene, { preset: 'sunset', mainIntensity: 2.1, ambientIntensity: .88 });
+    lighting.mainLight.color.setHex(0xffcb91);
+    lighting.mainLight.position.set(5.8, 4.35, -5.7);
+    lighting.mainLight.shadow.normalBias = .031;
+    lighting.mainLight.shadow.autoUpdate = false;
+    lighting.mainLight.shadow.needsUpdate = true;
+    lighting.ambientLight.color.setHex(0xf9dfd2);
+    lighting.rimLight.intensity = .63;
+
+    // Terreno da Ilha e Costa de Pedras
+    const islandGroup = new THREE.Group();
+    scene.add(islandGroup);
+
+    const updateSea = buildSea(islandGroup);
+    buildLand(islandGroup);
+    const { light: beaconLight, lamp } = buildLighthouse(islandGroup);
+    const drawCanvas = document.getElementById('draw-canvas');
+    drawCanvas.width = 480;
+    drawCanvas.height = 252;
+    const drawingTexture = new THREE.CanvasTexture(drawCanvas);
+    drawingTexture.colorSpace = THREE.SRGBColorSpace;
+    buildShelter(islandGroup, drawingTexture);
+
+    // Pedras Empilháveis (4 pedras de rio lisas)
+    const stones = [];
+    const stoneConfigs = [
+      { size: [0.35, 0.14, 0.3], basePos: new THREE.Vector3(-.91, .815, 1.47), stackY: .798 },
+      { size: [0.28, 0.12, 0.25], basePos: new THREE.Vector3(-1.49, .785, 1.05), stackY: 1.057 },
+      { size: [0.22, 0.10, 0.2], basePos: new THREE.Vector3(-1.36, .763, 1.65), stackY: 1.273 },
+      { size: [0.15, 0.08, 0.14], basePos: new THREE.Vector3(-.47, .741, 1.66), stackY: 1.454 }
+    ];
+
+    stoneConfigs.forEach((cfg, idx) => {
+      const sGeo = new THREE.SphereGeometry(1, 16, 12);
+      sGeo.scale(cfg.size[0], cfg.size[1], cfg.size[2]);
+      const sMat = MaterialFactory.stone(idx % 2 === 0 ? 0x55504a : 0x6e6862, 0.85);
+      const sMesh = new THREE.Mesh(sGeo, sMat);
+      sMesh.position.copy(cfg.basePos);
+      sMesh.castShadow = true;
+      islandGroup.add(sMesh);
+      stones.push({ mesh: sMesh, basePos: cfg.basePos.clone(), stackPos: new THREE.Vector3(-1.13, cfg.stackY, 1.35), isStacked: false });
+    });
+
+    let currentStackedCount = 0;
+    window.stackNextStone = function() {
+      if (currentStackedCount < stones.length) {
+        const st = stones[currentStackedCount];
+        st.isStacked = true;
+        st.mesh.position.copy(st.stackPos);
+        lighting.mainLight.shadow.needsUpdate = true;
+        currentStackedCount++;
+        audio.playClick(340 + currentStackedCount * 60, 0.04);
+        document.getElementById('help-msg').textContent = `Pedra ${currentStackedCount} empilhada em equilíbrio sereno.`;
+      }
+    };
+
+    window.resetStones = function() {
+      stones.forEach(st => {
+        st.isStacked = false;
+        st.mesh.position.copy(st.basePos);
+      });
+      currentStackedCount = 0;
+      lighting.mainLight.shadow.needsUpdate = true;
+      audio.playClick(260, 0.04);
+      document.getElementById('help-msg').textContent = 'Pedras retornadas ao chão.';
+    };
+
+    // A rede tem uma superfície de tecido suspensa entre dois pontos fixos.
+    const hammockGroup = new THREE.Group();
+    hammockGroup.position.set(.66, .64, -1.39);
+    islandGroup.add(hammockGroup);
+    const bark = MaterialFactory.wood(0x6c4c32);
+    const leaves = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,2),
+      new THREE.MeshStandardMaterial({ roughness: .98 }), 54);
+    const dummy = new THREE.Object3D();
+    const leafColor = new THREE.Color();
+    for (const [index,x] of [-.63, .81].entries()) {
+      beam(hammockGroup, [x,0,0], [x-.12,1.48,-.06], .15, .16, bark);
+      for (let i = 0; i < 4; i++) {
+        const a = i * 2.39996;
+        beam(hammockGroup,[x-.083,.92,-.04],[x+Math.cos(a)*.44,1.48,Math.sin(a)*.45],.073,.072,bark);
+      }
+      for (let i = 0; i < 27; i++) {
+        const a = i * 2.39996;
+        dummy.position.set(x + .53*Math.cos(a)*Math.sin(i*3.9), 1.45 + .55*Math.sin(i*2.9)**2, .53*Math.sin(a));
+        dummy.scale.set(.20+.12*Math.sin(i)**2,.21+.125*Math.sin(i*4)**2,.26);
+        dummy.rotation.set(i,a,i*.42);
+        dummy.updateMatrix();
+        leaves.setMatrixAt(index*27+i,dummy.matrix);
+        leaves.setColorAt(index*27+i,leafColor.setHSL(.14+.11*Math.sin(i)**2,.38,.22+.14*Math.cos(i)**2));
+      }
+    }
+    leaves.castShadow = true;
+    leaves.receiveShadow = true;
+    hammockGroup.add(leaves);
+    const textile = new THREE.PlaneGeometry(1.41,.53,30,12);
+    const textileVertices = textile.getAttribute('position');
+    for (let i = 0; i < textileVertices.count; i++) {
+      const x = textileVertices.getX(i);
+      const across = textileVertices.getY(i);
+      const taper = Math.sin(Math.PI * (x / 1.41 + .5));
+      textileVertices.setXYZ(i, x, .83 - taper * (.33 - 1.7*across**2), across * taper);
+    }
+    textile.computeVertexNormals();
+    const linen = new THREE.MeshPhysicalMaterial({ color: 0xd4c09a, roughness: .97, sheen: .9, side: THREE.DoubleSide });
+    const hammockMesh = mesh(hammockGroup, textile, linen, .09,0,0);
+
+    // Hotspots de Câmera
+    const cameraTargets = {
+      1: { pos: new THREE.Vector3(.16, 3.1, 6.95), look: new THREE.Vector3(.04, 1.37, -.32) },
+      2: { pos: new THREE.Vector3(.86, 2.48, 3.92), look: new THREE.Vector3(.96, 1.02, .96) },
+      3: { pos: new THREE.Vector3(-1.02, 1.92, 3.80), look: new THREE.Vector3(-.98, .83, 1.21) },
+      4: { pos: new THREE.Vector3(2.1, 2.34, 4.55), look: new THREE.Vector3(1.10, 1.11, -.32) },
+      5: { pos: new THREE.Vector3(.51, 2.83, 2.42), look: new THREE.Vector3(.79, 1.31, -1.41) }
+    };
+    const targetCamPos = cameraTargets[1].pos.clone();
+    const targetCamLook = cameraTargets[1].look.clone();
+    const currentLook = targetCamLook.clone();
+    const visibleLook = new THREE.Vector3();
+    const narrow = matchMedia('(max-width: 768px) and (orientation: portrait)');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    camera.position.copy(targetCamPos);
+    let activeSpot = 1;
+    let breathing = false;
+    let breathingTime = 0;
+    let lastInhale;
+    const breathButton = document.getElementById('btn-breathe');
+    const breathIndicator = document.getElementById('breath-circle');
+    const breathText = document.getElementById('breath-text');
+    const guidance = {
+      1: 'Comece quando quiser ou observe apenas a luz.',
+      2: 'Desenhe na folha. Seus traços aparecem na mesa.',
+      3: 'Observe o mar ou empilhe as pedras ao seu ritmo.',
+      4: 'Uma pausa em silêncio junto à janela acesa.',
+      5: 'Observe a rede entre as árvores.'
+    };
+    function renderBreath() {
+      const phase = breathingTime % 8;
+      const inhale = phase < 4;
+      if (lastInhale !== inhale || !breathing) {
+        lastInhale = inhale;
+        breathIndicator.classList.toggle('inhale', breathing && inhale);
+        breathText.textContent = breathing ? (inhale ? 'Inspirar suavemente' : 'Expirar no seu ritmo') : 'No seu ritmo';
+      }
+      const intensity = breathing && !reduceMotion.matches ? .5 - .5 * Math.cos(phase * Math.PI / 4) : .38;
+      beaconLight.intensity = 1.45 + intensity * 3.15;
+      lamp.emissiveIntensity = .92 + intensity * .95;
+    }
+    function setBreathing(active) {
+      breathing = active;
+      breathingTime = 0;
+      lastInhale = undefined;
+      breathButton.textContent = active ? 'Parar' : 'Começar';
+      breathButton.setAttribute('aria-pressed', String(active));
+      renderBreath();
+    }
+    window.toggleBreathing = () => setBreathing(!breathing);
+    setBreathing(false);
+
+    window.selectSpot = function(id) {
+      activeSpot = id;
+      setBreathing(false);
+      document.getElementById('help-msg').textContent = guidance[id];
+      document.querySelectorAll('.spot-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-spot-' + id).classList.add('active');
+
+      targetCamPos.copy(cameraTargets[id].pos);
+      targetCamLook.copy(cameraTargets[id].look);
+
+      document.getElementById('breathing-card').style.display = id === 1 ? 'flex' : 'none';
+      document.getElementById('drawing-card').style.display = id === 2 ? 'flex' : 'none';
+      document.getElementById('cairn-card').style.display = id === 3 ? 'flex' : 'none';
+
+      if (id !== 4) audio.playChime(id === 1 ? 480 : id === 3 ? 400 : 360, 0.8);
+    };
+
+    const drawingContext = drawCanvas.getContext('2d');
+    let currentColor = '#254533';
+    let drawingPointer = null;
+    function resetPaper() {
+      drawingContext.fillStyle = '#fff8e8';
+      drawingContext.fillRect(0,0,drawCanvas.width,drawCanvas.height);
+      drawingTexture.needsUpdate = true;
+    }
+    resetPaper();
+    window.setDrawColor = color => { currentColor = color; };
+    window.clearDrawCanvas = resetPaper;
+
+    function drawPosition(event) {
+      const bounds = drawCanvas.getBoundingClientRect();
+      return [(event.clientX-bounds.left)/bounds.width*drawCanvas.width,
+        (event.clientY-bounds.top)/bounds.height*drawCanvas.height];
+    }
+    drawCanvas.addEventListener('pointerdown', event => {
+      if (drawingPointer !== null) return;
+      drawingPointer = event.pointerId;
+      drawCanvas.setPointerCapture(event.pointerId);
+      drawingContext.beginPath();
+      drawingContext.moveTo(...drawPosition(event));
+    });
+    drawCanvas.addEventListener('pointermove', event => {
+      if (drawingPointer !== event.pointerId) return;
+      const point = drawPosition(event);
+      drawingContext.strokeStyle = currentColor;
+      drawingContext.lineWidth = 4;
+      drawingContext.lineCap = 'round';
+      drawingContext.lineTo(...point);
+      drawingContext.stroke();
+      drawingContext.beginPath();
+      drawingContext.moveTo(...point);
+      drawingTexture.needsUpdate = true;
+    });
+    drawCanvas.addEventListener('lostpointercapture', () => { drawingPointer = null; });
+
+    let waveTime = 0;
+    let lastFrame = performance.now();
+    let animId;
+    function animate(now = performance.now()) {
+      animId = requestAnimationFrame(animate);
+      const delta = Math.min((now-lastFrame)/1000,.1);
+      lastFrame = now;
+      if (lifecycle.isPaused) return;
+      if (!reduceMotion.matches && activeSpot !== 4) waveTime += delta * .85;
+      updateSea(waveTime);
+      hammockMesh.rotation.z = Math.sin(waveTime * .72) * .027;
+      if (breathing) {
+        breathingTime += delta;
+        renderBreath();
+      }
+      const smoothing = reduceMotion.matches ? 1 : 1 - Math.exp(-delta * 5.2);
+      camera.position.lerp(targetCamPos,smoothing);
+      currentLook.lerp(targetCamLook,smoothing);
+      visibleLook.copy(currentLook);
+      if (!narrow.matches) visibleLook.x += activeSpot === 1 ? .95 : .43;
+      camera.lookAt(visibleLook);
+      engineRenderer.render(scene, camera);
+    }
+    const lifecycle = new LifecycleManager({
+      onPause: () => { audio.setMuted(true); },
+      onResume: () => { audio.setMuted(lifecycle.isMuted); },
+      onMute: (m) => { audio.setMuted(m); },
+      dispose: () => {
+        if (animId) cancelAnimationFrame(animId);
+        window.removeEventListener('resize', frameScene);
+        engineRenderer.dispose();
+        audio.dispose();
+        lighting.dispose();
+        drawingTexture.dispose();
+      }
+    });
+    animate();
+
+  </script>
+</body>
+</html>

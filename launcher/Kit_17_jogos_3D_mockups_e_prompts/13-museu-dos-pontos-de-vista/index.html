@@ -7,11 +7,15 @@
 <title>Museu dos Pontos de Vista — Sangi3D</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./museum.css">
+<style>
+  html, body { touch-action: manipulation; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  #canvas-container { width: 100%; height: 100%; }
+</style>
 <script src="/shared/sangi-bridge.js"></script>
 </head>
 <body>
 <main>
-  <section id="canvas-container" aria-label="Vitrine 3D">
+  <section id="canvas-container" class="canvas-container" aria-label="Vitrine 3D">
     <a class="back" href="/">← Launcher</a>
     <div class="exhibit"><span>MUSEU DOS PONTOS DE VISTA</span><strong id="view-label">Vista da galeria</strong></div>
     <p id="scene-status" role="status" hidden></p>
@@ -37,6 +41,26 @@
     <div class="footer"><button id="mode">Explorar livremente</button><button id="next" class="primary" disabled>Próxima vitrine</button></div>
   </section>
 </main>
-<script type="module" src="./museum.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/shared/vendor/three.module.js"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from '/shared/vendor/three.module.js';
+  import { MaterialFactory } from '/shared/engine/materials.js';
+  import { ResponsiveAudio } from '/shared/engine/audio.js';
+  import './museum.js';
+
+  // Interaction handlers and cleanup
+  window.addEventListener('pointerdown', () => {});
+  window.addEventListener('sangi:dispose', () => {
+    if (window.gallery && typeof window.gallery.dispose === 'function') {
+      window.gallery.dispose();
+    }
+  });
+</script>
 </body>
 </html>

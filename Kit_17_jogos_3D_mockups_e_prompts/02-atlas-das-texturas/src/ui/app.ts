@@ -448,7 +448,9 @@ export class AppUI {
     if (key !== this.lastOverlayKey) {
       this.lastOverlayKey = key;
       this.overlay.innerHTML = html;
-      (this.overlay.querySelector('.b-cta, button') as HTMLElement | null)?.focus({ preventScroll: true });
+      if (window.parent === window || navigator.userActivation.hasBeenActive) {
+        this.overlay.querySelector<HTMLElement>('.b-cta, button')?.focus({ preventScroll: true });
+      }
     }
   }
 

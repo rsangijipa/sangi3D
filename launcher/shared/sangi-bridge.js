@@ -33,6 +33,16 @@
     window.addEventListener('load', notifyReady);
   }
 
+  function dispose() {
+    if (window.__SANGI_DISPOSED__) return;
+    window.__SANGI_DISPOSED__ = true;
+    window.dispatchEvent(new CustomEvent('sangi:dispose'));
+  }
+
+  window.addEventListener('pagehide', function (event) {
+    if (!event.persisted) dispose();
+  });
+
   window.addEventListener('message', function (e) {
     if (!e.data || typeof e.data !== 'object') return;
     switch (e.data.type) {
@@ -49,19 +59,7 @@
         window.dispatchEvent(new CustomEvent('sangi:mute', { detail: { muted: window.__SANGI_MUTED__ } }));
         break;
       case 'SANGI_APP_DISPOSE':
-        window.__SANGI_DISPOSED__ = true;
-        window.dispatchEvent(new CustomEvent('sangi:dispose'));
-        // Liberação forçada de contextos WebGL em caso de descarte
-        try {
-          var canvases = document.querySelectorAll('canvas');
-          for (var i = 0; i < canvases.length; i++) {
-            var gl = canvases[i].getContext('webgl2') || canvases[i].getContext('webgl');
-            if (gl) {
-              var ext = gl.getExtension('WEBGL_lose_context');
-              if (ext) ext.loseContext();
-            }
-          }
-        } catch (err) {}
+        dispose();
         break;
     }
   });

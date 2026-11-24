@@ -62,7 +62,12 @@ copyRecursive(
   path.join(LAUNCHER, '03_Colecoes')
 );
 
-console.log('--- 8. Ajustando URLs de /play/ e capas no catálogo apps.json ---');
+console.log('--- 8. Espelhando runtime local de Three.js e módulos de cena ---');
+for (const directory of ['engine', 'vendor']) {
+  copyRecursive(path.join(ROOT, 'shared', directory), path.join(LAUNCHER, 'shared', directory));
+}
+
+console.log('--- 9. Ajustando URLs de /play/ e capas no catálogo apps.json ---');
 const appsJsonPath = path.join(ROOT, 'api', 'apps.json');
 let apps = JSON.parse(fs.readFileSync(appsJsonPath, 'utf8'));
 // Filtra qualquer autorreferência ao index.html

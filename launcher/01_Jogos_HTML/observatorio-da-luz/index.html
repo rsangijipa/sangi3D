@@ -1,0 +1,3491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Observatório da Luz — Exploração Sensorial de Iluminação</title>
+  <script src="../../shared/vendor/three-r128.min.js"></script>
+  <style>
+    :root {
+      --forest: #254533;
+      --forest-dark: #1A3325;
+      --forest-ink: #1D2E24;
+      --cream: #FAF5E9;
+      --parchment: #F2E4CC;
+      --parchment-deep: #E5D2B2;
+      --oak: #A76C3D;
+      --terracotta: #B96A46;
+      --moss: #79835A;
+      --brass: #D8AE66;
+      --slate: #263D4C;
+      --muted-ink: #4A5B50;
+      --border-soft: rgba(37, 69, 51, 0.18);
+      --shadow-card: 0 12px 32px rgba(26, 38, 30, 0.18), 0 2px 6px rgba(26, 38, 30, 0.1);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --font-serif: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+      --font-sans: ui-rounded, "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --hud-width: clamp(276px, 27vw, 376px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: #232824;
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    /* Skip link for keyboard accessibility */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 8px;
+      z-index: 1000;
+      background: var(--forest);
+      color: var(--cream);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .skip-link:focus {
+      left: 12px;
+    }
+
+    /* Main Layout Shell */
+    #app-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: radial-gradient(circle at 35% 45%, #3d352a 0%, #1f2521 100%);
+    }
+
+    /* 3D Viewport */
+    #scene-viewport {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: grab;
+    }
+    #scene-viewport:active {
+      cursor: grabbing;
+    }
+    #scene-viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Accessible 2D / DOM Fallback Stage */
+    #dom-fallback-stage {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 84px calc(var(--hud-width) + 32px) 32px 32px;
+      transition: background-color 300ms ease, filter 300ms ease;
+    }
+    #dom-fallback-stage.active {
+      display: flex;
+    }
+    .fallback-room {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, rgba(242, 228, 204, 0.94), rgba(226, 205, 174, 0.94));
+      border: 2px solid var(--oak);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+    .fallback-blinds {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      height: 64px;
+      margin-bottom: 18px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #e5a365, #f5d399);
+      border: 2px solid var(--oak);
+    }
+    .fallback-slat {
+      flex: 1;
+      background: #8c5932;
+      border-radius: 2px;
+      transition: transform 250ms ease, opacity 250ms ease;
+    }
+    .fallback-panels-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: end;
+    }
+    .fallback-panel-card {
+      background: var(--cream);
+      border: 2px solid var(--brass);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      transition: transform 280ms ease, box-shadow 280ms ease, opacity 280ms ease;
+    }
+    .fallback-panel-card.selected {
+      outline: 3px solid var(--forest);
+      outline-offset: 2px;
+    }
+    .fallback-glass {
+      height: 150px;
+      border-radius: 14px 14px 6px 6px;
+      margin-bottom: 12px;
+      border: 3px solid var(--brass);
+      background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,0.22) 0px,
+        rgba(255,255,255,0.22) 4px,
+        rgba(0,0,0,0.06) 4px,
+        rgba(0,0,0,0.06) 10px
+      );
+      transition: background-color 280ms ease, box-shadow 280ms ease, transform 280ms ease;
+    }
+
+    /* Top-left Brand & Utility Bar */
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: calc(var(--hud-width) + 28px);
+      z-index: 30;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .brand-pill {
+      pointer-events: auto;
+      background: rgba(250, 245, 233, 0.93);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 8px 14px;
+      box-shadow: 0 6px 20px rgba(26, 38, 30, 0.14);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: var(--forest);
+      color: var(--cream);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: clamp(1rem, 1.4vw, 1.2rem);
+      font-weight: 700;
+      color: var(--forest-ink);
+      margin: 0;
+      line-height: 1.15;
+    }
+    .brand-sub {
+      font-size: 0.76rem;
+      color: var(--muted-ink);
+      margin: 0;
+    }
+
+    .utility-cluster {
+      pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .icon-btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 11px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(250, 245, 233, 0.93);
+      backdrop-filter: blur(8px);
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(26, 38, 30, 0.12);
+      transition: background 180ms ease, transform 120ms ease, border-color 180ms ease;
+    }
+    .icon-btn:hover {
+      background: var(--parchment);
+      border-color: var(--oak);
+    }
+    .icon-btn:active {
+      transform: translateY(1px);
+    }
+    .icon-btn[aria-pressed="true"] {
+      background: var(--forest);
+      color: var(--cream);
+      border-color: var(--forest);
+    }
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Scene Dimmer Popover */
+    .dimmer-popover {
+      position: absolute;
+      top: calc(66px + var(--safe-top));
+      right: calc(var(--hud-width) + 28px);
+      z-index: 35;
+      width: 248px;
+      background: var(--cream);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow-card);
+      display: none;
+    }
+    .dimmer-popover.open {
+      display: block;
+    }
+    .dimmer-popover p {
+      margin: 4px 0 10px;
+      font-size: 0.78rem;
+      color: var(--muted-ink);
+    }
+
+    /* Floating 3D Hover Tooltip */
+    #scene-tooltip {
+      position: absolute;
+      z-index: 25;
+      pointer-events: none;
+      background: rgba(37, 69, 51, 0.92);
+      color: var(--cream);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0;
+      transform: translate(-50%, -120%);
+      transition: opacity 150ms ease;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    #scene-tooltip.visible {
+      opacity: 1;
+    }
+
+    /* Camera Accessibility Controls (bottom-left of 3D area) */
+    .camera-controls {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cam-btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 11px;
+      border: 1px solid var(--border-soft);
+      background: rgba(250, 245, 233, 0.88);
+      color: var(--forest-ink);
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(26, 38, 30, 0.14);
+    }
+    .cam-btn:hover {
+      background: var(--parchment);
+    }
+
+    /* Right HUD Panel (Desktop) */
+    #hud-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      bottom: 14px;
+      width: var(--hud-width);
+      z-index: 40;
+      background: rgba(250, 245, 233, 0.96);
+      background-image:
+        radial-gradient(rgba(167, 108, 61, 0.05) 1px, transparent 0);
+      background-size: 16px 16px;
+      border: 1px solid rgba(167, 108, 61, 0.28);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .drawer-handle-bar {
+      display: none;
+      width: 100%;
+      min-height: 36px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 3px;
+      padding: 6px 0 4px;
+      color: var(--muted-ink);
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .drawer-pill {
+      width: 42px;
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(37, 69, 51, 0.3);
+    }
+
+    .hud-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border-soft);
+      background: rgba(242, 228, 204, 0.55);
+      flex-shrink: 0;
+    }
+    .hud-stage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .stage-badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--forest);
+      background: rgba(37, 69, 51, 0.1);
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+    .progress-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .progress-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(37, 69, 51, 0.2);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease;
+    }
+    .progress-dot.done {
+      background: var(--moss);
+    }
+    .progress-dot.active {
+      background: var(--forest);
+      transform: scale(1.28);
+    }
+
+    .hud-title {
+      font-family: var(--font-serif);
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: var(--forest-ink);
+      margin: 0 0 3px;
+    }
+    .hud-desc {
+      font-size: 0.83rem;
+      color: var(--muted-ink);
+      margin: 0;
+    }
+
+    .hud-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overscroll-behavior: contain;
+    }
+
+    .hud-section {
+      background: rgba(255, 253, 248, 0.78);
+      border: 1px solid rgba(37, 69, 51, 0.13);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--forest);
+      margin: 0 0 9px;
+    }
+
+    /* Preset Grid */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+    .preset-btn {
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      background: var(--parchment);
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      text-align: left;
+      transition: all 160ms ease;
+    }
+    .preset-btn:hover {
+      border-color: var(--oak);
+      background: #ebd8b8;
+    }
+    .preset-btn.active {
+      background: var(--forest);
+      color: var(--cream);
+      border-color: var(--forest);
+    }
+    .preset-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+
+    /* Panel A/B Switcher & Compare Controls */
+    .panel-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .panel-tab {
+      min-height: 44px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-soft);
+      background: var(--cream);
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 160ms ease;
+    }
+    .panel-tab.active {
+      background: var(--forest);
+      color: var(--cream);
+      border-color: var(--forest);
+    }
+    .panel-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.25);
+    }
+
+    .compare-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .chip-btn {
+      flex: 1;
+      min-height: 40px;
+      padding: 6px 8px;
+      border-radius: 9px;
+      border: 1px solid var(--border-soft);
+      background: var(--parchment);
+      color: var(--forest-ink);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .chip-btn.active {
+      background: var(--slate);
+      color: var(--cream);
+      border-color: var(--slate);
+    }
+
+    .snapshot-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 9px;
+      background: rgba(216, 174, 102, 0.18);
+      border: 1px solid rgba(167, 108, 61, 0.3);
+      font-size: 0.78rem;
+      color: var(--forest-ink);
+    }
+    .snapshot-bar button {
+      min-height: 34px;
+      padding: 4px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--oak);
+      background: var(--cream);
+      color: var(--forest-ink);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Sliders */
+    .control-group {
+      margin-bottom: 12px;
+    }
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+    .control-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .control-top label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--forest-ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .control-value {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--forest);
+      font-variant-numeric: tabular-nums;
+    }
+    .control-hint {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--muted-ink);
+      margin-top: 3px;
+    }
+    .locked-tag {
+      font-size: 0.7rem;
+      background: var(--terracotta);
+      color: var(--cream);
+      padding: 1px 6px;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 99px;
+      background: var(--parchment-deep);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].warmth-slider {
+      background: linear-gradient(90deg, #E89E52 0%, #F4E6CA 50%, #7FB7BE 100%);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--forest);
+      border: 3px solid var(--cream);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.28);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--forest);
+      border: 3px solid var(--cream);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.28);
+      cursor: pointer;
+    }
+    input[type="range"]:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    /* Accompanied mode lock selector */
+    .accompanied-box {
+      background: rgba(38, 61, 76, 0.08);
+      border: 1px solid rgba(38, 61, 76, 0.24);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+    .accompanied-box select {
+      width: 100%;
+      min-height: 44px;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 9px;
+      border: 1px solid var(--border-soft);
+      background: var(--cream);
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Preference Buttons */
+    .pref-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+    }
+    .pref-btn {
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-soft);
+      background: var(--parchment);
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    .pref-btn.wide {
+      grid-column: span 2;
+    }
+    .pref-btn:hover {
+      border-color: var(--oak);
+    }
+    .pref-btn.selected {
+      background: var(--forest);
+      color: var(--cream);
+      border-color: var(--forest);
+    }
+
+    /* Feedback & Hint Box */
+    .feedback-box {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(121, 131, 90, 0.15);
+      border-left: 4px solid var(--moss);
+      font-size: 0.82rem;
+      color: var(--forest-ink);
+    }
+
+    /* Saved Configs */
+    .saved-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .saved-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      background: var(--parchment);
+      font-size: 0.78rem;
+    }
+    .saved-item button {
+      min-height: 34px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-soft);
+      background: var(--cream);
+      color: var(--forest-ink);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* HUD Footer Buttons */
+    .hud-footer {
+      padding: 12px 16px calc(12px + var(--safe-bottom));
+      border-top: 1px solid var(--border-soft);
+      background: rgba(242, 228, 204, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .footer-row {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-primary {
+      flex: 1;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 11px;
+      border: none;
+      background: var(--forest);
+      color: var(--cream);
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 160ms ease;
+    }
+    .btn-primary:hover {
+      background: var(--forest-dark);
+    }
+    .btn-secondary {
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: 11px;
+      border: 1px solid var(--border-soft);
+      background: var(--cream);
+      color: var(--forest-ink);
+      font-family: var(--font-sans);
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(26, 38, 30, 0.06);
+    }
+    .btn-secondary:hover {
+      background: var(--parchment);
+    }
+    .btn-ghost {
+      min-height: 36px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--muted-ink);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      background: rgba(37, 69, 51, 0.08);
+      color: var(--forest-ink);
+    }
+
+    /* Modals & Overlays (Intro, Pause, Confirm Reset, Review) */
+    .overlay-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(24, 34, 28, 0.64);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .overlay-backdrop.open {
+      display: flex;
+    }
+    .modal-card {
+      width: 100%;
+      max-width: 520px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      background: var(--cream);
+      border: 1.5px solid rgba(167, 108, 61, 0.35);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+    .modal-eyebrow {
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--oak);
+      margin: 0 0 6px;
+    }
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+      font-weight: 700;
+      color: var(--forest-ink);
+      margin: 0 0 8px;
+    }
+    .modal-lead {
+      font-size: 0.95rem;
+      color: var(--muted-ink);
+      margin: 0 0 18px;
+    }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+      margin-bottom: 18px;
+    }
+    .mode-card {
+      min-height: 54px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-soft);
+      background: var(--parchment);
+      color: var(--forest-ink);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 150ms ease;
+    }
+    .mode-card.selected {
+      background: var(--forest);
+      color: var(--cream);
+      border-color: var(--forest);
+    }
+    .mode-card strong {
+      font-size: 0.92rem;
+    }
+    .mode-card span {
+      font-size: 0.8rem;
+      opacity: 0.88;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .summary-metric {
+      background: var(--parchment);
+      border-radius: 11px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-soft);
+    }
+    .summary-metric .k {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted-ink);
+      display: block;
+    }
+    .summary-metric .v {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--forest-ink);
+    }
+    .notice-box {
+      font-size: 0.78rem;
+      color: var(--muted-ink);
+      background: rgba(216, 174, 102, 0.18);
+      border: 1px solid rgba(167, 108, 61, 0.25);
+      border-radius: 10px;
+      padding: 9px 11px;
+      margin: 12px 0;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 200;
+      background: var(--forest);
+      color: var(--cream);
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    #toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Demo Banner */
+    #demo-banner {
+      position: absolute;
+      left: 16px;
+      top: calc(74px + var(--safe-top));
+      z-index: 32;
+      max-width: 360px;
+      background: rgba(37, 69, 51, 0.94);
+      color: var(--cream);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow-card);
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    #demo-banner.active {
+      display: flex;
+    }
+    #demo-banner p {
+      margin: 0;
+      font-size: 0.84rem;
+    }
+    #demo-banner button {
+      min-height: 36px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(250, 245, 233, 0.4);
+      background: transparent;
+      color: var(--cream);
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Focus Ring */
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 3px solid var(--oak);
+      outline-offset: 2px;
+    }
+
+    /* Responsive Mobile Portrait (360-820px) */
+    @media (max-width: 820px) and (orientation: portrait) {
+      .top-bar {
+        left: 10px;
+        right: 10px;
+        top: calc(8px + var(--safe-top));
+      }
+      .brand-pill {
+        padding: 6px 10px;
+      }
+      .brand-sub {
+        display: none;
+      }
+      .icon-btn .btn-text {
+        display: none;
+      }
+      .dimmer-popover {
+        right: 10px;
+        top: calc(58px + var(--safe-top));
+      }
+      .camera-controls {
+        bottom: calc(42dvh + 10px);
+        left: 10px;
+      }
+      #hud-panel {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 42dvh;
+        border-radius: 20px 20px 0 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        transition: height 240ms ease;
+      }
+      #hud-panel.expanded {
+        height: 70dvh;
+      }
+      .drawer-handle-bar {
+        display: flex;
+      }
+      .hud-header {
+        padding: 6px 14px 8px;
+      }
+      .hud-scroll {
+        padding: 10px 14px;
+      }
+      #dom-fallback-stage {
+        padding: 64px 12px 44dvh 12px;
+      }
+      .fallback-glass {
+        height: 92px;
+      }
+    }
+
+    /* Compact Landscape Mobile / Tablet */
+    @media (max-height: 540px) and (orientation: landscape) {
+      :root {
+        --hud-width: clamp(260px, 38vw, 340px);
+      }
+      .brand-sub {
+        display: none;
+      }
+      .icon-btn .btn-text {
+        display: none;
+      }
+    }
+
+    /* Reduced Motion */
+    body.reduced-motion *,
+    body.reduced-motion *::before,
+    body.reduced-motion *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  </style>
+</head>
+<body>
+  <a href="#hud-panel" class="skip-link">Pular para os controles de iluminação</a>
+
+  <div id="app-shell">
+    <!-- 3D WebGL Viewport -->
+    <div id="scene-viewport" role="region" aria-label="Observatório da Luz em 3D. Arraste para girar levemente a câmera ou clique nos painéis A e B."></div>
+
+    <!-- Accessible 2D DOM Fallback Stage -->
+    <div id="dom-fallback-stage" role="region" aria-label="Representação acessível em 2D dos painéis de luz A e B">
+      <div class="fallback-room" id="fallback-room">
+        <div class="fallback-blinds" id="fallback-blinds" aria-label="Persianas da estufa">
+          <div class="fallback-slat"></div>
+          <div class="fallback-slat"></div>
+          <div class="fallback-slat"></div>
+          <div class="fallback-slat"></div>
+          <div class="fallback-slat"></div>
+        </div>
+        <div class="fallback-panels-row">
+          <div class="fallback-panel-card" id="fallback-card-A">
+            <div class="fallback-glass" id="fallback-glass-A"></div>
+            <strong>Painel A</strong>
+            <div id="fallback-meta-A" style="font-size:0.8rem;color:var(--muted-ink);margin-top:4px;"></div>
+          </div>
+          <div class="fallback-panel-card" id="fallback-card-B">
+            <div class="fallback-glass" id="fallback-glass-B"></div>
+            <strong>Painel B</strong>
+            <div id="fallback-meta-B" style="font-size:0.8rem;color:var(--muted-ink);margin-top:4px;"></div>
+          </div>
+        </div>
+        <p style="margin:14px 0 0;font-size:0.78rem;color:var(--muted-ink);text-align:center;">
+          Modo acessível 2D ativo — os mesmos controles ajustam cor, brilho simulado, inclinação e persianas.
+        </p>
+      </div>
+    </div>
+
+    <!-- Hover Tooltip for 3D Interactive Objects -->
+    <div id="scene-tooltip" role="status" aria-live="polite"></div>
+
+    <!-- Top Brand & Utility Bar -->
+    <header class="top-bar">
+      <div class="brand-pill">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Observatório da Luz</h1>
+          <p class="brand-sub" id="brand-mode-label">Modo Guiado</p>
+        </div>
+      </div>
+
+      <div class="utility-cluster">
+        <button type="button" class="icon-btn" id="btn-dimmer" aria-expanded="false" aria-controls="dimmer-popover" title="Brilho geral da cena">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+          <span class="btn-text">Brilho cena</span>
+        </button>
+        <button type="button" class="icon-btn" id="btn-mute" aria-pressed="false" title="Ativar ou silenciar áudio">
+          <svg id="icon-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <span class="btn-text" id="label-mute">Som</span>
+        </button>
+        <button type="button" class="icon-btn" id="btn-motion" aria-pressed="false" title="Alternar movimento reduzido">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9 12h6"></path></svg>
+          <span class="btn-text">Suave</span>
+        </button>
+        <button type="button" class="icon-btn" id="btn-fallback-toggle" aria-pressed="false" title="Alternar visão 3D ou 2D acessível">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+          <span class="btn-text" id="label-view-mode">2D</span>
+        </button>
+        <button type="button" class="icon-btn" id="btn-pause" title="Pausar sessão (Esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          <span class="btn-text">Pausar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scene Brightness Dimmer Popover (Separate from exercise intensity) -->
+    <div class="dimmer-popover" id="dimmer-popover" role="dialog" aria-label="Ajuste de brilho geral da cena">
+      <div class="control-top">
+        <label for="input-scene-dimmer">Brilho geral da cena</label>
+        <span class="control-value" id="val-scene-dimmer">100%</span>
+      </div>
+      <p>Reduz o brilho visual do ambiente sem alterar a intensidade do exercício.</p>
+      <input type="range" id="input-scene-dimmer" min="35" max="100" step="5" value="100" aria-label="Brilho geral da cena em porcentagem" />
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+        <label for="chk-bloom" style="font-size:0.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="chk-bloom" checked /> Halo suave nos painéis
+        </label>
+        <button type="button" class="btn-ghost" id="btn-close-dimmer">Fechar</button>
+      </div>
+    </div>
+
+    <!-- Demo Banner -->
+    <div id="demo-banner" role="status" aria-live="polite">
+      <p id="demo-text">Demonstração: observando a luz suave mudar de temperatura...</p>
+      <button type="button" id="btn-stop-demo">Parar</button>
+    </div>
+
+    <!-- Accessible Camera Buttons -->
+    <div class="camera-controls" aria-label="Controles de ângulo da câmera">
+      <button type="button" class="cam-btn" id="cam-left" title="Girar câmera à esquerda" aria-label="Girar câmera à esquerda">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <button type="button" class="cam-btn" id="cam-reset" title="Centralizar enquadramento" aria-label="Centralizar câmera">Centro</button>
+      <button type="button" class="cam-btn" id="cam-right" title="Girar câmera à direita" aria-label="Girar câmera à direita">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+
+    <!-- Main HUD Panel (Desktop Right / Mobile Bottom Sheet) -->
+    <aside id="hud-panel" aria-label="Painel de controles do Observatório da Luz">
+      <button type="button" class="drawer-handle-bar" id="btn-drawer-toggle" aria-expanded="false" aria-label="Expandir ou recolher painel de controles">
+        <span class="drawer-pill" aria-hidden="true"></span>
+        <span id="drawer-label">Expandir controles</span>
+      </button>
+
+      <div class="hud-header">
+        <div class="hud-stage-row">
+          <span class="stage-badge" id="hud-stage-badge">Etapa 1 de 5</span>
+          <div class="progress-dots" id="progress-dots" role="tablist" aria-label="Etapas da exploração"></div>
+        </div>
+        <h2 class="hud-title" id="hud-stage-title">Escolher luz inicial suave</h2>
+        <p class="hud-desc" id="hud-stage-desc">Escolha um ponto de partida acolhedor para observar a estufa.</p>
+      </div>
+
+      <div class="hud-scroll" id="hud-scroll">
+        <!-- Accompanied Mode Variable Lock -->
+        <div class="accompanied-box" id="accompanied-box" style="display:none;">
+          <div class="section-label" style="margin-bottom:4px;">
+            <span>Modo Acompanhado</span>
+          </div>
+          <label for="select-lock-var" style="font-size:0.8rem;color:var(--muted-ink);display:block;">
+            Fixar uma variável para explorar as demais com calma:
+          </label>
+          <select id="select-lock-var">
+            <option value="none">Nenhuma variável fixada</option>
+            <option value="intensity">Fixar Intensidade</option>
+            <option value="warmth">Fixar Temperatura aparente</option>
+            <option value="angle">Fixar Direção do painel</option>
+            <option value="blind">Fixar Abertura da persiana</option>
+          </select>
+        </div>
+
+        <!-- Presets Section -->
+        <section class="hud-section" id="sec-presets">
+          <div class="section-label">
+            <span>Presets de luz suave</span>
+            <span style="font-size:0.72rem;font-weight:600;color:var(--muted-ink);text-transform:none;">Toque para aplicar</span>
+          </div>
+          <div class="preset-grid" id="preset-grid"></div>
+        </section>
+
+        <!-- Panel Selector & Compare Section -->
+        <section class="hud-section" id="sec-compare">
+          <div class="section-label">
+            <span>Painéis de vidro canelado</span>
+            <span id="active-panel-pill" style="font-size:0.74rem;color:var(--oak);text-transform:none;">Editando A</span>
+          </div>
+
+          <div class="panel-tabs" role="tablist" aria-label="Selecionar painel de luz">
+            <button type="button" class="panel-tab active" id="tab-panel-A" role="tab" aria-selected="true">
+              <span class="panel-dot" id="dot-panel-A" style="background:#7EC6C2;"></span>
+              Painel A
+            </button>
+            <button type="button" class="panel-tab" id="tab-panel-B" role="tab" aria-selected="false">
+              <span class="panel-dot" id="dot-panel-B" style="background:#F2B86B;"></span>
+              Painel B
+            </button>
+          </div>
+
+          <div class="compare-row" id="compare-controls">
+            <button type="button" class="chip-btn active" id="btn-cmp-side" aria-pressed="true">Lado a lado</button>
+            <button type="button" class="chip-btn" id="btn-cmp-alt" aria-pressed="false">Alternar suave</button>
+            <button type="button" class="chip-btn" id="btn-alt-switch" style="display:none;flex:0.9;">Ver outro</button>
+          </div>
+
+          <div class="snapshot-bar" id="snapshot-bar">
+            <span id="snapshot-status">Snapshot A livre para edição</span>
+            <button type="button" id="btn-toggle-lock-A">Fixar A</button>
+          </div>
+        </section>
+
+        <!-- Sliders Section -->
+        <section class="hud-section" id="sec-sliders">
+          <div class="section-label">
+            <span>Ajustes da luz</span>
+            <span style="font-size:0.72rem;font-weight:600;color:var(--muted-ink);text-transform:none;">Sincronizado na prancheta</span>
+          </div>
+
+          <div class="control-group" id="grp-intensity">
+            <div class="control-top">
+              <label for="slider-intensity">Intensidade <span class="locked-tag" id="lock-tag-intensity" style="display:none;">Fixada</span></label>
+              <span class="control-value" id="val-intensity">65%</span>
+            </div>
+            <input type="range" id="slider-intensity" min="0" max="100" step="1" value="65" />
+            <div class="control-hint"><span>Apagada (0%)</span><span>Suave máxima (100%)</span></div>
+          </div>
+
+          <div class="control-group" id="grp-warmth">
+            <div class="control-top">
+              <label for="slider-warmth">Temperatura aparente <span class="locked-tag" id="lock-tag-warmth" style="display:none;">Fixada</span></label>
+              <span class="control-value" id="val-warmth">Neutra · ~4300K (simulado)</span>
+            </div>
+            <input type="range" class="warmth-slider" id="slider-warmth" min="0" max="100" step="1" value="50" />
+            <div class="control-hint"><span>Quente (âmbar)</span><span>Fria (azul-verde)</span></div>
+          </div>
+
+          <div class="control-group" id="grp-angle">
+            <div class="control-top">
+              <label for="slider-angle">Direção do painel <span class="locked-tag" id="lock-tag-angle" style="display:none;">Fixada</span></label>
+              <span class="control-value" id="val-angle">0°</span>
+            </div>
+            <input type="range" id="slider-angle" min="-25" max="25" step="1" value="0" />
+            <div class="control-hint"><span>-25° (esquerda)</span><span>0°</span><span>+25° (direita)</span></div>
+          </div>
+
+          <div class="control-group" id="grp-blind">
+            <div class="control-top">
+              <label for="slider-blind">Abertura da persiana <span class="locked-tag" id="lock-tag-blind" style="display:none;">Fixada</span></label>
+              <span class="control-value" id="val-blind">35°</span>
+            </div>
+            <input type="range" id="slider-blind" min="0" max="75" step="1" value="35" />
+            <div class="control-hint"><span>Fechada (0°)</span><span>Aberta (75°)</span></div>
+          </div>
+        </section>
+
+        <!-- Preference & Save Section -->
+        <section class="hud-section" id="sec-preference">
+          <div class="section-label">
+            <span>Qual trouxe mais conforto visual?</span>
+          </div>
+          <p style="margin:0 0 9px;font-size:0.79rem;color:var(--muted-ink);">
+            Não existe certo ou errado — escolha apenas o que parece mais agradável agora.
+          </p>
+          <div class="pref-grid" id="pref-grid">
+            <button type="button" class="pref-btn" data-pref="A">Painel A</button>
+            <button type="button" class="pref-btn" data-pref="B">Painel B</button>
+            <button type="button" class="pref-btn" data-pref="ambas">Ambas</button>
+            <button type="button" class="pref-btn" data-pref="nenhuma">Nenhuma</button>
+            <button type="button" class="pref-btn wide" data-pref="nao_sei">Não sei / ainda observando</button>
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button type="button" class="btn-secondary" id="btn-save-config" style="flex:1;min-height:40px;font-size:0.8rem;">
+              Guardar configuração atual
+            </button>
+          </div>
+          <div class="saved-list" id="saved-list"></div>
+        </section>
+
+        <!-- Contextual Feedback & Guided Hint -->
+        <div class="feedback-box" id="feedback-box" aria-live="polite">
+          Observe como o vidro canelado espalha a luz sobre a mesa de carvalho.
+        </div>
+        <button type="button" class="btn-secondary" id="btn-hint" style="display:none;min-height:40px;font-size:0.8rem;">
+          Ver pista suave desta etapa
+        </button>
+      </div>
+
+      <div class="hud-footer">
+        <div class="footer-row">
+          <button type="button" class="btn-secondary" id="btn-prev">Voltar</button>
+          <button type="button" class="btn-primary" id="btn-next">Próxima etapa</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+          <button type="button" class="btn-ghost" id="btn-skip">Pular etapa</button>
+          <button type="button" class="btn-ghost" id="btn-reset-ask">Reiniciar</button>
+          <button type="button" class="btn-ghost" id="btn-open-review">Revisão</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Intro Modal -->
+    <div class="overlay-backdrop open" id="modal-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+      <div class="modal-card">
+        <p class="modal-eyebrow">Estufa de Iluminação · Experiência Interativa</p>
+        <h2 class="modal-title" id="intro-title">Observatório da Luz</h2>
+        <p class="modal-lead">
+          Explore intensidade, temperatura aparente e direção da luz em uma estufa acolhedora para descobrir o que traz mais conforto visual.
+        </p>
+
+        <div class="mode-grid" role="radiogroup" aria-label="Escolha o modo de exploração">
+          <button type="button" class="mode-card selected" data-mode="guiado" role="radio" aria-checked="true">
+            <strong>Modo Guiado</strong>
+            <span>Etapas graduais com pistas opcionais, da luz suave à comparação A e B.</span>
+          </button>
+          <button type="button" class="mode-card" data-mode="livre" role="radio" aria-checked="false">
+            <strong>Modo Livre</strong>
+            <span>Todos os painéis, persianas e presets liberados para explorar sem roteiro.</span>
+          </button>
+          <button type="button" class="mode-card" data-mode="acompanhado" role="radio" aria-checked="false">
+            <strong>Modo Acompanhado</strong>
+            <span>Permite que um adulto fixe uma variável enquanto a outra é explorada.</span>
+          </button>
+        </div>
+
+        <p class="notice-box" style="margin-top:0;">
+          Os rótulos em Kelvin são valores visuais simulados e não representam calibração real de lux ou da tela.
+        </p>
+
+        <div class="footer-row">
+          <button type="button" class="btn-secondary" id="btn-start-demo">Ver demonstração</button>
+          <button type="button" class="btn-primary" id="btn-start-play">Entrar no observatório</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Modal -->
+    <div class="overlay-backdrop" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="modal-card" style="max-width:420px;">
+        <p class="modal-eyebrow">Sessão pausada</p>
+        <h2 class="modal-title" id="pause-title">Pausa tranquila</h2>
+        <p class="modal-lead">Suas configurações dos painéis A e B continuam preservadas.</p>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <button type="button" class="btn-primary" id="btn-resume">Continuar exploração</button>
+          <button type="button" class="btn-secondary" id="btn-change-mode">Trocar modo (Livre / Guiado / Acompanhado)</button>
+          <button type="button" class="btn-secondary" id="btn-pause-review">Ir para revisão e resumo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Destructive Reset Modal -->
+    <div class="overlay-backdrop" id="modal-reset" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <div class="modal-card" style="max-width:420px;">
+        <p class="modal-eyebrow">Confirmação</p>
+        <h2 class="modal-title" id="reset-title">Reiniciar configurações?</h2>
+        <p class="modal-lead">
+          Os painéis A e B voltarão ao preset seguro inicial e a preferência atual será limpa.
+        </p>
+        <div class="footer-row">
+          <button type="button" class="btn-secondary" id="btn-reset-cancel">Cancelar</button>
+          <button type="button" class="btn-primary" id="btn-reset-confirm" style="background:var(--terracotta);">Confirmar reinício</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review & Export Modal -->
+    <div class="overlay-backdrop" id="modal-review" role="dialog" aria-modal="true" aria-labelledby="review-title">
+      <div class="modal-card">
+        <p class="modal-eyebrow">Revisão da exploração</p>
+        <h2 class="modal-title" id="review-title">Registro do Observatório</h2>
+        <p class="modal-lead">
+          Resumo objetivo das configurações observadas nesta sessão — sem pontuações ou avaliação de certo e errado.
+        </p>
+
+        <div class="summary-grid" id="review-summary-grid"></div>
+
+        <div class="hud-section" style="margin-bottom:12px;">
+          <div class="section-label"><span>Comparativo final A × B</span></div>
+          <div id="review-ab-details" style="font-size:0.83rem;color:var(--forest-ink);display:grid;gap:6px;"></div>
+        </div>
+
+        <div class="notice-box">
+          Por padrão, a sessão fica apenas na memória desta aba e não envia dados externos. Em dispositivos compartilhados, evite salvar localmente ou apague ao terminar.
+        </div>
+
+        <div class="footer-row" style="margin-bottom:8px;">
+          <button type="button" class="btn-secondary" id="btn-export-json">Exportar JSON</button>
+          <button type="button" class="btn-secondary" id="btn-save-local">Salvar neste aparelho</button>
+        </div>
+        <div class="footer-row">
+          <button type="button" class="btn-ghost" id="btn-clear-local" style="color:var(--terracotta);">Apagar dados locais</button>
+          <button type="button" class="btn-secondary" id="btn-review-back">Voltar à cena</button>
+          <button type="button" class="btn-primary" id="btn-review-repeat">Nova exploração</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+       * 1. CONTENT MODULE (game/content.ts)
+       * ===================================================================== */
+      const STORAGE_KEY = 'observatorio_da_luz_v1';
+
+      const PRESETS = {
+        amanhecer: {
+          id: 'amanhecer',
+          name: 'Amanhecer',
+          swatch: '#F1B97B',
+          desc: 'Luz quente e baixa, com persianas entreabertas.',
+          A: { intensity: 52, warmth: 22, angle: -8, blind: 28 },
+          B: { intensity: 64, warmth: 36, angle: 8, blind: 28 }
+        },
+        tarde: {
+          id: 'tarde',
+          name: 'Tarde',
+          swatch: '#E59A58',
+          desc: 'Claridade dourada moderada e persianas mais abertas.',
+          A: { intensity: 72, warmth: 76, angle: -10, blind: 52 },
+          B: { intensity: 76, warmth: 20, angle: 10, blind: 52 }
+        },
+        luz_difusa: {
+          id: 'luz_difusa',
+          name: 'Luz difusa',
+          swatch: '#C9DFD9',
+          desc: 'Equilíbrio neutro e suave, sem contrastes fortes.',
+          A: { intensity: 58, warmth: 58, angle: 0, blind: 38 },
+          B: { intensity: 58, warmth: 42, angle: 0, blind: 38 }
+        },
+        noite_suave: {
+          id: 'noite_suave',
+          name: 'Noite suave',
+          swatch: '#9B7C54',
+          desc: 'Baixa luminosidade âmbar e persianas quase fechadas.',
+          A: { intensity: 34, warmth: 16, angle: -5, blind: 10 },
+          B: { intensity: 40, warmth: 28, angle: 5, blind: 10 }
+        }
+      };
+
+      const STAGES = [
+        {
+          id: 'inicio',
+          title: 'Escolher luz inicial suave',
+          desc: 'Experimente os presets abaixo para encontrar uma base confortável.',
+          hint: 'Comece por “Luz difusa” ou “Noite suave” se preferir menos brilho na estufa.'
+        },
+        {
+          id: 'intensidade',
+          title: 'Ajustar intensidade (0–100%)',
+          desc: 'Deslize a intensidade para observar a luz na mesa e nas paredes.',
+          hint: 'Você também pode tocar nos botões da prancheta 3D ou usar as setas do teclado.'
+        },
+        {
+          id: 'temperatura_direcao',
+          title: 'Temperatura, direção e persiana',
+          desc: 'Explore tons quentes e frios, incline o painel (±25°) e gire a persiana.',
+          hint: 'Inclinar o painel muda onde o reflexo cai na mesa; a persiana controla a luz do jardim.'
+        },
+        {
+          id: 'comparar',
+          title: 'Comparar A e B sem pressa',
+          desc: 'Conserve a luz A fixa enquanto ajusta a B lado a lado ou alternando suavemente.',
+          hint: 'Ative “Fixar A” para testar variações em B sem perder sua referência A.'
+        },
+        {
+          id: 'preferencia',
+          title: 'Registrar preferência visual',
+          desc: 'Indique qual iluminação pareceu mais confortável e guarde se desejar.',
+          hint: '“Ambas”, “Nenhuma” e “Não sei” são escolhas igualmente válidas.'
+        }
+      ];
+
+      const PREFERENCE_LABELS = {
+        A: 'Painel A',
+        B: 'Painel B',
+        ambas: 'Ambas',
+        nenhuma: 'Nenhuma',
+        nao_sei: 'Não sei / ainda observando'
+      };
+
+      const MODE_LABELS = {
+        guiado: 'Modo Guiado',
+        livre: 'Modo Livre',
+        acompanhado: 'Modo Acompanhado'
+      };
+
+      const ASSET_MANIFEST = [
+        { id: 'greenhouse', category: 'environment', type: 'procedural_pbr', status: 'loaded' },
+        { id: 'window_frames', category: 'environment', type: 'procedural_pbr', status: 'loaded' },
+        { id: 'blinds', category: 'interactive', type: 'articulated_slats', status: 'loaded' },
+        { id: 'table_round', category: 'hero_prop', type: 'procedural_pbr', status: 'loaded' },
+        { id: 'light_panel_A', category: 'hero_interactive', type: 'pivoting_panel', status: 'loaded' },
+        { id: 'light_panel_B', category: 'hero_interactive', type: 'pivoting_panel', status: 'loaded' },
+        { id: 'ribbed_glass', category: 'hero_material', type: 'fluted_rods_normal', status: 'loaded' },
+        { id: 'brass_stands', category: 'hero_prop', type: 'brushed_metal', status: 'loaded' },
+        { id: 'clipboard', category: 'hero_interactive', type: 'table_prop', status: 'loaded' },
+        { id: 'slider_knob', category: 'interactive', type: 'synced_3d_knobs', status: 'loaded' },
+        { id: 'lamp_mushroom', category: 'accent_light', type: 'ceramic_glass', status: 'loaded' },
+        { id: 'plant_set', category: 'foliage', type: 'instanced_leaves', status: 'loaded' },
+        { id: 'cushions', category: 'soft_prop', type: 'linen_felt', status: 'loaded' },
+        { id: 'garden_baked', category: 'backdrop', type: 'sunset_dome', status: 'loaded' }
+      ];
+
+      /* =====================================================================
+       * 2. RULES MODULE (game/rules.ts)
+       * ===================================================================== */
+      function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+      }
+
+      function sanitizePanel(p) {
+        return {
+          intensity: Math.round(clamp(Number(p.intensity) || 0, 0, 100)),
+          warmth: Math.round(clamp(Number(p.warmth) || 0, 0, 100)),
+          angle: Math.round(clamp(Number(p.angle) || 0, -25, 25)),
+          blind: Math.round(clamp(Number(p.blind) || 0, 0, 75))
+        };
+      }
+
+      // Linear-space interpolation between warm amber (~2400K) and cool teal-daylight (~6500K)
+      function warmthToSimulatedKelvin(warmth) {
+        return Math.round(2400 + (clamp(warmth, 0, 100) / 100) * 4100);
+      }
+
+      function warmthLabel(warmth) {
+        if (warmth <= 28) return 'Quente';
+        if (warmth <= 45) return 'Suave quente';
+        if (warmth <= 58) return 'Neutra';
+        if (warmth <= 75) return 'Suave fria';
+        return 'Fria';
+      }
+
+      function warmthToHex(warmth) {
+        const t = clamp(warmth, 0, 100) / 100;
+        // sRGB -> approximate linear interpolation -> sRGB
+        const warm = [1.0, 0.72, 0.40];   // Warm amber
+        const mid  = [0.98, 0.94, 0.85];  // Soft warm-neutral paper
+        const cool = [0.56, 0.86, 0.85];  // Soft teal-blue glass from brief
+        let r, g, b;
+        if (t < 0.5) {
+          const k = t * 2;
+          r = warm[0] + (mid[0] - warm[0]) * k;
+          g = warm[1] + (mid[1] - warm[1]) * k;
+          b = warm[2] + (mid[2] - warm[2]) * k;
+        } else {
+          const k = (t - 0.5) * 2;
+          r = mid[0] + (cool[0] - mid[0]) * k;
+          g = mid[1] + (cool[1] - mid[1]) * k;
+          b = mid[2] + (cool[2] - mid[2]) * k;
+        }
+        const toHex = (c) => Math.round(clamp(c, 0, 1) * 255).toString(16).padStart(2, '0');
+        return '#' + toHex(r) + toHex(g) + toHex(b);
+      }
+
+      function formatDuration(ms) {
+        const totalSec = Math.max(0, Math.round(ms / 1000));
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return m > 0 ? m + ' min ' + s + ' s' : s + ' s';
+      }
+
+      /* =====================================================================
+       * 3. STATE MODULE (game/state.ts)
+       * ===================================================================== */
+      function createInitialState(seed) {
+        const base = PRESETS.tarde;
+        return {
+          version: '1.0.0',
+          seed: seed || Math.floor(Date.now() % 100000),
+          screen: 'intro',
+          mode: 'guiado',
+          stage: 0,
+          paused: false,
+          demoActive: false,
+          activePanel: 'A',
+          compareMode: 'side_by_side',
+          alternateShowing: 'A',
+          snapshotALocked: false,
+          activePreset: 'tarde',
+          A: sanitizePanel(base.A),
+          B: sanitizePanel(base.B),
+          lockedVar: 'none',
+          sceneDimmer: 100,
+          bloomEnabled: true,
+          reducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+          muted: false,
+          domFallbackMode: false,
+          preference: null,
+          savedConfigs: [],
+          feedback: 'Observe os dois painéis de vidro canelado sobre a mesa de carvalho.',
+          telemetry: {
+            activeMs: 0,
+            lastTickAt: performance.now(),
+            pauses: 0,
+            hintsUsed: 0,
+            stagesVisited: [0],
+            comparisonsCount: 0,
+            choicesLog: []
+          }
+        };
+      }
+
+      let state = createInitialState();
+      let transitionLockUntil = 0;
+
+      // Host integration postMessage (optional, versioned, no personal data)
+      function emitHostEvent(type, payload) {
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              namespace: 'observatorio_da_luz',
+              version: state.version,
+              type: type,
+              payload: payload || {}
+            }, '*');
+          }
+        } catch (e) {
+          // Ignore sandbox postMessage restrictions
+        }
+      }
+
+      function recordChoice(action, detail) {
+        state.telemetry.choicesLog.push({
+          tMs: Math.round(state.telemetry.activeMs),
+          action: action,
+          detail: detail
+        });
+        if (state.telemetry.choicesLog.length > 80) {
+          state.telemetry.choicesLog.shift();
+        }
+      }
+
+      function buildSummaryObject() {
+        return {
+          version: state.version,
+          seed: state.seed,
+          mode: state.mode,
+          activeDurationMs: Math.round(state.telemetry.activeMs),
+          activeDurationFormatted: formatDuration(state.telemetry.activeMs),
+          stagesVisited: state.telemetry.stagesVisited.map((i) => STAGES[i] ? STAGES[i].title : String(i)),
+          pauses: state.telemetry.pauses,
+          hintsUsed: state.telemetry.hintsUsed,
+          comparisonsCount: state.telemetry.comparisonsCount,
+          activePreset: state.activePreset,
+          compareMode: state.compareMode,
+          preference: state.preference,
+          preferenceLabel: state.preference ? PREFERENCE_LABELS[state.preference] : 'Não selecionada',
+          panelA: Object.assign({}, state.A, { simulatedKelvin: warmthToSimulatedKelvin(state.A.warmth) }),
+          panelB: Object.assign({}, state.B, { simulatedKelvin: warmthToSimulatedKelvin(state.B.warmth) }),
+          sceneDimmerPercent: state.sceneDimmer,
+          savedConfigsCount: state.savedConfigs.length,
+          disclaimer: 'Registros objetivos de preferência visual simulada; sem calibração real de lux ou finalidade clínica.'
+        };
+      }
+
+      /* =====================================================================
+       * 4. AUDIO MODULE (audio/ — Pure Web Audio API, soft foley)
+       * ===================================================================== */
+      const AudioEngine = (function () {
+        let ctx = null;
+        let masterGain = null;
+
+        function ensureContext() {
+          if (state.muted) return null;
+          if (!ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return null;
+            ctx = new AudioCtx();
+            masterGain = ctx.createGain();
+            masterGain.gain.value = 0.12; // Safe headroom
+            masterGain.connect(ctx.destination);
+          }
+          if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+          }
+          return ctx;
+        }
+
+        function playTone(freq, duration, type, gainPeak) {
+          const c = ensureContext();
+          if (!c || state.muted) return;
+          const now = c.currentTime;
+          const osc = c.createOscillator();
+          const env = c.createGain();
+          osc.type = type || 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          env.gain.setValueAtTime(0.0001, now);
+          env.gain.linearRampToValueAtTime(Math.min(gainPeak || 0.25, 0.35), now + 0.015);
+          env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          osc.connect(env);
+          env.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + duration + 0.02);
+        }
+
+        let lastSliderSound = 0;
+
+        return {
+          click() {
+            playTone(392, 0.09, 'triangle', 0.22);
+          },
+          preset() {
+            playTone(330, 0.14, 'sine', 0.2);
+            setTimeout(() => playTone(440, 0.18, 'sine', 0.18), 60);
+          },
+          slider(norm) {
+            const now = performance.now();
+            if (now - lastSliderSound < 85) return;
+            lastSliderSound = now;
+            playTone(260 + clamp(norm, 0, 1) * 240, 0.06, 'sine', 0.12);
+          },
+          complete() {
+            playTone(392, 0.2, 'sine', 0.2);
+            setTimeout(() => playTone(493.88, 0.22, 'sine', 0.18), 90);
+            setTimeout(() => playTone(587.33, 0.3, 'sine', 0.18), 180);
+          },
+          dispose() {
+            if (ctx) {
+              ctx.close().catch(() => {});
+              ctx = null;
+            }
+          }
+        };
+      })();
+
+      /* =====================================================================
+       * 5. SCENE MODULE (scene/ — Three.js 3D Diorama)
+       * ===================================================================== */
+      const Scene3D = (function () {
+        let renderer, scene, camera;
+        let container;
+        let rafId = null;
+        let disposed = false;
+        let webglAvailable = false;
+
+        // Procedural textures
+        const textures = [];
+
+        // Animated/Interactive refs
+        const blindSlats = [];
+        let panelAGroup, panelBGroup;
+        let panelAGlassMat, panelBGlassMat;
+        let panelAGlowMat, panelBGlowMat;
+        let panelAHaloMat, panelBHaloMat;
+        let lightA, lightB;
+        let sunLight, hemiLight, ambLight, mushroomLight;
+        let knobIntensity, knobWarmth, knobAngle;
+        let hoverMesh = null;
+        const interactiveMeshes = [];
+
+        // Smooth interpolation state
+        const smooth = {
+          A: { intensity: 72, warmth: 76, angle: -10, blind: 52, vis: 1 },
+          B: { intensity: 76, warmth: 20, angle: 10, blind: 52, vis: 1 },
+          dimmer: 1.0,
+          camYaw: 0.0,
+          targetCamYaw: 0.0,
+          camPitch: 0.0,
+          targetCamPitch: 0.0
+        };
+
+        // Raycaster & pointer
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        let draggingCamera = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let dragMoved = false;
+
+        function makeWoodTexture(baseHex, grainHex) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = baseHex;
+          ctx.fillRect(0, 0, 256, 256);
+          ctx.strokeStyle = grainHex;
+          ctx.globalAlpha = 0.22;
+          for (let i = 0; i < 60; i++) {
+            ctx.beginPath();
+            const y = (i / 60) * 256;
+            ctx.lineWidth = 1 + (i % 3);
+            ctx.moveTo(0, y);
+            ctx.bezierCurveTo(85, y + Math.sin(i) * 5, 170, y - Math.cos(i) * 5, 256, y);
+            ctx.stroke();
+          }
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.wrapS = THREE.RepeatWrapping;
+          tex.wrapT = THREE.RepeatWrapping;
+          tex.encoding = THREE.sRGBEncoding;
+          textures.push(tex);
+          return tex;
+        }
+
+        function makePaperTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FAF5E9';
+          ctx.fillRect(0, 0, 256, 256);
+          ctx.fillStyle = 'rgba(167, 108, 61, 0.08)';
+          for (let i = 0; i < 420; i++) {
+            ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 1);
+          }
+          // Subtle clipboard lines
+          ctx.strokeStyle = 'rgba(37, 69, 51, 0.16)';
+          ctx.lineWidth = 2;
+          [74, 132, 190].forEach((y) => {
+            ctx.beginPath();
+            ctx.moveTo(28, y);
+            ctx.lineTo(228, y);
+            ctx.stroke();
+          });
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.encoding = THREE.sRGBEncoding;
+          textures.push(tex);
+          return tex;
+        }
+
+        function makeGardenTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 512;
+          const ctx = canvas.getContext('2d');
+          // Golden hour sunset sky
+          const grad = ctx.createLinearGradient(0, 0, 0, 512);
+          grad.addColorStop(0.0, '#44586A');
+          grad.addColorStop(0.32, '#9A7863');
+          grad.addColorStop(0.60, '#E3A468');
+          grad.addColorStop(0.78, '#F2C98A');
+          grad.addColorStop(1.0, '#3D523A');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 512, 512);
+
+          // Soft sun glow
+          const sun = ctx.createRadialGradient(210, 290, 10, 210, 290, 140);
+          sun.addColorStop(0, 'rgba(255, 240, 200, 0.85)');
+          sun.addColorStop(0.5, 'rgba(242, 184, 110, 0.35)');
+          sun.addColorStop(1, 'rgba(242, 184, 110, 0)');
+          ctx.fillStyle = sun;
+          ctx.fillRect(0, 0, 512, 512);
+
+          // Garden foliage silhouettes
+          const layers = [
+            { y: 360, color: '#586B49', count: 16, r: 52 },
+            { y: 410, color: '#394D34', count: 18, r: 48 },
+            { y: 465, color: '#243525', count: 22, r: 45 }
+          ];
+          layers.forEach((layer, idx) => {
+            ctx.fillStyle = layer.color;
+            for (let i = 0; i < layer.count; i++) {
+              const x = (i / (layer.count - 1)) * 512 + Math.sin(i * 2.1 + idx) * 18;
+              const r = layer.r * (0.7 + ((i * 17) % 10) / 20);
+              ctx.beginPath();
+              ctx.arc(x, layer.y + Math.cos(i) * 14, r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.encoding = THREE.sRGBEncoding;
+          textures.push(tex);
+          return tex;
+        }
+
+        function makeRugTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#79835A';
+          ctx.fillRect(0, 0, 256, 256);
+          // Woven concentric rings
+          for (let r = 16; r < 126; r += 14) {
+            ctx.strokeStyle = r % 28 === 0 ? 'rgba(242, 228, 204, 0.32)' : 'rgba(37, 69, 51, 0.25)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(128, 128, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.encoding = THREE.sRGBEncoding;
+          textures.push(tex);
+          return tex;
+        }
+
+        function buildLightPanel(id, xPos, initialColorHex) {
+          const root = new THREE.Group();
+          root.name = 'light_panel_' + id;
+          root.position.set(xPos, 0.80, -0.08);
+
+          const brassMat = new THREE.MeshStandardMaterial({
+            color: 0xD8AE66,
+            metalness: 0.78,
+            roughness: 0.28
+          });
+
+          // Brass base (brass_stands)
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.032, 32), brassMat);
+          base.position.y = 0.016;
+          base.castShadow = true;
+          base.receiveShadow = true;
+          root.add(base);
+
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.14, 18), brassMat);
+          stem.position.y = 0.09;
+          stem.castShadow = true;
+          root.add(stem);
+
+          // Fork arms
+          const forkBar = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.022, 0.026), brassMat);
+          forkBar.position.y = 0.16;
+          root.add(forkBar);
+
+          [-0.22, 0.22].forEach((sideX) => {
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.26, 0.026), brassMat);
+            arm.position.set(sideX, 0.28, 0);
+            root.add(arm);
+
+            const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.03, 16), brassMat);
+            knob.rotation.z = Math.PI / 2;
+            knob.position.set(sideX + (sideX < 0 ? -0.016 : 0.016), 0.38, 0);
+            root.add(knob);
+          });
+
+          // Pivoting frame (rotates ±25° around Y or X — we tilt gently around Y/X for clear directional cue)
+          const pivot = new THREE.Group();
+          pivot.name = 'pivot_' + id;
+          pivot.position.set(0, 0.38, 0);
+          root.add(pivot);
+
+          // Outer brass frame
+          const frameW = 0.40;
+          const frameH = 0.54;
+          const frameD = 0.045;
+          const topBar = new THREE.Mesh(new THREE.BoxGeometry(frameW + 0.03, 0.024, frameD), brassMat);
+          topBar.position.y = frameH / 2;
+          pivot.add(topBar);
+          const botBar = new THREE.Mesh(new THREE.BoxGeometry(frameW + 0.03, 0.024, frameD), brassMat);
+          botBar.position.y = -frameH / 2;
+          pivot.add(botBar);
+          [-frameW / 2, frameW / 2].forEach((sx) => {
+            const vBar = new THREE.Mesh(new THREE.BoxGeometry(0.024, frameH, frameD), brassMat);
+            vBar.position.x = sx;
+            pivot.add(vBar);
+          });
+
+          // Back casing (matte warm oak/brass back)
+          const backPlate = new THREE.Mesh(
+            new THREE.BoxGeometry(frameW - 0.01, frameH - 0.01, 0.014),
+            new THREE.MeshStandardMaterial({ color: 0x5A4632, roughness: 0.72, metalness: 0.2 })
+          );
+          backPlate.position.z = -0.014;
+          pivot.add(backPlate);
+
+          // Emissive inner diffuser
+          const glowMat = new THREE.MeshStandardMaterial({
+            color: initialColorHex,
+            emissive: initialColorHex,
+            emissiveIntensity: 1.15,
+            roughness: 0.35,
+            metalness: 0.05
+          });
+          const diffuser = new THREE.Mesh(new THREE.PlaneGeometry(frameW - 0.03, frameH - 0.03), glowMat);
+          diffuser.position.z = -0.002;
+          pivot.add(diffuser);
+
+          // Ribbed glass (vertical fluted rods)
+          const glassMat = new THREE.MeshPhysicalMaterial({
+            color: initialColorHex,
+            emissive: initialColorHex,
+            emissiveIntensity: 0.35,
+            roughness: 0.16,
+            metalness: 0.02,
+            transparent: true,
+            opacity: 0.78
+          });
+          const rodCount = 13;
+          const rodGeo = new THREE.CylinderGeometry(0.013, 0.013, frameH - 0.03, 10);
+          for (let i = 0; i < rodCount; i++) {
+            const rx = -0.168 + (i / (rodCount - 1)) * 0.336;
+            const rod = new THREE.Mesh(rodGeo, glassMat);
+            rod.position.set(rx, 0, 0.012);
+            pivot.add(rod);
+          }
+
+          // Soft halo plane (toggled with bloomEnabled)
+          const haloCanvas = document.createElement('canvas');
+          haloCanvas.width = 128;
+          haloCanvas.height = 128;
+          const hctx = haloCanvas.getContext('2d');
+          const hgrad = hctx.createRadialGradient(64, 64, 12, 64, 64, 64);
+          hgrad.addColorStop(0, 'rgba(255,255,255,0.55)');
+          hgrad.addColorStop(0.55, 'rgba(255,255,255,0.16)');
+          hgrad.addColorStop(1, 'rgba(255,255,255,0)');
+          hctx.fillStyle = hgrad;
+          hctx.fillRect(0, 0, 128, 128);
+          const haloTex = new THREE.CanvasTexture(haloCanvas);
+          textures.push(haloTex);
+
+          const haloMat = new THREE.MeshBasicMaterial({
+            map: haloTex,
+            color: initialColorHex,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+          });
+          const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.76, 0.88), haloMat);
+          halo.position.z = 0.026;
+          pivot.add(halo);
+
+          // Invisible picking collider for clean raycasting
+          const collider = new THREE.Mesh(
+            new THREE.BoxGeometry(0.46, 0.62, 0.14),
+            new THREE.MeshBasicMaterial({ visible: false })
+          );
+          collider.userData = {
+            interactive: true,
+            action: 'select_panel',
+            panelId: id,
+            label: 'Painel ' + id + ' — clique para selecionar'
+          };
+          pivot.add(collider);
+          interactiveMeshes.push(collider);
+
+          // Dynamic light per panel
+          const pLight = new THREE.PointLight(initialColorHex, 1.4, 4.8, 1.7);
+          pLight.position.set(0, 0.0, 0.26);
+          pivot.add(pLight);
+
+          return { root, pivot, glowMat, glassMat, haloMat, light: pLight };
+        }
+
+        function buildPlant(x, y, z, scale, potColor) {
+          const group = new THREE.Group();
+          group.position.set(x, y, z);
+          group.scale.setScalar(scale);
+
+          const potMat = new THREE.MeshStandardMaterial({ color: potColor, roughness: 0.78 });
+          const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.24, 20), potMat);
+          pot.position.y = 0.12;
+          pot.castShadow = true;
+          pot.receiveShadow = true;
+          group.add(pot);
+
+          const soil = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.145, 0.145, 0.02, 16),
+            new THREE.MeshStandardMaterial({ color: 0x3D2E22, roughness: 0.95 })
+          );
+          soil.position.y = 0.235;
+          group.add(soil);
+
+          const leafMat1 = new THREE.MeshStandardMaterial({ color: 0x2F523B, roughness: 0.68, side: THREE.DoubleSide });
+          const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x5F764A, roughness: 0.68, side: THREE.DoubleSide });
+
+          for (let i = 0; i < 9; i++) {
+            const ang = (i / 9) * Math.PI * 2 + (i % 2) * 0.25;
+            const stemH = 0.22 + (i % 3) * 0.12;
+            const leafGroup = new THREE.Group();
+            leafGroup.position.set(Math.cos(ang) * 0.04, 0.24, Math.sin(ang) * 0.04);
+            leafGroup.rotation.y = -ang;
+            leafGroup.rotation.z = 0.25 + (i % 3) * 0.16;
+
+            const stem = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.007, 0.01, stemH, 6),
+              leafMat1
+            );
+            stem.position.y = stemH / 2;
+            leafGroup.add(stem);
+
+            const blade = new THREE.Mesh(
+              new THREE.SphereGeometry(0.095, 10, 8),
+              i % 2 === 0 ? leafMat1 : leafMat2
+            );
+            blade.scale.set(1.25, 0.14, 0.78);
+            blade.position.set(0.05, stemH, 0);
+            blade.castShadow = true;
+            leafGroup.add(blade);
+
+            group.add(leafGroup);
+          }
+          return group;
+        }
+
+        function init() {
+          container = document.getElementById('scene-viewport');
+          if (!container || typeof THREE === 'undefined') {
+            enableFallback(true);
+            return false;
+          }
+
+          try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+          } catch (e) {
+            enableFallback(true);
+            return false;
+          }
+
+          webglAvailable = true;
+          const isMobile = window.innerWidth <= 820;
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          renderer.shadowMap.enabled = true;
+          renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+          renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          renderer.toneMappingExposure = 1.08;
+          renderer.outputEncoding = THREE.sRGBEncoding;
+          container.appendChild(renderer.domElement);
+
+          // Context loss recovery -> switch cleanly to accessible 2D mode
+          renderer.domElement.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            enableFallback(true);
+            showToast('WebGL pausado pelo navegador — modo acessível 2D ativado.');
+          }, false);
+
+          scene = new THREE.Scene();
+          scene.background = new THREE.Color(0x2D2823);
+          scene.fog = new THREE.Fog(0x2F2923, 7.5, 16);
+
+          camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 30);
+          updateCameraLayout(true);
+
+          // Materials
+          const oakTex = makeWoodTexture('#A76C3D', '#633B1D');
+          const darkOakTex = makeWoodTexture('#7A4D2A', '#472912');
+          const floorTex = makeWoodTexture('#8E623D', '#58371E');
+          floorTex.repeat.set(4, 4);
+
+          const oakMat = new THREE.MeshStandardMaterial({ map: oakTex, roughness: 0.72, metalness: 0.04 });
+          const darkOakMat = new THREE.MeshStandardMaterial({ map: darkOakTex, roughness: 0.78, metalness: 0.04 });
+          const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.76, metalness: 0.03 });
+          const wallPlasterMat = new THREE.MeshStandardMaterial({ color: 0xE6D7BE, roughness: 0.92 });
+          const glassPaneMat = new THREE.MeshPhysicalMaterial({
+            color: 0xFFF2DC,
+            roughness: 0.12,
+            metalness: 0.05,
+            transparent: true,
+            opacity: 0.16
+          });
+
+          // 1. Floor & Greenhouse Structure (greenhouse + window_frames)
+          const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat);
+          floor.rotation.x = -Math.PI / 2;
+          floor.receiveShadow = true;
+          scene.add(floor);
+
+          // Woven floor rug
+          const rug = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.55, 1.56, 0.018, 40),
+            new THREE.MeshStandardMaterial({ map: makeRugTexture(), roughness: 0.94 })
+          );
+          rug.position.set(0, 0.009, 0.1);
+          rug.receiveShadow = true;
+          scene.add(rug);
+
+          // Low dado walls
+          const backDado = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.95, 0.18), wallPlasterMat);
+          backDado.position.set(0, 0.475, -2.15);
+          backDado.receiveShadow = true;
+          scene.add(backDado);
+
+          const leftDado = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.95, 5.2), wallPlasterMat);
+          leftDado.position.set(-2.95, 0.475, 0.25);
+          leftDado.receiveShadow = true;
+          scene.add(leftDado);
+
+          // Greenhouse wooden mullions (window_frames)
+          [-2.85, -1.45, 0.0, 1.45, 2.85].forEach((wx) => {
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.11, 3.3, 0.14), oakMat);
+            post.position.set(wx, 1.65, -2.12);
+            post.castShadow = true;
+            post.receiveShadow = true;
+            scene.add(post);
+          });
+          [0.95, 2.25, 3.25].forEach((wy) => {
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(6.0, 0.1, 0.15), oakMat);
+            beam.position.set(0, wy, -2.12);
+            scene.add(beam);
+          });
+          // Roof rafters
+          [-2.1, -0.7, 0.7, 2.1].forEach((rx) => {
+            const rafter = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.12, 4.4), oakMat);
+            rafter.position.set(rx, 3.35, -0.2);
+            rafter.rotation.x = 0.08;
+            scene.add(rafter);
+          });
+
+          // Window glass pane
+          const backGlass = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.3), glassPaneMat);
+          backGlass.position.set(0, 2.1, -2.16);
+          scene.add(backGlass);
+
+          // 2. Sunset Garden Backdrop (garden_baked)
+          const gardenBackdrop = new THREE.Mesh(
+            new THREE.PlaneGeometry(8.4, 4.8),
+            new THREE.MeshBasicMaterial({ map: makeGardenTexture() })
+          );
+          gardenBackdrop.position.set(0, 2.0, -3.25);
+          scene.add(gardenBackdrop);
+
+          // 3. Articulated Horizontal Blinds (blinds)
+          const blindsGroup = new THREE.Group();
+          blindsGroup.name = 'blinds';
+          blindsGroup.position.set(0, 0, -2.02);
+          const slatMat = new THREE.MeshStandardMaterial({ color: 0xC3925B, roughness: 0.72 });
+          const slatCount = 11;
+          for (let i = 0; i < slatCount; i++) {
+            const slat = new THREE.Mesh(new THREE.BoxGeometry(4.15, 0.016, 0.095), slatMat);
+            slat.position.set(0, 2.95 - i * 0.135, 0);
+            slat.castShadow = true;
+            blindsGroup.add(slat);
+            blindSlats.push(slat);
+          }
+          // Blinds interactive collider
+          const blindCollider = new THREE.Mesh(
+            new THREE.BoxGeometry(4.2, 1.5, 0.18),
+            new THREE.MeshBasicMaterial({ visible: false })
+          );
+          blindCollider.position.set(0, 2.3, 0);
+          blindCollider.userData = {
+            interactive: true,
+            action: 'cycle_blinds',
+            label: 'Persianas — clique para alternar abertura'
+          };
+          blindsGroup.add(blindCollider);
+          interactiveMeshes.push(blindCollider);
+          scene.add(blindsGroup);
+
+          // 4. Round Wooden Table (table_round)
+          const tableGroup = new THREE.Group();
+          tableGroup.name = 'table_round';
+          const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 0.90, 0.055, 44), oakMat);
+          tableTop.position.y = 0.77;
+          tableTop.castShadow = true;
+          tableTop.receiveShadow = true;
+          tableGroup.add(tableTop);
+
+          const tableRim = new THREE.Mesh(new THREE.TorusGeometry(0.91, 0.022, 12, 48), darkOakMat);
+          tableRim.rotation.x = Math.PI / 2;
+          tableRim.position.y = 0.768;
+          tableGroup.add(tableRim);
+
+          const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.13, 0.72, 24), darkOakMat);
+          pedestal.position.y = 0.39;
+          pedestal.castShadow = true;
+          tableGroup.add(pedestal);
+
+          const tableFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 0.05, 28), darkOakMat);
+          tableFoot.position.y = 0.035;
+          tableFoot.receiveShadow = true;
+          tableGroup.add(tableFoot);
+          scene.add(tableGroup);
+
+          // 5. Light Panels A & B (light_panel_A, light_panel_B, ribbed_glass, brass_stands)
+          const pA = buildLightPanel('A', -0.35, warmthToHex(state.A.warmth));
+          panelAGroup = pA.pivot;
+          panelAGlowMat = pA.glowMat;
+          panelAGlassMat = pA.glassMat;
+          panelAHaloMat = pA.haloMat;
+          lightA = pA.light;
+          scene.add(pA.root);
+
+          const pB = buildLightPanel('B', 0.35, warmthToHex(state.B.warmth));
+          panelBGroup = pB.pivot;
+          panelBGlowMat = pB.glowMat;
+          panelBGlassMat = pB.glassMat;
+          panelBHaloMat = pB.haloMat;
+          lightB = pB.light;
+          scene.add(pB.root);
+
+          // 6. Clipboard + Physical Synced 3D Sliders (clipboard + slider_knob)
+          const clipGroup = new THREE.Group();
+          clipGroup.name = 'clipboard';
+          clipGroup.position.set(0.0, 0.805, 0.44);
+          clipGroup.rotation.y = -0.08;
+
+          const board = new THREE.Mesh(
+            new THREE.BoxGeometry(0.42, 0.016, 0.30),
+            new THREE.MeshStandardMaterial({ color: 0x9F6B40, roughness: 0.84 })
+          );
+          board.castShadow = true;
+          board.receiveShadow = true;
+          clipGroup.add(board);
+
+          const paper = new THREE.Mesh(
+            new THREE.BoxGeometry(0.36, 0.006, 0.24),
+            new THREE.MeshStandardMaterial({ map: makePaperTexture(), roughness: 0.9 })
+          );
+          paper.position.set(0, 0.011, 0.01);
+          paper.receiveShadow = true;
+          clipGroup.add(paper);
+
+          const clipBrass = new THREE.Mesh(
+            new THREE.BoxGeometry(0.11, 0.022, 0.035),
+            new THREE.MeshStandardMaterial({ color: 0xD8AE66, metalness: 0.8, roughness: 0.25 })
+          );
+          clipBrass.position.set(0, 0.02, -0.125);
+          clipGroup.add(clipBrass);
+
+          const knobMat = new THREE.MeshStandardMaterial({ color: 0x254533, roughness: 0.45, metalness: 0.12 });
+          const trackMat = new THREE.MeshStandardMaterial({ color: 0x7A5434, roughness: 0.7 });
+
+          function makeSliderRow(zOff, varName, label) {
+            const track = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.008, 0.012), trackMat);
+            track.position.set(0, 0.016, zOff);
+            clipGroup.add(track);
+
+            const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.018, 18), knobMat);
+            knob.position.set(0, 0.024, zOff);
+            knob.castShadow = true;
+            knob.userData = {
+              interactive: true,
+              action: 'nudge_slider',
+              varName: varName,
+              label: label + ' (clique para ajustar)'
+            };
+            clipGroup.add(knob);
+            interactiveMeshes.push(knob);
+            return knob;
+          }
+
+          knobIntensity = makeSliderRow(-0.045, 'intensity', 'Prancheta: Intensidade');
+          knobWarmth = makeSliderRow(0.02, 'warmth', 'Prancheta: Temperatura');
+          knobAngle = makeSliderRow(0.085, 'angle', 'Prancheta: Direção');
+          scene.add(clipGroup);
+
+          // Pencil & ceramic bud vase on table
+          const pencil = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.006, 0.006, 0.19, 8),
+            new THREE.MeshStandardMaterial({ color: 0xD8AE66, roughness: 0.6 })
+          );
+          pencil.rotation.z = Math.PI / 2;
+          pencil.rotation.y = 0.45;
+          pencil.position.set(0.32, 0.805, 0.46);
+          scene.add(pencil);
+
+          const budVase = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.032, 0.055, 0.14, 18),
+            new THREE.MeshStandardMaterial({ color: 0xB96A46, roughness: 0.65 })
+          );
+          budVase.position.set(-0.56, 0.865, 0.36);
+          budVase.castShadow = true;
+          scene.add(budVase);
+
+          // 7. Side Shelf & Mushroom Lamp on the Left (lamp_mushroom)
+          const shelfGroup = new THREE.Group();
+          shelfGroup.position.set(-1.95, 0, -1.15);
+          shelfGroup.rotation.y = 0.55;
+
+          const shelfBody = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.92, 0.36), darkOakMat);
+          shelfBody.position.y = 0.46;
+          shelfBody.castShadow = true;
+          shelfBody.receiveShadow = true;
+          shelfGroup.add(shelfBody);
+
+          const lampGroup = new THREE.Group();
+          lampGroup.name = 'lamp_mushroom';
+          lampGroup.position.set(0.05, 0.92, 0);
+
+          const lampStem = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.055, 0.085, 0.22, 20),
+            new THREE.MeshStandardMaterial({ color: 0xF2E4CC, roughness: 0.4 })
+          );
+          lampStem.position.y = 0.11;
+          lampGroup.add(lampStem);
+
+          const lampCap = new THREE.Mesh(
+            new THREE.SphereGeometry(0.18, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.56),
+            new THREE.MeshStandardMaterial({
+              color: 0xFFF3D9,
+              emissive: 0xF5C27A,
+              emissiveIntensity: 0.72,
+              roughness: 0.28
+            })
+          );
+          lampCap.position.y = 0.19;
+          lampGroup.add(lampCap);
+
+          mushroomLight = new THREE.PointLight(0xFFCB86, 0.85, 4.0, 2);
+          mushroomLight.position.set(0, 0.22, 0.08);
+          lampGroup.add(mushroomLight);
+          shelfGroup.add(lampGroup);
+          scene.add(shelfGroup);
+
+          // 8. Potted Plants (plant_set)
+          scene.add(buildPlant(-1.55, 0, -1.65, 1.35, 0xB96A46));
+          scene.add(buildPlant(1.45, 0, -1.55, 1.25, 0xD8AE66));
+          scene.add(buildPlant(-1.42, 0, 0.55, 0.95, 0xA76C3D));
+          scene.add(buildPlant(1.22, 0, -0.85, 0.85, 0x79835A));
+
+          // 9. Floor Cushions (cushions)
+          const cushionGeo = new THREE.CylinderGeometry(0.28, 0.30, 0.12, 24);
+          const cushion1 = new THREE.Mesh(
+            cushionGeo,
+            new THREE.MeshStandardMaterial({ color: 0xB96A46, roughness: 0.92 })
+          );
+          cushion1.scale.set(1.1, 0.85, 0.95);
+          cushion1.position.set(-1.12, 0.06, 0.88);
+          cushion1.rotation.y = 0.4;
+          cushion1.castShadow = true;
+          cushion1.receiveShadow = true;
+          scene.add(cushion1);
+
+          const cushion2 = new THREE.Mesh(
+            cushionGeo,
+            new THREE.MeshStandardMaterial({ color: 0xF2E4CC, roughness: 0.92 })
+          );
+          cushion2.scale.set(1.0, 0.82, 1.05);
+          cushion2.position.set(-0.78, 0.11, 1.06);
+          cushion2.rotation.z = -0.18;
+          cushion2.castShadow = true;
+          cushion2.receiveShadow = true;
+          scene.add(cushion2);
+
+          // 10. Base Environment Lighting
+          hemiLight = new THREE.HemisphereLight(0xFFE6C2, 0x3D4939, 0.65);
+          scene.add(hemiLight);
+
+          ambLight = new THREE.AmbientLight(0xF2DEC2, 0.28);
+          scene.add(ambLight);
+
+          sunLight = new THREE.DirectionalLight(0xFFB974, 1.05);
+          sunLight.position.set(-1.6, 3.2, -2.8);
+          sunLight.castShadow = true;
+          sunLight.shadow.mapSize.width = isMobile ? 512 : 1024;
+          sunLight.shadow.mapSize.height = isMobile ? 512 : 1024;
+          sunLight.shadow.camera.near = 0.5;
+          sunLight.shadow.camera.far = 12;
+          sunLight.shadow.bias = -0.001;
+          scene.add(sunLight);
+
+          // Pointer Events for Camera Orbit & 3D Picking
+          const dom = renderer.domElement;
+          dom.addEventListener('pointerdown', onPointerDown);
+          dom.addEventListener('pointermove', onPointerMove);
+          dom.addEventListener('pointerup', onPointerUp);
+          dom.addEventListener('pointercancel', onPointerUp);
+          window.addEventListener('resize', onResize);
+
+          animate();
+          return true;
+        }
+
+        function updateCameraLayout(immediate) {
+          if (!camera || !container) return;
+          const w = container.clientWidth || window.innerWidth;
+          const h = container.clientHeight || window.innerHeight;
+          const isMobilePortrait = w <= 820 && h > w;
+
+          camera.aspect = w / h;
+          camera.fov = isMobilePortrait ? 44 : 40;
+          camera.updateProjectionMatrix();
+
+          // Frame table + both panels symmetrically to the left of right-HUD on desktop,
+          // and in the upper 58% above the bottom drawer on mobile portrait
+          const baseRadius = isMobilePortrait ? 2.55 : 2.38;
+          const baseY = isMobilePortrait ? 1.62 : 1.54;
+          const lookX = isMobilePortrait ? 0.0 : 0.36;
+          const lookY = isMobilePortrait ? 0.84 : 1.02;
+          const lookZ = isMobilePortrait ? 0.12 : 0.02;
+
+          const yaw = smooth.camYaw;
+          const pitch = smooth.camPitch;
+          camera.position.set(
+            lookX + Math.sin(yaw) * baseRadius - (isMobilePortrait ? 0 : 0.18),
+            baseY + pitch * 0.45,
+            Math.cos(yaw) * baseRadius
+          );
+          camera.lookAt(lookX - (isMobilePortrait ? 0 : 0.06), lookY, lookZ);
+          if (immediate && renderer && scene) {
+            renderer.render(scene, camera);
+          }
+        }
+
+        function onResize() {
+          if (!renderer || !container) return;
+          const w = container.clientWidth;
+          const h = container.clientHeight;
+          const isMobile = w <= 820;
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+          renderer.setSize(w, h);
+          updateCameraLayout(true);
+        }
+
+        function getPointerNDC(e) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        function onPointerDown(e) {
+          if (state.paused || state.screen !== 'play') return;
+          draggingCamera = true;
+          dragMoved = false;
+          dragStartX = e.clientX;
+          dragStartY = e.clientY;
+          try { renderer.domElement.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+
+        function onPointerMove(e) {
+          if (!renderer || state.domFallbackMode) return;
+          if (draggingCamera) {
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            if (Math.hypot(dx, dy) > 5) dragMoved = true;
+            if (dragMoved) {
+              smooth.targetCamYaw = clamp(smooth.targetCamYaw - dx * 0.0032, -0.42, 0.42);
+              smooth.targetCamPitch = clamp(smooth.targetCamPitch + dy * 0.0022, -0.22, 0.25);
+              dragStartX = e.clientX;
+              dragStartY = e.clientY;
+            }
+            return;
+          }
+
+          // Hover raycast on interactive colliders only
+          getPointerNDC(e);
+          raycaster.setFromCamera(pointer, camera);
+          const hits = raycaster.intersectObjects(interactiveMeshes, false);
+          const tip = document.getElementById('scene-tooltip');
+          if (hits.length > 0 && state.screen === 'play' && !state.paused) {
+            hoverMesh = hits[0].object;
+            renderer.domElement.style.cursor = 'pointer';
+            tip.textContent = hoverMesh.userData.label || '';
+            tip.style.left = e.clientX + 'px';
+            tip.style.top = e.clientY + 'px';
+            tip.classList.add('visible');
+          } else {
+            hoverMesh = null;
+            renderer.domElement.style.cursor = 'grab';
+            tip.classList.remove('visible');
+          }
+        }
+
+        function onPointerUp(e) {
+          if (!draggingCamera) return;
+          draggingCamera = false;
+          try { renderer.domElement.releasePointerCapture(e.pointerId); } catch (_) {}
+          if (!dragMoved && state.screen === 'play' && !state.paused) {
+            getPointerNDC(e);
+            raycaster.setFromCamera(pointer, camera);
+            const hits = raycaster.intersectObjects(interactiveMeshes, false);
+            if (hits.length > 0) {
+              handle3DClick(hits[0].object.userData);
+            }
+          }
+        }
+
+        function handle3DClick(data) {
+          if (!data) return;
+          if (data.action === 'select_panel') {
+            selectPanel(data.panelId);
+          } else if (data.action === 'cycle_blinds') {
+            const current = getActivePanelConfig().blind;
+            const next = current < 20 ? 40 : current < 60 ? 70 : 10;
+            updateActiveVar('blind', next);
+          } else if (data.action === 'nudge_slider') {
+            const cfg = getActivePanelConfig();
+            if (data.varName === 'intensity') {
+              updateActiveVar('intensity', (cfg.intensity + 15) % 105);
+            } else if (data.varName === 'warmth') {
+              updateActiveVar('warmth', (cfg.warmth + 20) % 105);
+            } else if (data.varName === 'angle') {
+              const nextAng = cfg.angle >= 15 ? -20 : cfg.angle + 10;
+              updateActiveVar('angle', nextAng);
+            }
+          }
+        }
+
+        function applyPanelVisual(pivot, glowMat, glassMat, haloMat, light, data, isVisible, dimmer) {
+          const vis = isVisible;
+          const intensityNorm = (data.intensity / 100) * vis;
+          const hex = warmthToHex(data.warmth);
+          const col = new THREE.Color(hex);
+
+          // Tilt ±25° (smooth yaw + slight pitch for directional clarity)
+          const rad = (data.angle * Math.PI) / 180;
+          pivot.rotation.y = rad;
+          pivot.rotation.x = Math.abs(rad) * 0.14;
+
+          glowMat.color.copy(col);
+          glowMat.emissive.copy(col);
+          glowMat.emissiveIntensity = (0.08 + intensityNorm * 1.45) * dimmer;
+
+          glassMat.color.copy(col);
+          glassMat.emissive.copy(col);
+          glassMat.emissiveIntensity = (0.04 + intensityNorm * 0.42) * dimmer;
+          glassMat.opacity = 0.52 + intensityNorm * 0.34;
+
+          haloMat.color.copy(col);
+          haloMat.opacity = state.bloomEnabled ? intensityNorm * 0.42 * dimmer : 0;
+
+          light.color.copy(col);
+          light.intensity = intensityNorm * 2.15 * dimmer;
+        }
+
+        let prevTime = performance.now();
+
+        function animate() {
+          if (disposed) return;
+          rafId = requestAnimationFrame(animate);
+
+          const now = performance.now();
+          const dt = Math.min((now - prevTime) / 1000, 0.05); // Delta clamped
+          prevTime = now;
+
+          // Active monotonic clock
+          if (state.screen === 'play' && !state.paused && !document.hidden) {
+            state.telemetry.activeMs += dt * 1000;
+          }
+
+          if (state.domFallbackMode || !renderer || !scene) return;
+
+          const lerpFactor = state.reducedMotion ? 1.0 : Math.min(1, dt * 7.5); // ~250-350ms response
+
+          // Target visibility for smooth alternation without flash
+          const visA = state.compareMode === 'alternate' && state.alternateShowing !== 'A' ? 0.06 : 1.0;
+          const visB = state.compareMode === 'alternate' && state.alternateShowing !== 'B' ? 0.06 : 1.0;
+
+          ['intensity', 'warmth', 'angle', 'blind'].forEach((k) => {
+            smooth.A[k] += (state.A[k] - smooth.A[k]) * lerpFactor;
+            smooth.B[k] += (state.B[k] - smooth.B[k]) * lerpFactor;
+          });
+          smooth.A.vis += (visA - smooth.A.vis) * lerpFactor;
+          smooth.B.vis += (visB - smooth.B.vis) * lerpFactor;
+          smooth.dimmer += (state.sceneDimmer / 100 - smooth.dimmer) * lerpFactor;
+          smooth.camYaw += (smooth.targetCamYaw - smooth.camYaw) * lerpFactor;
+          smooth.camPitch += (smooth.targetCamPitch - smooth.camPitch) * lerpFactor;
+
+          updateCameraLayout(false);
+
+          // Apply panel visuals
+          applyPanelVisual(panelAGroup, panelAGlowMat, panelAGlassMat, panelAHaloMat, lightA, smooth.A, smooth.A.vis, smooth.dimmer);
+          applyPanelVisual(panelBGroup, panelBGlowMat, panelBGlassMat, panelBHaloMat, lightB, smooth.B, smooth.B.vis, smooth.dimmer);
+
+          // Apply blinds angle (0–75°) from active panel
+          const activeBlind = state.activePanel === 'A' ? smooth.A.blind : smooth.B.blind;
+          const slatRad = ((75 - activeBlind) * Math.PI) / 180;
+          for (let i = 0; i < blindSlats.length; i++) {
+            blindSlats[i].rotation.x = slatRad;
+          }
+
+          // Modulate warm sunset sunLight by blind openness and scene dimmer
+          const blindOpenNorm = clamp(activeBlind / 75, 0, 1);
+          sunLight.intensity = (0.35 + blindOpenNorm * 1.15) * smooth.dimmer;
+          hemiLight.intensity = (0.35 + blindOpenNorm * 0.42) * smooth.dimmer;
+          ambLight.intensity = 0.24 * smooth.dimmer;
+          mushroomLight.intensity = 0.85 * smooth.dimmer;
+          renderer.toneMappingExposure = 0.65 + smooth.dimmer * 0.45;
+
+          // Sync 3D clipboard knobs with active panel values
+          const activeSmooth = state.activePanel === 'A' ? smooth.A : smooth.B;
+          if (knobIntensity) knobIntensity.position.x = -0.125 + (activeSmooth.intensity / 100) * 0.25;
+          if (knobWarmth) knobWarmth.position.x = -0.125 + (activeSmooth.warmth / 100) * 0.25;
+          if (knobAngle) knobAngle.position.x = ((activeSmooth.angle + 25) / 50) * 0.25 - 0.125;
+
+          renderer.render(scene, camera);
+        }
+
+        return {
+          init,
+          nudgeCamera(dYaw) {
+            smooth.targetCamYaw = clamp(smooth.targetCamYaw + dYaw, -0.42, 0.42);
+          },
+          resetCamera() {
+            smooth.targetCamYaw = 0;
+            smooth.targetCamPitch = 0;
+          },
+          isWebGLAvailable() {
+            return webglAvailable;
+          },
+          dispose() {
+            disposed = true;
+            if (rafId) cancelAnimationFrame(rafId);
+            window.removeEventListener('resize', onResize);
+            textures.forEach((t) => t.dispose());
+            if (renderer) {
+              renderer.dispose();
+            }
+          }
+        };
+      })();
+
+      /* =====================================================================
+       * 6. UI & INTERACTION CONTROLLER (ui/ & input/)
+       * ===================================================================== */
+      function getActivePanelConfig() {
+        return state.activePanel === 'A' ? state.A : state.B;
+      }
+
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('visible');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => el.classList.remove('visible'), 2600);
+      }
+
+      function enableFallback(flag) {
+        state.domFallbackMode = flag;
+        document.getElementById('dom-fallback-stage').classList.toggle('active', flag);
+        document.getElementById('scene-viewport').style.display = flag ? 'none' : 'block';
+        document.getElementById('btn-fallback-toggle').setAttribute('aria-pressed', String(flag));
+        document.getElementById('label-view-mode').textContent = flag ? '3D' : '2D';
+        renderDOMFallback();
+      }
+
+      function renderDOMFallback() {
+        if (!state.domFallbackMode) return;
+        const stage = document.getElementById('dom-fallback-stage');
+        stage.style.filter = 'brightness(' + (state.sceneDimmer / 100) + ')';
+
+        ['A', 'B'].forEach((id) => {
+          const cfg = state[id];
+          const hex = warmthToHex(cfg.warmth);
+          const vis = state.compareMode === 'alternate' && state.alternateShowing !== id ? 0.14 : 1;
+          const glass = document.getElementById('fallback-glass-' + id);
+          const card = document.getElementById('fallback-card-' + id);
+          const meta = document.getElementById('fallback-meta-' + id);
+
+          const alpha = 0.2 + (cfg.intensity / 100) * 0.8;
+          glass.style.backgroundColor = hex;
+          glass.style.opacity = String(alpha * vis);
+          glass.style.transform = 'perspective(360px) rotateY(' + cfg.angle + 'deg)';
+          glass.style.boxShadow = state.bloomEnabled
+            ? '0 0 ' + Math.round(cfg.intensity * 0.35 * vis) + 'px ' + hex
+            : 'none';
+          card.classList.toggle('selected', state.activePanel === id);
+          meta.textContent = cfg.intensity + '% · ' + warmthLabel(cfg.warmth) + ' · ' + (cfg.angle > 0 ? '+' : '') + cfg.angle + '°';
+        });
+
+        const activeBlind = getActivePanelConfig().blind;
+        const scaleY = Math.max(0.18, 1 - activeBlind / 90);
+        document.querySelectorAll('#fallback-blinds .fallback-slat').forEach((s) => {
+          s.style.transform = 'scaleY(' + scaleY.toFixed(2) + ')';
+        });
+      }
+
+      function selectPanel(panelId) {
+        state.activePanel = panelId;
+        if (state.compareMode === 'alternate') {
+          state.alternateShowing = panelId;
+        }
+        AudioEngine.click();
+        state.feedback = panelId === 'A' && state.snapshotALocked
+          ? 'Painel A está conservado (somente leitura). Clique em “Editar A” para modificar.'
+          : 'Editando Painel ' + panelId + '. Ajuste os controles para observar a mudança na mesa.';
+        renderUI();
+      }
+
+      function applyPreset(presetId) {
+        const p = PRESETS[presetId];
+        if (!p) return;
+        state.activePreset = presetId;
+        if (!state.snapshotALocked) {
+          state.A = sanitizePanel(p.A);
+        }
+        state.B = sanitizePanel(p.B);
+        AudioEngine.preset();
+        state.feedback = 'Preset “' + p.name + '” aplicado: ' + p.desc;
+        recordChoice('preset', presetId);
+        renderUI();
+      }
+
+      function updateActiveVar(varName, rawValue) {
+        if (state.activePanel === 'A' && state.snapshotALocked) {
+          showToast('Painel A está fixado para comparação. Desbloqueie A ou edite B.');
+          renderUI();
+          return;
+        }
+        if (state.mode === 'acompanhado' && state.lockedVar === varName) {
+          showToast('Variável fixada no Modo Acompanhado.');
+          renderUI();
+          return;
+        }
+
+        const target = getActivePanelConfig();
+        target[varName] = Number(rawValue);
+        const sanitized = sanitizePanel(target);
+        state[state.activePanel] = sanitized;
+        state.activePreset = 'custom';
+
+        const norm = varName === 'angle' ? (sanitized.angle + 25) / 50
+          : varName === 'blind' ? sanitized.blind / 75
+          : sanitized[varName] / 100;
+        AudioEngine.slider(norm);
+
+        if (varName === 'intensity') {
+          state.feedback = 'Intensidade do Painel ' + state.activePanel + ' em ' + sanitized.intensity + '%. Note a luz refletida na mesa.';
+        } else if (varName === 'warmth') {
+          state.feedback = 'Temperatura aparente ' + warmthLabel(sanitized.warmth).toLowerCase() + ' (~' + warmthToSimulatedKelvin(sanitized.warmth) + 'K simulado).';
+        } else if (varName === 'angle') {
+          state.feedback = 'Painel ' + state.activePanel + ' inclinado em ' + (sanitized.angle > 0 ? '+' : '') + sanitized.angle + '°.';
+        } else if (varName === 'blind') {
+          state.feedback = 'Persiana da estufa em ' + sanitized.blind + '° — luz do jardim ajustada.';
+        }
+
+        renderUI();
+      }
+
+      function setStage(idx) {
+        const now = performance.now();
+        if (now < transitionLockUntil) return;
+        transitionLockUntil = now + 220;
+
+        if (idx >= STAGES.length) {
+          openReview();
+          return;
+        }
+        state.stage = clamp(idx, 0, STAGES.length - 1);
+        if (!state.telemetry.stagesVisited.includes(state.stage)) {
+          state.telemetry.stagesVisited.push(state.stage);
+        }
+        // Automatically lock snapshot A when entering stage 3 (Comparar) so A is preserved while editing B
+        if (state.stage === 3 && !state.snapshotALocked) {
+          state.snapshotALocked = true;
+          state.activePanel = 'B';
+          state.telemetry.comparisonsCount += 1;
+          state.feedback = 'Configuração A conservada automaticamente! Agora ajuste o Painel B para comparar.';
+        } else {
+          state.feedback = STAGES[state.stage].desc;
+        }
+        AudioEngine.click();
+        renderUI();
+      }
+
+      function renderUI() {
+        const cfg = getActivePanelConfig();
+        const isALockedEditing = state.activePanel === 'A' && state.snapshotALocked;
+
+        // Top mode label
+        document.getElementById('brand-mode-label').textContent = MODE_LABELS[state.mode];
+
+        // Stage header & progress dots
+        const st = STAGES[state.stage];
+        document.getElementById('hud-stage-badge').textContent = state.mode === 'livre'
+          ? 'Exploração Livre'
+          : 'Etapa ' + (state.stage + 1) + ' de ' + STAGES.length;
+        document.getElementById('hud-stage-title').textContent = state.mode === 'livre'
+          ? 'Laboratório da Estufa'
+          : st.title;
+        document.getElementById('hud-stage-desc').textContent = state.mode === 'livre'
+          ? 'Ajuste qualquer painel, persiana ou preset no seu ritmo.'
+          : st.desc;
+
+        const dotsEl = document.getElementById('progress-dots');
+        dotsEl.innerHTML = '';
+        STAGES.forEach((s, i) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'progress-dot' + (i === state.stage ? ' active' : state.telemetry.stagesVisited.includes(i) ? ' done' : '');
+          btn.setAttribute('aria-label', 'Ir para etapa ' + (i + 1) + ': ' + s.title);
+          btn.setAttribute('aria-selected', String(i === state.stage));
+          btn.addEventListener('click', () => setStage(i));
+          dotsEl.appendChild(btn);
+        });
+
+        // Accompanied mode bar
+        document.getElementById('accompanied-box').style.display = state.mode === 'acompanhado' ? 'block' : 'none';
+        document.getElementById('select-lock-var').value = state.lockedVar;
+
+        // Presets
+        const presetGrid = document.getElementById('preset-grid');
+        presetGrid.innerHTML = '';
+        Object.values(PRESETS).forEach((p) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'preset-btn' + (state.activePreset === p.id ? ' active' : '');
+          b.innerHTML = '<span class="preset-swatch" style="background:' + p.swatch + '"></span><span>' + p.name + '</span>';
+          b.addEventListener('click', () => applyPreset(p.id));
+          presetGrid.appendChild(b);
+        });
+
+        // Panel tabs & swatches
+        document.getElementById('dot-panel-A').style.background = warmthToHex(state.A.warmth);
+        document.getElementById('dot-panel-B').style.background = warmthToHex(state.B.warmth);
+        document.getElementById('tab-panel-A').classList.toggle('active', state.activePanel === 'A');
+        document.getElementById('tab-panel-B').classList.toggle('active', state.activePanel === 'B');
+        document.getElementById('tab-panel-A').setAttribute('aria-selected', String(state.activePanel === 'A'));
+        document.getElementById('tab-panel-B').setAttribute('aria-selected', String(state.activePanel === 'B'));
+        document.getElementById('active-panel-pill').textContent = isALockedEditing ? 'A conservado' : 'Editando ' + state.activePanel;
+
+        // Compare controls
+        document.getElementById('btn-cmp-side').classList.toggle('active', state.compareMode === 'side_by_side');
+        document.getElementById('btn-cmp-side').setAttribute('aria-pressed', String(state.compareMode === 'side_by_side'));
+        document.getElementById('btn-cmp-alt').classList.toggle('active', state.compareMode === 'alternate');
+        document.getElementById('btn-cmp-alt').setAttribute('aria-pressed', String(state.compareMode === 'alternate'));
+        const altBtn = document.getElementById('btn-alt-switch');
+        altBtn.style.display = state.compareMode === 'alternate' ? 'inline-flex' : 'none';
+        altBtn.textContent = state.alternateShowing === 'A' ? 'Ver B' : 'Ver A';
+
+        // Snapshot A bar
+        document.getElementById('snapshot-status').textContent = state.snapshotALocked
+          ? 'A conservado (imutável)'
+          : 'A livre para edição';
+        document.getElementById('btn-toggle-lock-A').textContent = state.snapshotALocked ? 'Editar A' : 'Fixar A';
+
+        // Sliders values & lock states
+        const sInt = document.getElementById('slider-intensity');
+        const sWarm = document.getElementById('slider-warmth');
+        const sAng = document.getElementById('slider-angle');
+        const sBlind = document.getElementById('slider-blind');
+
+        sInt.value = cfg.intensity;
+        sWarm.value = cfg.warmth;
+        sAng.value = cfg.angle;
+        sBlind.value = cfg.blind;
+
+        document.getElementById('val-intensity').textContent = cfg.intensity + '%';
+        document.getElementById('val-warmth').textContent = warmthLabel(cfg.warmth) + ' · ~' + warmthToSimulatedKelvin(cfg.warmth) + 'K (simulado)';
+        document.getElementById('val-angle').textContent = (cfg.angle > 0 ? '+' : '') + cfg.angle + '°';
+        document.getElementById('val-blind').textContent = cfg.blind + '°';
+
+        const vars = [
+          { name: 'intensity', el: sInt },
+          { name: 'warmth', el: sWarm },
+          { name: 'angle', el: sAng },
+          { name: 'blind', el: sBlind }
+        ];
+        vars.forEach((v) => {
+          const lockedByAccomp = state.mode === 'acompanhado' && state.lockedVar === v.name;
+          v.el.disabled = isALockedEditing || lockedByAccomp;
+          document.getElementById('lock-tag-' + v.name).style.display = lockedByAccomp ? 'inline' : 'none';
+        });
+
+        // Show progressive groups in guided mode (all visible in livre/acompanhado)
+        const showAdvanced = state.mode !== 'guiado' || state.stage >= 2;
+        document.getElementById('grp-warmth').style.display = showAdvanced ? 'block' : 'none';
+        document.getElementById('grp-angle').style.display = showAdvanced ? 'block' : 'none';
+        document.getElementById('grp-blind').style.display = showAdvanced ? 'block' : 'none';
+        document.getElementById('sec-preference').style.display = (state.mode !== 'guiado' || state.stage >= 4) ? 'block' : 'none';
+
+        // Preference buttons
+        document.querySelectorAll('#pref-grid .pref-btn').forEach((b) => {
+          b.classList.toggle('selected', b.dataset.pref === state.preference);
+        });
+
+        // Saved configs list
+        const savedEl = document.getElementById('saved-list');
+        savedEl.innerHTML = '';
+        state.savedConfigs.forEach((item, idx) => {
+          const row = document.createElement('div');
+          row.className = 'saved-item';
+          row.innerHTML = '<span><strong>' + item.name + '</strong> · A ' + item.A.intensity + '% / B ' + item.B.intensity + '%</span>';
+          const loadBtn = document.createElement('button');
+          loadBtn.type = 'button';
+          loadBtn.textContent = 'Carregar';
+          loadBtn.addEventListener('click', () => {
+            state.A = sanitizePanel(item.A);
+            state.B = sanitizePanel(item.B);
+            state.snapshotALocked = false;
+            state.activePreset = 'custom';
+            AudioEngine.preset();
+            showToast(item.name + ' carregada.');
+            renderUI();
+          });
+          row.appendChild(loadBtn);
+          savedEl.appendChild(row);
+        });
+
+        // Feedback & Hint
+        document.getElementById('feedback-box').textContent = state.feedback;
+        document.getElementById('btn-hint').style.display = state.mode === 'guiado' ? 'inline-flex' : 'none';
+
+        // Navigation buttons
+        document.getElementById('btn-prev').disabled = state.stage === 0;
+        document.getElementById('btn-next').textContent = state.stage >= STAGES.length - 1 ? 'Concluir e revisar' : 'Próxima etapa';
+
+        // Utility buttons state
+        document.getElementById('btn-mute').setAttribute('aria-pressed', String(state.muted));
+        document.getElementById('label-mute').textContent = state.muted ? 'Mudo' : 'Som';
+        document.getElementById('btn-motion').setAttribute('aria-pressed', String(state.reducedMotion));
+        document.body.classList.toggle('reduced-motion', state.reducedMotion);
+        document.getElementById('val-scene-dimmer').textContent = state.sceneDimmer + '%';
+        document.getElementById('input-scene-dimmer').value = state.sceneDimmer;
+        document.getElementById('chk-bloom').checked = state.bloomEnabled;
+
+        renderDOMFallback();
+      }
+
+      /* =====================================================================
+       * 7. DEMO, PAUSE, RESET & REVIEW FLOWS
+       * ===================================================================== */
+      let demoTimer = null;
+
+      function startDemo() {
+        document.getElementById('modal-intro').classList.remove('open');
+        state.screen = 'play';
+        state.demoActive = true;
+        const banner = document.getElementById('demo-banner');
+        const text = document.getElementById('demo-text');
+        banner.classList.add('active');
+
+        const steps = [
+          { msg: '1/3 · Aplicando luz suave do Amanhecer na estufa...', fn: () => applyPreset('amanhecer') },
+          { msg: '2/3 · Fixando Painel A e ajustando Painel B mais frio...', fn: () => {
+            state.snapshotALocked = true;
+            state.activePanel = 'B';
+            state.B = sanitizePanel({ intensity: 74, warmth: 82, angle: 14, blind: 55 });
+            renderUI();
+          }},
+          { msg: '3/3 · Alternando suavemente A e B sem flash...', fn: () => {
+            state.compareMode = 'alternate';
+            state.alternateShowing = 'A';
+            renderUI();
+            setTimeout(() => {
+              if (!state.demoActive) return;
+              state.alternateShowing = 'B';
+              renderUI();
+            }, 1300);
+          }}
+        ];
+
+        let i = 0;
+        function runStep() {
+          if (!state.demoActive) return;
+          if (i >= steps.length) {
+            stopDemo(true);
+            return;
+          }
+          text.textContent = steps[i].msg;
+          steps[i].fn();
+          i++;
+          demoTimer = setTimeout(runStep, 2600);
+        }
+        runStep();
+      }
+
+      function stopDemo(finished) {
+        state.demoActive = false;
+        clearTimeout(demoTimer);
+        document.getElementById('demo-banner').classList.remove('active');
+        state.compareMode = 'side_by_side';
+        state.snapshotALocked = false;
+        if (finished) {
+          showToast('Demonstração concluída — agora explore no seu ritmo!');
+        }
+        renderUI();
+      }
+
+      function setPaused(flag) {
+        if (state.screen !== 'play') return;
+        state.paused = flag;
+        document.getElementById('modal-pause').classList.toggle('open', flag);
+        if (flag) {
+          state.telemetry.pauses += 1;
+          emitHostEvent('pause');
+        } else {
+          emitHostEvent('resume');
+        }
+      }
+
+      function openReview() {
+        stopDemo(false);
+        state.screen = 'review';
+        state.paused = false;
+        document.getElementById('modal-pause').classList.remove('open');
+
+        const sum = buildSummaryObject();
+        const grid = document.getElementById('review-summary-grid');
+        grid.innerHTML = [
+          { k: 'Modo', v: MODE_LABELS[sum.mode] },
+          { k: 'Tempo ativo', v: sum.activeDurationFormatted },
+          { k: 'Preferência registrada', v: sum.preferenceLabel },
+          { k: 'Configurações guardadas', v: String(sum.savedConfigsCount) }
+        ].map((m) => '<div class="summary-metric"><span class="k">' + m.k + '</span><span class="v">' + m.v + '</span></div>').join('');
+
+        document.getElementById('review-ab-details').innerHTML =
+          '<div><strong>Painel A:</strong> ' + sum.panelA.intensity + '% · ' + warmthLabel(sum.panelA.warmth) + ' (~' + sum.panelA.simulatedKelvin + 'K simulado) · ' + (sum.panelA.angle > 0 ? '+' : '') + sum.panelA.angle + '° · Persiana ' + sum.panelA.blind + '°</div>' +
+          '<div><strong>Painel B:</strong> ' + sum.panelB.intensity + '% · ' + warmthLabel(sum.panelB.warmth) + ' (~' + sum.panelB.simulatedKelvin + 'K simulado) · ' + (sum.panelB.angle > 0 ? '+' : '') + sum.panelB.angle + '° · Persiana ' + sum.panelB.blind + '°</div>';
+
+        document.getElementById('modal-review').classList.add('open');
+        AudioEngine.complete();
+        emitHostEvent('complete', sum);
+        emitHostEvent('summary', sum);
+      }
+
+      function exportSummaryJSON() {
+        const data = JSON.stringify(buildSummaryObject(), null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'observatorio-da-luz-resumo.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('Resumo JSON exportado.');
+      }
+
+      function saveLocalSession() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: state.version,
+            A: state.A,
+            B: state.B,
+            preference: state.preference,
+            savedConfigs: state.savedConfigs,
+            sceneDimmer: state.sceneDimmer,
+            savedAt: new Date().toISOString()
+          }));
+          showToast('Configurações salvas localmente neste aparelho.');
+        } catch (e) {
+          showToast('Armazenamento local indisponível neste navegador.');
+        }
+      }
+
+      function clearLocalSession() {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          showToast('Dados locais apagados.');
+        } catch (e) {
+          showToast('Nenhum dado local para apagar.');
+        }
+      }
+
+      function tryLoadLocalPreferences() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.version === '1.0.0') {
+            if (parsed.A) state.A = sanitizePanel(parsed.A);
+            if (parsed.B) state.B = sanitizePanel(parsed.B);
+            if (Array.isArray(parsed.savedConfigs)) state.savedConfigs = parsed.savedConfigs.slice(0, 6);
+            if (typeof parsed.sceneDimmer === 'number') state.sceneDimmer = clamp(parsed.sceneDimmer, 35, 100);
+          }
+        } catch (e) {
+          // Ignore storage access errors
+        }
+      }
+
+      /* =====================================================================
+       * 8. WIRE EVENTS & BOOTSTRAP
+       * ===================================================================== */
+      function wireEvents() {
+        // Intro mode selector
+        document.querySelectorAll('#modal-intro .mode-card').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.mode = btn.dataset.mode;
+            document.querySelectorAll('#modal-intro .mode-card').forEach((b) => {
+              const sel = b === btn;
+              b.classList.toggle('selected', sel);
+              b.setAttribute('aria-checked', String(sel));
+            });
+            AudioEngine.click();
+          });
+        });
+
+        document.getElementById('btn-start-play').addEventListener('click', () => {
+          document.getElementById('modal-intro').classList.remove('open');
+          state.screen = 'play';
+          state.paused = false;
+          AudioEngine.preset();
+          renderUI();
+        });
+
+        document.getElementById('btn-start-demo').addEventListener('click', startDemo);
+        document.getElementById('btn-stop-demo').addEventListener('click', () => stopDemo(false));
+
+        // Utility buttons
+        const dimmerPop = document.getElementById('dimmer-popover');
+        const btnDimmer = document.getElementById('btn-dimmer');
+        btnDimmer.addEventListener('click', () => {
+          const open = !dimmerPop.classList.contains('open');
+          dimmerPop.classList.toggle('open', open);
+          btnDimmer.setAttribute('aria-expanded', String(open));
+          AudioEngine.click();
+        });
+        document.getElementById('btn-close-dimmer').addEventListener('click', () => {
+          dimmerPop.classList.remove('open');
+          btnDimmer.setAttribute('aria-expanded', 'false');
+        });
+        document.getElementById('input-scene-dimmer').addEventListener('input', (e) => {
+          state.sceneDimmer = clamp(Number(e.target.value), 35, 100);
+          renderUI();
+        });
+        document.getElementById('chk-bloom').addEventListener('change', (e) => {
+          state.bloomEnabled = e.target.checked;
+          renderUI();
+        });
+
+        document.getElementById('btn-mute').addEventListener('click', () => {
+          state.muted = !state.muted;
+          renderUI();
+          if (!state.muted) AudioEngine.click();
+        });
+
+        document.getElementById('btn-motion').addEventListener('click', () => {
+          state.reducedMotion = !state.reducedMotion;
+          AudioEngine.click();
+          showToast(state.reducedMotion ? 'Movimento reduzido ativado.' : 'Transições suaves ativadas.');
+          renderUI();
+        });
+
+        document.getElementById('btn-fallback-toggle').addEventListener('click', () => {
+          if (!Scene3D.isWebGLAvailable() && state.domFallbackMode) {
+            showToast('WebGL não está disponível neste navegador.');
+            return;
+          }
+          enableFallback(!state.domFallbackMode);
+          AudioEngine.click();
+        });
+
+        document.getElementById('btn-pause').addEventListener('click', () => setPaused(true));
+        document.getElementById('btn-resume').addEventListener('click', () => setPaused(false));
+        document.getElementById('btn-change-mode').addEventListener('click', () => {
+          document.getElementById('modal-pause').classList.remove('open');
+          state.screen = 'intro';
+          state.paused = false;
+          document.getElementById('modal-intro').classList.add('open');
+        });
+        document.getElementById('btn-pause-review').addEventListener('click', openReview);
+
+        // Camera accessibility buttons
+        document.getElementById('cam-left').addEventListener('click', () => { Scene3D.nudgeCamera(-0.18); AudioEngine.click(); });
+        document.getElementById('cam-right').addEventListener('click', () => { Scene3D.nudgeCamera(0.18); AudioEngine.click(); });
+        document.getElementById('cam-reset').addEventListener('click', () => { Scene3D.resetCamera(); AudioEngine.click(); });
+
+        // Mobile bottom drawer toggle
+        const hudPanel = document.getElementById('hud-panel');
+        const drawerBtn = document.getElementById('btn-drawer-toggle');
+        drawerBtn.addEventListener('click', () => {
+          const exp = !hudPanel.classList.contains('expanded');
+          hudPanel.classList.toggle('expanded', exp);
+          drawerBtn.setAttribute('aria-expanded', String(exp));
+          document.getElementById('drawer-label').textContent = exp ? 'Recolher controles' : 'Expandir controles';
+        });
+
+        // Accompanied mode lock select
+        document.getElementById('select-lock-var').addEventListener('change', (e) => {
+          state.lockedVar = e.target.value;
+          AudioEngine.click();
+          renderUI();
+        });
+
+        // Panel tabs
+        document.getElementById('tab-panel-A').addEventListener('click', () => selectPanel('A'));
+        document.getElementById('tab-panel-B').addEventListener('click', () => selectPanel('B'));
+
+        // Compare controls
+        document.getElementById('btn-cmp-side').addEventListener('click', () => {
+          state.compareMode = 'side_by_side';
+          state.telemetry.comparisonsCount += 1;
+          AudioEngine.click();
+          state.feedback = 'Comparação lado a lado: observe Painel A e Painel B ao mesmo tempo.';
+          renderUI();
+        });
+        document.getElementById('btn-cmp-alt').addEventListener('click', () => {
+          state.compareMode = 'alternate';
+          state.alternateShowing = state.activePanel;
+          state.telemetry.comparisonsCount += 1;
+          AudioEngine.click();
+          state.feedback = 'Alternância suave ativa: troque entre A e B sem flash brusco.';
+          renderUI();
+        });
+        document.getElementById('btn-alt-switch').addEventListener('click', () => {
+          state.alternateShowing = state.alternateShowing === 'A' ? 'B' : 'A';
+          AudioEngine.click();
+          state.feedback = 'Exibindo suavemente o Painel ' + state.alternateShowing + '.';
+          renderUI();
+        });
+
+        // Snapshot A lock toggle
+        document.getElementById('btn-toggle-lock-A').addEventListener('click', () => {
+          state.snapshotALocked = !state.snapshotALocked;
+          if (state.snapshotALocked && state.activePanel === 'A') {
+            state.activePanel = 'B';
+          }
+          AudioEngine.click();
+          state.feedback = state.snapshotALocked
+            ? 'Snapshot A fixado! Agora você pode modificar B mantendo A intacto.'
+            : 'Painel A liberado para edição.';
+          renderUI();
+        });
+
+        // Sliders
+        document.getElementById('slider-intensity').addEventListener('input', (e) => updateActiveVar('intensity', e.target.value));
+        document.getElementById('slider-warmth').addEventListener('input', (e) => updateActiveVar('warmth', e.target.value));
+        document.getElementById('slider-angle').addEventListener('input', (e) => updateActiveVar('angle', e.target.value));
+        document.getElementById('slider-blind').addEventListener('input', (e) => updateActiveVar('blind', e.target.value));
+
+        // Preference buttons
+        document.querySelectorAll('#pref-grid .pref-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.preference = btn.dataset.pref;
+            AudioEngine.click();
+            state.feedback = 'Preferência registrada: “' + PREFERENCE_LABELS[state.preference] + '”. Obrigado por observar com calma.';
+            recordChoice('preference', state.preference);
+            renderUI();
+          });
+        });
+
+        // Save current snapshot in session
+        document.getElementById('btn-save-config').addEventListener('click', () => {
+          const idx = state.savedConfigs.length + 1;
+          state.savedConfigs.unshift({
+            name: 'Luz #' + idx,
+            A: Object.assign({}, state.A),
+            B: Object.assign({}, state.B)
+          });
+          if (state.savedConfigs.length > 5) state.savedConfigs.pop();
+          AudioEngine.preset();
+          showToast('Configuração guardada na sessão.');
+          renderUI();
+        });
+
+        // Hint button
+        document.getElementById('btn-hint').addEventListener('click', () => {
+          state.telemetry.hintsUsed += 1;
+          state.feedback = 'Pista: ' + STAGES[state.stage].hint;
+          AudioEngine.click();
+          renderUI();
+        });
+
+        // Footer navigation
+        document.getElementById('btn-prev').addEventListener('click', () => setStage(state.stage - 1));
+        document.getElementById('btn-next').addEventListener('click', () => setStage(state.stage + 1));
+        document.getElementById('btn-skip').addEventListener('click', () => setStage(state.stage + 1));
+        document.getElementById('btn-open-review').addEventListener('click', openReview);
+
+        // Destructive reset confirmation
+        document.getElementById('btn-reset-ask').addEventListener('click', () => {
+          document.getElementById('modal-reset').classList.add('open');
+        });
+        document.getElementById('btn-reset-cancel').addEventListener('click', () => {
+          document.getElementById('modal-reset').classList.remove('open');
+        });
+        document.getElementById('btn-reset-confirm').addEventListener('click', () => {
+          document.getElementById('modal-reset').classList.remove('open');
+          const mode = state.mode;
+          const dimmed = state.sceneDimmer;
+          const muted = state.muted;
+          const reduced = state.reducedMotion;
+          const fallback = state.domFallbackMode;
+          state = createInitialState();
+          state.screen = 'play';
+          state.mode = mode;
+          state.sceneDimmer = dimmed;
+          state.muted = muted;
+          state.reducedMotion = reduced;
+          state.domFallbackMode = fallback;
+          applyPreset('luz_difusa');
+          Scene3D.resetCamera();
+          showToast('Painéis retornados ao preset seguro “Luz difusa”.');
+        });
+
+        // Review buttons
+        document.getElementById('btn-export-json').addEventListener('click', exportSummaryJSON);
+        document.getElementById('btn-save-local').addEventListener('click', saveLocalSession);
+        document.getElementById('btn-clear-local').addEventListener('click', clearLocalSession);
+        document.getElementById('btn-review-back').addEventListener('click', () => {
+          document.getElementById('modal-review').classList.remove('open');
+          state.screen = 'play';
+          renderUI();
+        });
+        document.getElementById('btn-review-repeat').addEventListener('click', () => {
+          document.getElementById('modal-review').classList.remove('open');
+          state = createInitialState();
+          state.screen = 'intro';
+          document.getElementById('modal-intro').classList.add('open');
+          renderUI();
+        });
+
+        // Keyboard shortcuts: Escape pauses/closes modals, Enter confirms intro
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (dimmerPop.classList.contains('open')) {
+              dimmerPop.classList.remove('open');
+              btnDimmer.setAttribute('aria-expanded', 'false');
+            } else if (document.getElementById('modal-reset').classList.contains('open')) {
+              document.getElementById('modal-reset').classList.remove('open');
+            } else if (state.screen === 'play') {
+              setPaused(!state.paused);
+            }
+          }
+        });
+
+        // Auto-pause when tab is hidden
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden && state.screen === 'play' && !state.paused) {
+            setPaused(true);
+          }
+        });
+
+        // Clean dispose on unload
+        window.addEventListener('beforeunload', () => {
+          emitHostEvent('exit', buildSummaryObject());
+          Scene3D.dispose();
+          AudioEngine.dispose();
+        });
+      }
+
+      window.addEventListener('load', () => {
+        tryLoadLocalPreferences();
+        wireEvents();
+        const ok = Scene3D.init();
+        if (!ok) {
+          enableFallback(true);
+        }
+        renderUI();
+        emitHostEvent('ready', { assets: ASSET_MANIFEST.length });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -645,10 +645,11 @@
     }
 
     // ---------- Player Modal & Ciclo de Vida ----------
-    function openApp(id) {
+    function openApp(id, opener = document.activeElement) {
       const app = state.apps.find((a) => a.id === id);
       if (!app || !app.url || app.status !== 'ready') return;
       remember(app.id);
+      if (state.activeAppId) closeApp();
 
       state.activeAppId = app.id;
       $('#playerAppName').textContent = cleanName(app.name);
@@ -666,21 +667,23 @@
       const iframe = document.createElement('iframe');
       iframe.className = 'player-frame';
       iframe.title = app.fullTitle || app.name;
-      iframe.allow = 'fullscreen; accelerometer; gyroscope; xr-spatial-tracking; execution-while-out-of-viewport; execution-while-not-rendered; autoplay';
+      iframe.allow = 'fullscreen; accelerometer; gyroscope; xr-spatial-tracking; autoplay';
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-downloads');
       iframe.src = app.url;
 
       let loaded = false;
       iframe.onload = () => {
         loaded = true;
-        setTimeout(() => { loader.classList.add('fade-out'); }, 350);
+        setTimeout(() => { if (iframe.isConnected) loader.classList.add('fade-out'); }, 350);
       };
-      setTimeout(() => { if (!loaded) loader.classList.add('fade-out'); }, 4000);
+      setTimeout(() => { if (!loaded && iframe.isConnected) loader.classList.add('fade-out'); }, 4000);
 
       container.appendChild(iframe);
       modal.hidden = false;
       modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      closeApp.opener = opener;
+      $('#closePlayerBtn').focus();
 
       history.pushState({ app: app.id }, '', `#play=${encodeURIComponent(app.id)}`);
     }
@@ -691,18 +694,23 @@
 
       const container = $('#playerFrameContainer');
       const iframe = container.querySelector('iframe');
-      if (iframe && iframe.contentWindow) {
+      if (iframe?.contentWindow) {
         try {
-          iframe.contentWindow.postMessage({ type: 'SANGI_APP_PAUSE' }, '*');
-          iframe.contentWindow.postMessage({ type: 'SANGI_APP_DISPOSE' }, '*');
+          iframe.contentWindow.postMessage({ type: 'SANGI_APP_DISPOSE' }, location.origin);
         } catch {}
-        iframe.src = 'about:blank';
       }
+      const id = CSS.escape(state.activeAppId || '');
+      const opener = closeApp.opener?.isConnected && closeApp.opener !== document.body
+        ? closeApp.opener
+        : document.querySelector(`#list [data-play="${id}"]:not(.cover)`) || $('#q');
+      if (modal.contains(document.activeElement)) $('#q').focus();
+      closeApp.opener = null;
       container.innerHTML = '';
       modal.hidden = true;
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
       state.activeAppId = null;
+      opener.focus();
 
       if (location.hash.startsWith('#play=')) {
         history.replaceState(null, '', location.pathname + location.search);
@@ -776,7 +784,7 @@
       const p = e.target.closest('[data-play]');
       if (p) {
         e.preventDefault();
-        openApp(p.dataset.play);
+        openApp(p.dataset.play, p);
         return;
       }
       const o = e.target.closest('[data-open]'); if (o) remember(o.dataset.open);
