@@ -1,0 +1,14 @@
+{
+  "project": "12-maquina-das-consequencias",
+  "checks": [
+    "WebGL2 inicializado"
+  ],
+  "errors": [],
+  "network": [],
+  "hardware": "Chrome headless · ANGLE SwiftShader (software)",
+  "captures": [
+    "desktop-inicial.png"
+  ],
+  "pass": false,
+  "failure": "page.waitForFunction: Timeout 30000ms exceeded.\n    at C:\\workspace\\verify_12.mjs:15:150"
+}

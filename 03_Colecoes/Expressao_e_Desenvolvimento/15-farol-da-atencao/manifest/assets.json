@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "project": "15-farol-da-atencao",
+  "units": "metres",
+  "assets": [
+    {
+      "id": "farol",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "lente_fresnel_estilizada",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "manivela",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "embarcacoes",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "boias",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "rochas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mar",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "nuvens",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "binoculos",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mapa",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    }
+  ]
+}

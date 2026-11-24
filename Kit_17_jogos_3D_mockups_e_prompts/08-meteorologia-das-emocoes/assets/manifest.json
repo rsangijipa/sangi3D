@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "generated": true,
+  "note": "Todos os assets sao proceduralmente gerados em tempo de execucao. Nenhum arquivo binario externo e necessario.",
+  "assets": [
+    { "id": "dome_frame", "category": "scene", "type": "procedural", "generator": "scene/objects.ts#buildDomeFrame", "unit": "meters", "yUp": true, "collider": "box", "lod": "hero" },
+    { "id": "window_glass", "category": "scene", "type": "procedural", "generator": "scene/objects.ts#buildWindowGlass", "unit": "meters", "yUp": true, "collider": "none", "lod": "hero", "fallback": "sem refracao/blur" },
+    { "id": "armillary", "category": "scene", "type": "procedural", "generator": "scene/objects.ts#buildArmillary", "unit": "meters", "yUp": true, "collider": "sphere", "lod": "hero" },
+    { "id": "telescope", "category": "scene", "type": "procedural", "generator": "scene/objects.ts#buildTelescope", "unit": "meters", "yUp": true, "collider": "box", "lod": "hero" },
+    { "id": "globe", "category": "scene", "type": "procedural", "generator": "scene/objects.ts#buildGlobe", "unit": "meters", "yUp": true, "collider": "sphere", "lod": "hero" },
+    { "id": "console", "category": "scene", "type": "procedural", "generator": "scene/objects.ts#buildConsole", "unit": "meters", "yUp": true, "collider": "box", "lod": "hero" },
+    { "id": "dial_sun", "category": "ui3d", "type": "procedural", "generator": "scene/objects.ts#buildDial", "unit": "meters", "yUp": true, "collider": "cylinder", "interactive": true },
+    { "id": "dial_cloud", "category": "ui3d", "type": "procedural", "generator": "scene/objects.ts#buildDial", "unit": "meters", "yUp": true, "collider": "cylinder", "interactive": true },
+    { "id": "dial_rain", "category": "ui3d", "type": "procedural", "category": "ui3d", "generator": "scene/objects.ts#buildDial", "unit": "meters", "yUp": true, "collider": "cylinder", "interactive": true },
+    { "id": "dial_wind", "category": "ui3d", "type": "procedural", "generator": "scene/objects.ts#buildDial", "unit": "meters", "yUp": true, "collider": "cylinder", "interactive": true },
+    { "id": "pointer", "category": "ui3d", "type": "procedural", "generator": "scene/objects.ts#buildDialPointer", "unit": "meters", "yUp": true, "collider": "none" },
+    { "id": "cloud_layers", "category": "effect", "type": "procedural", "generator": "scene/sky.ts", "unit": "meters", "yUp": true, "collider": "none", "lod": "hero" },
+    { "id": "rain_particles", "category": "effect", "type": "procedural", "generator": "scene/sky.ts", "unit": "meters", "yUp": true, "collider": "none", "maxParticlesMobile": 200, "maxParticlesDesktop": 600 },
+    { "id": "wind_foliage", "category": "effect", "type": "procedural", "generator": "scene/objects.ts#buildPlants", "unit": "meters", "yUp": true, "collider": "none", "instanced": true },
+    { "id": "sky_gradient", "category": "effect", "type": "procedural", "generator": "scene/sky.ts", "unit": "none", "collider": "none" },
+    { "id": "desk_props", "category": "decoration", "type": "procedural", "generator": "scene/objects.ts#buildDeskProps", "unit": "meters", "yUp": true, "instanced": true, "lod": "decoration" },
+    { "id": "audio_rain", "category": "audio", "type": "synthesized", "generator": "audio/index.ts", "format": "web-audio", "userGestureRequired": true },
+    { "id": "audio_wind", "category": "audio", "type": "synthesized", "generator": "audio/index.ts", "format": "web-audio", "userGestureRequired": true },
+    { "id": "audio_ui", "category": "audio", "type": "synthesized", "generator": "audio/index.ts", "format": "web-audio", "userGestureRequired": true }
+  ]
+}

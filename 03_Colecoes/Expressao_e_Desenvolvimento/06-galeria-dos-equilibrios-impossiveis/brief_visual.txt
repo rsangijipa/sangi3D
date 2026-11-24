@@ -1,0 +1,4 @@
+06 — Galeria dos Equilíbrios Impossíveis
+Galeria contemporânea de pedra clara, teto alto, janela zenital, móbile cinético de latão, madeira, cerâmica e vidro suspenso sobre plataforma; sombras delicadas no piso
+visão frontal oblíqua do móbile inteiro, close-up no fulcro; objetos de diferentes massas visíveis
+HUD: Adicionar peso / Mover fulcro / Observar movimento / Equilíbrio livre

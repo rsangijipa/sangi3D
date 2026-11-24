@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "project": "14-relojoaria-das-prioridades",
+  "units": "metres",
+  "assets": [
+    {
+      "id": "engrenagens",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "eixos",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "manivela",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "pendulo",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mola_visual",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mostrador",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cartoes_de_atividades",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "segmentos_de_tempo",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "project": "03-laboratorio-de-camadas-sonoras",
+  "version": "1.0.0",
+  "assets": [
+    {
+      "id": "mixer_body",
+      "path": "procedural:src/scene/mixer.ts#MixingDesk",
+      "category": "furniture",
+      "license": "Custom/MIT",
+      "triangles": 960,
+      "materials": ["woodOakPBR", "woodTrimPBR"],
+      "collider": "box_slope",
+      "description": "Corpo da mesa de som em carvalho mel inclinado a 16° com chanfros laterais."
+    },
+    {
+      "id": "fader_knob",
+      "path": "procedural:src/scene/mixer.ts#FaderTrackInfo",
+      "category": "interactive_controls",
+      "license": "Custom/MIT",
+      "triangles": 240,
+      "materials": ["woodKnobPBR", "greenAccentPBR"],
+      "collider": "drag_box",
+      "description": "5 knobs deslizantes de madeira com canal verde no foco."
+    },
+    {
+      "id": "headphone_button",
+      "path": "procedural:src/scene/mixer.ts#soloBtn",
+      "category": "interactive_controls",
+      "license": "Custom/MIT",
+      "triangles": 380,
+      "materials": ["creamButtonMat", "soloGreenMat"],
+      "collider": "click_cylinder",
+      "description": "Botões circulares com ícone de fone para isolamento solo."
+    },
+    {
+      "id": "dome_glass",
+      "path": "procedural:src/scene/cloches.ts#ClochesManager",
+      "category": "glassware",
+      "license": "Custom/MIT",
+      "triangles": 1640,
+      "materials": ["glassPhysicalPBR", "turnedWoodBase", "glowRingEmissive"],
+      "collider": "click_cylinder",
+      "description": "5 redomas de vidro artesanal com refração e base emissiva verde."
+    },
+    {
+      "id": "shoe_model",
+      "path": "procedural:src/scene/miniatures.ts#buildShoeMiniature",
+      "category": "props",
+      "license": "Custom/MIT",
+      "triangles": 620,
+      "materials": ["greenCanvasMat", "whiteRubberMat"],
+      "collider": "visual_prop",
+      "description": "Tênis esportivo verde oliva com cadarço e biqueira brancos flutuando na redoma 2."
+    },
+    {
+      "id": "fan_model",
+      "path": "procedural:src/scene/miniatures.ts#buildFanMiniature",
+      "category": "props",
+      "license": "Custom/MIT",
+      "triangles": 780,
+      "materials": ["sageStandMat", "fanBladesMat"],
+      "collider": "visual_prop",
+      "description": "Mini ventilador de mesa com 4 pás rotativas sincronizadas com o volume."
+    },
+    {
+      "id": "city_model",
+      "path": "procedural:src/scene/miniatures.ts#buildCityMiniature",
+      "category": "props",
+      "license": "Custom/MIT",
+      "triangles": 840,
+      "materials": ["buildingMat", "asphaltMat", "lampGlowMat"],
+      "collider": "visual_prop",
+      "description": "Edifícios em miniatura com asfalto curvo e poste de luz âmbar."
+    },
+    {
+      "id": "speech_icon",
+      "path": "procedural:src/scene/miniatures.ts#buildSpeechMiniature",
+      "category": "props",
+      "license": "Custom/MIT",
+      "triangles": 320,
+      "materials": ["creamBubbleMat"],
+      "collider": "visual_prop",
+      "description": "Balão de fala 3D com 3 pontos debossados."
+    },
+    {
+      "id": "music_note",
+      "path": "procedural:src/scene/miniatures.ts#buildMusicNoteMiniature",
+      "category": "props",
+      "license": "Custom/MIT",
+      "triangles": 460,
+      "materials": ["carvedWoodMat"],
+      "collider": "visual_prop",
+      "description": "Par de colcheias musicais esculpidas em madeira."
+    },
+    {
+      "id": "desk_lamp",
+      "path": "procedural:src/scene/props.ts#buildDeskLamp",
+      "category": "lighting_fixture",
+      "license": "Custom/MIT",
+      "triangles": 920,
+      "materials": ["brushedAluminumMat", "bulbGlowMat"],
+      "collider": "static_prop",
+      "description": "Luminária articulada com cúpula e luz pontual quente motivada."
+    },
+    {
+      "id": "microphone_prop",
+      "path": "procedural:src/scene/props.ts#buildVintageMicrophone",
+      "category": "props",
+      "license": "Custom/MIT",
+      "triangles": 880,
+      "materials": ["darkSteelMat", "chromeMeshMat"],
+      "collider": "static_prop",
+      "description": "Microfone condensador de estúdio vintage com suspensão shockmount."
+    },
+    {
+      "id": "pegboard",
+      "path": "procedural:src/scene/workbench.ts#buildPegboardWall",
+      "category": "architecture",
+      "license": "Custom/MIT",
+      "triangles": 1450,
+      "materials": ["pegboardWoodPBR", "holeShadeMat"],
+      "collider": "static_wall",
+      "description": "Parede perfurada de madeira com janela arqueada e bandeirolas."
+    }
+  ]
+}

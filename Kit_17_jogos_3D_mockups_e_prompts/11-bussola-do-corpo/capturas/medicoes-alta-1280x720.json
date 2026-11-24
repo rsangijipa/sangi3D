@@ -1,0 +1,12 @@
+[
+  {
+    "profile": "1280x720-alta",
+    "calls": 62,
+    "triangles": 122109,
+    "width": 1280,
+    "height": 720,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "alta",
+    "averageMs": 34.375
+  }
+]

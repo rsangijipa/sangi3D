@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Oficina dos Robôs Imperfeitos — Experiência 3D Interativa</title>
+
+  <!-- Tailwind CSS & Three.js CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Barra Imersiva Compartilhada do Workspace -->
+  <link rel="stylesheet" href="shared/imersivo.css?v=3" />
+
+  <style>
+    :root {
+      --cor-bronze: #b8860b;
+      --cor-cobre: #b87333;
+      --cor-madeira: #3d2314;
+      --cor-ouro: #e5a93b;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0f0a07;
+      color: #ede2d3;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    .glass-steampunk {
+      background: rgba(26, 17, 12, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(229, 169, 59, 0.28);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+    }
+
+    .btn-steampunk {
+      transition: all 200ms cubic-bezier(.2,.6,.3,1);
+    }
+    .btn-steampunk:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(229, 169, 59, 0.3);
+    }
+    .btn-steampunk:active {
+      transform: translateY(1px);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 4px #e5a93b); }
+      50% { opacity: 1; filter: drop-shadow(0 0 12px #e5a93b); }
+    }
+    .glow-gear {
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
+
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -15px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: toastFade 3.2s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(229, 169, 59, 0.4); border-radius: 9999px; }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- Canvas WebGL 3D -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI Superior -->
+  <header id="ui-top-bar" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <a href="/index.html" class="glass-steampunk px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-amber-950/40 flex items-center space-x-2 text-amber-200/90 transition" title="Voltar ao Launcher">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Launcher</span>
+      </a>
+      <div class="glass-steampunk px-4 py-2 rounded-xl flex flex-col">
+        <span class="text-xs uppercase tracking-wider text-amber-400/90 font-bold">Ambiente 02 · Reconstrução Fiel</span>
+        <h1 class="text-sm font-semibold text-amber-100">Oficina dos Robôs Imperfeitos</h1>
+      </div>
+    </div>
+
+    <!-- Indicador de Carga & Tensão de Corda -->
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <div class="glass-steampunk px-3.5 py-2 rounded-xl flex items-center space-x-3">
+        <div class="flex flex-col text-right">
+          <span class="text-[10px] uppercase font-bold text-amber-400/70 tracking-wider">Corda Mecânica</span>
+          <span id="label-spring" class="text-xs font-semibold text-amber-200">Pronto para dar corda</span>
+        </div>
+        <div class="w-24 h-2.5 bg-black/50 rounded-full overflow-hidden border border-amber-600/30 p-0.5">
+          <div id="bar-spring" class="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-yellow-300 rounded-full transition-all duration-300" style="width: 35%;"></div>
+        </div>
+      </div>
+
+      <button id="btn-windup" class="btn-steampunk glass-steampunk px-4 py-2 rounded-xl text-xs font-semibold hover:bg-amber-500/20 flex items-center space-x-2 text-amber-300 border border-amber-500/40" title="Dar Corda no Robô (Espaço ou Clique)">
+        <svg class="w-4 h-4 text-amber-400 animate-spin" style="animation-duration: 6s;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Dar Corda (W)</span>
+      </button>
+
+      <button id="btn-sound-toggle" class="glass-steampunk p-2.5 rounded-xl hover:bg-amber-950/40 text-amber-300/80 transition" title="Alternar Efeitos Sonoros (M)">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12 0l-6-6m6 0l-6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Dock Inferior com Painel de Ferramentas e Interações -->
+  <footer id="ui-bottom-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2.5 z-20 pointer-events-auto">
+    <div class="glass-steampunk p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <!-- Câmeras -->
+      <button id="cam-bench" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200/90 hover:bg-amber-500/20 transition active">Bancada</button>
+      <button id="cam-robot" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200/90 hover:bg-amber-500/20 transition">Robô</button>
+      <button id="cam-tools" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200/90 hover:bg-amber-500/20 transition">Ferramentas</button>
+      <button id="cam-lamp" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200/90 hover:bg-amber-500/20 transition">Lampião</button>
+    </div>
+
+    <!-- Ações do Robô -->
+    <div class="glass-steampunk p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="btn-oil" class="btn-steampunk px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 flex items-center space-x-1.5 transition">
+        <span>🛢️</span>
+        <span>Lubrificar</span>
+      </button>
+
+      <button id="btn-swap-gear" class="btn-steampunk px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 flex items-center space-x-1.5 transition">
+        <span>⚙️</span>
+        <span>Ajustar Engrenagem</span>
+      </button>
+
+      <button id="btn-emotion" class="btn-steampunk px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 flex items-center space-x-1.5 transition">
+        <span id="emotion-icon">🥺</span>
+        <span id="emotion-name">Sentir: Melancolia</span>
+      </button>
+
+      <button id="btn-drawer-toggle" class="btn-steampunk px-3 py-1.5 rounded-xl text-xs font-medium text-amber-300 bg-amber-500/10 hover:bg-amber-500/30 border border-amber-500/30 flex items-center space-x-1.5 transition">
+        <span>📖</span>
+        <span>Caderno do Reparador</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Dica de Interação no Centro Inferior -->
+  <div id="hint-bubble" class="absolute bottom-20 left-1/2 -translate-x-1/2 glass-steampunk px-4 py-2 rounded-full text-xs font-medium text-amber-200/90 pointer-events-none transition-all duration-300 z-10 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+    <span>Clique no robô, na chave de corda ou nas engrenagens da bancada para interagir</span>
+  </div>
+
+  <!-- Gaveta Lateral: Caderno do Reparador & Reflexão Psicológica -->
+  <aside id="info-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full glass-steampunk border-l border-amber-500/30 z-30 translate-x-full transition-transform duration-300 flex flex-col p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-amber-500/20">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">⚙️</span>
+        <h2 class="text-base font-bold text-amber-100">Caderno da Imperfeição</h2>
+      </div>
+      <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-amber-500/20 text-amber-300 transition">✕</button>
+    </div>
+
+    <div class="space-y-4 pt-4 text-xs text-amber-200/90 leading-relaxed">
+      <section class="bg-amber-950/40 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-1 text-sm">A Filosofia do Autômato Imperfeito</h3>
+        <p>
+          Este pequeno robô foi montado com peças recolhidas em diferentes épocas: engrenagens desgastadas,
+          um manômetro que oscila conforme a respiração e olhos de vidro âmbar que guardam histórias.
+          Ele não foi feito para ser uma máquina fria de precisão, mas um companheiro sensível.
+        </p>
+      </section>
+
+      <section class="bg-black/30 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-1">Eixos Psicológicos & Terapêuticos</h3>
+        <ul class="list-disc pl-4 space-y-1 text-amber-200/80">
+          <li><strong>Tolerância à Frustração:</strong> Descobrir que peças travadas não significam fracasso, apenas demandam pausa e lubrificação.</li>
+          <li><strong>Autocompaixão:</strong> Reconhecer as marcas de uso e arranhões como cicatrizes valorosas de experiência.</li>
+          <li><strong>Flexibilidade Cognitiva:</strong> Trocar uma engrenagem que não se encaixa sem descartar todo o projeto.</li>
+          <li><strong>Ritmo Próprio:</strong> A corda mecânica se esgota e precisa ser renovada com calma.</li>
+        </ul>
+      </section>
+
+      <section class="bg-amber-950/40 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-1">Registro de Reparos & Sentires</h3>
+        <textarea id="repair-notes" rows="4" class="w-full bg-black/60 border border-amber-500/30 rounded-lg p-2.5 text-xs text-amber-100 focus:outline-none focus:border-amber-400 placeholder-amber-500/40" placeholder="Qual parte sua hoje pede paciência, reparo suave ou apenas um tempo de descanso? Escreva aqui..."></textarea>
+        <button id="btn-save-note" class="mt-2 w-full py-2 bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-white font-semibold rounded-lg shadow transition">Salvar Reflexão</button>
+      </section>
+
+      <section class="text-[11px] text-amber-400/60 pt-2 border-t border-amber-500/20">
+        <p><strong>Controles:</strong> Botão esquerdo gira a cena • Botão direito move o foco • Scroll aproxima • Espaço/W dá corda • L alterna luzes • M alterna áudio.</p>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Elemento para Toasts -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center space-y-2"></div>
+
+  <!-- Script Principal da Experiência 3D -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+       * 1. SISTEMA DE ÁUDIO PROCEDURAL (Web Audio API)
+       * ========================================================== */
+      class SteampunkAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.humGain = null;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          this.ctx = new AudioContext();
+
+          // Ruído ambiente contínuo da oficina (caldeira / luz a óleo suave)
+          const bufferSize = this.ctx.sampleRate * 2;
+          const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = (Math.random() * 2 - 1) * 0.015;
+          }
+
+          const whiteNoise = this.ctx.createBufferSource();
+          whiteNoise.buffer = noiseBuffer;
+          whiteNoise.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 280;
+
+          this.humGain = this.ctx.createGain();
+          this.humGain.gain.value = 0.25;
+
+          whiteNoise.connect(filter);
+          filter.connect(this.humGain);
+          this.humGain.connect(this.ctx.destination);
+          whiteNoise.start();
+        }
+
+        playRatchet() {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          // Som mecânico de catraca da chave de corda
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(600 + Math.random() * 200, now);
+          osc.frequency.exponentialRampToValueAtTime(120, now + 0.04);
+
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        }
+
+        playTick() {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(1400, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.02);
+        }
+
+        playSteam() {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const bufferSize = this.ctx.sampleRate * 0.4;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+          }
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1200, now);
+          filter.Q.value = 1.5;
+
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.38);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          noise.start(now);
+        }
+
+        playOilDrop() {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(1800, now + 0.08);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        }
+
+        playChime(noteFreq = 523.25) {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(noteFreq, now);
+
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.25);
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.humGain && this.ctx) {
+            this.humGain.gain.value = this.enabled ? 0.25 : 0;
+          }
+          return this.enabled;
+        }
+      }
+
+      const audio = new SteampunkAudioEngine();
+
+      /* ==========================================================
+       * 2. CENÁRIO 3D & THREE.JS SETUP
+       * ========================================================== */
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x110c08);
+      scene.fog = new THREE.FogExp2(0x110c08, 0.038);
+
+      const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 50);
+      camera.position.set(0, 2.2, 4.2);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.05;
+      controls.minDistance = 1.2;
+      controls.maxDistance = 8.5;
+      controls.target.set(0, 1.2, 0);
+
+      /* ==========================================================
+       * 3. TEXTURAS PROCEDURAIS PBR
+       * ========================================================== */
+      function createWoodTexture() {
+        const c = document.createElement('canvas');
+        c.width = 1024;
+        c.height = 1024;
+        const ctx = c.getContext('2d');
+        // Fundo marrom noz escuro envelhecido
+        ctx.fillStyle = '#301c10';
+        ctx.fillRect(0, 0, 1024, 1024);
+
+        // Veios de madeira horizontais
+        for (let i = 0; i < 600; i++) {
+          const y = Math.random() * 1024;
+          const alpha = 0.03 + Math.random() * 0.07;
+          ctx.strokeStyle = Math.random() > 0.5 ? `rgba(28, 14, 6, ${alpha})` : `rgba(74, 46, 26, ${alpha})`;
+          ctx.lineWidth = 1 + Math.random() * 6;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.bezierCurveTo(256, y + (Math.random() - 0.5) * 20, 768, y + (Math.random() - 0.5) * 20, 1024, y);
+          ctx.stroke();
+        }
+
+        // Marcas circulares e nós de madeira
+        for (let k = 0; k < 12; k++) {
+          const kx = Math.random() * 1024;
+          const ky = Math.random() * 1024;
+          ctx.strokeStyle = 'rgba(20, 10, 4, 0.25)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.ellipse(kx, ky, 20 + Math.random() * 30, 8 + Math.random() * 15, Math.random(), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        const texture = new THREE.CanvasTexture(c);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2);
+        return texture;
+      }
+
+      function createAgedMetalTexture(baseColorHex, specColorHex) {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = baseColorHex;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Manchas de oxidação e abrasão
+        for (let i = 0; i < 2000; i++) {
+          const x = Math.random() * 512;
+          const y = Math.random() * 512;
+          const r = Math.random() * 3 + 1;
+          ctx.fillStyle = Math.random() > 0.6 ? specColorHex : 'rgba(20, 15, 10, 0.12)';
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const texture = new THREE.CanvasTexture(c);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+      }
+
+      const woodMap = createWoodTexture();
+      const brassMap = createAgedMetalTexture('#b8860b', '#e5b550');
+      const copperMap = createAgedMetalTexture('#9e4e2a', '#c8784e');
+      const ironMap = createAgedMetalTexture('#3a3532', '#645d58');
+
+      /* ==========================================================
+       * 4. MATERIAIS PBR
+       * ========================================================== */
+      const matWoodBench = new THREE.MeshStandardMaterial({
+        map: woodMap,
+        roughness: 0.85,
+        metalness: 0.05,
+      });
+
+      const matBrass = new THREE.MeshStandardMaterial({
+        map: brassMap,
+        color: 0xc49432,
+        roughness: 0.45,
+        metalness: 0.82,
+      });
+
+      const matCopper = new THREE.MeshStandardMaterial({
+        map: copperMap,
+        color: 0xb55a30,
+        roughness: 0.5,
+        metalness: 0.78,
+      });
+
+      const matAgedIron = new THREE.MeshStandardMaterial({
+        map: ironMap,
+        color: 0x48423d,
+        roughness: 0.65,
+        metalness: 0.75,
+      });
+
+      const matGoldGlowing = new THREE.MeshStandardMaterial({
+        color: 0xffaa22,
+        emissive: 0xff7700,
+        emissiveIntensity: 0.85,
+        roughness: 0.25,
+        metalness: 0.3,
+      });
+
+      const matGlassAmber = new THREE.MeshPhysicalMaterial({
+        color: 0xff9922,
+        emissive: 0xaa5500,
+        emissiveIntensity: 0.6,
+        roughness: 0.15,
+        metalness: 0.1,
+        transmission: 0.88,
+        thickness: 0.5,
+        transparent: true,
+        opacity: 0.95,
+      });
+
+      const matDialFace = new THREE.MeshStandardMaterial({
+        color: 0xf5eed9,
+        roughness: 0.9,
+        metalness: 0.1,
+      });
+
+      /* ==========================================================
+       * 5. ILUMINAÇÃO ATMOSFÉRICA
+       * ========================================================== */
+      // Luz ambiente aconchegante
+      const ambLight = new THREE.AmbientLight(0x3a2818, 0.7);
+      scene.add(ambLight);
+
+      // Luz principal: Lâmpada a querosene à esquerda
+      const lampLight = new THREE.PointLight(0xff9d3b, 2.4, 7);
+      lampLight.position.set(-1.4, 2.1, 0.4);
+      lampLight.castShadow = true;
+      lampLight.shadow.mapSize.width = 1024;
+      lampLight.shadow.mapSize.height = 1024;
+      lampLight.shadow.bias = -0.001;
+      scene.add(lampLight);
+
+      // Luz suave de preenchimento (lado direito e frontal)
+      const fillLight = new THREE.DirectionalLight(0xd4a068, 0.5);
+      fillLight.position.set(2, 3, 2);
+      scene.add(fillLight);
+
+      // Rim light sutil na silhueta do robô
+      const rimLight = new THREE.PointLight(0x5588cc, 0.4, 5);
+      rimLight.position.set(0.6, 2.4, -1.8);
+      scene.add(rimLight);
+
+      /* ==========================================================
+       * 6. CENOGRAFIA: BANCADA DE MADEIRA E AMBIENTE
+       * ========================================================== */
+      // Mesa de trabalho resistente
+      const benchGroup = new THREE.Group();
+
+      const tableTopGeo = new THREE.BoxGeometry(4.2, 0.18, 2.4);
+      const tableTop = new THREE.Mesh(tableTopGeo, matWoodBench);
+      tableTop.position.set(0, 0.8, 0);
+      tableTop.receiveShadow = true;
+      benchGroup.add(tableTop);
+
+      // Pernas robustas da mesa
+      const legGeo = new THREE.BoxGeometry(0.18, 1.6, 0.18);
+      const legPositions = [
+        [-1.9, 0, -1.0],
+        [ 1.9, 0, -1.0],
+        [-1.9, 0,  1.0],
+        [ 1.9, 0,  1.0]
+      ];
+      legPositions.forEach(([lx, ly, lz]) => {
+        const leg = new THREE.Mesh(legGeo, matWoodBench);
+        leg.position.set(lx, ly, lz);
+        leg.castShadow = true;
+        leg.receiveShadow = true;
+        benchGroup.add(leg);
+      });
+
+      // Parede de fundo com prateleiras e ferramentas
+      const wallGeo = new THREE.PlaneGeometry(10, 7);
+      const matWall = new THREE.MeshStandardMaterial({
+        color: 0x18120c,
+        roughness: 0.95,
+      });
+      const backWall = new THREE.Mesh(wallGeo, matWall);
+      backWall.position.set(0, 3, -1.3);
+      backWall.receiveShadow = true;
+      benchGroup.add(backWall);
+
+      // Prateleiras de madeira no fundo
+      for (let s = 0; s < 2; s++) {
+        const shelfGeo = new THREE.BoxGeometry(3.6, 0.08, 0.4);
+        const shelf = new THREE.Mesh(shelfGeo, matWoodBench);
+        shelf.position.set(0, 2.2 + s * 0.9, -1.1);
+        shelf.castShadow = true;
+        shelf.receiveShadow = true;
+        benchGroup.add(shelf);
+
+        // Frascos e engrenagens decorativas nas prateleiras
+        for (let b = -4; b <= 4; b++) {
+          if (Math.abs(b) === 1) continue;
+          const bottleGeo = new THREE.CylinderGeometry(0.06, 0.07, 0.28, 12);
+          const matBottle = Math.random() > 0.5 ? matGlassAmber : matBrass;
+          const bottle = new THREE.Mesh(bottleGeo, matBottle);
+          bottle.position.set(b * 0.35, 2.2 + s * 0.9 + 0.16, -1.08);
+          benchGroup.add(bottle);
+        }
+      }
+
+      scene.add(benchGroup);
+
+      /* ==========================================================
+       * 7. LAMPIÃO A ÓLEO COM CHAMA INTERATIVA
+       * ========================================================== */
+      const lampGroup = new THREE.Group();
+      lampGroup.position.set(-1.4, 0.89, -0.3);
+
+      // Base de latão do lampião
+      const lampBaseGeo = new THREE.CylinderGeometry(0.2, 0.28, 0.22, 16);
+      const lampBase = new THREE.Mesh(lampBaseGeo, matBrass);
+      lampBase.castShadow = true;
+      lampGroup.add(lampBase);
+
+      // Queimador e grade
+      const burnerGeo = new THREE.CylinderGeometry(0.12, 0.18, 0.15, 16);
+      const burner = new THREE.Mesh(burnerGeo, matCopper);
+      burner.position.y = 0.18;
+      lampGroup.add(burner);
+
+      // Globo de vidro transparente
+      const glassGeo = new THREE.SphereGeometry(0.22, 16, 16);
+      glassGeo.scale(0.8, 1.4, 0.8);
+      const lampGlass = new THREE.Mesh(glassGeo, matGlassAmber);
+      lampGlass.position.y = 0.42;
+      lampGroup.add(lampGlass);
+
+      // Chama interna brilhante
+      const flameGeo = new THREE.ConeGeometry(0.04, 0.12, 8);
+      const matFlame = new THREE.MeshBasicMaterial({ color: 0xfff2a3 });
+      const flameMesh = new THREE.Mesh(flameGeo, matFlame);
+      flameMesh.position.y = 0.35;
+      lampGroup.add(flameMesh);
+
+      // Cúpula superior e alça
+      const capGeo = new THREE.CylinderGeometry(0.1, 0.18, 0.12, 16);
+      const capMesh = new THREE.Mesh(capGeo, matBrass);
+      capMesh.position.y = 0.64;
+      lampGroup.add(capMesh);
+
+      scene.add(lampGroup);
+
+      /* ==========================================================
+       * 8. CONSTRUÇÃO DO HERÓI: ROBÔ STEAMPUNK IMPERFEITO
+       * ========================================================== */
+      const robot = new THREE.Group();
+      robot.position.set(0, 0.89, 0); // sentado sobre a mesa
+
+      // 8.1. Pélvis e Assento
+      const pelvisGeo = new THREE.CylinderGeometry(0.3, 0.34, 0.24, 16);
+      const pelvis = new THREE.Mesh(pelvisGeo, matBrass);
+      pelvis.position.y = 0.18;
+      pelvis.castShadow = true;
+      robot.add(pelvis);
+
+      // 8.2. Tronco / Caldeira de Cobre
+      const torsoGroup = new THREE.Group();
+      torsoGroup.position.set(0, 0.48, 0);
+
+      const torsoGeo = new THREE.CylinderGeometry(0.36, 0.32, 0.54, 18);
+      const torsoMesh = new THREE.Mesh(torsoGeo, matCopper);
+      torsoMesh.castShadow = true;
+      torsoMesh.receiveShadow = true;
+      torsoGroup.add(torsoMesh);
+
+      // Cinta de rebites de latão no torso
+      const beltGeo = new THREE.TorusGeometry(0.365, 0.03, 8, 24);
+      const belt = new THREE.Mesh(beltGeo, matBrass);
+      belt.rotation.x = Math.PI / 2;
+      belt.position.y = 0.05;
+      torsoGroup.add(belt);
+
+      // Manômetro no peito direito
+      const gaugeGroup = new THREE.Group();
+      gaugeGroup.position.set(0.18, 0.08, 0.32);
+      gaugeGroup.rotation.y = 0.25;
+
+      const gaugeRingGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.04, 16);
+      gaugeRingGeo.rotateX(Math.PI / 2);
+      const gaugeRing = new THREE.Mesh(gaugeRingGeo, matBrass);
+      gaugeGroup.add(gaugeRing);
+
+      const gaugeFaceGeo = new THREE.CircleGeometry(0.085, 16);
+      const gaugeFace = new THREE.Mesh(gaugeFaceGeo, matDialFace);
+      gaugeFace.position.z = 0.022;
+      gaugeGroup.add(gaugeFace);
+
+      // Ponteiro indicador do manômetro
+      const needleGeo = new THREE.BoxGeometry(0.008, 0.065, 0.005);
+      needleGeo.translate(0, 0.025, 0);
+      const needleMesh = new THREE.Mesh(needleGeo, matAgedIron);
+      needleMesh.position.z = 0.026;
+      gaugeGroup.add(needleMesh);
+
+      torsoGroup.add(gaugeGroup);
+
+      // Engrenagem central exposta no peito esquerdo
+      const chestGearGroup = new THREE.Group();
+      chestGearGroup.position.set(-0.14, 0.06, 0.32);
+      chestGearGroup.rotation.y = -0.2;
+
+      function createGearMesh(radius, teethCount, thickness, material) {
+        const gearG = new THREE.Group();
+        const diskGeo = new THREE.CylinderGeometry(radius, radius, thickness, 20);
+        diskGeo.rotateX(Math.PI / 2);
+        const disk = new THREE.Mesh(diskGeo, material);
+        gearG.add(disk);
+
+        const toothGeo = new THREE.BoxGeometry(radius * 0.28, radius * 0.32, thickness * 0.98);
+        for (let t = 0; t < teethCount; t++) {
+          const angle = (t / teethCount) * Math.PI * 2;
+          const tooth = new THREE.Mesh(toothGeo, material);
+          tooth.position.set(Math.cos(angle) * radius * 0.96, Math.sin(angle) * radius * 0.96, 0);
+          tooth.rotation.z = angle;
+          gearG.add(tooth);
+        }
+        return gearG;
+      }
+
+      const chestGear = createGearMesh(0.11, 10, 0.025, matBrass);
+      chestGearGroup.add(chestGear);
+
+      const subGear = createGearMesh(0.065, 7, 0.022, matAgedIron);
+      subGear.position.set(0.12, 0.1, 0.005);
+      chestGearGroup.add(subGear);
+
+      torsoGroup.add(chestGearGroup);
+
+      // Chave de corda borboleta nas costas
+      const keyGroup = new THREE.Group();
+      keyGroup.position.set(0, 0.15, -0.38);
+
+      const keyShaftGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.16, 12);
+      keyShaftGeo.rotateX(Math.PI / 2);
+      const keyShaft = new THREE.Mesh(keyShaftGeo, matAgedIron);
+      keyGroup.add(keyShaft);
+
+      const wingGeo = new THREE.TorusGeometry(0.1, 0.025, 8, 16);
+      const wingL = new THREE.Mesh(wingGeo, matBrass);
+      wingL.position.set(-0.09, 0, -0.09);
+      wingL.rotation.y = Math.PI / 2;
+      keyGroup.add(wingL);
+
+      const wingR = new THREE.Mesh(wingGeo, matBrass);
+      wingR.position.set(0.09, 0, -0.09);
+      wingR.rotation.y = Math.PI / 2;
+      keyGroup.add(wingR);
+
+      torsoGroup.add(keyGroup);
+
+      // Pequena lanterna pendurada nas costas do robô
+      const miniLanternGroup = new THREE.Group();
+      miniLanternGroup.position.set(0.3, 0.05, -0.28);
+      const miniCageGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.16, 8);
+      const miniCage = new THREE.Mesh(miniCageGeo, matBrass);
+      miniLanternGroup.add(miniCage);
+      const miniBulbGeo = new THREE.SphereGeometry(0.04, 8, 8);
+      const miniBulb = new THREE.Mesh(miniBulbGeo, matGoldGlowing);
+      miniLanternGroup.add(miniBulb);
+      torsoGroup.add(miniLanternGroup);
+
+      robot.add(torsoGroup);
+
+      // 8.3. Cabeça do Robô (Sensível, com Rebites e Olhos de Vidro Âmbar)
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 1.05, 0.04);
+
+      // Cúpula da cabeça esférica achatada
+      const headDomeGeo = new THREE.SphereGeometry(0.38, 24, 20);
+      headDomeGeo.scale(1, 1.05, 1);
+      const headDome = new THREE.Mesh(headDomeGeo, matBrass);
+      headDome.castShadow = true;
+      headGroup.add(headDome);
+
+      // Viseira / moldura facial rebaixada
+      const visorPlateGeo = new THREE.BoxGeometry(0.5, 0.28, 0.08);
+      const visorPlate = new THREE.Mesh(visorPlateGeo, matCopper);
+      visorPlate.position.set(0, -0.02, 0.32);
+      headGroup.add(visorPlate);
+
+      // Olhos grandes de vidro âmbar (Lentes expressivas)
+      const eyeLGroup = new THREE.Group();
+      eyeLGroup.position.set(-0.14, 0.01, 0.36);
+      const eyeRGroup = new THREE.Group();
+      eyeRGroup.position.set( 0.14, 0.01, 0.36);
+
+      [eyeLGroup, eyeRGroup].forEach((eg) => {
+        const rimGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.03, 16);
+        rimGeo.rotateX(Math.PI / 2);
+        const rim = new THREE.Mesh(rimGeo, matBrass);
+        eg.add(rim);
+
+        const lensGeo = new THREE.SphereGeometry(0.082, 16, 16);
+        lensGeo.scale(1, 1, 0.5);
+        const lens = new THREE.Mesh(lensGeo, matGlassAmber);
+        lens.position.z = 0.015;
+        eg.add(lens);
+
+        const innerLight = new THREE.PointLight(0xffaa22, 0.6, 1.2);
+        innerLight.position.z = 0.05;
+        eg.add(innerLight);
+      });
+
+      headGroup.add(eyeLGroup);
+      headGroup.add(eyeRGroup);
+
+      // Boca: fresta de ventilação curvada
+      const mouthGeo = new THREE.TorusGeometry(0.09, 0.016, 6, 16, Math.PI * 0.7);
+      const mouthMesh = new THREE.Mesh(mouthGeo, matAgedIron);
+      mouthMesh.rotation.z = Math.PI * 0.15;
+      mouthMesh.position.set(0, -0.15, 0.37);
+      headGroup.add(mouthMesh);
+
+      // Orelhas / Engrenagens nas têmporas
+      const earL = createGearMesh(0.12, 10, 0.03, matBrass);
+      earL.position.set(-0.4, 0.02, 0);
+      earL.rotation.y = Math.PI / 2;
+      headGroup.add(earL);
+
+      const earR = createGearMesh(0.12, 10, 0.03, matBrass);
+      earR.position.set(0.4, 0.02, 0);
+      earR.rotation.y = -Math.PI / 2;
+      headGroup.add(earR);
+
+      // Pequena antena superior com mola
+      const antennaGeo = new THREE.CylinderGeometry(0.01, 0.015, 0.18, 8);
+      const antenna = new THREE.Mesh(antennaGeo, matCopper);
+      antenna.position.set(0, 0.44, 0);
+      headGroup.add(antenna);
+
+      const antennaBallGeo = new THREE.SphereGeometry(0.035, 12, 12);
+      const antennaBall = new THREE.Mesh(antennaBallGeo, matGoldGlowing);
+      antennaBall.position.set(0, 0.54, 0);
+      headGroup.add(antennaBall);
+
+      robot.add(headGroup);
+
+      // 8.4. Braços e Mãos Articuladas (Repousando nos Joelhos)
+      function createArm(isLeft) {
+        const side = isLeft ? -1 : 1;
+        const armG = new THREE.Group();
+        armG.position.set(side * 0.42, 0.7, 0);
+
+        // Articulação do ombro
+        const shoulderGeo = new THREE.SphereGeometry(0.09, 12, 12);
+        const shoulder = new THREE.Mesh(shoulderGeo, matBrass);
+        armG.add(shoulder);
+
+        // Braço superior
+        const upperArmGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.3, 12);
+        upperArmGeo.translate(0, -0.15, 0);
+        const upperArm = new THREE.Mesh(upperArmGeo, matAgedIron);
+        upperArm.rotation.x = 0.4;
+        upperArm.rotation.z = side * 0.15;
+        armG.add(upperArm);
+
+        // Cotovelo
+        const elbowGeo = new THREE.SphereGeometry(0.07, 10, 10);
+        const elbow = new THREE.Mesh(elbowGeo, matBrass);
+        elbow.position.set(side * 0.05, -0.3, 0.12);
+        armG.add(elbow);
+
+        // Antebraço em direção aos joelhos
+        const forearmGeo = new THREE.CylinderGeometry(0.055, 0.05, 0.32, 12);
+        forearmGeo.translate(0, -0.16, 0);
+        const forearm = new THREE.Mesh(forearmGeo, matCopper);
+        forearm.position.copy(elbow.position);
+        forearm.rotation.x = -0.7;
+        forearm.rotation.y = side * 0.3;
+        armG.add(forearm);
+
+        // Mão articulada com dedos
+        const handGeo = new THREE.BoxGeometry(0.12, 0.06, 0.14);
+        const hand = new THREE.Mesh(handGeo, matBrass);
+        hand.position.set(side * 0.12, -0.42, 0.36);
+        armG.add(hand);
+
+        return armG;
+      }
+
+      const armLeft = createArm(true);
+      const armRight = createArm(false);
+      robot.add(armLeft);
+      robot.add(armRight);
+
+      // 8.5. Pernas e Botas de Bronze (Sentadas para a Frente)
+      function createLeg(isLeft) {
+        const side = isLeft ? -1 : 1;
+        const legG = new THREE.Group();
+        legG.position.set(side * 0.22, 0.16, 0.12);
+
+        // Coxa dobrada para a frente
+        const thighGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.32, 12);
+        thighGeo.rotateX(Math.PI / 2);
+        const thigh = new THREE.Mesh(thighGeo, matAgedIron);
+        thigh.position.set(0, 0, 0.14);
+        legG.add(thigh);
+
+        // Joelho com engrenagem
+        const kneeGear = createGearMesh(0.09, 8, 0.03, matBrass);
+        kneeGear.position.set(0, 0, 0.32);
+        kneeGear.rotation.y = Math.PI / 2;
+        legG.add(kneeGear);
+
+        // Canela descendo até a bancada
+        const shinGeo = new THREE.CylinderGeometry(0.07, 0.065, 0.22, 12);
+        const shin = new THREE.Mesh(shinGeo, matCopper);
+        shin.position.set(0, -0.06, 0.38);
+        legG.add(shin);
+
+        // Bota arredondada de bronze
+        const bootGeo = new THREE.BoxGeometry(0.14, 0.08, 0.24);
+        const boot = new THREE.Mesh(bootGeo, matBrass);
+        boot.position.set(0, -0.14, 0.44);
+        boot.castShadow = true;
+        legG.add(boot);
+
+        return legG;
+      }
+
+      robot.add(createLeg(true));
+      robot.add(createLeg(false));
+
+      scene.add(robot);
+
+      /* ==========================================================
+       * 9. OBJETOS ESPALHADOS NA BANCADA (ITENS INTERATIVOS)
+       * ========================================================== */
+      const interactiveItems = [];
+
+      // 9.1. Almotolia de Óleo (Oil Can) com bico curvo longo
+      const oilCanGroup = new THREE.Group();
+      oilCanGroup.name = 'oilCan';
+      oilCanGroup.position.set(-0.85, 0.89, 0.5);
+
+      const oilBodyGeo = new THREE.CylinderGeometry(0.1, 0.16, 0.22, 16);
+      const oilBody = new THREE.Mesh(oilBodyGeo, matBrass);
+      oilBody.castShadow = true;
+      oilCanGroup.add(oilBody);
+
+      const spoutGeo = new THREE.CylinderGeometry(0.015, 0.03, 0.28, 10);
+      spoutGeo.rotateZ(-0.4);
+      spoutGeo.translate(0.06, 0.22, 0);
+      const spout = new THREE.Mesh(spoutGeo, matCopper);
+      oilCanGroup.add(spout);
+
+      scene.add(oilCanGroup);
+      interactiveItems.push({ obj: oilCanGroup, type: 'oil' });
+
+      // 9.2. Engrenagens Soltas sobre a Madeira
+      const gearTable1 = createGearMesh(0.16, 12, 0.03, matBrass);
+      gearTable1.rotation.x = Math.PI / 2;
+      gearTable1.position.set(-0.55, 0.905, 0.65);
+      scene.add(gearTable1);
+      interactiveItems.push({ obj: gearTable1, type: 'gear' });
+
+      const gearTable2 = createGearMesh(0.11, 8, 0.025, matCopper);
+      gearTable2.rotation.x = Math.PI / 2;
+      gearTable2.position.set(-0.4, 0.905, 0.85);
+      scene.add(gearTable2);
+      interactiveItems.push({ obj: gearTable2, type: 'gear' });
+
+      const gearTable3 = createGearMesh(0.2, 14, 0.03, matAgedIron);
+      gearTable3.rotation.x = Math.PI / 2;
+      gearTable3.position.set(0.7, 0.905, 0.6);
+      scene.add(gearTable3);
+      interactiveItems.push({ obj: gearTable3, type: 'gear' });
+
+      // 9.3. Chaves de Boca / Ferramentas na bancada
+      const wrenchGeo = new THREE.BoxGeometry(0.05, 0.015, 0.35);
+      const wrench = new THREE.Mesh(wrenchGeo, matAgedIron);
+      wrench.position.set(0.9, 0.9, 0.4);
+      wrench.rotation.y = 0.5;
+      scene.add(wrench);
+
+      // Partículas de Vapor / Faíscas
+      const particleCount = 35;
+      const particleGeo = new THREE.BufferGeometry();
+      const particlePositions = new Float32Array(particleCount * 3);
+      const particleVelocities = [];
+
+      for (let p = 0; p < particleCount; p++) {
+        particlePositions[p * 3]     = (Math.random() - 0.5) * 1.5;
+        particlePositions[p * 3 + 1] = 0.9 + Math.random() * 1.2;
+        particlePositions[p * 3 + 2] = (Math.random() - 0.5) * 1.5;
+        particleVelocities.push({
+          x: (Math.random() - 0.5) * 0.003,
+          y: 0.003 + Math.random() * 0.006,
+          z: (Math.random() - 0.5) * 0.003,
+          life: Math.random()
+        });
+      }
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+      const particleMat = new THREE.PointsMaterial({
+        color: 0xffcc66,
+        size: 0.035,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending
+      });
+      const steamParticles = new THREE.Points(particleGeo, particleMat);
+      scene.add(steamParticles);
+
+      /* ==========================================================
+       * 10. ESTADO, DINÂMICA E ANIMAÇÕES
+       * ========================================================== */
+      const state = {
+        springEnergy: 35, // 0 a 100
+        isWinding: false,
+        emotionIndex: 0,
+        emotions: [
+          { name: 'Melancolia Serena', icon: '🥺', headTilt: 0.22, headPan: 0.0, eyeIntensity: 0.5, speed: 0.5, desc: 'Acolhimento da própria vulnerabilidade' },
+          { name: 'Curiosidade Ativa', icon: '🧐', headTilt: -0.08, headPan: 0.25, eyeIntensity: 1.0, speed: 1.2, desc: 'Vontade de explorar novas soluções' },
+          { name: 'Energia & Esperança', icon: '✨', headTilt: -0.15, headPan: 0.0, eyeIntensity: 1.4, speed: 1.8, desc: 'Força renovada e ritmo pulsante' },
+          { name: 'Orgulho Imperfeito', icon: '💖', headTilt: 0.05, headPan: -0.1, eyeIntensity: 0.9, speed: 0.8, desc: 'Beleza nas marcas e na singularidade' },
+        ],
+        activeCamera: 'bench'
+      };
+
+      function updateSpringUI() {
+        const bar = document.getElementById('bar-spring');
+        const lbl = document.getElementById('label-spring');
+        bar.style.width = `${Math.min(100, Math.max(0, state.springEnergy))}%`;
+
+        if (state.springEnergy > 75) {
+          lbl.textContent = 'Corda Plena! Tique-taque vivo';
+          bar.className = 'h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-yellow-300 rounded-full transition-all duration-300';
+        } else if (state.springEnergy > 25) {
+          lbl.textContent = 'Em movimento suave';
+          bar.className = 'h-full bg-gradient-to-r from-amber-600 via-amber-400 to-yellow-300 rounded-full transition-all duration-300';
+        } else {
+          lbl.textContent = 'Precisando de nova corda';
+          bar.className = 'h-full bg-gradient-to-r from-rose-600 to-amber-600 rounded-full transition-all duration-300';
+        }
+      }
+
+      function showToast(text) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'glass-steampunk px-4 py-2.5 rounded-xl text-xs text-amber-200 border border-amber-500/40 shadow-xl toast-anim';
+        t.textContent = text;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      function windUpSpring() {
+        audio.playRatchet();
+        state.springEnergy = Math.min(100, state.springEnergy + 20);
+        updateSpringUI();
+
+        // Rotação visual da chave de corda
+        keyGroup.rotation.z += Math.PI * 0.4;
+        showToast('⚙️ Chave girada! Tensão acumulada com sucesso.');
+
+        if (state.springEnergy >= 95) {
+          audio.playSteam();
+          audio.playChime(659.25);
+          showToast('🔔 Plenitude alcançada! O robô vibra em harmonia.');
+        }
+      }
+
+      function applyOil() {
+        audio.playOilDrop();
+        oilCanGroup.position.y += 0.08;
+        setTimeout(() => { oilCanGroup.position.y -= 0.08; }, 250);
+        state.springEnergy = Math.min(100, state.springEnergy + 10);
+        updateSpringUI();
+        showToast('🛢️ Gota de óleo suave aplicada nas engrenagens! Atrito reduzido.');
+      }
+
+      function swapGear() {
+        audio.playTick();
+        chestGearGroup.scale.set(1.15, 1.15, 1.15);
+        setTimeout(() => chestGearGroup.scale.set(1, 1, 1), 200);
+        showToast('⚙️ Engrenagem ajustada! Encaixe perfeito para o momento.');
+      }
+
+      function nextEmotion() {
+        state.emotionIndex = (state.emotionIndex + 1) % state.emotions.length;
+        const cur = state.emotions[state.emotionIndex];
+        document.getElementById('emotion-icon').textContent = cur.icon;
+        document.getElementById('emotion-name').textContent = cur.name;
+        audio.playChime(440 + state.emotionIndex * 110);
+        showToast(`${cur.icon} Estado Emocional: ${cur.name} — ${cur.desc}`);
+      }
+
+      /* ==========================================================
+       * 11. POSICIONAMENTO DINÂMICO DE CÂMERAS
+       * ========================================================== */
+      const camPresets = {
+        bench: { pos: new THREE.Vector3(0, 2.2, 4.2), target: new THREE.Vector3(0, 1.2, 0) },
+        robot: { pos: new THREE.Vector3(0, 1.6, 1.8), target: new THREE.Vector3(0, 1.35, 0.1) },
+        tools: { pos: new THREE.Vector3(-0.9, 1.7, 1.6), target: new THREE.Vector3(-0.5, 0.95, 0.5) },
+        lamp:  { pos: new THREE.Vector3(-1.8, 1.8, 1.4), target: new THREE.Vector3(-1.4, 1.3, -0.2) }
+      };
+
+      let targetCamPos = camPresets.bench.pos.clone();
+      let targetCamLook = camPresets.bench.target.clone();
+
+      function setCameraPreset(key) {
+        state.activeCamera = key;
+        const p = camPresets[key];
+        targetCamPos.copy(p.pos);
+        targetCamLook.copy(p.target);
+
+        document.querySelectorAll('.btn-cam').forEach(b => b.classList.remove('active', 'bg-amber-500/20', 'text-white'));
+        const activeBtn = document.getElementById(`cam-${key}`);
+        if (activeBtn) activeBtn.classList.add('active', 'bg-amber-500/20', 'text-white');
+      }
+
+      /* ==========================================================
+       * 12. RAYCASTING & INTERAÇÃO COM MOUSE/TOQUE
+       * ========================================================== */
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener('pointerdown', (e) => {
+        // Se clicar em elementos de UI, ignora
+        if (e.target.closest('#ui-top-bar, #ui-bottom-dock, #info-drawer, #toast-container')) return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+
+        // Testa interseção com o robô ou objetos
+        const hits = raycaster.intersectObjects([robot, oilCanGroup, gearTable1, gearTable2, gearTable3], true);
+        if (hits.length > 0) {
+          const first = hits[0].object;
+          if (first === headDome || first.parent === headGroup) {
+            nextEmotion();
+          } else if (first === keyShaft || first.parent === keyGroup) {
+            windUpSpring();
+          } else if (first.parent === oilCanGroup || first === oilBody) {
+            applyOil();
+          } else if (first.parent === gearTable1 || first.parent === gearTable2 || first.parent === gearTable3) {
+            swapGear();
+          } else {
+            windUpSpring();
+          }
+        }
+      });
+
+      /* ==========================================================
+       * 13. LISTENERS DE UI & TECLADO
+       * ========================================================== */
+      document.getElementById('btn-windup').addEventListener('click', windUpSpring);
+      document.getElementById('btn-oil').addEventListener('click', applyOil);
+      document.getElementById('btn-swap-gear').addEventListener('click', swapGear);
+      document.getElementById('btn-emotion').addEventListener('click', nextEmotion);
+
+      document.getElementById('cam-bench').addEventListener('click', () => setCameraPreset('bench'));
+      document.getElementById('cam-robot').addEventListener('click', () => setCameraPreset('robot'));
+      document.getElementById('cam-tools').addEventListener('click', () => setCameraPreset('tools'));
+      document.getElementById('cam-lamp').addEventListener('click', () => setCameraPreset('lamp'));
+
+      // Drawer
+      const drawer = document.getElementById('info-drawer');
+      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        drawer.classList.add('translate-x-full');
+      });
+      document.getElementById('btn-save-note').addEventListener('click', () => {
+        const val = document.getElementById('repair-notes').value;
+        if (val.trim()) {
+          showToast('💾 Reflexão guardada com carinho no seu diário de bordo.');
+        } else {
+          showToast('✏️ Escreva uma breve observação antes de salvar.');
+        }
+      });
+
+      // Som
+      const btnSound = document.getElementById('btn-sound-toggle');
+      btnSound.addEventListener('click', () => {
+        const on = audio.toggle();
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+        showToast(on ? '🔊 Sons mecânicos ativados' : '🔇 Áudio silenciado');
+      });
+
+      // Teclado
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.code === 'Space' || e.key.toLowerCase() === 'w') {
+          e.preventDefault();
+          windUpSpring();
+        } else if (e.key.toLowerCase() === 'o') {
+          applyOil();
+        } else if (e.key.toLowerCase() === 'e') {
+          nextEmotion();
+        } else if (e.key.toLowerCase() === 'm') {
+          btnSound.click();
+        } else if (e.key.toLowerCase() === '1') {
+          setCameraPreset('bench');
+        } else if (e.key.toLowerCase() === '2') {
+          setCameraPreset('robot');
+        } else if (e.key.toLowerCase() === '3') {
+          setCameraPreset('tools');
+        } else if (e.key.toLowerCase() === '4') {
+          setCameraPreset('lamp');
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ==========================================================
+       * 14. LOOP DE RENDERIZAÇÃO & ANIMAÇÃO PROCEDURAL
+       * ========================================================== */
+      const clock = new THREE.Clock();
+      let lastTick = 0;
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = clock.getDelta();
+        const elapsedTime = clock.getElapsedTime();
+
+        // 1. Suavização da transição de câmera
+        camera.position.lerp(targetCamPos, 0.04);
+        controls.target.lerp(targetCamLook, 0.04);
+        controls.update();
+
+        // 2. Cintilação do Lampião a querosene
+        const flicker = Math.sin(elapsedTime * 9) * 0.15 + Math.cos(elapsedTime * 17) * 0.1;
+        lampLight.intensity = 2.4 + flicker;
+        flameMesh.scale.set(1 + flicker * 0.2, 1 + flicker * 0.4, 1 + flicker * 0.2);
+
+        // 3. Esvaziamento natural da corda
+        if (state.springEnergy > 0) {
+          state.springEnergy -= delta * 1.8;
+          if (state.springEnergy < 0) state.springEnergy = 0;
+          updateSpringUI();
+        }
+
+        // 4. Som de tique-taque periódico se houver corda
+        if (state.springEnergy > 2 && elapsedTime - lastTick > (1.2 - (state.springEnergy / 100) * 0.8)) {
+          audio.playTick();
+          lastTick = elapsedTime;
+        }
+
+        // 5. Movimentos mecânicos do robô
+        const curEmotion = state.emotions[state.emotionIndex];
+        const motionFactor = (state.springEnergy / 100);
+
+        // Rotação das engrenagens do peito
+        chestGear.rotation.z += delta * (1.5 + motionFactor * 4) * curEmotion.speed;
+        subGear.rotation.z -= delta * (2.2 + motionFactor * 6) * curEmotion.speed;
+
+        // Orelhas girando levemente
+        earL.rotation.z += delta * motionFactor * 1.2;
+        earR.rotation.z -= delta * motionFactor * 1.2;
+
+        // Movimento do manômetro (oscilando com a respiração mecânica)
+        needleMesh.rotation.z = THREE.MathUtils.lerp(
+          needleMesh.rotation.z,
+          (motionFactor * Math.PI * 0.8) - Math.PI * 0.4 + Math.sin(elapsedTime * 3) * 0.08,
+          0.1
+        );
+
+        // Respiração do torso
+        torsoGroup.position.y = 0.48 + Math.sin(elapsedTime * 2) * 0.012;
+
+        // Postura da cabeça baseada na emoção
+        headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, curEmotion.headTilt + Math.sin(elapsedTime * 1.5) * 0.02, 0.05);
+        headGroup.rotation.y = THREE.MathUtils.lerp(headGroup.rotation.y, curEmotion.headPan + Math.cos(elapsedTime * 0.8) * 0.03, 0.05);
+
+        // Brilho dos olhos pulsando
+        const eyePulse = curEmotion.eyeIntensity * (0.8 + Math.sin(elapsedTime * 3) * 0.2);
+        matGlassAmber.emissiveIntensity = eyePulse;
+
+        // 6. Atualização de partículas de vapor/faíscas
+        const posAttr = particleGeo.attributes.position;
+        for (let p = 0; p < particleCount; p++) {
+          const vel = particleVelocities[p];
+          posAttr.array[p * 3] += vel.x;
+          posAttr.array[p * 3 + 1] += vel.y;
+          posAttr.array[p * 3 + 2] += vel.z;
+
+          // Se subir demais, reseta perto do robô
+          if (posAttr.array[p * 3 + 1] > 2.4) {
+            posAttr.array[p * 3] = (Math.random() - 0.5) * 0.6;
+            posAttr.array[p * 3 + 1] = 0.95;
+            posAttr.array[p * 3 + 2] = (Math.random() - 0.5) * 0.6;
+          }
+        }
+        posAttr.needsUpdate = true;
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      // Esconde o aviso de dica após 6 segundos
+      setTimeout(() => {
+        const hint = document.getElementById('hint-bubble');
+        if (hint) {
+          hint.style.opacity = '0';
+          setTimeout(() => hint.remove(), 500);
+        }
+      }, 6500);
+
+    })();
+  </script>
+
+  <!-- Script Compartilhado de Barra Imersiva e Atalhos -->
+  <script src="shared/imersivo.js?v=3"></script>
+  <script>
+    if (window.Imersivo) {
+      Imersivo.init({
+        ambienteId: 'oficina-dos-robos-imperfeitos',
+        titulo: 'Oficina dos Robôs Imperfeitos',
+        tema: 'steampunk'
+      });
+    }
+  </script>
+</body>
+</html>

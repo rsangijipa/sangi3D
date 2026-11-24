@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "project": "17-navegador-dos-valores",
+  "units": "metres",
+  "assets": [
+    {
+      "id": "casco",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mastros",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "velas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "cordas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "leme",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "bussola",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "mapa",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "ilhas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "boias",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    },
+    {
+      "id": "ondas",
+      "source": "src/scene/experience.ts + src/core/models.ts",
+      "type": "procedural",
+      "license": "Código autoral desta implementação; bibliotecas conforme credits.md",
+      "materials": "PBR procedural",
+      "lod": "qualidade e segmentos limitados",
+      "collision": "proxy independente quando manipulável",
+      "pivot": "Y-up conforme função",
+      "clips": "animação procedural"
+    }
+  ]
+}

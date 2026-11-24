@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cidade das Conexões 3D — Jardins do Sentir</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; user-select: none; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f1924; color: #f1f5f9; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    #canvas-container { position: fixed; inset: 0; z-index: 1; }
+    .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .glass { background: rgba(16, 26, 38, 0.84); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(186, 214, 240, 0.22); box-shadow: 0 18px 42px rgba(0,0,0,0.45); }
+    .pill { transition: all 0.2s ease; cursor: pointer; }
+    .pill:hover { border-color: rgba(186, 214, 240, 0.52); transform: translateY(-1px); }
+    .pill.active { background: linear-gradient(135deg, #2b7a8c, #1c5061); color: #fff; border-color: #8ee3f5; }
+    #toast { position: fixed; bottom: 86px; left: 50%; transform: translateX(-50%) translateY(16px); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 40; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <header class="fixed top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+    <div class="glass rounded-2xl px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
+      <div class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-300/35 flex items-center justify-center text-lg">🌉</div>
+      <div>
+        <h1 class="serif text-xl font-semibold text-sky-50 leading-tight">Cidade das Conexões</h1>
+        <p class="text-[11px] text-sky-200/75">Jardins do Sentir 3D · Fronteiras saudáveis, pontes e redes de apoio</p>
+      </div>
+    </div>
+    <div class="glass rounded-2xl px-3 py-2 flex items-center gap-2 pointer-events-auto">
+      <select id="quality-select" class="bg-black/35 text-xs text-sky-100 border border-sky-200/25 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer">
+        <option value="high">Qualidade: Alta (PBR + 2K)</option>
+        <option value="balanced" selected>Qualidade: Equilibrada</option>
+        <option value="eco">Qualidade: Econômica</option>
+      </select>
+      <div class="flex gap-1" id="time-bar">
+        <button data-time="day" class="pill px-2.5 py-1.5 rounded-lg text-xs border border-sky-200/20">☀️ Dia</button>
+        <button data-time="sunset" class="pill active px-2.5 py-1.5 rounded-lg text-xs border border-sky-200/20">🌅 Entardecer</button>
+        <button data-time="night" class="pill px-2.5 py-1.5 rounded-lg text-xs border border-sky-200/20">🌙 Noite</button>
+      </div>
+      <button id="btn-audio" class="pill px-2.5 py-1.5 rounded-lg text-xs border border-sky-200/20 bg-white/5 text-sky-100">🔊 Som</button>
+    </div>
+  </header>
+
+  <!-- Left Bridge & Boundary Control Panel -->
+  <aside class="fixed left-4 top-24 bottom-24 z-20 w-72 glass rounded-2xl p-4 flex flex-col gap-3.5 overflow-y-auto">
+    <div>
+      <div class="text-[11px] uppercase tracking-widest text-sky-300/85 font-semibold mb-2">Pontes Levadiças (Fronteiras)</div>
+      <div id="bridge-controls" class="space-y-2"></div>
+    </div>
+
+    <div class="border-t border-sky-200/15 pt-3">
+      <div class="text-[11px] uppercase tracking-widest text-sky-300/85 font-semibold mb-1.5">Bairro Selecionado</div>
+      <div id="district-card" class="bg-white/5 border border-sky-200/20 rounded-xl p-3">
+        <div id="district-name" class="serif text-lg font-semibold text-sky-50">Clique em um bairro ou ponte</div>
+        <p id="district-desc" class="text-[11px] text-sky-100/80 mt-1 leading-relaxed">Cada ponte representa um limite que você pode baixar para receber encontros ou erguer para cuidar do seu espaço.</p>
+      </div>
+    </div>
+
+    <div class="border-t border-sky-200/15 pt-3 mt-auto">
+      <div class="flex items-center justify-between text-xs mb-1">
+        <span class="text-sky-200/80">Fluxo de Conexões Ativo</span>
+        <span id="flow-status" class="font-semibold text-emerald-300">3 / 3 pontes</span>
+      </div>
+      <p class="text-[11px] text-sky-200/65 leading-snug">Observe os ciclistas e barcos: quando você ergue uma ponte, o tráfego respeita o limite e retorna com calma.</p>
+    </div>
+  </aside>
+
+  <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass rounded-2xl px-4 py-2 flex items-center gap-2">
+    <button data-cam="aerial" class="pill active px-3 py-1.5 rounded-xl text-xs border border-sky-200/20">🗺️ Vista da Cidade</button>
+    <button data-cam="canal" class="pill px-3 py-1.5 rounded-xl text-xs border border-sky-200/20">🚤 Canal e Pontes</button>
+    <button data-cam="plaza" class="pill px-3 py-1.5 rounded-xl text-xs border border-sky-200/20">⛲ Praça Central</button>
+    <span class="hidden md:inline text-[11px] text-sky-200/70 pl-2 border-l border-sky-200/20">Clique nas pontes em 3D para erguer/baixar · Clique nos prédios para explorar</span>
+  </footer>
+
+  <div id="toast" class="glass rounded-full px-5 py-2 text-xs text-sky-50 font-medium border border-sky-300/35"></div>
+
+  <script>
+    (() => {
+      if (window.Imersivo && typeof window.Imersivo.init === 'function') {
+        try { window.Imersivo.init({ id: 'cidade-conexoes', title: 'Cidade das Conexões' }); } catch (e) {}
+      }
+
+      // --- Audio ---
+      let audioCtx = null, audioEnabled = true;
+      function ensureAudio() {
+        if (!audioEnabled) return null;
+        if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) audioCtx = new AC(); }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+      function playBridgeSound(open) {
+        const ctx = ensureAudio(); if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(open ? 180 : 280, now);
+        osc.frequency.exponentialRampToValueAtTime(open ? 300 : 150, now + 0.45);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain).connect(ctx.destination); osc.start(now); osc.stop(now + 0.55);
+      }
+
+      const toastEl = document.getElementById('toast');
+      let toastTimer = null;
+      function showToast(m) {
+        toastEl.textContent = m; toastEl.classList.add('show');
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+      }
+
+      // --- Procedural PBR Textures ---
+      function makeCobbleTexture(size = 512) {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#474c52'; ctx.fillRect(0, 0, size, size);
+        for (let y = 0; y < size; y += 20) {
+          for (let x = 0; x < size; x += 28) {
+            const ox = (y / 20) % 2 ? 14 : 0;
+            const shade = 75 + Math.floor(Math.random() * 35);
+            ctx.fillStyle = `rgb(${shade},${shade + 2},${shade + 6})`;
+            ctx.fillRect((x + ox) % size + 2, y + 2, 24, 16);
+          }
+        }
+        const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(6, 6);
+        return tex;
+      }
+
+      function makeFacadeTexture(baseHex, lit = true, size = 256) {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = baseHex; ctx.fillRect(0, 0, size, size);
+        // Plaster subtle texture
+        for (let i = 0; i < 600; i++) {
+          ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+          ctx.fillRect(Math.random() * size, Math.random() * size, 4, 4);
+        }
+        const cols = 4, rows = 5;
+        for (let r = 0; r < rows; r++) {
+          for (let col = 0; col < cols; col++) {
+            const wx = 18 + col * 58, wy = 22 + r * 44;
+            ctx.fillStyle = '#2d241f'; ctx.fillRect(wx - 3, wy - 3, 34, 32);
+            const isWarm = lit && ((r + col) % 3 !== 0);
+            ctx.fillStyle = isWarm ? '#ffd782' : '#4a6275';
+            ctx.fillRect(wx, wy, 28, 26);
+          }
+        }
+        const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      function makeCityEnvMap(renderer, topHex, midHex, botHex) {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+        const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+        const ctx = c.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 0, 256);
+        g.addColorStop(0, topHex); g.addColorStop(0.5, midHex); g.addColorStop(1, botHex);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 256);
+        const tex = new THREE.CanvasTexture(c);
+        tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
+        const rt = pmrem.fromEquirectangular(tex);
+        tex.dispose(); pmrem.dispose();
+        return rt.texture;
+      }
+
+      // --- Scene & Renderer ---
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#2c2538');
+      scene.fog = new THREE.FogExp2('#2c2538', 0.022);
+
+      const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 120);
+      camera.position.set(1.2, 10.5, 13.8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+
+      const envMaps = {
+        day: makeCityEnvMap(renderer, '#5fa8e8', '#d7eefc', '#3c5240'),
+        sunset: makeCityEnvMap(renderer, '#2c2952', '#e88b5a', '#24222e'),
+        night: makeCityEnvMap(renderer, '#0b1024', '#1d2d4a', '#0c1018')
+      };
+      scene.environment = envMaps.sunset;
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true; controls.dampingFactor = 0.06;
+      controls.target.set(0, 0.6, 0);
+      controls.minDistance = 5; controls.maxDistance = 24;
+      controls.maxPolarAngle = Math.PI * 0.46;
+
+      // --- Lighting ---
+      const hemi = new THREE.HemisphereLight('#ffb987', '#2b3240', 0.72);
+      scene.add(hemi);
+      const sun = new THREE.DirectionalLight('#ffb478', 1.65);
+      sun.position.set(12, 11, 8);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.camera.left = -14; sun.shadow.camera.right = 14;
+      sun.shadow.camera.top = 14; sun.shadow.camera.bottom = -14;
+      sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03;
+      scene.add(sun);
+
+      // --- Canal & Two City Banks ---
+      const cobbleTex = makeCobbleTexture(512);
+      const bankMat = new THREE.MeshStandardMaterial({ map: cobbleTex, roughness: 0.85, metalness: 0.04 });
+      const stoneWallMat = new THREE.MeshStandardMaterial({ color: '#6b6762', roughness: 0.9 });
+
+      // West Bank (Privacy & Self-Care) & East Bank (Community & Support)
+      const westBank = new THREE.Mesh(new THREE.BoxGeometry(8.5, 0.9, 14), bankMat);
+      westBank.position.set(-6.0, 0.25, 0); westBank.receiveShadow = true; scene.add(westBank);
+      const eastBank = new THREE.Mesh(new THREE.BoxGeometry(8.5, 0.9, 14), bankMat);
+      eastBank.position.set(6.0, 0.25, 0); eastBank.receiveShadow = true; scene.add(eastBank);
+
+      // Stone canal embankments
+      [-1.78, 1.78].forEach(x => {
+        const curb = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 14), stoneWallMat);
+        curb.position.set(x, 0.76, 0); curb.castShadow = true; curb.receiveShadow = true; scene.add(curb);
+      });
+
+      // Animated Shimmering Canal Water
+      const waterGeo = new THREE.PlaneGeometry(3.6, 14.4, 24, 48);
+      waterGeo.rotateX(-Math.PI / 2);
+      const waterMat = new THREE.MeshStandardMaterial({
+        color: '#205b73', roughness: 0.14, metalness: 0.72, transparent: true, opacity: 0.92
+      });
+      const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+      waterMesh.position.set(0, 0.22, 0);
+      waterMesh.receiveShadow = true;
+      scene.add(waterMesh);
+
+      // --- 3 Hydraulic Bascule Drawbridges (Clickable in 3D!) ---
+      const BRIDGES = [
+        { id: 'confianca', name: 'Ponte da Confiança', z: -3.6, open: true, angle: 0, desc: 'Liga o Bairro do Abrigo Interno à Praça do Apoio Mútuo.' },
+        { id: 'dialogo', name: 'Ponte do Diálogo', z: 0.0, open: true, angle: 0, desc: 'Passagem central para trocas honestas e escuta recíproca.' },
+        { id: 'criatividade', name: 'Ponte da Curiosidade', z: 3.6, open: true, angle: 0, desc: 'Conecta o Jardim da Pausa ao Ateliê Comunitário.' }
+      ];
+
+      const ironMat = new THREE.MeshStandardMaterial({ color: '#394652', metalness: 0.78, roughness: 0.36 });
+      const deckMat = new THREE.MeshStandardMaterial({ color: '#8f6948', roughness: 0.76 });
+      const bridgeInteractables = [];
+
+      BRIDGES.forEach(b => {
+        const group = new THREE.Group();
+        group.position.set(0, 0.72, b.z);
+
+        // Two counter-rotating bascule leaves (left & right hinges)
+        const leftPivot = new THREE.Group(); leftPivot.position.set(-1.75, 0, 0);
+        const rightPivot = new THREE.Group(); rightPivot.position.set(1.75, 0, 0);
+
+        const leafGeo = new THREE.BoxGeometry(1.75, 0.12, 1.15);
+        const leftLeaf = new THREE.Mesh(leafGeo, deckMat); leftLeaf.position.set(0.875, 0, 0); leftLeaf.castShadow = true; leftLeaf.receiveShadow = true;
+        leftLeaf.userData.bridgeId = b.id;
+        const rightLeaf = new THREE.Mesh(leafGeo, deckMat); rightLeaf.position.set(-0.875, 0, 0); rightLeaf.castShadow = true; rightLeaf.receiveShadow = true;
+        rightLeaf.userData.bridgeId = b.id;
+
+        // Iron railings on leaves
+        [-0.54, 0.54].forEach(rz => {
+          const rL = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.22, 0.05), ironMat);
+          rL.position.set(0.875, 0.16, rz); rL.userData.bridgeId = b.id; leftPivot.add(rL);
+          const rR = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.22, 0.05), ironMat);
+          rR.position.set(-0.875, 0.16, rz); rR.userData.bridgeId = b.id; rightPivot.add(rR);
+        });
+
+        leftPivot.add(leftLeaf); rightPivot.add(rightLeaf);
+        group.add(leftPivot, rightPivot);
+
+        // Bridge stone pillars & warm lanterns
+        const lamps = [];
+        [-1.82, 1.82].forEach(px => {
+          [-0.64, 0.64].forEach(pz => {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.9, 12), ironMat);
+            post.position.set(px, 0.45, pz); post.castShadow = true; group.add(post);
+            const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 12), new THREE.MeshStandardMaterial({ color: '#ffdf9e', emissive: '#ffae42', emissiveIntensity: 1.5 }));
+            bulb.position.set(px, 0.95, pz); group.add(bulb);
+            lamps.push(bulb);
+          });
+        });
+
+        scene.add(group);
+        b.leftPivot = leftPivot; b.rightPivot = rightPivot; b.lamps = lamps;
+        bridgeInteractables.push(group);
+      });
+
+      // --- Architectural District Buildings (Clickable in 3D!) ---
+      const DISTRICTS = [
+        { name: 'Casa do Abrigo Interno', x: -4.6, z: -3.6, w: 2.2, h: 2.8, d: 2.0, col: '#c97b5d', roof: '#5c3329', desc: 'Espaço de silêncio, autocuidado e descanso emocional.' },
+        { name: 'Observatório dos Limites', x: -5.2, z: 0.1, w: 2.1, h: 3.6, d: 2.2, col: '#6c8aa3', roof: '#34495e', desc: 'De onde você percebe o que precisa dizer sim e o que precisa dizer não.' },
+        { name: 'Jardim da Pausa', x: -4.4, z: 3.8, w: 2.4, h: 2.0, d: 2.0, col: '#84a583', roof: '#3d5740', desc: 'Refúgio verde para desacelerar antes de novas conversas.' },
+        { name: 'Praça do Apoio Mútuo', x: 4.5, z: -3.6, w: 2.4, h: 3.1, d: 2.1, col: '#d49d57', roof: '#6b4724', desc: 'Pessoas confiáveis com quem dividir alegrias e vulnerabilidades.' },
+        { name: 'Casa do Diálogo', x: 5.0, z: 0.0, w: 2.5, h: 3.8, d: 2.3, col: '#b8686d', roof: '#59292e', desc: 'Encontro entre escuta ativa e expressão autêntica.' },
+        { name: 'Ateliê Comunitário', x: 4.5, z: 3.7, w: 2.3, h: 2.5, d: 2.0, col: '#7c70a1', roof: '#3b3357', desc: 'Projetos compartilhados, pertencimento e criação coletiva.' }
+      ];
+
+      const buildingMats = [];
+      const buildingGroup = new THREE.Group();
+      DISTRICTS.forEach(d => {
+        const g = new THREE.Group();
+        g.position.set(d.x, 0.7, d.z);
+        const texLit = makeFacadeTexture(d.col, true);
+        const texDay = makeFacadeTexture(d.col, false);
+        const mat = new THREE.MeshStandardMaterial({ map: texLit, roughness: 0.78 });
+        buildingMats.push({ mat, texLit, texDay });
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(d.w, d.h, d.d), mat);
+        body.position.y = d.h / 2; body.castShadow = true; body.receiveShadow = true;
+        body.userData.district = d; g.add(body);
+
+        const roof = new THREE.Mesh(
+          new THREE.ConeGeometry(Math.max(d.w, d.d) * 0.78, 1.15, 4),
+          new THREE.MeshStandardMaterial({ color: d.roof, roughness: 0.72 })
+        );
+        roof.rotation.y = Math.PI / 4; roof.position.y = d.h + 0.56; roof.castShadow = true;
+        roof.userData.district = d; g.add(roof);
+        buildingGroup.add(g);
+      });
+      scene.add(buildingGroup);
+
+      // Central Plaza Fountain with Water Jet Particles (East Bank)
+      const fountain = new THREE.Group();
+      fountain.position.set(2.9, 0.7, 1.8);
+      const basin = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.82, 0.24, 24), stoneWallMat);
+      basin.position.y = 0.12; fountain.add(basin);
+      const pool = new THREE.Mesh(new THREE.CircleGeometry(0.66, 24), waterMat);
+      pool.rotation.x = -Math.PI / 2; pool.position.y = 0.22; fountain.add(pool);
+      scene.add(fountain);
+
+      // Swaying Park Trees
+      const trees = [];
+      [[-3.0, -5.4], [-3.2, 2.0], [-6.8, -1.8], [3.1, -1.7], [3.1, 5.3], [7.2, 2.0]].forEach(([tx, tz]) => {
+        const tr = new THREE.Group();
+        tr.position.set(tx, 0.7, tz);
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.8, 10), deckMat);
+        trunk.position.y = 0.4; trunk.castShadow = true; tr.add(trunk);
+        const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.58, 1), new THREE.MeshStandardMaterial({ color: '#42734e', roughness: 0.85 }));
+        crown.position.y = 1.05; crown.castShadow = true; tr.add(crown);
+        scene.add(tr);
+        trees.push({ group: tr, phase: Math.random() * 6.28 });
+      });
+
+      // --- Gliding Canal Boats ---
+      const boats = [];
+      for (let i = 0; i < 2; i++) {
+        const boat = new THREE.Group();
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.18, 1.15), new THREE.MeshStandardMaterial({ color: i === 0 ? '#a84438' : '#356a82', roughness: 0.55 }));
+        hull.castShadow = true; boat.add(hull);
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.44), new THREE.MeshStandardMaterial({ color: '#f2e8d5', roughness: 0.6 }));
+        cabin.position.set(0, 0.16, -0.05); boat.add(cabin);
+        boat.position.set(i === 0 ? -0.65 : 0.65, 0.26, i === 0 ? -4 : 4);
+        scene.add(boat);
+        boats.push({ mesh: boat, dir: i === 0 ? 1 : -1, speed: 0.75 + i * 0.2 });
+      }
+
+      // --- Articulated Cyclists with Real Bridge-State Pathfinding ---
+      const cyclists = [];
+      BRIDGES.forEach((b, idx) => {
+        const cyc = new THREE.Group();
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.12, 0.1), new THREE.MeshStandardMaterial({ color: ['#f27d42', '#63d2c6', '#f2c94c'][idx], roughness: 0.4, metalness: 0.4 }));
+        frame.position.y = 0.22; cyc.add(frame);
+        const rider = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.34, 12), new THREE.MeshStandardMaterial({ color: '#f5efe6', roughness: 0.8 }));
+        rider.position.y = 0.44; rider.castShadow = true; cyc.add(rider);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 12), new THREE.MeshStandardMaterial({ color: '#e2b494', roughness: 0.7 }));
+        head.position.y = 0.67; cyc.add(head);
+        cyc.position.set(-3.2 + idx * 1.5, 0.76, b.z);
+        scene.add(cyc);
+        cyclists.push({ mesh: cyc, bridge: b, x: -3.2 + idx * 1.5, dir: 1, speed: 1.45 + idx * 0.18 });
+      });
+
+      // --- Bridge Toggle Logic & UI ---
+      const bridgeControlsEl = document.getElementById('bridge-controls');
+      const flowStatusEl = document.getElementById('flow-status');
+
+      function updateFlowUI() {
+        const openCount = BRIDGES.filter(b => b.open).length;
+        flowStatusEl.textContent = `${openCount} / 3 pontes`;
+        flowStatusEl.className = 'font-semibold ' + (openCount === 0 ? 'text-amber-300' : 'text-emerald-300');
+      }
+
+      function toggleBridge(id) {
+        const b = BRIDGES.find(x => x.id === id);
+        if (!b) return;
+        b.open = !b.open;
+        playBridgeSound(b.open);
+        renderBridgeButtons();
+        updateFlowUI();
+        document.getElementById('district-name').textContent = b.name;
+        document.getElementById('district-desc').textContent = b.open
+          ? `Ponte abaixada: ${b.desc}`
+          : 'Ponte erguida: fronteira protegida para preservar seu ritmo e espaço pessoal.';
+        showToast(b.open ? `🌉 ${b.name} abaixada — passagem aberta.` : `🛡️ ${b.name} erguida — limite protegido.`);
+      }
+
+      function renderBridgeButtons() {
+        bridgeControlsEl.innerHTML = '';
+        BRIDGES.forEach(b => {
+          const btn = document.createElement('button');
+          btn.className = 'pill w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs border ' +
+            (b.open ? 'bg-teal-600/30 border-teal-300/40 text-teal-50' : 'bg-amber-900/30 border-amber-300/35 text-amber-100');
+          btn.innerHTML = `<span>${b.name}</span><span class="text-[10px] font-semibold">${b.open ? 'Aberta' : 'Erguida'}</span>`;
+          btn.addEventListener('click', () => toggleBridge(b.id));
+          bridgeControlsEl.appendChild(btn);
+        });
+      }
+      renderBridgeButtons();
+
+      // Time of Day Lighting Presets
+      const TIME_PRESETS = {
+        day: { bg: '#7cb5e2', fog: '#8bc0e8', sunCol: '#fff7e6', sunInt: 1.75, hemiSky: '#dff2ff', hemiInt: 0.9, lit: false, lampInt: 0.15 },
+        sunset: { bg: '#2c2538', fog: '#2c2538', sunCol: '#ffb478', sunInt: 1.65, hemiSky: '#ffb987', hemiInt: 0.72, lit: true, lampInt: 1.5 },
+        night: { bg: '#0c1222', fog: '#0c1222', sunCol: '#7ca2db', sunInt: 0.65, hemiSky: '#2d456b', hemiInt: 0.45, lit: true, lampInt: 2.5 }
+      };
+      document.getElementById('time-bar').querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.time;
+          const p = TIME_PRESETS[mode];
+          scene.background.set(p.bg); scene.fog.color.set(p.fog);
+          scene.environment = envMaps[mode];
+          sun.color.set(p.sunCol); sun.intensity = p.sunInt;
+          hemi.color.set(p.hemiSky); hemi.intensity = p.hemiInt;
+          buildingMats.forEach(bm => { bm.mat.map = p.lit ? bm.texLit : bm.texDay; bm.mat.needsUpdate = true; });
+          BRIDGES.forEach(b => b.lamps.forEach(l => { l.material.emissiveIntensity = p.lampInt; }));
+          document.getElementById('time-bar').querySelectorAll('button').forEach(x => x.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      document.getElementById('btn-audio').addEventListener('click', (e) => {
+        audioEnabled = !audioEnabled; e.target.textContent = audioEnabled ? '🔊 Som' : '🔇 Mudo';
+      });
+      document.getElementById('quality-select').addEventListener('change', (e) => {
+        const q = e.target.value;
+        renderer.setPixelRatio(q === 'high' ? Math.min(window.devicePixelRatio, 2) : q === 'balanced' ? Math.min(window.devicePixelRatio, 1.5) : 1);
+      });
+
+      const CAM_VIEWS = {
+        aerial: { pos: new THREE.Vector3(1.2, 10.5, 13.8), target: new THREE.Vector3(0, 0.6, 0) },
+        canal: { pos: new THREE.Vector3(0.4, 3.8, 9.2), target: new THREE.Vector3(0, 0.8, 0) },
+        plaza: { pos: new THREE.Vector3(7.5, 4.2, 6.8), target: new THREE.Vector3(3.2, 1.0, 1.2) }
+      };
+      let camAnim = null;
+      document.querySelectorAll('[data-cam]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const v = CAM_VIEWS[btn.dataset.cam];
+          camAnim = { fromPos: camera.position.clone(), toPos: v.pos.clone(), fromT: controls.target.clone(), toT: v.target.clone(), t: 0 };
+          document.querySelectorAll('[data-cam]').forEach(x => x.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      // Full 3D Raycasting on Bridges & District Buildings
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let downXY = null;
+      renderer.domElement.addEventListener('pointerdown', (e) => { downXY = { x: e.clientX, y: e.clientY }; });
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (!downXY || Math.hypot(e.clientX - downXY.x, e.clientY - downXY.y) > 7) return;
+        pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects([...bridgeInteractables, buildingGroup], true);
+        if (!hits.length) return;
+        const ud = hits[0].object.userData;
+        if (ud && ud.bridgeId) {
+          toggleBridge(ud.bridgeId);
+        } else if (ud && ud.district) {
+          document.getElementById('district-name').textContent = ud.district.name;
+          document.getElementById('district-desc').textContent = ud.district.desc;
+          showToast(`🏛️ ${ud.district.name}`);
+        }
+      });
+
+      // --- Animation Loop (Hydraulic Bridges + Water Waves + Pathfinding Cyclists) ---
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const dt = Math.min(clock.getDelta(), 0.05);
+        const t = clock.elapsedTime;
+
+        if (camAnim) {
+          camAnim.t = Math.min(1, camAnim.t + dt * 2.0);
+          const ease = 1 - Math.pow(1 - camAnim.t, 3);
+          camera.position.lerpVectors(camAnim.fromPos, camAnim.toPos, ease);
+          controls.target.lerpVectors(camAnim.fromT, camAnim.toT, ease);
+          if (camAnim.t >= 1) camAnim = null;
+        }
+        controls.update();
+
+        // Smooth hydraulic bascule bridge lift physics
+        BRIDGES.forEach(b => {
+          const targetAngle = b.open ? 0 : 0.88;
+          b.angle += (targetAngle - b.angle) * Math.min(1, dt * 4.5);
+          b.leftPivot.rotation.z = b.angle;
+          b.rightPivot.rotation.z = -b.angle;
+        });
+
+        // Water ripples
+        const wp = waterGeo.attributes.position;
+        for (let i = 0; i < wp.count; i++) {
+          const x = wp.getX(i), z = wp.getZ(i);
+          wp.setY(i, Math.sin(z * 1.4 + t * 2.2) * 0.032 + Math.cos(x * 2.2 - t * 1.8) * 0.018);
+        }
+        wp.needsUpdate = true;
+        waterGeo.computeVertexNormals();
+
+        // Boats gliding
+        boats.forEach(bt => {
+          bt.mesh.position.z += bt.dir * bt.speed * dt;
+          bt.mesh.position.y = 0.25 + Math.sin(t * 2.6 + bt.mesh.position.z) * 0.025;
+          bt.mesh.rotation.z = Math.sin(t * 2.0) * 0.04;
+          if (bt.mesh.position.z > 6.2) bt.mesh.position.z = -6.2;
+          if (bt.mesh.position.z < -6.2) bt.mesh.position.z = 6.2;
+        });
+
+        // Cyclists respect bridge state!
+        cyclists.forEach(c => {
+          const nextX = c.x + c.dir * c.speed * dt;
+          const enteringCanal = Math.abs(nextX) < 1.95 && Math.abs(c.x) >= 1.95;
+          if (enteringCanal && !c.bridge.open) {
+            c.dir *= -1; // Respect raised boundary and turn back gracefully
+          } else {
+            c.x = nextX;
+            if (c.x > 4.2) c.dir = -1;
+            if (c.x < -4.2) c.dir = 1;
+          }
+          c.mesh.position.x = c.x;
+          c.mesh.rotation.y = c.dir > 0 ? 0 : Math.PI;
+          c.mesh.position.y = 0.76 + Math.abs(Math.sin(t * 9)) * 0.02;
+        });
+
+        // Park trees wind sway
+        trees.forEach(tr => {
+          tr.group.rotation.z = Math.sin(t * 1.4 + tr.phase) * 0.04;
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+    })();
+  </script>
+</body>
+</html>

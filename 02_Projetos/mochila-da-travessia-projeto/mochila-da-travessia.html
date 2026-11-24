@@ -1,0 +1,3079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mochila da Travessia — Experiência 3D Interativa</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --canvas-green: #556B57;
+      --leather-warm: #A67D52;
+      --parchment: #C8BA9E;
+      --alpine-slate: #48677C;
+      --terracotta: #B56B4E;
+      --hud-bg: rgba(24, 34, 27, 0.88);
+      --hud-bg-solid: #1B261E;
+      --hud-surface: rgba(39, 53, 43, 0.90);
+      --hud-border: rgba(200, 186, 158, 0.36);
+      --hud-border-strong: rgba(214, 182, 134, 0.78);
+      --text-main: #F5EFE3;
+      --text-soft: #CFC3AD;
+      --accent-valid: #7EE39A;
+      --accent-warn: #F0B66A;
+      --accent-danger: #E88270;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --shadow-hud: 0 12px 32px rgba(10, 14, 11, 0.52);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: #141B16;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #canvas-wrap {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100dvh;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    #scene-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Focus visibility for accessibility */
+    button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2.5px solid var(--accent-valid);
+      outline-offset: 2px;
+    }
+
+    /* HUD Layer */
+    #hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hud-interactive { pointer-events: auto; }
+    .hud-hidden-mode .collapsible-hud { opacity: 0; pointer-events: none; transform: translateY(-6px); }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title-plaque {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(165deg, #253629 0%, #1B271E 100%);
+      border: 1.5px solid var(--hud-border-strong);
+      border-radius: 12px;
+      padding: 8px 14px;
+      box-shadow: var(--shadow-hud), inset 0 0 0 2px rgba(200, 186, 158, 0.14);
+    }
+
+    .title-plaque h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #F4EAD6;
+      line-height: 1.15;
+    }
+
+    .title-sub {
+      font-size: 0.7rem;
+      color: var(--parchment);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .top-utility {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 12px;
+      padding: 4px 6px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-hud);
+    }
+
+    .icon-btn {
+      min-width: 38px;
+      min-height: 38px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+    }
+
+    .icon-btn:hover { background: rgba(200, 186, 158, 0.14); border-color: var(--hud-border); }
+    .icon-btn:active { transform: scale(0.97); }
+    .icon-btn.active {
+      background: rgba(166, 125, 82, 0.30);
+      border-color: var(--leather-warm);
+      color: #FFF4E2;
+    }
+    .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Phase Stepper (Top Right - Exact 4 labels from brief/mockup) */
+    .phase-stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 12px;
+      padding: 5px 8px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-hud);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .phase-btn {
+      min-height: 38px;
+      padding: 6px 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(200, 186, 158, 0.22);
+      background: rgba(34, 46, 37, 0.85);
+      color: var(--text-soft);
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .phase-btn:hover {
+      border-color: var(--parchment);
+      color: var(--text-main);
+    }
+
+    .phase-btn.active {
+      background: linear-gradient(135deg, #B28452 0%, #865D36 100%);
+      border-color: #F3DFBE;
+      color: #FFFDF8;
+      box-shadow: 0 0 16px rgba(188, 138, 82, 0.48);
+    }
+
+    .phase-sep {
+      color: var(--parchment);
+      opacity: 0.55;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    /* Middle Area: Left Inventory Dock + Right Contextual Panel */
+    .mid-row {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 0;
+      margin: 10px 0;
+    }
+
+    .left-dock {
+      width: 248px;
+      max-width: 24vw;
+      max-height: calc(100dvh - 180px);
+      background: var(--hud-bg);
+      border: 1.5px solid var(--hud-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-hud);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.25s ease, opacity 0.22s ease;
+    }
+
+    .dock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid rgba(200, 186, 158, 0.18);
+    }
+
+    .dock-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: var(--parchment);
+      text-transform: uppercase;
+    }
+
+    .dock-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .item-card {
+      position: relative;
+      background: rgba(34, 46, 38, 0.92);
+      border: 1.5px solid rgba(200, 186, 158, 0.22);
+      border-radius: 10px;
+      padding: 8px 6px 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease;
+      min-height: 82px;
+    }
+
+    .item-card:hover {
+      border-color: var(--parchment);
+      background: rgba(48, 64, 52, 0.95);
+    }
+
+    .item-card.selected {
+      border-color: #F2E3C2;
+      background: rgba(65, 84, 67, 0.96);
+      box-shadow: 0 0 14px rgba(126, 227, 154, 0.34), inset 0 0 0 1px rgba(242, 227, 194, 0.5);
+    }
+
+    .item-card .item-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .item-card .item-meta {
+      font-size: 0.65rem;
+      color: var(--text-soft);
+      text-align: center;
+    }
+
+    .item-card .packed-badge {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2F7A47;
+      border: 1.5px solid #D9F7E2;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .item-card .sym-badge {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: rgba(181, 107, 78, 0.32);
+      border: 1px solid rgba(200, 186, 158, 0.45);
+      color: #F4DFC8;
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .dock-actions {
+      border-top: 1px solid rgba(200, 186, 158, 0.18);
+      padding: 10px;
+      background: rgba(20, 29, 23, 0.92);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .selected-summary {
+      font-size: 0.75rem;
+      color: var(--parchment);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .btn-primary, .btn-secondary {
+      min-height: 38px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      border: 1px solid transparent;
+      transition: all 0.16s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #5A7B5E 0%, #446048 100%);
+      border-color: rgba(180, 230, 190, 0.45);
+      color: #F8FBF8;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    .btn-warm {
+      background: linear-gradient(135deg, #B58654 0%, #8C6037 100%);
+      border-color: rgba(245, 223, 185, 0.55);
+      color: #FFFDF8;
+    }
+    .btn-warm:hover { filter: brightness(1.1); }
+
+    .btn-secondary {
+      background: rgba(46, 61, 50, 0.92);
+      border-color: var(--hud-border);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover { background: rgba(62, 80, 67, 0.96); border-color: var(--parchment); }
+
+    .btn-danger {
+      background: rgba(145, 55, 45, 0.85);
+      border-color: rgba(232, 130, 112, 0.55);
+      color: #FFF4F2;
+    }
+
+    /* Right Contextual Drawer (One panel at a time: Inspection / Journey / Review / Accompanied / Help) */
+    .context-panel {
+      width: 320px;
+      max-width: 28vw;
+      max-height: calc(100dvh - 180px);
+      background: var(--hud-bg);
+      border: 1.5px solid var(--hud-border-strong);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-hud);
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .context-panel.open { display: flex; }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid rgba(200, 186, 158, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      color: #F5E9D3;
+    }
+
+    .panel-body {
+      font-size: 0.83rem;
+      line-height: 1.48;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .prompt-quote {
+      background: rgba(166, 125, 82, 0.16);
+      border-left: 3px solid var(--leather-warm);
+      border-radius: 0 8px 8px 0;
+      padding: 9px 11px;
+      font-style: italic;
+      color: #F4E8D1;
+      font-size: 0.82rem;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      background: rgba(55, 72, 60, 0.9);
+      border: 1px solid var(--hud-border);
+      color: var(--text-main);
+    }
+
+    .chip.sym {
+      background: rgba(181, 107, 78, 0.25);
+      border-color: rgba(210, 150, 120, 0.55);
+    }
+
+    /* Bottom Telemetry & Controls Bar */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .telemetry-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 12px;
+      padding: 7px 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-hud);
+      flex-wrap: wrap;
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-label {
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--parchment);
+    }
+
+    .metric-val {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .com-bar {
+      width: 68px;
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(200, 186, 158, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .com-dot {
+      position: absolute;
+      top: 1px;
+      width: 10px;
+      height: 6px;
+      border-radius: 99px;
+      background: var(--accent-valid);
+      left: 50%;
+      transform: translateX(-50%);
+      transition: left 0.25s ease, background 0.25s ease;
+    }
+
+    .bottom-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 12px;
+      padding: 5px 8px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-hud);
+      flex-wrap: wrap;
+    }
+
+    .select-styled {
+      min-height: 36px;
+      background: rgba(34, 46, 37, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--hud-border);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    /* Toast / Live feedback */
+    #toast {
+      position: fixed;
+      bottom: 74px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: rgba(24, 34, 27, 0.95);
+      border: 1px solid var(--hud-border-strong);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-hud);
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Modals (Entry, Pause, Reset Confirm) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(12, 18, 14, 0.72);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal-card {
+      width: 100%;
+      max-width: 560px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      background: linear-gradient(170deg, #223026 0%, #17211A 100%);
+      border: 1.5px solid var(--hud-border-strong);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-card h2 {
+      margin: 0;
+      font-family: Georgia, serif;
+      font-size: 1.35rem;
+      color: #F6EBD6;
+    }
+
+    .modal-card p {
+      margin: 0;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--text-soft);
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .mode-option {
+      text-align: left;
+      background: rgba(36, 49, 40, 0.9);
+      border: 1.5px solid var(--hud-border);
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .mode-option:hover, .mode-option.selected {
+      border-color: var(--leather-warm);
+      background: rgba(74, 62, 46, 0.55);
+    }
+
+    .mode-option strong { display: block; font-size: 0.84rem; margin-bottom: 3px; color: #F7ECDA; }
+    .mode-option span { display: block; font-size: 0.74rem; color: var(--text-soft); line-height: 1.35; }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.8rem;
+    }
+
+    .field-group input[type="text"], .field-group textarea, .field-group select {
+      background: rgba(20, 29, 23, 0.95);
+      border: 1px solid var(--hud-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.82rem;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.8rem;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(200, 186, 158, 0.12);
+    }
+
+    .obs-item {
+      background: rgba(24, 34, 27, 0.85);
+      border: 1px solid rgba(200, 186, 158, 0.2);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 0.76rem;
+    }
+
+    /* Mobile & Compact Viewport Adaptation (390x844, 360x640) */
+    .mobile-sheet-toggle { display: none; }
+
+    @media (max-width: 820px) {
+      .title-plaque h1 { font-size: 0.92rem; }
+      .title-sub { display: none; }
+      .phase-stepper { width: 100%; justify-content: space-between; overflow-x: auto; padding: 4px; }
+      .phase-btn { padding: 6px 8px; font-size: 0.72rem; flex: 1; justify-content: center; }
+      .phase-sep { display: none; }
+
+      .mid-row {
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: stretch;
+        margin: 4px 0;
+      }
+
+      .left-dock {
+        width: 100%;
+        max-width: 100%;
+        max-height: 36dvh;
+        border-radius: 16px 16px 12px 12px;
+      }
+
+      .left-dock.sheet-collapsed {
+        max-height: 46px;
+      }
+
+      .mobile-sheet-toggle { display: inline-flex; }
+
+      .dock-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .item-card { min-height: 68px; padding: 6px 4px; }
+      .item-card .item-meta { display: none; }
+
+      .context-panel {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 68px;
+        width: auto;
+        max-width: none;
+        max-height: 44dvh;
+        z-index: 30;
+      }
+
+      .telemetry-strip { padding: 6px 10px; gap: 8px; width: 100%; justify-content: space-between; }
+      .bottom-tools { width: 100%; justify-content: space-between; }
+      .mode-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-wrap">
+    <canvas id="scene-canvas" aria-label="Cena 3D interativa da Mochila da Travessia sobre mesa de cabana de montanha"></canvas>
+  </div>
+
+  <div id="hud">
+    <!-- TOP BAR -->
+    <header class="top-bar">
+      <div class="brand-cluster hud-interactive">
+        <div class="title-plaque">
+          <svg width="28" height="24" viewBox="0 0 32 26" fill="none" aria-hidden="true">
+            <path d="M2 23L11.5 6L17.5 16L21.5 10.5L30 23" stroke="#E5D5B5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.5 12L11.5 14L14.2 11.2" stroke="#E5D5B5" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <h1>Mochila da Travessia</h1>
+            <div class="title-sub" id="mode-badge">Modo Livre · Trilha da Manhã</div>
+          </div>
+        </div>
+
+        <div class="top-utility">
+          <button class="icon-btn" id="btn-modes" title="Escolher viagem e modo" aria-label="Escolher viagem e modo">
+            <span>Viagem</span>
+          </button>
+          <button class="icon-btn" id="btn-audio" title="Ativar ou silenciar áudio" aria-label="Áudio">
+            <span id="audio-label">Som: Off</span>
+          </button>
+          <button class="icon-btn" id="btn-quality" title="Qualidade gráfica" aria-label="Qualidade gráfica">
+            <span id="quality-label">Equilibrada</span>
+          </button>
+          <button class="icon-btn" id="btn-pause" title="Pausar (P)" aria-label="Pausar">Pausa</button>
+          <button class="icon-btn" id="btn-help" title="Ajuda contextual (?)" aria-label="Ajuda">?</button>
+          <button class="icon-btn" id="btn-toggle-hud" title="Recolher interface (H)" aria-label="Recolher interface">H</button>
+          <button class="icon-btn" id="btn-fullscreen" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+        </div>
+      </div>
+
+      <!-- EXACT 4-STEP HUD FROM BRIEF & MOCKUP -->
+      <nav class="phase-stepper hud-interactive collapsible-hud" aria-label="Etapas da travessia">
+        <button class="phase-btn" data-phase="escolher">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+          <span>Escolher objetos</span>
+        </button>
+        <span class="phase-sep" aria-hidden="true">›</span>
+        <button class="phase-btn active" data-phase="organizar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>Organizar mochila</span>
+        </button>
+        <span class="phase-sep" aria-hidden="true">›</span>
+        <button class="phase-btn" data-phase="revisar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.3 2.3 4.7-5"/></svg>
+          <span>Revisar</span>
+        </button>
+        <span class="phase-sep" aria-hidden="true">›</span>
+        <button class="phase-btn" data-phase="seguir">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 19l7-12 4.5 7 3-4.5L21 19H3z"/></svg>
+          <span>Seguir viagem</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- MIDDLE: LEFT OBJECTS DOCK + RIGHT CONTEXTUAL PANEL -->
+    <main class="mid-row">
+      <aside class="left-dock hud-interactive collapsible-hud" id="left-dock" aria-label="Objetos da mesa e mochila">
+        <div class="dock-header">
+          <span class="dock-title">Objetos</span>
+          <button class="icon-btn mobile-sheet-toggle" id="btn-sheet-toggle" aria-label="Expandir ou recolher lista de objetos">▾</button>
+        </div>
+
+        <div class="dock-grid" id="item-grid" role="listbox" aria-label="Lista de objetos manipuláveis"></div>
+
+        <div class="dock-actions" id="dock-actions">
+          <div class="selected-summary">
+            <strong id="sel-name">Cantil</strong>
+            <span id="sel-status">Na mesa</span>
+          </div>
+          <div class="action-row">
+            <button class="btn-primary" id="btn-pack-toggle">Colocar na mochila</button>
+            <button class="btn-secondary" id="btn-rotate" title="Girar 90 graus (R)">Girar 90°</button>
+          </div>
+          <div class="action-row">
+            <button class="btn-secondary" id="btn-move-pocket">Mover bolso</button>
+            <button class="btn-secondary" id="btn-inspect">Inspecionar</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- SINGLE CONTEXTUAL RIGHT PANEL -->
+      <section class="context-panel hud-interactive collapsible-hud" id="context-panel" aria-live="polite">
+        <div class="panel-head">
+          <h2 id="panel-title">Detalhes</h2>
+          <button class="icon-btn" id="btn-close-panel" aria-label="Fechar painel">✕</button>
+        </div>
+        <div class="panel-body" id="panel-body"></div>
+      </section>
+    </main>
+
+    <!-- BOTTOM TELEMETRY & QUICK CONTROLS -->
+    <footer class="bottom-bar collapsible-hud">
+      <div class="telemetry-strip hud-interactive" aria-label="Indicadores físicos da mochila">
+        <div class="metric">
+          <span class="metric-label">Volume ocupado</span>
+          <span class="metric-val" id="m-volume">0%</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Massa física</span>
+          <span class="metric-val" id="m-mass">0,00 kg</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Centro de massa</span>
+          <span class="metric-val">
+            <span class="com-bar" aria-hidden="true"><span class="com-dot" id="m-com-dot"></span></span>
+            <span id="m-balance">Equilibrada</span>
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Simbólicos (sem peso)</span>
+          <span class="metric-val" id="m-symbolic">0 na mochila · 2 na mesa</span>
+        </div>
+      </div>
+
+      <div class="bottom-tools hud-interactive">
+        <select class="select-styled" id="camera-select" aria-label="Escolher visão da câmera">
+          <option value="mesa">Câmera: Mesa e Mochila</option>
+          <option value="grade">Câmera: Interior / Grade</option>
+          <option value="cabana">Câmera: Cabana e Janela</option>
+          <option value="simbolicos">Câmera: Lembranças</option>
+        </select>
+        <button class="icon-btn" id="btn-undo" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">↶ Desfazer</button>
+        <button class="icon-btn" id="btn-redo" title="Refazer (Ctrl+Y)" aria-label="Refazer">↷ Refazer</button>
+        <button class="icon-btn" id="btn-accompanied-open" style="display:none;" title="Painel de acompanhamento">Acompanhado</button>
+        <button class="icon-btn" id="btn-reset" title="Reiniciar arrumação">Reiniciar</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- LIVE FEEDBACK TOAST -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ENTRY / MODE & JOURNEY MODAL -->
+  <div class="modal-backdrop open" id="modal-entry" role="dialog" aria-modal="true" aria-labelledby="entry-title">
+    <div class="modal-card">
+      <h2 id="entry-title">Mochila da Travessia</h2>
+      <p>
+        Organize sua mochila sobre a mesa da cabana: escolha objetos práticos, gire e acomode nos compartimentos ou decida levar lembranças simbólicas — sem pontuação, sem cronômetro e sem atribuir peso emocional automático.
+      </p>
+
+      <div class="field-group">
+        <label for="entry-journey"><strong>1. Escolher viagem (cenário inicial)</strong></label>
+        <select id="entry-journey">
+          <option value="trilha_manha">Trilha da Manhã — Mochila parcialmente pronta (padrão)</option>
+          <option value="travessia_montanha">Travessia de Montanha — Mais itens sobre a mesa</option>
+          <option value="rotina_cuidado">Preparação de Rotina — Mochila vazia para começar do zero</option>
+          <option value="cabana_silencio">Cabana de Inverno — Foco em escolhas simbólicas</option>
+        </select>
+      </div>
+
+      <div>
+        <strong style="font-size:0.82rem; display:block; margin-bottom:6px;">2. Modo da experiência</strong>
+        <div class="mode-grid" id="entry-modes"></div>
+      </div>
+
+      <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:4px;">
+        <button class="btn-secondary" id="btn-entry-demo">Ver guia rápido (pulável)</button>
+        <button class="btn-warm" id="btn-entry-start">Entrar na cabana</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAUSE MODAL -->
+  <div class="modal-backdrop" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <div class="modal-card" style="max-width:420px;">
+      <h2 id="pause-title">Experiência pausada</h2>
+      <p>A simulação 3D está pausada. Você pode retomar quando quiser, alterar o modo ou encerrar sem precisar concluir nenhuma etapa.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="btn-secondary" id="btn-pause-exit">Encerrar sessão</button>
+        <button class="btn-warm" id="btn-pause-resume">Retomar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESET CONFIRM MODAL -->
+  <div class="modal-backdrop" id="modal-reset" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+    <div class="modal-card" style="max-width:420px;">
+      <h2 id="reset-title">Reiniciar arrumação?</h2>
+      <p>Isso restaurará a posição física dos objetos na mesa e na mochila para a configuração inicial da viagem escolhida.</p>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button class="btn-secondary" id="btn-reset-cancel">Cancelar</button>
+        <button class="btn-danger" id="btn-reset-confirm">Confirmar reinício</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // =========================================================================
+    // 1. DOMAIN CONTENT & CONFIGURATION (Mirrors game/content.js)
+    // =========================================================================
+    const VERSION = '2.0.0';
+    const STORAGE_KEY_PREFS = 'mochila_travessia_prefs_v2';
+    const STORAGE_KEY_OPTIN = 'mochila_travessia_saved_v2';
+
+    const MODES = [
+      { id: 'livre', label: 'Livre', desc: 'Explore no seu ritmo, sem etapas obrigatórias.', strictPhysics: true, maxMassKg: null, accompanied: false },
+      { id: 'desafio_organizacao', label: 'Desafio de organização', desc: 'Acomode os itens respeitando grade, volume e limite de 3,5 kg.', strictPhysics: true, maxMassKg: 3.5, accompanied: false },
+      { id: 'preparacao_rotina', label: 'Preparação de rotina', desc: 'Sequência guiada para escolher, distribuir e revisar.', strictPhysics: true, maxMassKg: 4.0, accompanied: false },
+      { id: 'travessia_simbolica', label: 'Travessia simbólica', desc: 'Objetos práticos e lembranças simbólicas sem peso emocional.', strictPhysics: true, maxMassKg: null, accompanied: false },
+      { id: 'revisao_acompanhada', label: 'Revisão acompanhada', desc: 'Ajustes de mediação e registro apenas de observáveis.', strictPhysics: true, maxMassKg: null, accompanied: true }
+    ];
+
+    const JOURNEYS = {
+      trilha_manha: {
+        id: 'trilha_manha',
+        name: 'Trilha da Manhã',
+        prompt: 'O que faz sentido levar consigo para uma travessia curta de manhã?',
+        route: [[0.14, 0.80], [0.32, 0.64], [0.54, 0.48], [0.76, 0.24]],
+        initialPacked: {
+          casaco: { pocket: 'principal', col: 0, row: 0, rotation: 0 },
+          livro: { pocket: 'principal', col: 3, row: 0, rotation: 0 },
+          lanterna: { pocket: 'principal', col: 0, row: 2, rotation: 0 },
+          bussola: { pocket: 'principal', col: 3, row: 2, rotation: 0 },
+          corda: { pocket: 'principal', col: 2, row: 3, rotation: 0 }
+        }
+      },
+      travessia_montanha: {
+        id: 'travessia_montanha',
+        name: 'Travessia de Montanha',
+        prompt: 'Como distribuir o volume e o equilíbrio quando o caminho pede mais preparo?',
+        route: [[0.12, 0.84], [0.28, 0.56], [0.52, 0.60], [0.68, 0.34], [0.85, 0.18]],
+        initialPacked: {
+          casaco: { pocket: 'principal', col: 0, row: 0, rotation: 0 },
+          corda: { pocket: 'principal', col: 2, row: 3, rotation: 0 }
+        }
+      },
+      rotina_cuidado: {
+        id: 'rotina_cuidado',
+        name: 'Preparação de Rotina',
+        prompt: 'O que você percebe quando experimenta outra forma de escolher e carregar?',
+        route: [[0.20, 0.74], [0.48, 0.50], [0.74, 0.28]],
+        initialPacked: {}
+      },
+      cabana_silencio: {
+        id: 'cabana_silencio',
+        name: 'Cabana de Inverno',
+        prompt: 'Algumas lembranças podem ir na mochila e outras podem ficar sobre a mesa. O que escolhe agora?',
+        route: [[0.18, 0.80], [0.42, 0.64], [0.64, 0.38], [0.82, 0.26]],
+        initialPacked: {
+          livro: { pocket: 'principal', col: 3, row: 0, rotation: 0 },
+          bussola: { pocket: 'principal', col: 3, row: 2, rotation: 0 }
+        }
+      }
+    };
+
+    const POCKETS = {
+      principal: {
+        id: 'principal',
+        name: 'Compartimento Principal',
+        cols: 5,
+        rows: 4,
+        xMin: -0.225, xMax: 0.225,
+        zMin: -0.195, zMax: 0.165,
+        yBase: 0.068
+      },
+      frontal: {
+        id: 'frontal',
+        name: 'Bolso Frontal',
+        cols: 3,
+        rows: 1,
+        xMin: -0.145, xMax: 0.145,
+        zMin: 0.215, zMax: 0.295,
+        yBase: 0.052
+      }
+    };
+
+    const SEMANTIC_CARDS = [
+      { id: 'montanha', title: 'Montanha', motif: 'Presença e passo firme' },
+      { id: 'rosa', title: 'Direção', motif: 'Valores que orientam' },
+      { id: 'broto', title: 'Cuidado', motif: 'Cultivo diário' },
+      { id: 'fogueira', title: 'Abrigo', motif: 'Calor e descanso' }
+    ];
+
+    const ITEMS = [
+      {
+        id: 'cantil', name: 'Cantil', symbolic: false, massKg: 0.85, gridW: 2, gridH: 1,
+        allowedPockets: ['principal'], tablePos: [-0.46, 0.0, 0.02], tableRotY: 0.36,
+        desc: 'Cantil de alumínio revestido em lona verde-oliva com alças de couro e tampa metálica.',
+        prompt: 'O que sustenta seu ritmo ao longo do percurso?'
+      },
+      {
+        id: 'livro', name: 'Livro', symbolic: false, massKg: 0.55, gridW: 2, gridH: 2,
+        allowedPockets: ['principal'], tablePos: [0.54, 0.0, -0.18], tableRotY: -0.24,
+        desc: 'Caderno de campo encadernado em couro gravado com folha botânica e páginas costuradas.',
+        prompt: 'Que anotações ou memórias vale ter por perto?'
+      },
+      {
+        id: 'pedra', name: 'Pedra', symbolic: true, massKg: 0.0, physicalRefKg: 0.35, gridW: 1, gridH: 1,
+        allowedPockets: ['principal', 'frontal'], tablePos: [0.56, 0.0, 0.10], tableRotY: 0.5,
+        desc: 'Pedra de granito alpino. Objeto simbólico: levar ou deixar na mesa não acrescenta peso emocional.',
+        prompt: 'Você prefere carregar esta lembrança na mochila ou deixá-la descansar sobre a mesa?'
+      },
+      {
+        id: 'lanterna', name: 'Lanterna', symbolic: false, massKg: 0.32, gridW: 2, gridH: 1,
+        allowedPockets: ['principal', 'frontal'], tablePos: [-0.46, 0.0, -0.17], tableRotY: 0.2,
+        desc: 'Lanterna metálica anodizada com aro de latão e feixe quente acionável.',
+        prompt: 'O que ajuda a enxergar o próximo passo quando escurece?'
+      },
+      {
+        id: 'bussola', name: 'Bússola', symbolic: false, massKg: 0.14, gridW: 1, gridH: 1,
+        allowedPockets: ['principal', 'frontal'], tablePos: [-0.36, 0.0, 0.24], tableRotY: -0.12,
+        desc: 'Bússola de bolso em latão envelhecido com rosa dos ventos e agulha magnética ativa.',
+        prompt: 'Que direção importa para você nesta etapa?'
+      },
+      {
+        id: 'corda', name: 'Corda', symbolic: false, massKg: 0.72, gridW: 2, gridH: 1,
+        allowedPockets: ['principal'], tablePos: [0.46, 0.0, 0.25], tableRotY: -0.38,
+        desc: 'Corda de cânhamo trançada em espiral firme, presa com laço central.',
+        prompt: 'Quais apoios práticos dão firmeza à travessia?'
+      },
+      {
+        id: 'casaco', name: 'Casaco', symbolic: false, massKg: 0.68, gridW: 2, gridH: 2,
+        allowedPockets: ['principal'], tablePos: [-0.62, 0.0, -0.34], tableRotY: 0.26,
+        desc: 'Casaco acolchoado azul-ardósia com acabamento terracota, dobrado para viagem.',
+        prompt: 'Como você se protege quando o clima muda de repente?'
+      },
+      {
+        id: 'cartoes_semanticos', name: 'Cartões', symbolic: true, massKg: 0.0, physicalRefKg: 0.04, gridW: 1, gridH: 1,
+        allowedPockets: ['principal', 'frontal'], tablePos: [0.58, 0.0, -0.05], tableRotY: -0.18,
+        desc: 'Quatro cartões ilustrados em papel encorpado. Objeto simbólico livre de escore ou peso automático.',
+        prompt: 'Qual imagem conversa com o que importa para você hoje?'
+      },
+      {
+        id: 'mapa', name: 'Mapa', symbolic: false, massKg: 0.08, gridW: 2, gridH: 1,
+        allowedPockets: ['principal', 'frontal'], tablePos: [-0.52, 0.0, 0.14], tableRotY: -0.22,
+        desc: 'Mapa topográfico dobrável com curvas de nível e rota pontilhada da viagem escolhida.',
+        prompt: 'Prefere deixar o mapa aberto na mesa ou levá-lo dobrado no bolso frontal?'
+      }
+    ];
+    const ITEM_BY_ID = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
+
+    const CAMERA_PRESETS = {
+      mesa: { pos: [0.03, 0.96, 1.02], target: [0.02, 0.09, 0.01] },
+      grade: { pos: [0.05, 0.88, 0.42], target: [0.05, 0.09, 0.01] },
+      cabana: { pos: [0.62, 0.72, 1.34], target: [-0.14, 0.24, -0.14] },
+      simbolicos: { pos: [0.70, 0.56, 0.52], target: [0.56, 0.05, 0.02] }
+    };
+
+    // =========================================================================
+    // 2. SERIALIZABLE STATE & PURE PACKING / PHYSICS RULES
+    // =========================================================================
+    function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+    function getFootprint(item, rotation) {
+      const r = ((rotation % 2) + 2) % 2;
+      return r === 1 ? { w: item.gridH, h: item.gridW } : { w: item.gridW, h: item.gridH };
+    }
+
+    function getEffectiveMass(item, includeSymbolicMass) {
+      if (item.symbolic) return includeSymbolicMass ? (item.physicalRefKg || 0) : 0;
+      return item.massKg;
+    }
+
+    function createInitialState(journeyId = 'trilha_manha', modeId = 'livre') {
+      const j = JOURNEYS[journeyId] || JOURNEYS.trilha_manha;
+      const m = MODES.find((x) => x.id === modeId) || MODES[0];
+      const items = {};
+      for (const it of ITEMS) {
+        const p = j.initialPacked[it.id];
+        items[it.id] = p
+          ? { location: 'backpack', pocket: p.pocket, col: p.col, row: p.row, rotation: p.rotation || 0 }
+          : { location: 'table', pocket: null, col: 0, row: 0, rotation: 0 };
+      }
+      return {
+        version: VERSION,
+        seed: 1901,
+        mode: m.id,
+        phase: 'organizar',
+        journeyId: j.id,
+        selectedItemId: 'cantil',
+        inspectingItemId: null,
+        paused: false,
+        flapClosed: false,
+        flashlightOn: true,
+        settings: {
+          strictPhysics: m.strictPhysics,
+          maxMassKg: m.maxMassKg,
+          quality: 'equilibrada',
+          audioEnabled: false,
+          includeSymbolicMass: false,
+          accompaniedOpportunities: 3,
+          accompaniedInstruction: 'visual_textual',
+          hudCollapsed: false
+        },
+        sceneState: {
+          items,
+          cameraPreset: 'mesa',
+          selectedCardId: 'montanha',
+          voluntaryCardNote: ''
+        },
+        history: { past: [], future: [] },
+        observations: []
+      };
+    }
+
+    function buildOccupancyGrid(st, pocketId, excludeId = null) {
+      const pk = POCKETS[pocketId];
+      const g = Array.from({ length: pk.rows }, () => Array(pk.cols).fill(null));
+      for (const [id, pl] of Object.entries(st.sceneState.items)) {
+        if (id === excludeId || pl.location !== 'backpack' || pl.pocket !== pocketId) continue;
+        const item = ITEM_BY_ID[id];
+        const { w, h } = getFootprint(item, pl.rotation);
+        for (let r = pl.row; r < pl.row + h; r++) {
+          for (let c = pl.col; c < pl.col + w; c++) {
+            if (r >= 0 && r < pk.rows && c >= 0 && c < pk.cols) g[r][c] = id;
+          }
+        }
+      }
+      return g;
+    }
+
+    function computeMetrics(st) {
+      const totalCells = POCKETS.principal.cols * POCKETS.principal.rows + POCKETS.frontal.cols * POCKETS.frontal.rows;
+      let occupiedCells = 0, mass = 0, symPack = 0, symTable = 0;
+      let wx = 0, wy = 0, wTotal = 0;
+      for (const it of ITEMS) {
+        const pl = st.sceneState.items[it.id];
+        if (pl.location === 'backpack') {
+          if (it.symbolic) symPack++;
+          const { w, h } = getFootprint(it, pl.rotation);
+          occupiedCells += w * h;
+          const m = getEffectiveMass(it, st.settings.includeSymbolicMass);
+          mass += m;
+          const pk = POCKETS[pl.pocket];
+          if (pk && m > 0) {
+            const cx = ((pl.col + w / 2) / pk.cols) * 2 - 1;
+            const cy = ((pl.row + h / 2) / pk.rows) * 2 - 1;
+            wx += cx * m;
+            wy += cy * m;
+            wTotal += m;
+          }
+        } else if (it.symbolic) {
+          symTable++;
+        }
+      }
+      const comX = wTotal > 0 ? wx / wTotal : 0;
+      const comY = wTotal > 0 ? wy / wTotal : 0;
+      let balanceLabel = 'Equilibrada';
+      if (wTotal === 0) balanceLabel = 'Sem carga física';
+      else if (Math.abs(comX) > 0.34) balanceLabel = comX < 0 ? 'Mais peso à esquerda' : 'Mais peso à direita';
+      else if (Math.abs(comY) > 0.38) balanceLabel = comY < 0 ? 'Mais peso no topo' : 'Mais peso na base';
+      return {
+        volumePct: Math.min(100, Math.round((occupiedCells / totalCells) * 100)),
+        physicalMassKg: Number(mass.toFixed(2)),
+        comX, comY, balanceLabel, symPack, symTable
+      };
+    }
+
+    function canPlaceItem(st, itemId, pocketId, col, row, rotation = 0) {
+      const it = ITEM_BY_ID[itemId];
+      const pk = POCKETS[pocketId];
+      if (!it || !pk) return { ok: false, reason: 'Compartimento inválido.' };
+      if (!it.allowedPockets.includes(pocketId)) return { ok: false, reason: `${it.name} não cabe no ${pk.name}.` };
+      const { w, h } = getFootprint(it, rotation);
+      if (col < 0 || row < 0 || col + w > pk.cols || row + h > pk.rows) {
+        return { ok: false, reason: 'Fora dos limites internos da mochila.' };
+      }
+      if (st.settings.strictPhysics) {
+        const g = buildOccupancyGrid(st, pocketId, itemId);
+        for (let r = row; r < row + h; r++) {
+          for (let c = col; c < col + w; c++) {
+            if (g[r][c]) return { ok: false, reason: `Espaço ocupado por ${ITEM_BY_ID[g[r][c]].name}.` };
+          }
+        }
+        if (st.settings.maxMassKg !== null) {
+          const mNow = computeMetrics(st).physicalMassKg;
+          const already = st.sceneState.items[itemId].location === 'backpack';
+          const add = already ? 0 : getEffectiveMass(it, st.settings.includeSymbolicMass);
+          if (mNow + add > st.settings.maxMassKg + 0.001) {
+            return { ok: false, reason: `Ultrapassa o limite físico de ${st.settings.maxMassKg.toFixed(1)} kg.` };
+          }
+        }
+      }
+      return { ok: true, reason: null };
+    }
+
+    function findFirstValidSlot(st, itemId, preferredPocket = null) {
+      const it = ITEM_BY_ID[itemId];
+      if (!it) return null;
+      const list = preferredPocket && it.allowedPockets.includes(preferredPocket)
+        ? [preferredPocket, ...it.allowedPockets.filter((p) => p !== preferredPocket)]
+        : it.allowedPockets;
+      for (const pkId of list) {
+        const pk = POCKETS[pkId];
+        for (const rot of [0, 1]) {
+          for (let r = 0; r < pk.rows; r++) {
+            for (let c = 0; c < pk.cols; c++) {
+              if (canPlaceItem(st, itemId, pkId, c, r, rot).ok) return { pocket: pkId, col: c, row: r, rotation: rot };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function pushUndo(st) {
+      st.history.past.push(clone(st.sceneState));
+      if (st.history.past.length > 40) st.history.past.shift();
+      st.history.future = [];
+    }
+
+    let state = createInitialState('trilha_manha', 'livre');
+
+    // Load non-sensitive UI preferences safely
+    try {
+      const savedPrefs = JSON.parse(localStorage.getItem(STORAGE_KEY_PREFS) || 'null');
+      if (savedPrefs && savedPrefs.quality) state.settings.quality = savedPrefs.quality;
+    } catch (_) {}
+
+    // Integration postMessage helper (versioned, zero personal data by default)
+    function emitIntegrationEvent(type, payload = {}) {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            source: 'mochila-da-travessia',
+            version: VERSION,
+            type,
+            payload
+          }, '*');
+        }
+      } catch (_) {}
+    }
+
+    // =========================================================================
+    // 3. PROCEDURAL WEB AUDIO ENGINE (Starts ONLY after explicit user gesture)
+    // =========================================================================
+    const AudioEngine = (() => {
+      let ctx = null;
+      let masterGain = null;
+      let activeVoices = 0;
+      const MAX_VOICES = 6;
+
+      function ensureContext() {
+        if (!ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return false;
+          ctx = new AC();
+          const comp = ctx.createDynamicsCompressor();
+          comp.threshold.value = -16;
+          comp.knee.value = 18;
+          comp.ratio.value = 6;
+          masterGain = ctx.createGain();
+          masterGain.gain.value = 0.28;
+          masterGain.connect(comp);
+          comp.connect(ctx.destination);
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+        return true;
+      }
+
+      function playTone(freq, dur, type = 'sine', vol = 0.25, slideTo = null) {
+        if (!state.settings.audioEnabled || activeVoices >= MAX_VOICES) return;
+        if (!ensureContext()) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(vol, now + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+        osc.connect(g);
+        g.connect(masterGain);
+        activeVoices++;
+        osc.onended = () => { activeVoices = Math.max(0, activeVoices - 1); };
+        osc.start(now);
+        osc.stop(now + dur + 0.02);
+      }
+
+      function playNoise(dur, filterFreq, vol = 0.16) {
+        if (!state.settings.audioEnabled || activeVoices >= MAX_VOICES) return;
+        if (!ensureContext()) return;
+        const bufSize = Math.floor(ctx.sampleRate * dur);
+        const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.45));
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = filterFreq;
+        filter.Q.value = 1.4;
+        const g = ctx.createGain();
+        g.gain.value = vol;
+        src.connect(filter);
+        filter.connect(g);
+        g.connect(masterGain);
+        activeVoices++;
+        src.onended = () => { activeVoices = Math.max(0, activeVoices - 1); };
+        src.start();
+      }
+
+      return {
+        enable() { ensureContext(); },
+        pack() { playNoise(0.14, 720, 0.22); playTone(220, 0.12, 'triangle', 0.18, 290); },
+        table() { playTone(150, 0.10, 'triangle', 0.20, 105); playNoise(0.07, 420, 0.14); },
+        rotate() { playNoise(0.08, 1200, 0.12); playTone(380, 0.08, 'sine', 0.12, 460); },
+        buckle() { playTone(620, 0.06, 'square', 0.08, 840); setTimeout(() => playTone(480, 0.09, 'triangle', 0.14, 340), 55); },
+        click() { playTone(440, 0.05, 'sine', 0.10, 520); },
+        invalid() { playTone(190, 0.14, 'sine', 0.14, 150); }
+      };
+    })();
+
+    // =========================================================================
+    // 4. PROCEDURAL PBR TEXTURES (sRGB color + linear bump/roughness)
+    // =========================================================================
+    function makeCanvasTex(w, h, drawFn, isColor = true) {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const g = c.getContext('2d');
+      drawFn(g, w, h);
+      const tex = new THREE.CanvasTexture(c);
+      if (isColor) tex.encoding = THREE.sRGBEncoding;
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.anisotropy = 4;
+      return tex;
+    }
+
+    const texWood = makeCanvasTex(512, 512, (g, w, h) => {
+      g.fillStyle = '#563621';
+      g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 240; i++) {
+        const y = Math.random() * h;
+        g.strokeStyle = i % 3 === 0 ? 'rgba(32,18,10,0.34)' : 'rgba(138,94,58,0.22)';
+        g.lineWidth = 1 + Math.random() * 3.5;
+        g.beginPath();
+        g.moveTo(0, y);
+        g.bezierCurveTo(w * 0.33, y + (Math.random() - 0.5) * 14, w * 0.66, y + (Math.random() - 0.5) * 14, w, y);
+        g.stroke();
+      }
+      // Plank seams
+      g.fillStyle = 'rgba(22, 12, 6, 0.68)';
+      for (const sy of [128, 256, 384]) g.fillRect(0, sy, w, 3);
+    });
+    texWood.repeat.set(2, 2);
+
+    const texCanvasGreen = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#51664F';
+      g.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 3) {
+        g.fillStyle = y % 6 === 0 ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.065)';
+        g.fillRect(0, y, w, 1.5);
+      }
+      for (let x = 0; x < w; x += 3) {
+        g.fillStyle = x % 6 === 0 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.05)';
+        g.fillRect(x, 0, 1.5, h);
+      }
+    });
+    texCanvasGreen.repeat.set(3, 3);
+
+    const texCanvasBump = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#808080';
+      g.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 4) {
+        for (let x = 0; x < w; x += 4) {
+          const v = ((x + y) % 8 === 0) ? 165 : 105;
+          g.fillStyle = `rgb(${v},${v},${v})`;
+          g.fillRect(x, y, 2, 2);
+        }
+      }
+    }, false);
+    texCanvasBump.repeat.set(4, 4);
+
+    const texLeather = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#7D4B28';
+      g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 600; i++) {
+        g.fillStyle = Math.random() > 0.5 ? 'rgba(180,126,76,0.14)' : 'rgba(40,20,8,0.16)';
+        g.fillRect(Math.random() * w, Math.random() * h, 4, 3);
+      }
+    });
+
+    const texLining = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#BFA988';
+      g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 180; i++) {
+        g.strokeStyle = 'rgba(90,70,45,0.08)';
+        g.beginPath();
+        g.moveTo(0, i * 2);
+        g.lineTo(w, i * 2);
+        g.stroke();
+      }
+    });
+
+    const texBookCover = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#6E4022';
+      g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#A67D52';
+      g.lineWidth = 4;
+      g.strokeRect(14, 14, w - 28, h - 28);
+      // Embossed botanical leaf
+      g.save();
+      g.translate(w / 2, h / 2);
+      g.rotate(0.45);
+      g.fillStyle = '#9C7148';
+      g.beginPath();
+      g.ellipse(0, 0, 26, 54, 0, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = '#502A12';
+      g.lineWidth = 2.5;
+      g.beginPath();
+      g.moveTo(0, -54); g.lineTo(0, 58);
+      for (let y = -30; y <= 30; y += 15) {
+        g.moveTo(0, y); g.lineTo(18, y - 10);
+        g.moveTo(0, y); g.lineTo(-18, y - 10);
+      }
+      g.stroke();
+      g.restore();
+    });
+
+    const texCompassDial = makeCanvasTex(256, 256, (g, w, h) => {
+      const cx = w / 2, cy = h / 2;
+      g.fillStyle = '#EFE3C8';
+      g.beginPath(); g.arc(cx, cy, 122, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#3C2E1E'; g.lineWidth = 4;
+      g.beginPath(); g.arc(cx, cy, 114, 0, Math.PI * 2); g.stroke();
+      for (let i = 0; i < 36; i++) {
+        const a = (i * Math.PI * 2) / 36;
+        const r1 = i % 9 === 0 ? 86 : 98;
+        g.lineWidth = i % 9 === 0 ? 3 : 1.5;
+        g.beginPath();
+        g.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+        g.lineTo(cx + Math.cos(a) * 112, cy + Math.sin(a) * 112);
+        g.stroke();
+      }
+      g.fillStyle = '#3A2A1A';
+      g.font = 'bold 26px Georgia';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('N', cx, cy - 64);
+      g.fillText('S', cx, cy + 66);
+      g.fillText('L', cx + 66, cy + 2);
+      g.fillText('O', cx - 66, cy + 2);
+    });
+
+    const texGranite = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#7E7D7B';
+      g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 1600; i++) {
+        const shade = Math.floor(75 + Math.random() * 115);
+        g.fillStyle = `rgb(${shade},${shade},${shade + 2})`;
+        g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 4, 2 + Math.random() * 3);
+      }
+    });
+
+    const texBlanket = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#B56B4E';
+      g.fillRect(0, 0, w, h);
+      const bands = ['#3B4F5E', '#C8BA9E', '#8F4632', '#26342A', '#C8BA9E'];
+      bands.forEach((col, idx) => {
+        g.fillStyle = col;
+        g.fillRect(0, idx * 52, w, 24);
+      });
+      g.strokeStyle = 'rgba(255,245,230,0.45)';
+      g.lineWidth = 3;
+      for (let y = 14; y < h; y += 52) {
+        g.beginPath();
+        for (let x = 0; x <= w; x += 24) {
+          g.lineTo(x, y + (x % 48 === 0 ? -7 : 7));
+        }
+        g.stroke();
+      }
+    });
+
+    // Dynamic Map Texture (updates when Journey changes!)
+    const mapCanvas = document.createElement('canvas');
+    mapCanvas.width = 512;
+    mapCanvas.height = 384;
+    const mapTex = new THREE.CanvasTexture(mapCanvas);
+    mapTex.encoding = THREE.sRGBEncoding;
+
+    function redrawMapTexture(journeyId) {
+      const g = mapCanvas.getContext('2d');
+      const w = mapCanvas.width, h = mapCanvas.height;
+      const j = JOURNEYS[journeyId] || JOURNEYS.trilha_manha;
+      g.fillStyle = '#DFD1B3';
+      g.fillRect(0, 0, w, h);
+
+      // Subtle paper creases
+      g.strokeStyle = 'rgba(105, 82, 54, 0.16)';
+      g.lineWidth = 2;
+      g.beginPath(); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+
+      // Green highland contour blobs
+      const hills = [[130, 120, 88], [360, 100, 100], [270, 260, 95], [100, 290, 72]];
+      for (const [cx, cy, r] of hills) {
+        for (let k = 3; k >= 1; k--) {
+          g.fillStyle = k === 3 ? 'rgba(85,107,87,0.16)' : k === 2 ? 'rgba(85,107,87,0.22)' : 'rgba(166,125,82,0.18)';
+          g.beginPath(); g.ellipse(cx, cy, r * k * 0.42, r * k * 0.3, 0.3, 0, Math.PI * 2); g.fill();
+          g.strokeStyle = 'rgba(82,66,46,0.28)'; g.lineWidth = 1.2; g.stroke();
+        }
+      }
+
+      // Dashed red trail route
+      g.strokeStyle = '#A8382B';
+      g.lineWidth = 5;
+      g.setLineDash([12, 8]);
+      g.beginPath();
+      j.route.forEach(([rx, ry], idx) => {
+        const px = rx * w, py = ry * h;
+        if (idx === 0) g.moveTo(px, py); else g.lineTo(px, py);
+      });
+      g.stroke();
+      g.setLineDash([]);
+
+      // Destination X
+      const last = j.route[j.route.length - 1];
+      const lx = last[0] * w, ly = last[1] * h;
+      g.strokeStyle = '#A8382B'; g.lineWidth = 5;
+      g.beginPath();
+      g.moveTo(lx - 11, ly - 11); g.lineTo(lx + 11, ly + 11);
+      g.moveTo(lx + 11, ly - 11); g.lineTo(lx - 11, ly + 11);
+      g.stroke();
+
+      // Compass rose bottom-right
+      const rx = w - 64, ry = h - 58;
+      g.strokeStyle = '#53412B'; g.lineWidth = 2;
+      g.beginPath(); g.arc(rx, ry, 28, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.moveTo(rx, ry - 26); g.lineTo(rx, ry + 26); g.moveTo(rx - 26, ry); g.lineTo(rx + 26, ry); g.stroke();
+
+      mapTex.needsUpdate = true;
+    }
+    redrawMapTexture(state.journeyId);
+
+    function makeCardTexture(cardId) {
+      return makeCanvasTex(192, 256, (g, w, h) => {
+        g.fillStyle = '#EFE3C9';
+        g.fillRect(0, 0, w, h);
+        g.strokeStyle = '#8C7050'; g.lineWidth = 6;
+        g.strokeRect(10, 10, w - 20, h - 20);
+        g.save();
+        g.translate(w / 2, h / 2 - 12);
+        if (cardId === 'montanha') {
+          g.fillStyle = '#48677C';
+          g.beginPath(); g.moveTo(-54, 42); g.lineTo(-10, -40); g.lineTo(18, 12); g.lineTo(36, -16); g.lineTo(58, 42); g.closePath(); g.fill();
+        } else if (cardId === 'rosa') {
+          g.strokeStyle = '#A67D52'; g.lineWidth = 5;
+          g.beginPath(); g.arc(0, 0, 42, 0, Math.PI * 2); g.stroke();
+          g.beginPath(); g.moveTo(0, -52); g.lineTo(0, 52); g.moveTo(-52, 0); g.lineTo(52, 0); g.stroke();
+        } else if (cardId === 'broto') {
+          g.fillStyle = '#556B57';
+          g.beginPath(); g.ellipse(-18, -8, 22, 12, -0.5, 0, Math.PI * 2); g.fill();
+          g.beginPath(); g.ellipse(18, -14, 22, 12, 0.5, 0, Math.PI * 2); g.fill();
+          g.strokeStyle = '#556B57'; g.lineWidth = 5;
+          g.beginPath(); g.moveTo(0, 42); g.lineTo(0, -10); g.stroke();
+        } else {
+          g.fillStyle = '#B56B4E';
+          g.beginPath(); g.moveTo(0, -44); g.quadraticCurveTo(36, 0, 0, 32); g.quadraticCurveTo(-36, 0, 0, -44); g.fill();
+          g.fillStyle = '#F2B85B';
+          g.beginPath(); g.moveTo(0, -18); g.quadraticCurveTo(16, 4, 0, 24); g.quadraticCurveTo(-16, 4, 0, -18); g.fill();
+        }
+        g.restore();
+      });
+    }
+
+    // =========================================================================
+    // 5. THREE.JS 3D SCENE, LIGHTING & PROCEDURAL PBR ASSETS
+    // =========================================================================
+    const canvas = document.getElementById('scene-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#212D2B');
+    scene.fog = new THREE.Fog('#253336', 4.5, 13.0);
+
+    const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.05, 30);
+    const camCurrentPos = new THREE.Vector3(...CAMERA_PRESETS.mesa.pos);
+    const camTargetPos = new THREE.Vector3(...CAMERA_PRESETS.mesa.pos);
+    const lookCurrent = new THREE.Vector3(...CAMERA_PRESETS.mesa.target);
+    const lookTarget = new THREE.Vector3(...CAMERA_PRESETS.mesa.target);
+    camera.position.copy(camCurrentPos);
+    camera.lookAt(lookCurrent);
+
+    // Lighting motivated by cabin window (cool alpine daylight) + oil lantern (warm golden)
+    const hemiLight = new THREE.HemisphereLight('#C8DFF5', '#4D3220', 0.72);
+    scene.add(hemiLight);
+
+    const windowKey = new THREE.DirectionalLight('#E5F0FF', 1.35);
+    windowKey.position.set(-1.9, 2.3, -1.2);
+    windowKey.castShadow = true;
+    windowKey.shadow.mapSize.set(1024, 1024);
+    windowKey.shadow.camera.near = 0.4;
+    windowKey.shadow.camera.far = 7;
+    windowKey.shadow.camera.left = -1.4;
+    windowKey.shadow.camera.right = 1.4;
+    windowKey.shadow.camera.top = 1.2;
+    windowKey.shadow.camera.bottom = -1.2;
+    windowKey.shadow.bias = -0.0005;
+    scene.add(windowKey);
+
+    const lanternLight = new THREE.PointLight('#FFAA48', 1.95, 3.6, 1.5);
+    lanternLight.position.set(-0.72, 0.30, -0.34);
+    lanternLight.castShadow = true;
+    lanternLight.shadow.mapSize.set(512, 512);
+    lanternLight.shadow.bias = -0.001;
+    scene.add(lanternLight);
+
+    const rimWarm = new THREE.DirectionalLight('#FFD19E', 0.42);
+    rimWarm.position.set(1.6, 1.1, 1.4);
+    scene.add(rimWarm);
+
+    // Shared PBR Materials
+    const matCanvas = new THREE.MeshStandardMaterial({ map: texCanvasGreen, bumpMap: texCanvasBump, bumpScale: 0.006, roughness: 0.88, metalness: 0.04 });
+    const matLeather = new THREE.MeshStandardMaterial({ map: texLeather, roughness: 0.56, metalness: 0.08 });
+    const matBrass = new THREE.MeshStandardMaterial({ color: '#C99B52', roughness: 0.32, metalness: 0.84 });
+    const matLining = new THREE.MeshStandardMaterial({ map: texLining, roughness: 0.92, metalness: 0.02 });
+    const matWood = new THREE.MeshStandardMaterial({ map: texWood, roughness: 0.52, metalness: 0.06 });
+
+    // --- CABIN ENVIRONMENT (Table, Log Wall, Window, 3D Snowy Mountains, Props) ---
+    const envGroup = new THREE.Group();
+    scene.add(envGroup);
+
+    // Rustic timber table
+    const tableMesh = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.09, 1.42), matWood);
+    tableMesh.position.set(0, -0.045, 0.02);
+    tableMesh.receiveShadow = true;
+    envGroup.add(tableMesh);
+
+    // Cabin back log wall (split around window opening)
+    const matLog = new THREE.MeshStandardMaterial({ color: '#4B301E', roughness: 0.85, metalness: 0.04 });
+    for (let i = 0; i < 9; i++) {
+      const y = -0.1 + i * 0.22;
+      // Right wall logs
+      const logR = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 2.2, 12), matLog);
+      logR.rotation.z = Math.PI / 2;
+      logR.position.set(0.88, y, -0.92);
+      envGroup.add(logR);
+      // Lower & upper window wall logs
+      if (i < 2 || i > 6) {
+        const logL = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 1.6, 12), matLog);
+        logL.rotation.z = Math.PI / 2;
+        logL.position.set(-0.98, y, -0.92);
+        envGroup.add(logL);
+      }
+    }
+
+    // Window frame & mullions
+    const winGroup = new THREE.Group();
+    winGroup.position.set(-0.76, 0.72, -0.90);
+    const matFrame = new THREE.MeshStandardMaterial({ color: '#5A3A24', roughness: 0.72 });
+    const fTop = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.07, 0.08), matFrame); fTop.position.y = 0.52;
+    const fBot = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.08, 0.12), matFrame); fBot.position.y = -0.52;
+    const fLeft = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.1, 0.08), matFrame); fLeft.position.x = -0.54;
+    const fRight = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.1, 0.08), matFrame); fRight.position.x = 0.54;
+    const mVert = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.02, 0.05), matFrame);
+    const mHorz = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.04, 0.05), matFrame);
+    winGroup.add(fTop, fBot, fLeft, fRight, mVert, mHorz);
+    envGroup.add(winGroup);
+
+    // 3D Snowy Alpine Mountain Backdrop outside the window
+    const skyBackdrop = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.5, 4.0),
+      new THREE.MeshBasicMaterial({ color: '#8BB4D9' })
+    );
+    skyBackdrop.position.set(-0.8, 1.1, -3.6);
+    envGroup.add(skyBackdrop);
+
+    const matMountain = new THREE.MeshStandardMaterial({ color: '#48677C', roughness: 0.9, flatShading: true });
+    const matSnow = new THREE.MeshStandardMaterial({ color: '#EDF3F8', roughness: 0.75, flatShading: true });
+    const peakData = [
+      [-1.5, 0.35, -2.6, 0.95, 1.45],
+      [-0.75, 0.45, -2.9, 1.15, 1.85],
+      [-0.05, 0.30, -2.5, 0.9, 1.35]
+    ];
+    peakData.forEach(([px, py, pz, r, h]) => {
+      const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 6), matMountain);
+      m.position.set(px, py, pz);
+      envGroup.add(m);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.44, h * 0.44, 6), matSnow);
+      cap.position.set(px, py + h * 0.285, pz + 0.01);
+      envGroup.add(cap);
+    });
+
+    // Decorative: Glowing Oil Lantern (left background)
+    const lanternGroup = new THREE.Group();
+    lanternGroup.position.set(-0.72, 0.0, -0.34);
+    const lBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.095, 0.07, 16), matBrass);
+    lBase.position.y = 0.035; lBase.castShadow = true;
+    const lGlass = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.068, 0.062, 0.16, 16),
+      new THREE.MeshStandardMaterial({ color: '#FFE3B0', transparent: true, opacity: 0.35, roughness: 0.15, emissive: '#FF9A2E', emissiveIntensity: 0.4 })
+    );
+    lGlass.position.y = 0.15;
+    const lFlame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.018, 0.055, 8),
+      new THREE.MeshBasicMaterial({ color: '#FFE08A' })
+    );
+    lFlame.position.y = 0.145;
+    const lCap = new THREE.Mesh(new THREE.ConeGeometry(0.088, 0.06, 16), matBrass);
+    lCap.position.y = 0.26; lCap.castShadow = true;
+    lanternGroup.add(lBase, lGlass, lFlame, lCap);
+    envGroup.add(lanternGroup);
+
+    // Decorative: Enamel Mountain Mug + Steam Particles
+    const mugGroup = new THREE.Group();
+    mugGroup.position.set(-0.46, 0.0, -0.36);
+    const mugBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.048, 0.045, 0.092, 16),
+      new THREE.MeshStandardMaterial({ color: '#D8CEBC', roughness: 0.35 })
+    );
+    mugBody.position.y = 0.046; mugBody.castShadow = true;
+    const mugRim = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.004, 8, 20), new THREE.MeshStandardMaterial({ color: '#2B302C', roughness: 0.4 }));
+    mugRim.rotation.x = Math.PI / 2; mugRim.position.y = 0.092;
+    const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.005, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: '#D8CEBC', roughness: 0.35 }));
+    mugHandle.position.set(-0.048, 0.048, 0); mugHandle.rotation.z = Math.PI / 2;
+    mugGroup.add(mugBody, mugRim, mugHandle);
+    envGroup.add(mugGroup);
+
+    const steamParticles = [];
+    const matSteam = new THREE.MeshBasicMaterial({ color: '#EFECE6', transparent: true, opacity: 0.22, depthWrite: false });
+    for (let i = 0; i < 6; i++) {
+      const sp = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 8), matSteam.clone());
+      sp.position.set(-0.46, 0.11 + i * 0.035, -0.36);
+      sp.userData = { phase: i * 1.1 };
+      envGroup.add(sp);
+      steamParticles.push(sp);
+    }
+
+    // Decorative: Carved Wooden Owl on Log Slice (right background)
+    const owlGroup = new THREE.Group();
+    owlGroup.position.set(0.76, 0.0, -0.34);
+    owlGroup.rotation.y = -0.45;
+    const logSlice = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.078, 0.03, 14), new THREE.MeshStandardMaterial({ color: '#8C6743', roughness: 0.85 }));
+    logSlice.position.y = 0.015; logSlice.castShadow = true;
+    const owlMat = new THREE.MeshStandardMaterial({ color: '#A87D52', roughness: 0.72 });
+    const owlBody = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.046, 0.11, 10), owlMat);
+    owlBody.position.y = 0.085; owlBody.castShadow = true;
+    const owlHead = new THREE.Mesh(new THREE.SphereGeometry(0.038, 10, 10), owlMat);
+    owlHead.position.y = 0.15;
+    const earL = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 5), owlMat); earL.position.set(-0.024, 0.18, 0);
+    const earR = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 5), owlMat); earR.position.set(0.024, 0.18, 0);
+    owlGroup.add(logSlice, owlBody, owlHead, earL, earR);
+    envGroup.add(owlGroup);
+
+    // Decorative: Woven Wool Blanket (bottom right corner)
+    const blanket = new THREE.Mesh(
+      new THREE.BoxGeometry(0.46, 0.055, 0.42),
+      new THREE.MeshStandardMaterial({ map: texBlanket, roughness: 0.95 })
+    );
+    blanket.position.set(0.84, 0.024, 0.36);
+    blanket.rotation.set(0.06, -0.32, -0.05);
+    blanket.castShadow = true; blanket.receiveShadow = true;
+    envGroup.add(blanket);
+
+    // Decorative: Pinecones (bottom left corner)
+    const matCone = new THREE.MeshStandardMaterial({ color: '#5A3A22', roughness: 0.88, flatShading: true });
+    [[-0.78, 0.03, 0.42], [-0.66, 0.024, 0.48]].forEach(([x, y, z], idx) => {
+      const cone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.036 - idx * 0.006, 0), matCone);
+      cone.position.set(x, y, z); cone.scale.set(1, 1.3, 1); cone.rotation.z = 0.7;
+      cone.castShadow = true;
+      envGroup.add(cone);
+    });
+
+    // =========================================================================
+    // 6. HERO ASSET: MOCHILA COM COMPARTIMENTOS E FIVELAS
+    // =========================================================================
+    const backpackRoot = new THREE.Group();
+    backpackRoot.position.set(0.05, 0.0, 0.02);
+    scene.add(backpackRoot);
+
+    // Outer canvas shell (base + 4 thick padded walls)
+    const bpBase = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.06, 0.42), matCanvas);
+    bpBase.position.set(0, 0.03, -0.01);
+    bpBase.castShadow = true; bpBase.receiveShadow = true;
+    backpackRoot.add(bpBase);
+
+    // Inner padded sandstone floor
+    const bpFloor = new THREE.Mesh(new THREE.BoxGeometry(0.455, 0.016, 0.365), matLining);
+    bpFloor.position.set(0, 0.062, -0.015);
+    bpFloor.receiveShadow = true;
+    backpackRoot.add(bpFloor);
+
+    // Walls (Back, Front, Left, Right)
+    const wallSpecs = [
+      [0.50, 0.16, 0.036, 0, 0.11, -0.205],
+      [0.50, 0.145, 0.036, 0, 0.10, 0.185],
+      [0.036, 0.155, 0.42, -0.245, 0.105, -0.01],
+      [0.036, 0.155, 0.42, 0.245, 0.105, -0.01]
+    ];
+    wallSpecs.forEach(([w, h, d, x, y, z]) => {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matCanvas);
+      wall.position.set(x, y, z);
+      wall.castShadow = true; wall.receiveShadow = true;
+      backpackRoot.add(wall);
+    });
+
+    // Internal modular sandstone dividers (visual cues for compartments matching mockup)
+    const divMat = matLining;
+    const div1 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.075, 0.012), divMat); div1.position.set(0, 0.095, -0.015);
+    const div2 = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.075, 0.18), divMat); div2.position.set(0.045, 0.095, -0.105);
+    const div3 = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.075, 0.18), divMat); div3.position.set(-0.045, 0.095, 0.075);
+    backpackRoot.add(div1, div2, div3);
+
+    // Front exterior pocket (Bolso Frontal 3x1)
+    const frontPocket = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.11, 0.095), matCanvas);
+    frontPocket.position.set(0, 0.062, 0.252);
+    frontPocket.castShadow = true; frontPocket.receiveShadow = true;
+    backpackRoot.add(frontPocket);
+
+    // Front straps + brass buckles + carry handle
+    [-0.13, 0.13].forEach((sx) => {
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.13, 0.014), matLeather);
+      strap.position.set(sx, 0.085, 0.302);
+      const buckle = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.004, 6, 4), matBrass);
+      buckle.position.set(sx, 0.115, 0.308);
+      buckle.rotation.z = Math.PI / 4;
+      backpackRoot.add(strap, buckle);
+    });
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.011, 8, 16, Math.PI), matLeather);
+    handle.position.set(0, 0.04, 0.31);
+    handle.rotation.x = Math.PI / 2;
+    backpackRoot.add(handle);
+
+    // Animated Top Flap (hinged at back wall — closes cleanly when "Seguir viagem"!)
+    const flapPivot = new THREE.Group();
+    flapPivot.position.set(0, 0.185, -0.21);
+    backpackRoot.add(flapPivot);
+
+    const flapCanvas = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.032, 0.38), matCanvas);
+    flapCanvas.position.set(0, 0, -0.18);
+    flapCanvas.castShadow = true;
+    flapPivot.add(flapCanvas);
+
+    [-0.13, 0.13].forEach((sx) => {
+      const fStrap = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.038, 0.24), matLeather);
+      fStrap.position.set(sx, 0.004, -0.22);
+      const fBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.042, 0.025), matBrass);
+      fBuckle.position.set(sx, 0.004, -0.32);
+      flapPivot.add(fStrap, fBuckle);
+    });
+    // Start open (tilted back resting nicely like the mockup)
+    let flapCurrentAngle = -0.22;
+    flapPivot.rotation.x = flapCurrentAngle;
+
+    // Interactive Grid Cell Pads (invisible raycast targets + subtle hover/placement highlight!)
+    const gridCellMeshes = [];
+    const previewGroup = new THREE.Group();
+    previewGroup.visible = false;
+    backpackRoot.add(previewGroup);
+
+    const previewFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ color: '#7EE39A', transparent: true, opacity: 0.26, side: THREE.DoubleSide })
+    );
+    previewFill.rotation.x = -Math.PI / 2;
+    const previewEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 0.01, 1)),
+      new THREE.LineBasicMaterial({ color: '#8CF5A8' })
+    );
+    previewGroup.add(previewFill, previewEdges);
+
+    function cellToLocalPos(pocketId, col, row, w = 1, h = 1) {
+      const pk = POCKETS[pocketId];
+      const cw = (pk.xMax - pk.xMin) / pk.cols;
+      const ch = (pk.zMax - pk.zMin) / pk.rows;
+      return {
+        x: pk.xMin + (col + w / 2) * cw,
+        y: pk.yBase,
+        z: pk.zMin + (row + h / 2) * ch,
+        cw: cw * w,
+        ch: ch * h
+      };
+    }
+
+    ['principal', 'frontal'].forEach((pkId) => {
+      const pk = POCKETS[pkId];
+      const cw = (pk.xMax - pk.xMin) / pk.cols;
+      const ch = (pk.zMax - pk.zMin) / pk.rows;
+      for (let r = 0; r < pk.rows; r++) {
+        for (let c = 0; c < pk.cols; c++) {
+          const pad = new THREE.Mesh(
+            new THREE.PlaneGeometry(cw * 0.92, ch * 0.92),
+            new THREE.MeshBasicMaterial({ color: '#C8BA9E', transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+          );
+          pad.rotation.x = -Math.PI / 2;
+          pad.position.set(pk.xMin + (c + 0.5) * cw, pk.yBase + 0.004, pk.zMin + (r + 0.5) * ch);
+          pad.userData = { isGridCell: true, pocket: pkId, col: c, row: r };
+          backpackRoot.add(pad);
+          gridCellMeshes.push(pad);
+        }
+      }
+    });
+
+    // =========================================================================
+    // 7. BUILD ALL 9 INTERACTIVE 3D PACKABLE ASSETS
+    // =========================================================================
+    const itemMeshes = {};
+    const clickableTargets = [];
+    let compassNeedleMesh = null;
+    let flashlightSpot = null;
+    let flashlightLensMat = null;
+
+    function registerItemGroup(id, group) {
+      group.userData = { itemId: id };
+      // Selection glow ring under/around item
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.062, 0.074, 28),
+        new THREE.MeshBasicMaterial({ color: '#8CF5A8', transparent: true, opacity: 0.0, side: THREE.DoubleSide })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.005;
+      ring.name = 'selectionRing';
+      group.add(ring);
+
+      group.traverse((child) => {
+        if (child.isMesh && child.name !== 'selectionRing') {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.userData.itemId = id;
+          clickableTargets.push(child);
+        }
+      });
+      scene.add(group);
+      itemMeshes[id] = {
+        group,
+        ring,
+        targetPos: new THREE.Vector3(),
+        targetRotY: 0,
+        targetScale: new THREE.Vector3(1, 1, 1),
+        bounce: 0
+      };
+    }
+
+    // 1. Cantil
+    {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.105, 18), matCanvas);
+      body.scale.set(1.0, 1.0, 0.65);
+      body.position.y = 0.054;
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.018, 0.025, 14), matBrass);
+      neck.position.y = 0.114;
+      const strapH = new THREE.Mesh(new THREE.TorusGeometry(0.056, 0.006, 8, 22), matLeather);
+      strapH.rotation.x = Math.PI / 2; strapH.scale.set(1, 0.67, 1); strapH.position.y = 0.06;
+      const strapV = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.11, 0.078), matLeather);
+      strapV.position.y = 0.054;
+      g.add(body, neck, strapH, strapV);
+      registerItemGroup('cantil', g);
+    }
+
+    // 2. Livro
+    {
+      const g = new THREE.Group();
+      const coverMat = new THREE.MeshStandardMaterial({ map: texBookCover, roughness: 0.58 });
+      const pagesMat = new THREE.MeshStandardMaterial({ color: '#E8DAC0', roughness: 0.9 });
+      const book = new THREE.Mesh(new THREE.BoxGeometry(0.145, 0.036, 0.155), [pagesMat, matLeather, coverMat, matLeather, pagesMat, pagesMat]);
+      book.position.y = 0.018;
+      g.add(book);
+      registerItemGroup('livro', g);
+    }
+
+    // 3. Pedra (Simbólico)
+    {
+      const g = new THREE.Group();
+      const rockGeo = new THREE.IcosahedronGeometry(0.044, 1);
+      const pos = rockGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const vx = pos.getX(i), vy = pos.getY(i), vz = pos.getZ(i);
+        const n = 1 + 0.16 * Math.sin(vx * 42 + vy * 31) * Math.cos(vz * 37);
+        pos.setXYZ(i, vx * n * 1.15, vy * n * 0.72, vz * n * 0.95);
+      }
+      rockGeo.computeVertexNormals();
+      const rock = new THREE.Mesh(rockGeo, new THREE.MeshStandardMaterial({ map: texGranite, roughness: 0.88, flatShading: true }));
+      rock.position.y = 0.028;
+      g.add(rock);
+      registerItemGroup('pedra', g);
+    }
+
+    // 4. Lanterna
+    {
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: '#262A2D', roughness: 0.42, metalness: 0.72 });
+      const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.017, 0.115, 16), bodyMat);
+      tube.rotation.z = Math.PI / 2; tube.position.y = 0.024;
+      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.019, 0.034, 16), matBrass);
+      head.rotation.z = Math.PI / 2; head.position.set(0.068, 0.024, 0);
+      flashlightLensMat = new THREE.MeshStandardMaterial({ color: '#FFF5D0', emissive: '#FFCC66', emissiveIntensity: 1.5, roughness: 0.1 });
+      const lens = new THREE.Mesh(new THREE.CircleGeometry(0.022, 16), flashlightLensMat);
+      lens.rotation.y = Math.PI / 2; lens.position.set(0.086, 0.024, 0);
+      flashlightSpot = new THREE.PointLight('#FFD384', 0.65, 0.55, 2);
+      flashlightSpot.position.set(0.12, 0.03, 0);
+      g.add(tube, head, lens, flashlightSpot);
+      registerItemGroup('lanterna', g);
+    }
+
+    // 5. Bússola
+    {
+      const g = new THREE.Group();
+      const casing = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.040, 0.016, 22), matBrass);
+      casing.position.y = 0.008;
+      const dial = new THREE.Mesh(new THREE.CircleGeometry(0.033, 22), new THREE.MeshStandardMaterial({ map: texCompassDial, roughness: 0.5 }));
+      dial.rotation.x = -Math.PI / 2; dial.position.y = 0.017;
+      compassNeedleMesh = new THREE.Group();
+      compassNeedleMesh.position.y = 0.019;
+      const nNorth = new THREE.Mesh(new THREE.ConeGeometry(0.0045, 0.024, 4), new THREE.MeshStandardMaterial({ color: '#B83328' }));
+      nNorth.rotation.x = -Math.PI / 2; nNorth.position.z = -0.012;
+      const nSouth = new THREE.Mesh(new THREE.ConeGeometry(0.0045, 0.024, 4), new THREE.MeshStandardMaterial({ color: '#C8C8C8' }));
+      nSouth.rotation.x = Math.PI / 2; nSouth.position.z = 0.012;
+      compassNeedleMesh.add(nNorth, nSouth);
+      g.add(casing, dial, compassNeedleMesh);
+      registerItemGroup('bussola', g);
+    }
+
+    // 6. Corda
+    {
+      const g = new THREE.Group();
+      const ropeMat = new THREE.MeshStandardMaterial({ color: '#B79362', bumpMap: texCanvasBump, bumpScale: 0.01, roughness: 0.92 });
+      for (let i = -2; i <= 2; i++) {
+        const loop = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.0085, 8, 18), ropeMat);
+        loop.position.set(i * 0.016, 0.036, 0);
+        loop.scale.set(0.65, 0.72, 1.25);
+        g.add(loop);
+      }
+      const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.026, 12), matLeather);
+      tie.rotation.z = Math.PI / 2; tie.position.y = 0.036;
+      g.add(tie);
+      registerItemGroup('corda', g);
+    }
+
+    // 7. Casaco dobrado
+    {
+      const g = new THREE.Group();
+      const matNylon = new THREE.MeshStandardMaterial({ color: '#425E74', roughness: 0.62, metalness: 0.05 });
+      const matTrim = new THREE.MeshStandardMaterial({ color: '#B56B4E', roughness: 0.72 });
+      for (let i = 0; i < 3; i++) {
+        const puff = new THREE.Mesh(new THREE.BoxGeometry(0.152, 0.026, 0.145), matNylon);
+        puff.position.set(0, 0.016 + i * 0.022, 0);
+        g.add(puff);
+      }
+      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.022, 0.05), matTrim);
+      collar.position.set(0, 0.072, -0.042);
+      const zip = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.064, 0.008), matBrass);
+      zip.position.set(0, 0.042, 0.073);
+      g.add(collar, zip);
+      registerItemGroup('casaco', g);
+    }
+
+    // 8. Cartões Semânticos (Simbólico — 4 cartas em leque)
+    {
+      const g = new THREE.Group();
+      SEMANTIC_CARDS.forEach((c, idx) => {
+        const cardMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.056, 0.003, 0.078),
+          [
+            matLining, matLining,
+            new THREE.MeshStandardMaterial({ map: makeCardTexture(c.id), roughness: 0.7 }),
+            matLining, matLining, matLining
+          ]
+        );
+        cardMesh.position.set((idx - 1.5) * 0.024, 0.002 + idx * 0.0018, (idx - 1.5) * 0.006);
+        cardMesh.rotation.y = (idx - 1.5) * -0.16;
+        g.add(cardMesh);
+      });
+      registerItemGroup('cartoes_semanticos', g);
+    }
+
+    // 9. Mapa
+    {
+      const g = new THREE.Group();
+      const mapMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.004, 0.24),
+        [matLining, matLining, new THREE.MeshStandardMaterial({ map: mapTex, roughness: 0.85 }), matLining, matLining, matLining]
+      );
+      mapMesh.position.y = 0.003;
+      g.add(mapMesh);
+      registerItemGroup('mapa', g);
+    }
+
+    // Sync 3D targets from serializable state
+    function syncSceneTargets() {
+      const bpOrigin = backpackRoot.position;
+      for (const it of ITEMS) {
+        const st = state.sceneState.items[it.id];
+        const entry = itemMeshes[it.id];
+        if (!entry) continue;
+
+        if (state.inspectingItemId === it.id) {
+          // Bring inspected item gently forward & lifted in front of camera
+          entry.targetPos.set(0.02, 0.38, 0.42);
+          entry.targetScale.set(1.22, 1.22, 1.22);
+        } else if (st.location === 'backpack') {
+          const { w, h } = getFootprint(it, st.rotation);
+          const loc = cellToLocalPos(st.pocket, st.col, st.row, w, h);
+          entry.targetPos.set(bpOrigin.x + loc.x, bpOrigin.y + loc.y, bpOrigin.z + loc.z);
+          entry.targetRotY = st.rotation === 1 ? Math.PI / 2 : 0;
+          // Fold map neatly when inside backpack
+          if (it.id === 'mapa') entry.targetScale.set(0.45, 2.2, 0.34);
+          else if (it.id === 'cartoes_semanticos') entry.targetScale.set(0.75, 1.0, 0.75);
+          else entry.targetScale.set(0.92, 0.92, 0.92);
+        } else {
+          entry.targetPos.set(it.tablePos[0], it.tablePos[1], it.tablePos[2]);
+          entry.targetRotY = it.tableRotY + (st.rotation === 1 ? Math.PI / 2 : 0);
+          entry.targetScale.set(1, 1, 1);
+        }
+
+        // Selection ring visibility
+        const isSel = state.selectedItemId === it.id;
+        entry.ring.material.opacity = isSel ? 0.78 : 0.0;
+      }
+
+      // Update flashlight beam
+      if (flashlightSpot && flashlightLensMat) {
+        flashlightSpot.intensity = state.flashlightOn ? 0.75 : 0.0;
+        flashlightLensMat.emissiveIntensity = state.flashlightOn ? 1.6 : 0.05;
+      }
+
+      // Update camera preset
+      if (state.inspectingItemId) {
+        camTargetPos.set(0.02, 0.56, 0.84);
+        lookTarget.set(0.02, 0.34, 0.36);
+      } else {
+        const preset = CAMERA_PRESETS[state.sceneState.cameraPreset] || CAMERA_PRESETS.mesa;
+        const isMobile = window.innerWidth <= 820;
+        camTargetPos.set(preset.pos[0], preset.pos[1] + (isMobile ? 0.14 : 0), preset.pos[2] + (isMobile ? 0.22 : 0));
+        lookTarget.set(preset.target[0], preset.target[1] - (isMobile ? 0.06 : 0), preset.target[2]);
+      }
+    }
+
+    // =========================================================================
+    // 8. POINTER / RAYCAST / 3D DRAG-AND-DROP + CONSTRAINED ORBIT
+    // =========================================================================
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.14);
+
+    let draggingItemId = null;
+    let dragHoverCell = null;
+    let orbiting = false;
+    let orbitStart = { x: 0, y: 0 };
+    let orbitOffset = { theta: 0, phi: 0, zoom: 1 };
+
+    function setPointerFromEvent(e) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function updateGridPreview(itemId, pocketId, col, row, rotation) {
+      const it = ITEM_BY_ID[itemId];
+      if (!it || !pocketId) { previewGroup.visible = false; return; }
+      const { w, h } = getFootprint(it, rotation);
+      const loc = cellToLocalPos(pocketId, col, row, w, h);
+      const check = canPlaceItem(state, itemId, pocketId, col, row, rotation);
+      previewGroup.visible = true;
+      previewGroup.position.set(loc.x, loc.y + 0.012, loc.z);
+      previewFill.scale.set(loc.cw * 0.94, loc.ch * 0.94, 1);
+      previewEdges.scale.set(loc.cw * 0.95, 1, loc.ch * 0.95);
+      const colHex = check.ok ? '#7EE39A' : '#E88270';
+      previewFill.material.color.set(colHex);
+      previewEdges.material.color.set(colHex);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (state.paused) return;
+      setPointerFromEvent(e);
+      raycaster.setFromCamera(pointer, camera);
+
+      // 1. Check clickable 3D items first
+      const hits = raycaster.intersectObjects(clickableTargets, false);
+      if (hits.length > 0 && e.button === 0) {
+        const hitId = hits[0].object.userData.itemId;
+        state.selectedItemId = hitId;
+        draggingItemId = hitId;
+        dragHoverCell = null;
+        canvas.setPointerCapture(e.pointerId);
+        AudioEngine.click();
+        renderUI();
+        syncSceneTargets();
+        return;
+      }
+
+      // 2. Check clicking directly on an empty backpack grid cell to place selected item
+      if (state.selectedItemId && e.button === 0) {
+        const cellHits = raycaster.intersectObjects(gridCellMeshes, false);
+        if (cellHits.length > 0) {
+          const { pocket, col, row } = cellHits[0].object.userData;
+          const rot = state.sceneState.items[state.selectedItemId]?.rotation || 0;
+          dispatchPlace(state.selectedItemId, pocket, col, row, rot);
+          return;
+        }
+      }
+
+      // 3. Otherwise gentle constrained camera orbit
+      orbiting = true;
+      orbitStart = { x: e.clientX, y: e.clientY };
+      canvas.setPointerCapture(e.pointerId);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (state.paused) return;
+      setPointerFromEvent(e);
+      raycaster.setFromCamera(pointer, camera);
+
+      if (draggingItemId) {
+        // Lift dragged object along horizontal plane above backpack
+        const pt = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(dragPlane, pt)) {
+          const entry = itemMeshes[draggingItemId];
+          entry.group.position.lerp(new THREE.Vector3(pt.x, 0.22, pt.z), 0.55);
+        }
+        // Check hover over backpack grid cells
+        const cellHits = raycaster.intersectObjects(gridCellMeshes, false);
+        if (cellHits.length > 0) {
+          const { pocket, col, row } = cellHits[0].object.userData;
+          const rot = state.sceneState.items[draggingItemId]?.rotation || 0;
+          dragHoverCell = { pocket, col, row, rotation: rot };
+          updateGridPreview(draggingItemId, pocket, col, row, rot);
+        } else {
+          dragHoverCell = null;
+          previewGroup.visible = false;
+        }
+        return;
+      }
+
+      if (orbiting) {
+        const dx = (e.clientX - orbitStart.x) * 0.004;
+        const dy = (e.clientY - orbitStart.y) * 0.003;
+        orbitStart = { x: e.clientX, y: e.clientY };
+        orbitOffset.theta = Math.max(-0.55, Math.min(0.55, orbitOffset.theta - dx));
+        orbitOffset.phi = Math.max(-0.22, Math.min(0.28, orbitOffset.phi + dy));
+      }
+    });
+
+    canvas.addEventListener('pointerup', (e) => {
+      if (draggingItemId) {
+        const id = draggingItemId;
+        draggingItemId = null;
+        previewGroup.visible = false;
+        if (dragHoverCell) {
+          dispatchPlace(id, dragHoverCell.pocket, dragHoverCell.col, dragHoverCell.row, dragHoverCell.rotation);
+        } else {
+          // If dragged outside backpack bounds, return cleanly to table
+          setPointerFromEvent(e);
+          raycaster.setFromCamera(pointer, camera);
+          const pt = new THREE.Vector3();
+          if (raycaster.ray.intersectPlane(dragPlane, pt)) {
+            const distFromPack = Math.hypot(pt.x - backpackRoot.position.x, pt.z - backpackRoot.position.z);
+            if (distFromPack > 0.34 && state.sceneState.items[id].location === 'backpack') {
+              dispatchRemoveToTable(id);
+            }
+          }
+        }
+        dragHoverCell = null;
+        syncSceneTargets();
+      }
+      orbiting = false;
+      try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      orbitOffset.zoom = Math.max(0.74, Math.min(1.32, orbitOffset.zoom + e.deltaY * 0.0005));
+    }, { passive: false });
+
+    // =========================================================================
+    // 9. COMMAND DISPATCHERS & FEEDBACK
+    // =========================================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function dispatchPlace(itemId, pocket, col, row, rotation = 0) {
+      const check = canPlaceItem(state, itemId, pocket, col, row, rotation);
+      if (!check.ok) {
+        AudioEngine.invalid();
+        showToast(check.reason);
+        return false;
+      }
+      pushUndo(state);
+      state.sceneState.items[itemId] = { location: 'backpack', pocket, col, row, rotation: ((rotation % 2) + 2) % 2 };
+      state.selectedItemId = itemId;
+      state.flapClosed = false;
+      if (itemMeshes[itemId]) itemMeshes[itemId].bounce = 1.0;
+      AudioEngine.pack();
+      showToast(`${ITEM_BY_ID[itemId].name} acomodado no ${POCKETS[pocket].name}.`);
+      syncSceneTargets();
+      renderUI();
+      return true;
+    }
+
+    function dispatchAutoPack(itemId, preferredPocket = null) {
+      const slot = findFirstValidSlot(state, itemId, preferredPocket);
+      if (!slot) {
+        AudioEngine.invalid();
+        showToast('Sem espaço livre com as restrições atuais. Gire ou mova outro objeto.');
+        return false;
+      }
+      return dispatchPlace(itemId, slot.pocket, slot.col, slot.row, slot.rotation);
+    }
+
+    function dispatchRemoveToTable(itemId) {
+      if (state.sceneState.items[itemId].location === 'table') return;
+      pushUndo(state);
+      state.sceneState.items[itemId] = { location: 'table', pocket: null, col: 0, row: 0, rotation: 0 };
+      state.flapClosed = false;
+      AudioEngine.table();
+      showToast(`${ITEM_BY_ID[itemId].name} deixado sobre a mesa.`);
+      syncSceneTargets();
+      renderUI();
+    }
+
+    function dispatchRotate(itemId) {
+      const it = ITEM_BY_ID[itemId];
+      if (!it) return;
+      const cur = state.sceneState.items[itemId];
+      const nextRot = (cur.rotation + 1) % 2;
+      if (cur.location === 'table') {
+        pushUndo(state);
+        cur.rotation = nextRot;
+        AudioEngine.rotate();
+        showToast(`${it.name} girado 90° sobre a mesa.`);
+      } else {
+        if (canPlaceItem(state, itemId, cur.pocket, cur.col, cur.row, nextRot).ok) {
+          pushUndo(state);
+          cur.rotation = nextRot;
+          AudioEngine.rotate();
+          showToast(`${it.name} girado 90° no compartimento.`);
+        } else {
+          const pk = POCKETS[cur.pocket];
+          let moved = false;
+          for (let r = 0; r < pk.rows && !moved; r++) {
+            for (let c = 0; c < pk.cols && !moved; c++) {
+              if (canPlaceItem(state, itemId, cur.pocket, c, r, nextRot).ok) {
+                pushUndo(state);
+                cur.col = c; cur.row = r; cur.rotation = nextRot;
+                moved = true;
+              }
+            }
+          }
+          if (!moved) {
+            AudioEngine.invalid();
+            showToast(`Não há espaço para girar ${it.name} neste bolso.`);
+            return;
+          }
+          AudioEngine.rotate();
+          showToast(`${it.name} girado e reacomodado.`);
+        }
+      }
+      syncSceneTargets();
+      renderUI();
+    }
+
+    function dispatchMovePocket(itemId) {
+      const it = ITEM_BY_ID[itemId];
+      if (!it) return;
+      const cur = state.sceneState.items[itemId];
+      const target = cur.pocket === 'principal' ? 'frontal' : 'principal';
+      if (!it.allowedPockets.includes(target)) {
+        AudioEngine.invalid();
+        showToast(`${it.name} só pode ser acomodado no Compartimento Principal.`);
+        return;
+      }
+      const slot = findFirstValidSlot(state, itemId, target);
+      if (!slot || slot.pocket !== target) {
+        AudioEngine.invalid();
+        showToast(`Sem espaço livre no ${POCKETS[target].name}.`);
+        return;
+      }
+      dispatchPlace(itemId, target, slot.col, slot.row, slot.rotation);
+    }
+
+    function dispatchUndo() {
+      if (!state.history.past.length) { showToast('Nada para desfazer.'); return; }
+      state.history.future.push(clone(state.sceneState));
+      state.sceneState = state.history.past.pop();
+      state.flapClosed = false;
+      AudioEngine.click();
+      showToast('Última ação desfeita.');
+      syncSceneTargets();
+      renderUI();
+    }
+
+    function dispatchRedo() {
+      if (!state.history.future.length) { showToast('Nada para refazer.'); return; }
+      state.history.past.push(clone(state.sceneState));
+      state.sceneState = state.history.future.pop();
+      state.flapClosed = false;
+      AudioEngine.click();
+      showToast('Ação refeita.');
+      syncSceneTargets();
+      renderUI();
+    }
+
+    // =========================================================================
+    // 10. UI RENDERING, CONTEXTUAL PANELS & CUSTOM SVG ITEM ICONS
+    // =========================================================================
+    function getItemSvg(id) {
+      const icons = {
+        cantil: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><rect x="14" y="4" width="8" height="4" rx="1.5" fill="#C99B52"/><rect x="8" y="9" width="20" height="22" rx="8" fill="#556B57" stroke="#C8BA9E" stroke-width="1.5"/><path d="M8 18h20M18 9v22" stroke="#A67D52" stroke-width="2.5"/></svg>',
+        livro: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><rect x="7" y="5" width="22" height="26" rx="3" fill="#7D4B28" stroke="#C8BA9E" stroke-width="1.5"/><path d="M12 5v26" stroke="#A67D52" stroke-width="2"/><path d="M20 13c3 2 3 8 0 10-3-2-3-8 0-10z" fill="#C8BA9E"/></svg>',
+        pedra: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><path d="M7 22l5-10 11-3 7 8-4 10-14 2-5-7z" fill="#8D8D8B" stroke="#D2CCC2" stroke-width="1.5"/></svg>',
+        lanterna: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><rect x="6" y="13" width="16" height="10" rx="2" fill="#32383D" stroke="#C8BA9E" stroke-width="1.4"/><path d="M22 12l7-2v16l-7-2V12z" fill="#C99B52"/><circle cx="29" cy="18" r="2.2" fill="#FFE08A"/></svg>',
+        bussola: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="12" fill="#EFE3C8" stroke="#C99B52" stroke-width="2.5"/><path d="M18 9l3 9-3 9-3-9 3-9z" fill="#B83328"/><circle cx="18" cy="18" r="2" fill="#3A2A1A"/></svg>',
+        corda: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><rect x="6" y="10" width="24" height="16" rx="7" fill="none" stroke="#C29B67" stroke-width="3.2"/><rect x="11" y="10" width="14" height="16" rx="5" fill="none" stroke="#A67D52" stroke-width="2.4"/><rect x="15" y="10" width="6" height="16" fill="#7D4B28"/></svg>',
+        casaco: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><path d="M11 8l7 3 7-3 5 6-3 14H9L6 14l5-6z" fill="#48677C" stroke="#C8BA9E" stroke-width="1.5"/><path d="M18 11v17" stroke="#C99B52" stroke-width="1.8"/><path d="M12 9l6 3 6-3" stroke="#B56B4E" stroke-width="2.2"/></svg>',
+        cartoes_semanticos: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><rect x="6" y="9" width="15" height="20" rx="2" transform="rotate(-8 6 9)" fill="#DFD1B3" stroke="#8C7050" stroke-width="1.4"/><rect x="14" y="7" width="15" height="20" rx="2" transform="rotate(6 14 7)" fill="#EFE3C9" stroke="#8C7050" stroke-width="1.4"/><path d="M17 20l4-6 4 6h-8z" fill="#556B57"/></svg>',
+        mapa: '<svg width="32" height="32" viewBox="0 0 36 36" fill="none"><path d="M5 9l9-3 8 3 9-3v21l-9 3-8-3-9 3V9z" fill="#DFD1B3" stroke="#8C7050" stroke-width="1.5"/><path d="M9 22c4-4 8-2 12-7l5-2" stroke="#A8382B" stroke-width="2" stroke-dasharray="3 2"/></svg>'
+      };
+      return icons[id] || '';
+    }
+
+    let activePanel = null; // 'inspect' | 'review' | 'journey' | 'accompanied' | 'help' | null
+
+    function openContextPanel(type) {
+      activePanel = type;
+      const panel = document.getElementById('context-panel');
+      const title = document.getElementById('panel-title');
+      const body = document.getElementById('panel-body');
+      if (!type) {
+        panel.classList.remove('open');
+        if (state.inspectingItemId) {
+          state.inspectingItemId = null;
+          syncSceneTargets();
+        }
+        return;
+      }
+
+      panel.classList.add('open');
+      if (type === 'inspect') {
+        const it = ITEM_BY_ID[state.selectedItemId] || ITEMS[0];
+        const st = state.sceneState.items[it.id];
+        const fp = getFootprint(it, st.rotation);
+        title.textContent = `Inspecionar: ${it.name}`;
+        let extra = '';
+        if (it.id === 'lanterna') {
+          extra = `<button class="btn-warm" id="p-toggle-light">${state.flashlightOn ? 'Apagar feixe da lanterna' : 'Acender feixe da lanterna'}</button>`;
+        } else if (it.id === 'cartoes_semanticos') {
+          extra = `
+            <div class="field-group">
+              <label><strong>Cartão em destaque</strong></label>
+              <div class="chip-list">
+                ${SEMANTIC_CARDS.map((c) => `<button class="btn-secondary p-card-pick ${state.sceneState.selectedCardId === c.id ? 'btn-warm' : ''}" data-card="${c.id}" style="min-height:32px;padding:4px 8px;">${c.title}</button>`).join('')}
+              </div>
+              <label for="p-card-note" style="margin-top:6px;">Anotação breve voluntária (opcional, fica só em memória):</label>
+              <input type="text" id="p-card-note" maxlength="120" value="${escapeHtml(state.sceneState.voluntaryCardNote)}" placeholder="Ex.: lembrar de ir com calma..." />
+            </div>`;
+        }
+        body.innerHTML = `
+          <p style="margin:0;">${it.desc}</p>
+          <div class="chip-list">
+            <span class="chip">Grade: ${fp.w}×${fp.h}</span>
+            <span class="chip ${it.symbolic ? 'sym' : ''}">${it.symbolic ? 'Simbólico · Sem peso emocional' : `Massa física: ${it.massKg.toFixed(2).replace('.', ',')} kg`}</span>
+            <span class="chip">${st.location === 'backpack' ? POCKETS[st.pocket].name : 'Sobre a mesa'}</span>
+          </div>
+          <div class="prompt-quote">“${it.prompt}”</div>
+          ${extra}
+          <div class="action-row">
+            <button class="btn-primary" id="p-pack-btn">${st.location === 'backpack' ? 'Deixar na mesa' : 'Colocar na mochila'}</button>
+            <button class="btn-secondary" id="p-rot-btn">Girar 90°</button>
+          </div>
+        `;
+        const bLight = document.getElementById('p-toggle-light');
+        if (bLight) bLight.addEventListener('click', () => { state.flashlightOn = !state.flashlightOn; AudioEngine.click(); syncSceneTargets(); openContextPanel('inspect'); });
+        document.querySelectorAll('.p-card-pick').forEach((btn) => {
+          btn.addEventListener('click', () => { state.sceneState.selectedCardId = btn.dataset.card; AudioEngine.click(); openContextPanel('inspect'); });
+        });
+        const noteIn = document.getElementById('p-card-note');
+        if (noteIn) noteIn.addEventListener('input', (ev) => { state.sceneState.voluntaryCardNote = ev.target.value.slice(0, 120); });
+        document.getElementById('p-pack-btn').addEventListener('click', () => {
+          if (state.sceneState.items[it.id].location === 'backpack') dispatchRemoveToTable(it.id);
+          else dispatchAutoPack(it.id);
+          openContextPanel('inspect');
+        });
+        document.getElementById('p-rot-btn').addEventListener('click', () => { dispatchRotate(it.id); openContextPanel('inspect'); });
+      } else if (type === 'review') {
+        const m = computeMetrics(state);
+        const packed = ITEMS.filter((i) => state.sceneState.items[i.id].location === 'backpack');
+        const table = ITEMS.filter((i) => state.sceneState.items[i.id].location === 'table');
+        const isJourney = state.phase === 'seguir';
+        title.textContent = isJourney ? 'Pronto para seguir viagem' : 'Revisar sem julgamento';
+        body.innerHTML = `
+          <div class="prompt-quote">“O que você percebe quando experimenta outra forma de escolher e carregar?”</div>
+          <div>
+            <strong>Na mochila (${packed.length}):</strong>
+            <div class="chip-list" style="margin-top:5px;">
+              ${packed.length ? packed.map((i) => `<span class="chip ${i.symbolic ? 'sym' : ''}">${i.name} (${POCKETS[state.sceneState.items[i.id].pocket].id === 'frontal' ? 'Frontal' : 'Principal'})</span>`).join('') : '<span class="chip">Nenhum objeto na mochila</span>'}
+            </div>
+          </div>
+          <div>
+            <strong>Sobre a mesa (${table.length}):</strong>
+            <div class="chip-list" style="margin-top:5px;">
+              ${table.length ? table.map((i) => `<span class="chip ${i.symbolic ? 'sym' : ''}">${i.name}</span>`).join('') : '<span class="chip">Mesa livre</span>'}
+            </div>
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-soft);">
+            Volume: <strong>${m.volumePct}%</strong> · Massa física: <strong>${m.physicalMassKg.toFixed(2).replace('.', ',')} kg</strong> · Equilíbrio: <strong>${m.balanceLabel}</strong>.<br/>
+            Objetos simbólicos não recebem pontuação nem peso emocional automático.
+          </div>
+          <div class="action-row">
+            <button class="btn-warm" id="p-follow-btn">${isJourney ? 'Reabrir mochila' : 'Fechar fivelas e seguir'}</button>
+            <button class="btn-secondary" id="p-capture-btn">Capturar imagem</button>
+          </div>
+          <div class="action-row">
+            <button class="btn-secondary" id="p-export-btn">Exportar resumo JSON</button>
+            <button class="btn-secondary" id="p-save-optin">Salvar neste aparelho</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--text-soft);">
+            <span>Persistência opcional; evite salvar em aparelho compartilhado.</span>
+            <button class="icon-btn" id="p-clear-saved" style="min-height:28px; padding:2px 6px; color:var(--accent-danger);">Excluir salvo</button>
+          </div>
+        `;
+        document.getElementById('p-follow-btn').addEventListener('click', () => {
+          if (state.phase === 'seguir') {
+            setPhase('organizar');
+          } else {
+            setPhase('seguir');
+            AudioEngine.buckle();
+            emitIntegrationEvent('complete', { phase: 'seguir', packedCount: packed.length });
+          }
+        });
+        document.getElementById('p-capture-btn').addEventListener('click', captureScenePng);
+        document.getElementById('p-export-btn').addEventListener('click', exportObservableJson);
+        document.getElementById('p-save-optin').addEventListener('click', saveVoluntaryLocal);
+        document.getElementById('p-clear-saved').addEventListener('click', clearVoluntaryLocal);
+      } else if (type === 'accompanied') {
+        title.textContent = 'Revisão acompanhada';
+        body.innerHTML = `
+          <p style="margin:0; font-size:0.78rem; color:var(--text-soft);">Ajustes de mediação e registro apenas de ações observáveis. Respeita pausa, recusa e encerramento sem inferência psicológica.</p>
+          <div class="toggle-row">
+            <label for="acc-strict">Restrição física (sem sobrepor)</label>
+            <input type="checkbox" id="acc-strict" ${state.settings.strictPhysics ? 'checked' : ''} />
+          </div>
+          <div class="toggle-row">
+            <label for="acc-sym-mass">Incluir massa física real da pedra (0,35 kg)</label>
+            <input type="checkbox" id="acc-sym-mass" ${state.settings.includeSymbolicMass ? 'checked' : ''} />
+          </div>
+          <div class="field-group">
+            <label for="acc-action">Registrar observável</label>
+            <input type="text" id="acc-action" placeholder="Ex.: Organizou o cantil no compartimento" />
+            <div class="action-row">
+              <select id="acc-status">
+                <option value="independente">Independente</option>
+                <option value="com_ajuda">Com ajuda</option>
+                <option value="nao_realizada">Não realizada</option>
+                <option value="recusada">Recusada</option>
+              </select>
+              <button class="btn-primary" id="acc-add-btn">Registrar</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; max-height:140px; overflow-y:auto;">
+            ${state.observations.length ? state.observations.map((o) => `<div class="obs-item"><strong>${escapeHtml(o.status)}</strong> — ${escapeHtml(o.action)}</div>`).join('') : '<span style="font-size:0.75rem;color:var(--text-soft);">Nenhum observável registrado.</span>'}
+          </div>
+        `;
+        document.getElementById('acc-strict').addEventListener('change', (ev) => {
+          state.settings.strictPhysics = ev.target.checked;
+          showToast(ev.target.checked ? 'Restrições físicas ativadas.' : 'Modo físico flexível ativado.');
+        });
+        document.getElementById('acc-sym-mass').addEventListener('change', (ev) => {
+          state.settings.includeSymbolicMass = ev.target.checked;
+          renderUI();
+        });
+        document.getElementById('acc-add-btn').addEventListener('click', () => {
+          const act = document.getElementById('acc-action').value.trim() || 'Escolha de objeto';
+          const status = document.getElementById('acc-status').value;
+          state.observations.push({ timestamp: new Date().toISOString(), action: act.slice(0, 80), status });
+          showToast('Observável registrado.');
+          openContextPanel('accompanied');
+        });
+      } else if (type === 'help') {
+        title.textContent = 'Ajuda contextual';
+        body.innerHTML = `
+          <p style="margin:0;"><strong>Arrastar e soltar:</strong> arraste qualquer objeto 3D sobre a mochila até ver o contorno verde na grade e solte.</p>
+          <p style="margin:0;"><strong>Clique rápido / toque:</strong> toque em um objeto na lista ou na mesa e clique em <em>Colocar na mochila</em> ou direto em um espaço livre da mochila.</p>
+          <p style="margin:0;"><strong>Atalhos de teclado:</strong> <strong>R</strong> gira 90° · <strong>Ctrl+Z / Ctrl+Y</strong> desfaz/refaz · <strong>H</strong> recolhe HUD · <strong>P</strong> pausa · <strong>Esc</strong> fecha o painel.</p>
+          <p style="margin:0;"><strong>Objetos simbólicos:</strong> a pedra e os cartões podem ir na mochila ou ficar na mesa, sem peso emocional automático.</p>
+        `;
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    function setPhase(phaseId) {
+      state.phase = phaseId;
+      state.flapClosed = phaseId === 'seguir';
+      if (phaseId === 'escolher') {
+        state.sceneState.cameraPreset = 'mesa';
+        openContextPanel(null);
+      } else if (phaseId === 'organizar') {
+        state.sceneState.cameraPreset = 'grade';
+        if (activePanel === 'review') openContextPanel(null);
+      } else if (phaseId === 'revisar' || phaseId === 'seguir') {
+        state.sceneState.cameraPreset = 'mesa';
+        openContextPanel('review');
+      }
+      syncSceneTargets();
+      renderUI();
+    }
+
+    function renderUI() {
+      const m = computeMetrics(state);
+      const modeObj = MODES.find((x) => x.id === state.mode) || MODES[0];
+      const jObj = JOURNEYS[state.journeyId] || JOURNEYS.trilha_manha;
+
+      document.getElementById('mode-badge').textContent = `${modeObj.label} · ${jObj.name}`;
+      document.getElementById('audio-label').textContent = state.settings.audioEnabled ? 'Som: On' : 'Som: Off';
+      document.getElementById('btn-audio').classList.toggle('active', state.settings.audioEnabled);
+      document.getElementById('quality-label').textContent = state.settings.quality.charAt(0).toUpperCase() + state.settings.quality.slice(1);
+      document.getElementById('camera-select').value = state.sceneState.cameraPreset;
+      document.getElementById('btn-accompanied-open').style.display = modeObj.accompanied ? 'inline-flex' : 'none';
+
+      // Phase buttons
+      document.querySelectorAll('.phase-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.phase === state.phase);
+      });
+
+      // Telemetry
+      document.getElementById('m-volume').textContent = `${m.volumePct}%`;
+      const limitTxt = state.settings.maxMassKg ? ` / ${state.settings.maxMassKg.toFixed(1).replace('.', ',')} kg` : '';
+      document.getElementById('m-mass').textContent = `${m.physicalMassKg.toFixed(2).replace('.', ',')} kg${limitTxt}`;
+      document.getElementById('m-balance').textContent = m.balanceLabel;
+      document.getElementById('m-symbolic').textContent = `${m.symPack} na mochila · ${m.symTable} na mesa`;
+      const dot = document.getElementById('m-com-dot');
+      dot.style.left = `${Math.max(10, Math.min(90, 50 + m.comX * 40))}%`;
+      dot.style.background = Math.abs(m.comX) > 0.34 ? 'var(--accent-warn)' : 'var(--accent-valid)';
+
+      // Undo / Redo buttons
+      document.getElementById('btn-undo').disabled = state.history.past.length === 0;
+      document.getElementById('btn-redo').disabled = state.history.future.length === 0;
+
+      // Item Grid
+      const grid = document.getElementById('item-grid');
+      grid.innerHTML = '';
+      for (const it of ITEMS) {
+        const st = state.sceneState.items[it.id];
+        const packed = st.location === 'backpack';
+        const btn = document.createElement('button');
+        btn.className = `item-card${state.selectedItemId === it.id ? ' selected' : ''}`;
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', String(state.selectedItemId === it.id));
+        btn.innerHTML = `
+          ${it.symbolic ? '<span class="sym-badge">Simbólico</span>' : ''}
+          ${packed ? '<span class="packed-badge" title="Na mochila">✓</span>' : ''}
+          ${getItemSvg(it.id)}
+          <span class="item-name">${it.name}</span>
+          <span class="item-meta">${it.symbolic ? 'Livre de peso' : `${it.massKg.toFixed(2).replace('.', ',')} kg`}</span>
+        `;
+        btn.addEventListener('click', () => {
+          state.selectedItemId = it.id;
+          AudioEngine.click();
+          syncSceneTargets();
+          renderUI();
+          if (activePanel === 'inspect') openContextPanel('inspect');
+        });
+        grid.appendChild(btn);
+      }
+
+      // Selected action bar
+      const sel = ITEM_BY_ID[state.selectedItemId] || ITEMS[0];
+      const selSt = state.sceneState.items[sel.id];
+      document.getElementById('sel-name').textContent = sel.name;
+      document.getElementById('sel-status').textContent = selSt.location === 'backpack'
+        ? POCKETS[selSt.pocket].name
+        : 'Sobre a mesa';
+      document.getElementById('btn-pack-toggle').textContent = selSt.location === 'backpack'
+        ? 'Deixar na mesa'
+        : 'Colocar na mochila';
+      document.getElementById('btn-move-pocket').disabled = sel.allowedPockets.length < 2;
+    }
+
+    // Export & Opt-in Persistence
+    function exportObservableJson() {
+      const m = computeMetrics(state);
+      const summary = {
+        schemaVersion: VERSION,
+        app: 'mochila-da-travessia',
+        mode: state.mode,
+        journeyId: state.journeyId,
+        phase: state.phase,
+        aviso: 'Resumo descritivo de escolhas observáveis. Não constitui avaliação clínica ou escore subjetivo.',
+        metricasFisicas: {
+          volumeOcupadoPct: m.volumePct,
+          massaFisicaKg: m.physicalMassKg,
+          equilibrio: m.balanceLabel,
+          simbolicosNaMochila: m.symPack,
+          simbolicosNaMesa: m.symTable
+        },
+        naMochila: ITEMS.filter((i) => state.sceneState.items[i.id].location === 'backpack').map((i) => ({ id: i.id, nome: i.name, bolso: state.sceneState.items[i.id].pocket })),
+        naMesa: ITEMS.filter((i) => state.sceneState.items[i.id].location === 'table').map((i) => ({ id: i.id, nome: i.name })),
+        observaveis: state.observations
+      };
+      const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mochila-da-travessia-resumo-${state.journeyId}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      emitIntegrationEvent('summary', { packedCount: summary.naMochila.length, volumePct: m.volumePct });
+      showToast('Resumo observável exportado em JSON.');
+    }
+
+    function captureScenePng() {
+      renderer.render(scene, camera);
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mochila-da-travessia-${state.journeyId}.png`;
+      a.click();
+      showToast('Captura da cena 3D salva em PNG.');
+    }
+
+    function saveVoluntaryLocal() {
+      try {
+        localStorage.setItem(STORAGE_KEY_OPTIN, JSON.stringify({
+          version: VERSION,
+          journeyId: state.journeyId,
+          mode: state.mode,
+          sceneState: state.sceneState
+        }));
+        showToast('Arrumação salva localmente neste aparelho.');
+      } catch (_) {
+        showToast('Armazenamento local indisponível neste navegador.');
+      }
+    }
+
+    function clearVoluntaryLocal() {
+      try {
+        localStorage.removeItem(STORAGE_KEY_OPTIN);
+        showToast('Dados salvos localmente excluídos.');
+      } catch (_) {}
+    }
+
+    // =========================================================================
+    // 11. EVENT LISTENERS, QUALITY SCALING & RENDER LOOP
+    // =========================================================================
+    const QUALITY_LEVELS = ['leve', 'equilibrada', 'cinema'];
+    function applyQuality(q) {
+      state.settings.quality = q;
+      const dpr = q === 'cinema' ? Math.min(window.devicePixelRatio || 1, 2)
+        : q === 'equilibrada' ? Math.min(window.devicePixelRatio || 1, 1.35) : 0.85;
+      renderer.setPixelRatio(dpr);
+      renderer.shadowMap.enabled = q !== 'leve';
+      steamParticles.forEach((sp) => { sp.visible = q !== 'leve'; });
+      try { localStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify({ quality: q })); } catch (_) {}
+      renderUI();
+    }
+
+    // Wire entry modal modes
+    let entrySelectedMode = state.mode;
+    function renderEntryModes() {
+      const wrap = document.getElementById('entry-modes');
+      wrap.innerHTML = '';
+      MODES.forEach((m) => {
+        const b = document.createElement('button');
+        b.className = `mode-option${entrySelectedMode === m.id ? ' selected' : ''}`;
+        b.innerHTML = `<strong>${m.label}</strong><span>${m.desc}</span>`;
+        b.addEventListener('click', () => { entrySelectedMode = m.id; renderEntryModes(); });
+        wrap.appendChild(b);
+      });
+    }
+    renderEntryModes();
+
+    document.getElementById('btn-entry-start').addEventListener('click', () => {
+      const jId = document.getElementById('entry-journey').value;
+      const prevAudio = state.settings.audioEnabled;
+      const prevQuality = state.settings.quality;
+      state = createInitialState(jId, entrySelectedMode);
+      state.settings.audioEnabled = prevAudio;
+      state.settings.quality = prevQuality;
+      redrawMapTexture(jId);
+      document.getElementById('modal-entry').classList.remove('open');
+      syncSceneTargets();
+      renderUI();
+      showToast(`Viagem iniciada: ${JOURNEYS[jId].name}.`);
+    });
+
+    document.getElementById('btn-entry-demo').addEventListener('click', () => {
+      document.getElementById('modal-entry').classList.remove('open');
+      openContextPanel('help');
+    });
+
+    document.getElementById('btn-modes').addEventListener('click', () => {
+      document.getElementById('entry-journey').value = state.journeyId;
+      entrySelectedMode = state.mode;
+      renderEntryModes();
+      document.getElementById('modal-entry').classList.add('open');
+    });
+
+    document.getElementById('btn-audio').addEventListener('click', () => {
+      state.settings.audioEnabled = !state.settings.audioEnabled;
+      if (state.settings.audioEnabled) {
+        AudioEngine.enable();
+        AudioEngine.click();
+      }
+      renderUI();
+      showToast(state.settings.audioEnabled ? 'Áudio suave ativado.' : 'Áudio silenciado.');
+    });
+
+    document.getElementById('btn-quality').addEventListener('click', () => {
+      const idx = (QUALITY_LEVELS.indexOf(state.settings.quality) + 1) % QUALITY_LEVELS.length;
+      applyQuality(QUALITY_LEVELS[idx]);
+      showToast(`Qualidade gráfica: ${QUALITY_LEVELS[idx]}.`);
+    });
+
+    document.getElementById('btn-pause').addEventListener('click', () => {
+      state.paused = true;
+      document.getElementById('modal-pause').classList.add('open');
+      emitIntegrationEvent('pause');
+    });
+    document.getElementById('btn-pause-resume').addEventListener('click', () => {
+      state.paused = false;
+      document.getElementById('modal-pause').classList.remove('open');
+      emitIntegrationEvent('resume');
+    });
+    document.getElementById('btn-pause-exit').addEventListener('click', () => {
+      state.paused = false;
+      document.getElementById('modal-pause').classList.remove('open');
+      document.getElementById('modal-entry').classList.add('open');
+      emitIntegrationEvent('exit');
+      showToast('Sessão encerrada com segurança.');
+    });
+
+    document.getElementById('btn-help').addEventListener('click', () => {
+      openContextPanel(activePanel === 'help' ? null : 'help');
+    });
+    document.getElementById('btn-accompanied-open').addEventListener('click', () => {
+      openContextPanel(activePanel === 'accompanied' ? null : 'accompanied');
+    });
+    document.getElementById('btn-close-panel').addEventListener('click', () => openContextPanel(null));
+
+    document.getElementById('btn-toggle-hud').addEventListener('click', () => {
+      state.settings.hudCollapsed = !state.settings.hudCollapsed;
+      document.getElementById('hud').classList.toggle('hud-hidden-mode', state.settings.hudCollapsed);
+    });
+
+    document.getElementById('btn-fullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    });
+
+    document.getElementById('btn-sheet-toggle').addEventListener('click', () => {
+      document.getElementById('left-dock').classList.toggle('sheet-collapsed');
+    });
+
+    document.querySelectorAll('.phase-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        AudioEngine.click();
+        setPhase(btn.dataset.phase);
+      });
+    });
+
+    document.getElementById('btn-pack-toggle').addEventListener('click', () => {
+      const id = state.selectedItemId;
+      if (!id) return;
+      if (state.sceneState.items[id].location === 'backpack') dispatchRemoveToTable(id);
+      else dispatchAutoPack(id);
+    });
+    document.getElementById('btn-rotate').addEventListener('click', () => dispatchRotate(state.selectedItemId));
+    document.getElementById('btn-move-pocket').addEventListener('click', () => dispatchMovePocket(state.selectedItemId));
+    document.getElementById('btn-inspect').addEventListener('click', () => {
+      const id = state.selectedItemId;
+      state.inspectingItemId = state.inspectingItemId === id ? null : id;
+      openContextPanel(state.inspectingItemId ? 'inspect' : null);
+      syncSceneTargets();
+    });
+
+    document.getElementById('camera-select').addEventListener('change', (e) => {
+      state.sceneState.cameraPreset = e.target.value;
+      orbitOffset = { theta: 0, phi: 0, zoom: 1 };
+      syncSceneTargets();
+    });
+
+    document.getElementById('btn-undo').addEventListener('click', dispatchUndo);
+    document.getElementById('btn-redo').addEventListener('click', dispatchRedo);
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.getElementById('modal-reset').classList.add('open');
+    });
+    document.getElementById('btn-reset-cancel').addEventListener('click', () => {
+      document.getElementById('modal-reset').classList.remove('open');
+    });
+    document.getElementById('btn-reset-confirm').addEventListener('click', () => {
+      const prevSettings = clone(state.settings);
+      state = createInitialState(state.journeyId, state.mode);
+      state.settings = prevSettings;
+      document.getElementById('modal-reset').classList.remove('open');
+      openContextPanel(null);
+      syncSceneTargets();
+      renderUI();
+      showToast('Mesa e mochila restauradas.');
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      if (e.key === 'r' || e.key === 'R') { e.preventDefault(); dispatchRotate(state.selectedItemId); }
+      else if (e.key === 'h' || e.key === 'H') { document.getElementById('btn-toggle-hud').click(); }
+      else if (e.key === 'p' || e.key === 'P') {
+        if (state.paused) document.getElementById('btn-pause-resume').click();
+        else document.getElementById('btn-pause').click();
+      }
+      else if (e.key === 'Escape') { openContextPanel(null); }
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); dispatchUndo(); }
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); dispatchRedo(); }
+    });
+
+    // Resize + Visibility Pause + WebGL Context Loss Recovery
+    function onResize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      camera.aspect = w / Math.max(1, h);
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+      syncSceneTargets();
+    }
+    window.addEventListener('resize', onResize);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && !state.paused) {
+        state.paused = true;
+        emitIntegrationEvent('pause', { reason: 'tab_hidden' });
+      }
+    });
+
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      showToast('Contexto 3D interrompido temporariamente. Recuperando...');
+    });
+    canvas.addEventListener('webglcontextrestored', () => {
+      showToast('Cena 3D restaurada.');
+    });
+
+    // Main Animation Loop (dt clamped, smooth physical interpolation)
+    let lastTime = performance.now();
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      if (state.paused || document.hidden) return;
+
+      const t = now * 0.001;
+
+      // Subtle lantern flame flicker (warm cozy cabin feel, zero harsh flashes)
+      lanternLight.intensity = 1.88 + Math.sin(t * 5.2) * 0.08 + Math.sin(t * 11.7) * 0.04;
+      lFlame.scale.y = 0.94 + Math.sin(t * 7.5) * 0.08;
+
+      // Rising steam wisps from camp mug
+      if (state.settings.quality !== 'leve') {
+        steamParticles.forEach((sp) => {
+          const p = (t * 0.35 + sp.userData.phase) % 1;
+          sp.position.y = 0.105 + p * 0.16;
+          sp.position.x = -0.46 + Math.sin(t * 1.8 + sp.userData.phase) * 0.015;
+          sp.scale.setScalar(0.6 + p * 1.4);
+          sp.material.opacity = (1 - p) * 0.18;
+        });
+      }
+
+      // Smooth backpack Center-of-Mass physical tilt + top flap animation
+      const m = computeMetrics(state);
+      const targetTiltZ = -m.comX * 0.045;
+      const targetTiltX = m.comY * 0.03;
+      backpackRoot.rotation.z += (targetTiltZ - backpackRoot.rotation.z) * Math.min(1, dt * 5);
+      backpackRoot.rotation.x += (targetTiltX - backpackRoot.rotation.x) * Math.min(1, dt * 5);
+
+      const targetFlap = state.flapClosed ? 2.95 : -0.22;
+      flapCurrentAngle += (targetFlap - flapCurrentAngle) * Math.min(1, dt * 5.5);
+      flapPivot.rotation.x = flapCurrentAngle;
+
+      // Smooth compass magnetic needle settle
+      if (compassNeedleMesh) {
+        const targetNeedle = -itemMeshes.bussola.group.rotation.y + Math.sin(t * 1.4) * 0.03;
+        compassNeedleMesh.rotation.y += (targetNeedle - compassNeedleMesh.rotation.y) * Math.min(1, dt * 4);
+      }
+
+      // Smooth interpolation of all 9 interactive objects
+      for (const it of ITEMS) {
+        const entry = itemMeshes[it.id];
+        if (!entry || draggingItemId === it.id) continue;
+        entry.group.position.lerp(entry.targetPos, Math.min(1, dt * 9));
+        entry.group.scale.lerp(entry.targetScale, Math.min(1, dt * 9));
+        if (entry.bounce > 0.01) {
+          entry.group.position.y += Math.sin(entry.bounce * Math.PI) * 0.025;
+          entry.bounce = Math.max(0, entry.bounce - dt * 4.5);
+        }
+        if (state.inspectingItemId === it.id) {
+          entry.group.rotation.y += dt * 0.7;
+        } else {
+          entry.group.rotation.y += (entry.targetRotY - entry.group.rotation.y) * Math.min(1, dt * 9);
+        }
+      }
+
+      // Smooth constrained camera framing
+      const offsetPos = camTargetPos.clone().sub(lookTarget);
+      offsetPos.multiplyScalar(orbitOffset.zoom);
+      offsetPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), orbitOffset.theta);
+      offsetPos.y = Math.max(0.32, offsetPos.y + orbitOffset.phi * 0.8);
+      const desiredCam = lookTarget.clone().add(offsetPos);
+
+      camCurrentPos.lerp(desiredCam, Math.min(1, dt * 6));
+      lookCurrent.lerp(lookTarget, Math.min(1, dt * 6));
+      camera.position.copy(camCurrentPos);
+      camera.lookAt(lookCurrent);
+
+      renderer.render(scene, camera);
+    }
+
+    // Boot
+    applyQuality(state.settings.quality);
+    onResize();
+    syncSceneTargets();
+    renderUI();
+    emitIntegrationEvent('ready', { version: VERSION });
+    requestAnimationFrame(animate);
+  })();
+  </script>
+</body>
+</html>

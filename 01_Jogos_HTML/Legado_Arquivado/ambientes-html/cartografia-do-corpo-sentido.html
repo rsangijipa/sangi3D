@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cartografia do Corpo Sentido — Experiência 3D Somática</title>
+
+  <!-- Tailwind CSS & Three.js CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Barra Imersiva Compartilhada do Workspace -->
+  <link rel="stylesheet" href="shared/imersivo.css?v=3" />
+
+  <style>
+    :root {
+      --cor-zen: #38bdf8;
+      --cor-tatami: #2d372e;
+      --cor-madeira: #2b1810;
+      --cor-ouro: #fbbf24;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #080c10;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    .glass-somatic {
+      background: rgba(13, 22, 33, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-somatic {
+      transition: all 200ms cubic-bezier(.2,.6,.3,1);
+    }
+    .btn-somatic:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(56, 189, 248, 0.25);
+    }
+    .btn-somatic:active {
+      transform: translateY(1px);
+    }
+
+    @keyframes breathPulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.18); opacity: 1; }
+    }
+    .breath-indicator {
+      animation: breathPulse 6s infinite ease-in-out;
+    }
+
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -15px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: toastFade 3.2s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.35); border-radius: 9999px; }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- Canvas WebGL 3D -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI Superior -->
+  <header id="ui-top-bar" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <a href="/index.html" class="glass-somatic px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-white/10 flex items-center space-x-2 text-sky-200/90 transition" title="Voltar ao Launcher">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Launcher</span>
+      </a>
+      <div class="glass-somatic px-4 py-2 rounded-xl flex flex-col">
+        <span class="text-xs uppercase tracking-wider text-sky-400 font-bold">Ambiente 10 · Reconstrução Fiel</span>
+        <h1 class="text-sm font-semibold text-white/95">Cartografia do Corpo Sentido</h1>
+      </div>
+    </div>
+
+    <!-- Guia de Respiração & Consciência Corporal -->
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <div class="glass-somatic px-3.5 py-2 rounded-xl flex items-center space-x-3">
+        <div class="w-3.5 h-3.5 rounded-full bg-sky-400 shadow-[0_0_12px_#38bdf8] breath-indicator"></div>
+        <div class="flex flex-col">
+          <span class="text-[10px] uppercase font-bold text-sky-300/80 tracking-wider">Ritmo da Respiração</span>
+          <span id="breath-phase-text" class="text-xs font-medium text-sky-100">Inspirar suavemente...</span>
+        </div>
+      </div>
+
+      <button id="btn-sound-toggle" class="glass-somatic p-2.5 rounded-xl hover:bg-sky-950/40 text-sky-300 transition" title="Alternar Taça Tibetana e Ambiência (M)">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12 0l-6-6m6 0l-6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Paleta Somática Lateral Esquerda -->
+  <div id="sensation-palette" class="absolute left-4 top-24 glass-somatic p-3 rounded-2xl flex flex-col space-y-2.5 z-20 pointer-events-auto max-w-[210px]">
+    <div class="flex items-center justify-between pb-1.5 border-b border-sky-500/20">
+      <span class="text-xs font-bold text-sky-200">Qualidade Sentida</span>
+      <span id="badge-selected-zone" class="text-[10px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-full font-medium">Coração</span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+      <button class="btn-sensation p-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 flex flex-col items-center" data-color="0xf59e0b" data-sensation="Calor / Aconchego">
+        <span class="text-base">🔥</span>
+        <span>Calor</span>
+      </button>
+
+      <button class="btn-sensation p-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-200 flex flex-col items-center" data-color="0xf43f5e" data-sensation="Tensão / Aperto">
+        <span class="text-base">⚡</span>
+        <span>Tensão</span>
+      </button>
+
+      <button class="btn-sensation p-2 rounded-xl border border-sky-500/30 bg-sky-500/10 hover:bg-sky-500/20 text-sky-200 flex flex-col items-center active" data-color="0x38bdf8" data-sensation="Leveza / Espaço">
+        <span class="text-base">🍃</span>
+        <span>Leveza</span>
+      </button>
+
+      <button class="btn-sensation p-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-200 flex flex-col items-center" data-color="0x6366f1" data-sensation="Peso / Tristeza">
+        <span class="text-base">🌧️</span>
+        <span>Peso</span>
+      </button>
+
+      <button class="btn-sensation p-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 flex flex-col items-center" data-color="0x10b981" data-sensation="Vitalidade / Pulso">
+        <span class="text-base">🌱</span>
+        <span>Vitalidade</span>
+      </button>
+
+      <button class="btn-sensation p-2 rounded-xl border border-slate-500/30 bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 flex flex-col items-center" data-color="0x94a3b8" data-sensation="Dormência / Neutro">
+        <span class="text-base">🌫️</span>
+        <span>Dormência</span>
+      </button>
+    </div>
+
+    <!-- Controle de Intensidade -->
+    <div class="pt-2 border-t border-sky-500/20 space-y-1">
+      <div class="flex justify-between text-[10px] text-sky-200/80">
+        <span>Intensidade</span>
+        <span id="intensity-val">7 / 10</span>
+      </div>
+      <input id="slider-intensity" type="range" min="1" max="10" value="7" class="w-full h-1.5 bg-sky-950 rounded-lg appearance-none cursor-pointer accent-sky-400" />
+    </div>
+
+    <button id="btn-apply-sensation" class="w-full py-1.5 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white font-semibold text-xs rounded-xl shadow transition">
+      Mapear Região
+    </button>
+  </div>
+
+  <!-- Dock Inferior com Câmeras e Ações -->
+  <footer id="ui-bottom-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2.5 z-20 pointer-events-auto">
+    <div class="glass-somatic p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="cam-avatar" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200/90 hover:bg-sky-500/20 transition active">Corpo Inteiro</button>
+      <button id="cam-chest" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200/90 hover:bg-sky-500/20 transition">Coração & Peito</button>
+      <button id="cam-head" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200/90 hover:bg-sky-500/20 transition">Mente & Garganta</button>
+      <button id="cam-room" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200/90 hover:bg-sky-500/20 transition">Salão Zen</button>
+    </div>
+
+    <div class="glass-somatic p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="btn-singing-bowl" class="btn-somatic px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 flex items-center space-x-1.5 transition">
+        <span>🥣</span>
+        <span>Tocar Tigela</span>
+      </button>
+
+      <button id="btn-clear-map" class="btn-somatic px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 flex items-center space-x-1.5 transition">
+        <span>🔄</span>
+        <span>Limpar Mapa</span>
+      </button>
+
+      <button id="btn-drawer-toggle" class="btn-somatic px-3.5 py-1.5 rounded-xl text-xs font-medium text-sky-200 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 flex items-center space-x-1.5 transition">
+        <span>📋</span>
+        <span>Diário Somático</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Dica de Interação -->
+  <div id="hint-bubble" class="absolute bottom-20 left-1/2 -translate-x-1/2 glass-somatic px-4 py-2 rounded-full text-xs font-medium text-sky-200/90 pointer-events-none transition-all duration-300 z-10 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+    <span>Clique nas esferas do corpo holográfico para selecionar e colorir as sensações sentidas</span>
+  </div>
+
+  <!-- Gaveta Lateral: Diário Somático & Consciência Interoceptiva -->
+  <aside id="info-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full glass-somatic border-l border-sky-500/30 z-30 translate-x-full transition-transform duration-300 flex flex-col p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-sky-500/20">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">🧘</span>
+        <h2 class="text-base font-bold text-sky-100">Diário Somático</h2>
+      </div>
+      <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-300 transition">✕</button>
+    </div>
+
+    <div class="space-y-4 pt-4 text-xs text-sky-200/90 leading-relaxed">
+      <section class="bg-sky-950/40 p-3.5 rounded-xl border border-sky-500/20">
+        <h3 class="font-bold text-sky-300 mb-1 text-sm">O que é a Cartografia do Corpo?</h3>
+        <p>
+          Este espaço foi desenhado para facilitar a interocepção — a habilidade de escutar e dar contorno
+          às sensações que habitam o corpo físico sem julgamento imediato. O corpo não mente: ele registra
+          tensões, ritmos de respiração, calor de aconchego e pontos de fadiga.
+        </p>
+      </section>
+
+      <!-- Lista de Regiões Mapeadas -->
+      <section class="bg-black/30 p-3.5 rounded-xl border border-sky-500/20">
+        <h3 class="font-bold text-sky-300 mb-2">Registro de Sensações Mapeadas</h3>
+        <div id="somatic-log-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+          <div class="text-[11px] text-sky-300/60 italic">Nenhuma região registrada nesta sessão ainda.</div>
+        </div>
+      </section>
+
+      <!-- Anotação Subjetiva Livre -->
+      <section class="bg-sky-950/40 p-3.5 rounded-xl border border-sky-500/20">
+        <h3 class="font-bold text-sky-300 mb-1">Notas da Sessão & Percepções</h3>
+        <textarea id="somatic-notes" rows="4" class="w-full bg-black/60 border border-sky-500/30 rounded-lg p-2.5 text-xs text-sky-100 focus:outline-none focus:border-sky-400 placeholder-sky-500/40" placeholder="O que seu corpo está querendo expressar hoje? Descreva a temperatura, a pulsação ou a sensação de espaço..."></textarea>
+        <button id="btn-save-note" class="mt-2 w-full py-2 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white font-semibold rounded-lg shadow transition">Salvar no Diário</button>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center space-y-2"></div>
+
+  <!-- Script Principal da Experiência 3D -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+       * 1. SÍNTESE SONORA PROCEDURAL (Web Audio API)
+       * ========================================================== */
+      class SomaticAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.droneGain = null;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          this.ctx = new AudioContext();
+
+          // Drone zen contínuo em frequências ressonantes de 108Hz e 216Hz
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          osc1.type = 'sine';
+          osc1.frequency.value = 108;
+          osc2.type = 'sine';
+          osc2.frequency.value = 216;
+
+          const gainNode = this.ctx.createGain();
+          gainNode.gain.value = 0.08;
+
+          this.droneGain = this.ctx.createGain();
+          this.droneGain.gain.value = 0.2;
+
+          osc1.connect(gainNode);
+          osc2.connect(gainNode);
+          gainNode.connect(this.droneGain);
+          this.droneGain.connect(this.ctx.destination);
+
+          osc1.start();
+          osc2.start();
+        }
+
+        playTibetanBowl(freq = 432) {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          // Harmônicos fundamentais da taça tibetana
+          const freqs = [freq, freq * 2.76, freq * 5.4];
+          const gains = [0.35, 0.15, 0.06];
+
+          freqs.forEach((f, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now);
+
+            gain.gain.setValueAtTime(gains[idx], now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.5);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 4.6);
+          });
+        }
+
+        playChime(note = 528) {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(note, now);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.85);
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.droneGain && this.ctx) {
+            this.droneGain.gain.value = this.enabled ? 0.2 : 0;
+          }
+          return this.enabled;
+        }
+      }
+
+      const audio = new SomaticAudioEngine();
+
+      /* ==========================================================
+       * 2. CENÁRIO THREE.JS SETUP
+       * ========================================================== */
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0c141d);
+      scene.fog = new THREE.FogExp2(0x0c141d, 0.035);
+
+      const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 60);
+      camera.position.set(0, 1.8, 4.4);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.05;
+      controls.minDistance = 1.2;
+      controls.maxDistance = 10;
+      controls.target.set(0, 1.3, 0);
+
+      /* ==========================================================
+       * 3. TEXTURAS PROCEDURAIS
+       * ========================================================== */
+      function createTatamiTexture() {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#1e281f';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Fibras de palha entrelaçadas
+        for (let i = 0; i < 512; i += 6) {
+          ctx.strokeStyle = (i % 12 === 0) ? '#28362a' : '#172018';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(512, i);
+          ctx.stroke();
+        }
+
+        const texture = new THREE.CanvasTexture(c);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4);
+        return texture;
+      }
+
+      function createWoodZenTexture() {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#261811';
+        ctx.fillRect(0, 0, 512, 512);
+
+        for (let i = 0; i < 300; i++) {
+          const y = Math.random() * 512;
+          ctx.strokeStyle = `rgba(55, 36, 26, ${Math.random() * 0.1 + 0.05})`;
+          ctx.lineWidth = 1 + Math.random() * 4;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(512, y);
+          ctx.stroke();
+        }
+
+        const texture = new THREE.CanvasTexture(c);
+        return texture;
+      }
+
+      const tatamiMap = createTatamiTexture();
+      const woodZenMap = createWoodZenTexture();
+
+      /* ==========================================================
+       * 4. MATERIAIS
+       * ========================================================== */
+      const matTatami = new THREE.MeshStandardMaterial({
+        map: tatamiMap,
+        roughness: 0.9,
+        metalness: 0.05,
+      });
+
+      const matDarkWood = new THREE.MeshStandardMaterial({
+        map: woodZenMap,
+        roughness: 0.75,
+        metalness: 0.1,
+      });
+
+      const matHoloSkin = new THREE.MeshPhysicalMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.5,
+        roughness: 0.2,
+        metalness: 0.1,
+        transmission: 0.75,
+        transparent: true,
+        opacity: 0.82,
+        thickness: 0.6
+      });
+
+      /* ==========================================================
+       * 5. ILUMINAÇÃO ZEN & AMBIENTE
+       * ========================================================== */
+      const ambLight = new THREE.AmbientLight(0x162432, 0.9);
+      scene.add(ambLight);
+
+      // Luz suave natural do jardim externo
+      const sunLight = new THREE.DirectionalLight(0xfff3e0, 1.4);
+      sunLight.position.set(-3, 4, 2);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 1024;
+      sunLight.shadow.mapSize.height = 1024;
+      scene.add(sunLight);
+
+      // Ponto de luz sob a plataforma de meditação
+      const daisLight = new THREE.PointLight(0x38bdf8, 1.8, 4.5);
+      daisLight.position.set(0, 0.4, 0);
+      scene.add(daisLight);
+
+      /* ==========================================================
+       * 6. CENOGRAFIA: SALÃO ZEN COM VISTA PARA A NATUREZA
+       * ========================================================== */
+      const roomGroup = new THREE.Group();
+
+      // Piso Tatami Central
+      const floorGeo = new THREE.BoxGeometry(8, 0.1, 8);
+      const floor = new THREE.Mesh(floorGeo, matTatami);
+      floor.position.set(0, -0.05, 0);
+      floor.receiveShadow = true;
+      roomGroup.add(floor);
+
+      // Plataforma Circular de Meditação em Madeira Escura
+      const daisGeo = new THREE.CylinderGeometry(1.6, 1.7, 0.14, 32);
+      const dais = new THREE.Mesh(daisGeo, matDarkWood);
+      dais.position.set(0, 0.07, 0);
+      dais.receiveShadow = true;
+      roomGroup.add(dais);
+
+      // Anel de Luz Holográfica no chão
+      const ringGeo = new THREE.RingGeometry(1.3, 1.36, 32);
+      ringGeo.rotateX(-Math.PI / 2);
+      const matRing = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+      const ringMesh = new THREE.Mesh(ringGeo, matRing);
+      ringMesh.position.set(0, 0.145, 0);
+      roomGroup.add(ringMesh);
+
+      // Paredes e Colunas de Madeira com Moldura Shoji
+      const pillarGeo = new THREE.BoxGeometry(0.2, 3.8, 0.2);
+      const pillarCoords = [
+        [-3.6, 1.9, -3.6],
+        [ 3.6, 1.9, -3.6],
+        [-3.6, 1.9,  3.6],
+        [ 3.6, 1.9,  3.6]
+      ];
+      pillarCoords.forEach(([px, py, pz]) => {
+        const pillar = new THREE.Mesh(pillarGeo, matDarkWood);
+        pillar.position.set(px, py, pz);
+        pillar.castShadow = true;
+        roomGroup.add(pillar);
+      });
+
+      // Viga superior
+      const beamGeo = new THREE.BoxGeometry(7.4, 0.25, 0.25);
+      const beamBack = new THREE.Mesh(beamGeo, matDarkWood);
+      beamBack.position.set(0, 3.6, -3.6);
+      roomGroup.add(beamBack);
+
+      // Grande Janela Panorâmica ao Fundo com gradiente de montanhas e céu zen
+      const backdropGeo = new THREE.PlaneGeometry(16, 8);
+      const cSky = document.createElement('canvas');
+      cSky.width = 1024;
+      cSky.height = 512;
+      const ctxSky = cSky.getContext('2d');
+      const grad = ctxSky.createLinearGradient(0, 0, 0, 512);
+      grad.addColorStop(0, '#0c1a2e');
+      grad.addColorStop(0.5, '#1e3a5f');
+      grad.addColorStop(0.85, '#5c4d61');
+      grad.addColorStop(1, '#8c6b71');
+      ctxSky.fillStyle = grad;
+      ctxSky.fillRect(0, 0, 1024, 512);
+
+      // Silhuetas de montanhas ao longe
+      ctxSky.fillStyle = 'rgba(12, 22, 36, 0.7)';
+      ctxSky.beginPath();
+      ctxSky.moveTo(0, 380);
+      ctxSky.lineTo(240, 260);
+      ctxSky.lineTo(460, 340);
+      ctxSky.lineTo(720, 220);
+      ctxSky.lineTo(1024, 350);
+      ctxSky.lineTo(1024, 512);
+      ctxSky.lineTo(0, 512);
+      ctxSky.fill();
+
+      const skyTex = new THREE.CanvasTexture(cSky);
+      const matSky = new THREE.MeshBasicMaterial({ map: skyTex });
+      const skyMesh = new THREE.Mesh(backdropGeo, matSky);
+      skyMesh.position.set(0, 3.2, -6.5);
+      roomGroup.add(skyMesh);
+
+      // Bonsai em vaso de pedra à esquerda
+      const bonsaiGroup = new THREE.Group();
+      bonsaiGroup.position.set(-2.5, 0.15, -1.8);
+      const potGeo = new THREE.CylinderGeometry(0.35, 0.25, 0.2, 16);
+      const pot = new THREE.Mesh(potGeo, matDarkWood);
+      bonsaiGroup.add(pot);
+
+      const trunkGeo = new THREE.CylinderGeometry(0.04, 0.08, 0.5, 8);
+      trunkGeo.rotateZ(0.2);
+      const trunk = new THREE.Mesh(trunkGeo, matDarkWood);
+      trunk.position.set(0, 0.3, 0);
+      bonsaiGroup.add(trunk);
+
+      const leafCloudGeo = new THREE.SphereGeometry(0.28, 12, 12);
+      leafCloudGeo.scale(1.4, 0.6, 1.2);
+      const matFoliage = new THREE.MeshStandardMaterial({ color: 0x2e5c3e, roughness: 0.9 });
+      const leafCloud = new THREE.Mesh(leafCloudGeo, matFoliage);
+      leafCloud.position.set(0.12, 0.6, 0);
+      bonsaiGroup.add(leafCloud);
+
+      roomGroup.add(bonsaiGroup);
+
+      // Tigela Tibetana de Cobre no chão
+      const bowlGroup = new THREE.Group();
+      bowlGroup.position.set(1.4, 0.15, 0.8);
+      const bowlGeo = new THREE.SphereGeometry(0.2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      bowlGeo.rotateX(Math.PI);
+      const matBowl = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.3 });
+      const bowlMesh = new THREE.Mesh(bowlGeo, matBowl);
+      bowlGroup.add(bowlMesh);
+      roomGroup.add(bowlGroup);
+
+      scene.add(roomGroup);
+
+      /* ==========================================================
+       * 7. O AVATAR HOLOGRÁFICO & MAPEAMENTO SOMÁTICO EM 3D
+       * ========================================================== */
+      const avatarGroup = new THREE.Group();
+      avatarGroup.position.set(0, 0.22, 0);
+
+      // Definição das Regiões Anatômicas e Esferas Somáticas
+      const somaticZones = [
+        { id: 'mind', name: 'Mente / Cabeça', y: 2.15, r: 0.24, baseColor: 0x38bdf8, defaultSens: 'Pensamento / Atenção' },
+        { id: 'throat', name: 'Garganta / Voz', y: 1.82, r: 0.12, baseColor: 0x06b6d4, defaultSens: 'Expressão / Engolir' },
+        { id: 'chest', name: 'Peito / Coração', y: 1.55, r: 0.22, baseColor: 0x38bdf8, defaultSens: 'Acolhimento / Afeto' },
+        { id: 'solar', name: 'Plexo Solar / Estômago', y: 1.28, r: 0.18, baseColor: 0x0ea5e9, defaultSens: 'Digestão / Emoção' },
+        { id: 'abdomen', name: 'Abdômen / Ventre', y: 1.02, r: 0.21, baseColor: 0x0284c7, defaultSens: 'Base / Segurança' },
+        { id: 'shoulders', name: 'Ombros & Costas', y: 1.7, r: 0.38, rx: 1.8, ry: 0.35, rz: 0.8, baseColor: 0x0369a1, defaultSens: 'Cargas & Tensões' },
+        { id: 'hands', name: 'Mãos / Contato', y: 0.9, r: 0.14, dual: true, xOffset: 0.52, baseColor: 0x38bdf8, defaultSens: 'Ação & Alcance' },
+        { id: 'legs', name: 'Pernas & Pés', y: 0.42, r: 0.24, dual: true, xOffset: 0.28, baseColor: 0x075985, defaultSens: 'Apoio & Enraizamento' }
+      ];
+
+      const zoneMeshes = new Map();
+      const mappedSensations = new Map();
+
+      somaticZones.forEach(z => {
+        const mat = new THREE.MeshPhysicalMaterial({
+          color: z.baseColor,
+          emissive: z.baseColor,
+          emissiveIntensity: 0.45,
+          roughness: 0.2,
+          metalness: 0.1,
+          transmission: 0.8,
+          transparent: true,
+          opacity: 0.8,
+        });
+
+        if (z.dual) {
+          const dualG = new THREE.Group();
+          const gL = new THREE.SphereGeometry(z.r, 16, 16);
+          const mL = new THREE.Mesh(gL, mat);
+          mL.position.x = -z.xOffset;
+          dualG.add(mL);
+
+          const gR = new THREE.SphereGeometry(z.r, 16, 16);
+          const mR = new THREE.Mesh(gR, mat);
+          mR.position.x = z.xOffset;
+          dualG.add(mR);
+
+          dualG.position.y = z.y;
+          dualG.userData = { zone: z, mat: mat };
+          avatarGroup.add(dualG);
+          zoneMeshes.set(z.id, { obj: dualG, mat: mat, zone: z });
+        } else {
+          const geo = new THREE.SphereGeometry(z.r, 20, 20);
+          if (z.rx) geo.scale(z.rx, z.ry, z.rz);
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.y = z.y;
+          mesh.userData = { zone: z, mat: mat };
+          avatarGroup.add(mesh);
+          zoneMeshes.set(z.id, { obj: mesh, mat: mat, zone: z });
+        }
+      });
+
+      // Aura externa de respiração
+      const auraGeo = new THREE.SphereGeometry(1.2, 24, 24);
+      auraGeo.scale(0.8, 1.4, 0.7);
+      const matAura = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.08
+      });
+      const auraMesh = new THREE.Mesh(auraGeo, matAura);
+      auraMesh.position.y = 1.35;
+      avatarGroup.add(auraMesh);
+
+      scene.add(avatarGroup);
+
+      /* ==========================================================
+       * 8. ESTADO DA EXPERIÊNCIA
+       * ========================================================== */
+      const state = {
+        selectedZoneId: 'chest',
+        currentColorHex: 0x38bdf8,
+        currentSensationName: 'Leveza / Espaço',
+        intensity: 7,
+        activeCamera: 'avatar',
+        breathPhase: 0 // 0: inspira, 1: pausa, 2: expira
+      };
+
+      function showToast(text) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'glass-somatic px-4 py-2.5 rounded-xl text-xs text-sky-200 border border-sky-400/40 shadow-xl toast-anim';
+        t.textContent = text;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      function selectZone(zoneId) {
+        state.selectedZoneId = zoneId;
+        const entry = zoneMeshes.get(zoneId);
+        if (!entry) return;
+
+        document.getElementById('badge-selected-zone').textContent = entry.zone.name;
+        audio.playChime(396 + Math.random() * 200);
+        showToast(`📍 Região Selecionada: ${entry.zone.name}`);
+
+        // Destaca brevemente
+        entry.mat.emissiveIntensity = 1.2;
+        setTimeout(() => { entry.mat.emissiveIntensity = 0.5; }, 300);
+      }
+
+      function applySensation() {
+        const entry = zoneMeshes.get(state.selectedZoneId);
+        if (!entry) return;
+
+        const colorNum = state.currentColorHex;
+        entry.mat.color.setHex(colorNum);
+        entry.mat.emissive.setHex(colorNum);
+        entry.mat.emissiveIntensity = 0.4 + (state.intensity / 10) * 0.7;
+
+        mappedSensations.set(state.selectedZoneId, {
+          zone: entry.zone.name,
+          sensation: state.currentSensationName,
+          intensity: state.intensity,
+          color: colorNum,
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        });
+
+        audio.playChime(528);
+        renderLogList();
+        showToast(`✨ Mapeado: ${entry.zone.name} com ${state.currentSensationName} (Intensidade ${state.intensity})`);
+      }
+
+      function clearMap() {
+        somaticZones.forEach(z => {
+          const entry = zoneMeshes.get(z.id);
+          if (entry) {
+            entry.mat.color.setHex(z.baseColor);
+            entry.mat.emissive.setHex(z.baseColor);
+            entry.mat.emissiveIntensity = 0.45;
+          }
+        });
+        mappedSensations.clear();
+        renderLogList();
+        audio.playTibetanBowl(396);
+        showToast('🔄 Mapa somático reiniciado para o estado neutro.');
+      }
+
+      function renderLogList() {
+        const list = document.getElementById('somatic-log-list');
+        list.innerHTML = '';
+        if (mappedSensations.size === 0) {
+          list.innerHTML = '<div class="text-[11px] text-sky-300/60 italic">Nenhuma região registrada nesta sessão ainda.</div>';
+          return;
+        }
+
+        mappedSensations.forEach((item) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between p-1.5 rounded-lg bg-sky-950/40 border border-sky-500/20 text-[11px]';
+          row.innerHTML = `
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2.5 h-2.5 rounded-full" style="background-color: #${item.color.toString(16).padStart(6, '0')};"></span>
+              <strong class="text-sky-100">${item.zone}</strong>
+            </div>
+            <span class="text-sky-300/80">${item.sensation} (${item.intensity}/10)</span>
+          `;
+          list.appendChild(row);
+        });
+      }
+
+      /* ==========================================================
+       * 9. CONTROLE DE CÂMERAS PRESET
+       * ========================================================== */
+      const camPresets = {
+        avatar: { pos: new THREE.Vector3(0, 1.8, 4.4), target: new THREE.Vector3(0, 1.3, 0) },
+        chest:  { pos: new THREE.Vector3(0, 1.6, 1.9), target: new THREE.Vector3(0, 1.55, 0) },
+        head:   { pos: new THREE.Vector3(0, 2.1, 1.6), target: new THREE.Vector3(0, 2.15, 0) },
+        room:   { pos: new THREE.Vector3(-3.2, 2.6, 4.8), target: new THREE.Vector3(0, 1.4, -0.5) }
+      };
+
+      let targetCamPos = camPresets.avatar.pos.clone();
+      let targetCamLook = camPresets.avatar.target.clone();
+
+      function setCameraPreset(key) {
+        state.activeCamera = key;
+        const p = camPresets[key];
+        targetCamPos.copy(p.pos);
+        targetCamLook.copy(p.target);
+
+        document.querySelectorAll('.btn-cam').forEach(b => b.classList.remove('active', 'bg-sky-500/20', 'text-white'));
+        const activeBtn = document.getElementById(`cam-${key}`);
+        if (activeBtn) activeBtn.classList.add('active', 'bg-sky-500/20', 'text-white');
+      }
+
+      /* ==========================================================
+       * 10. RAYCASTING DE CLIQUE NO AVATAR
+       * ========================================================== */
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('#ui-top-bar, #ui-bottom-dock, #sensation-palette, #info-drawer, #toast-container')) return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        const clickable = [];
+        zoneMeshes.forEach(entry => {
+          clickable.push(entry.obj);
+        });
+
+        const hits = raycaster.intersectObjects(clickable, true);
+        if (hits.length > 0) {
+          let root = hits[0].object;
+          while (root.parent && !root.userData.zone) {
+            root = root.parent;
+          }
+          if (root.userData && root.userData.zone) {
+            selectZone(root.userData.zone.id);
+          }
+        }
+      });
+
+      /* ==========================================================
+       * 11. LISTENERS DE INTERFACE
+       * ========================================================== */
+      document.querySelectorAll('.btn-sensation').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.btn-sensation').forEach(b => b.classList.remove('active', 'ring-2', 'ring-sky-400'));
+          btn.classList.add('active', 'ring-2', 'ring-sky-400');
+          state.currentColorHex = parseInt(btn.dataset.color, 16);
+          state.currentSensationName = btn.dataset.sensation;
+          audio.playChime(440);
+        });
+      });
+
+      const sliderInt = document.getElementById('slider-intensity');
+      sliderInt.addEventListener('input', (e) => {
+        state.intensity = parseInt(e.target.value);
+        document.getElementById('intensity-val').textContent = `${state.intensity} / 10`;
+      });
+
+      document.getElementById('btn-apply-sensation').addEventListener('click', applySensation);
+      document.getElementById('btn-clear-map').addEventListener('click', clearMap);
+      document.getElementById('btn-singing-bowl').addEventListener('click', () => {
+        audio.playTibetanBowl(432);
+        showToast('🥣 Taça Tibetana ressoando em 432Hz...');
+      });
+
+      document.getElementById('cam-avatar').addEventListener('click', () => setCameraPreset('avatar'));
+      document.getElementById('cam-chest').addEventListener('click', () => setCameraPreset('chest'));
+      document.getElementById('cam-head').addEventListener('click', () => setCameraPreset('head'));
+      document.getElementById('cam-room').addEventListener('click', () => setCameraPreset('room'));
+
+      // Drawer
+      const drawer = document.getElementById('info-drawer');
+      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        drawer.classList.add('translate-x-full');
+      });
+      document.getElementById('btn-save-note').addEventListener('click', () => {
+        const val = document.getElementById('somatic-notes').value;
+        if (val.trim()) {
+          showToast('💾 Notas registradas no diário somático.');
+        } else {
+          showToast('✏️ Escreva uma reflexão antes de salvar.');
+        }
+      });
+
+      // Som toggle
+      const btnSound = document.getElementById('btn-sound-toggle');
+      btnSound.addEventListener('click', () => {
+        const on = audio.toggle();
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+        showToast(on ? '🔊 Áudio meditativo ativado' : '🔇 Áudio silenciado');
+      });
+
+      // Atalhos de Teclado
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.key.toLowerCase() === 'b' || e.code === 'Space') {
+          document.getElementById('btn-singing-bowl').click();
+        } else if (e.key.toLowerCase() === 'm') {
+          btnSound.click();
+        } else if (e.key.toLowerCase() === 'enter') {
+          applySensation();
+        } else if (e.key.toLowerCase() === '1') {
+          setCameraPreset('avatar');
+        } else if (e.key.toLowerCase() === '2') {
+          setCameraPreset('chest');
+        } else if (e.key.toLowerCase() === '3') {
+          setCameraPreset('head');
+        } else if (e.key.toLowerCase() === '4') {
+          setCameraPreset('room');
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ==========================================================
+       * 12. LOOP DE ANIMAÇÃO & RITMO RESPIRATÓRIO
+       * ========================================================== */
+      const clock = new THREE.Clock();
+      const breathPhaseEl = document.getElementById('breath-phase-text');
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = clock.getDelta();
+        const elapsedTime = clock.getElapsedTime();
+
+        // 1. Câmera fluida
+        camera.position.lerp(targetCamPos, 0.04);
+        controls.target.lerp(targetCamLook, 0.04);
+        controls.update();
+
+        // 2. Ciclo de Respiração 6 segundos (3s inspira, 3s expira)
+        const breathCycle = (elapsedTime % 6) / 6;
+        const breathScale = 1 + Math.sin(breathCycle * Math.PI * 2) * 0.08;
+        avatarGroup.scale.set(breathScale, 1 + (breathScale - 1) * 0.4, breathScale);
+
+        if (breathCycle < 0.45) {
+          breathPhaseEl.textContent = 'Inspirando... acolhendo o ar';
+        } else if (breathCycle < 0.55) {
+          breathPhaseEl.textContent = 'Pausa serena... presença plena';
+        } else {
+          breathPhaseEl.textContent = 'Expirando... liberando o peso';
+        }
+
+        // 3. Rotação sutil da aura e do anel zen
+        ringMesh.rotation.z += delta * 0.15;
+        auraMesh.rotation.y += delta * 0.1;
+
+        // 4. Ondulação suave de cada nódulo somático
+        let idx = 0;
+        zoneMeshes.forEach(entry => {
+          idx++;
+          const floatOffset = Math.sin(elapsedTime * 2 + idx) * 0.005;
+          entry.obj.position.y += floatOffset;
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      // Esconde o aviso de dica após 6 segundos
+      setTimeout(() => {
+        const hint = document.getElementById('hint-bubble');
+        if (hint) {
+          hint.style.opacity = '0';
+          setTimeout(() => hint.remove(), 500);
+        }
+      }, 6500);
+
+    })();
+  </script>
+
+  <!-- Script Compartilhado de Barra Imersiva e Atalhos -->
+  <script src="shared/imersivo.js?v=3"></script>
+  <script>
+    if (window.Imersivo) {
+      Imersivo.init({
+        ambienteId: 'cartografia-do-corpo-sentido',
+        titulo: 'Cartografia do Corpo Sentido',
+        tema: 'zen'
+      });
+    }
+  </script>
+</body>
+</html>

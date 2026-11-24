@@ -1,0 +1,22 @@
+[
+  {
+    "caminho": "04-tear-dos-vinculos",
+    "motivo": "Windows impediu a movimentação; preservado no local",
+    "erro": "[WinError 32] O arquivo já está sendo usado por outro processo: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\04-tear-dos-vinculos' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\03_Colecoes\\\\Expressao_e_Desenvolvimento\\\\04-tear-dos-vinculos'"
+  },
+  {
+    "caminho": "Kit_17_jogos_3D_mockups_e_prompts",
+    "motivo": "Windows impediu a movimentação; preservado no local",
+    "erro": "[WinError 5] Acesso negado: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\Kit_17_jogos_3D_mockups_e_prompts' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\03_Colecoes\\\\Kit_17_jogos_3D_mockups_e_prompts'"
+  },
+  {
+    "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas",
+    "motivo": "Windows impediu a movimentação; preservado no local",
+    "erro": "[WinError 5] Acesso negado: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\ambientes-interativos-adultos-e-marcas\\\\ambientes-interativos-adultos-e-marcas' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\03_Colecoes\\\\Adultos_e_Marcas'"
+  },
+  {
+    "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas",
+    "motivo": "Windows impediu a movimentação; preservado no local",
+    "erro": "[WinError 5] Acesso negado: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\ambientes-interativos-adultos-e-marcas\\\\ambientes-interativos-adultos-e-marcas' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\04_Prompts\\\\Colecao_80\\\\ambientes-interativos-adultos-e-marcas'"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "units": "m",
+  "up": "Y",
+  "assets": [
+    {"id":"tigelas","source":"src/scene/ceramic.ts","role":"interativo e decorativo","license":"original do projeto","size":[0.552,0.225,0.552],"materials":["esmalte azul e marfim","borda de argila"],"pivot":"centro da base","collider":"volume esférico de seleção por fragmento","clips":[],"lod":"lathe de 24 segmentos nas peças de estante","fallback":"setores do diagrama"},
+    {"id":"pratos","source":"src/scene/ceramic.ts","role":"interativo e decorativo","license":"original do projeto","size":[0.62,0.096,0.62],"materials":["esmalte marfim","borda de argila"],"pivot":"centro da base","collider":"volume esférico de seleção por fragmento","clips":[],"lod":"lathe de 24 segmentos nas peças de estante","fallback":"setores do diagrama"},
+    {"id":"vasos_com_fragmentos_pre_fraturados_e_ids_de_juntas","source":"src/scene/ceramic.ts","role":"interativo e decorativo","license":"original do projeto","size":[0.346,0.351,0.346],"materials":["esmalte de óxido de ferro","borda de argila"],"pivot":"centro da base","collider":"volume de seleção separado e tubos ampliados nas juntas","clips":[],"lod":"lathe de 24 segmentos nas peças de estante","fallback":"setores do diagrama"},
+    {"id":"pincel","source":"src/scene/workshop.ts","role":"decorativo, ferramenta acionada pelo cursor","license":"original do projeto","size":[0.024,0.265,0.024],"materials":["madeira","metal","cerdas"],"pivot":"centro do cabo","collider":null,"clips":[],"lod":"10–12 segmentos radiais","fallback":"botões de trecho"},
+    {"id":"espatula","source":"src/scene/workshop.ts","role":"decorativo","license":"original do projeto","size":[0.031,0.271,0.022],"materials":["madeira","aço"],"pivot":"centro do cabo","collider":null,"clips":[],"lod":"10–12 segmentos radiais","fallback":null},
+    {"id":"laca_virtual","source":"src/scene/workshop.ts","role":"recipiente decorativo, aplicação interativa na junta","license":"original do projeto","size":[0.11,0.067,0.11],"materials":["laca"],"pivot":"fundo do recipiente","collider":null,"clips":[],"lod":"perfil de revolução","fallback":"controles por trecho"},
+    {"id":"pigmento_metalico","source":"src/scene/index.ts","role":"interativo","license":"original do projeto","size":[0.005,0.35,0.005],"materials":["acabamento metálico dourado"],"pivot":"junta local à peça","collider":"tubo de seleção de raio 0,02 m","clips":[],"lod":"oito regiões por junta","fallback":"linha dourada no setor"},
+    {"id":"bandeja","source":"src/scene/workshop.ts","role":"decorativo","license":"original do projeto","size":[0.38,0.027,0.38],"materials":["madeira"],"pivot":"centro","collider":null,"clips":[],"lod":"chanfro de 2 segmentos","fallback":null},
+    {"id":"suportes","source":"src/scene/workshop.ts","role":"decorativo","license":"original do projeto","size":[0.458,0.024,0.458],"materials":["madeira escura","linho"],"pivot":"centro","collider":null,"clips":[],"lod":"cilindro e volumes chanfrados","fallback":null},
+    {"id":"folhagem_outonal","source":"src/scene/workshop.ts","role":"decorativo","license":"original do projeto","size":[4,3,3.3],"materials":["folhas tingidas"],"pivot":"posição por instância","collider":null,"clips":[],"lod":"2.400 instâncias de folha plana","fallback":null},
+    {"id":"sons_da_bancada","source":"src/audio.ts","role":"feedback opcional","license":"original do projeto","size":null,"materials":[],"pivot":null,"collider":null,"clips":["encaixe","laca","pigmento"],"lod":null,"fallback":"feedback visual e textual"}
+  ]
+}

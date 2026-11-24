@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Casa Seixo Yoga e Terapia — Rochas em Equilíbrio 3D</title>
+  <meta name="description" content="À beira de um rio raso, empilhe seixos com física real. Encontre o ponto de apoio e respire no ritmo da correnteza.">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Nunito+Sans:ital,opsz,wght@0,6..12,300..900;1,6..12,300..900&display=swap" rel="stylesheet">
+  <style>
+/*FONTS*/
+/*STYLE*/
+  </style>
+  <script type="importmap">
+/*IMPORTS*/
+  </script>
+</head>
+<body>
+  <canvas id="scene" tabindex="0" aria-label="Ambiente 3D com margem de rio raso, seixos minerais e bambuzal matinal. Empilhe as pedras sobre a rocha base."></canvas>
+
+  <!-- Topbar de Demonstração (oculta com ?embed=1) -->
+  <header class="topbar" id="topbar">
+    <nav class="topbar-nav" aria-label="Navegação do site">
+      <a href="#inicio" class="brand-logo" id="brandLogo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <ellipse cx="12" cy="18" rx="8" ry="4"/>
+          <ellipse cx="12" cy="12" rx="6" ry="3"/>
+          <ellipse cx="12" cy="7" rx="3.5" ry="2"/>
+        </svg>
+        <span id="brandName">Casa Seixo Yoga e Terapia</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#inicio">Início</a></li>
+        <li><a href="#servicos">Serviços</a></li>
+        <li><a href="#sobre" id="linkSobre">Sobre</a></li>
+        <li><a href="#contato">Contato</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="btn-cta" id="btnCta">Ver horários</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Conteúdo Editorial à Esquerda -->
+  <main class="hero-content" id="heroContent">
+    <h1 class="hero-title" id="heroTitle">Uma pedra<br>de cada vez.</h1>
+    <p class="hero-subtitle" id="heroSubtitle">Empilhe seixos com presença. Sinta o ponto de apoio e respire com o ritmo das águas.</p>
+
+    <div class="steps-card" aria-label="Passos da experiência">
+      <ul class="steps-list" id="stepsList">
+        <li class="step-item active" data-step="0"><span class="step-num">1</span><span>Escolha uma pedra</span></li>
+        <li class="step-item" data-step="1"><span class="step-num">2</span><span>Encontre o apoio</span></li>
+        <li class="step-item" data-step="2"><span class="step-num">3</span><span>Solte devagar</span></li>
+        <li class="step-item" data-step="3"><span class="step-num">4</span><span>Recomece quando cair</span></li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- Momento de Interação (HUD Encontre o Apoio) -->
+  <aside class="hud-balance" id="hudBalance" aria-label="Ajuste do apoio da pedra">
+    <div class="hud-header">
+      <span class="hud-title">Encontre o apoio</span>
+      <span class="stability-badge estavel" id="stabilityBadge"><i></i><span id="stabilityLabel">Estável</span></span>
+    </div>
+    <div class="hud-actions">
+      <button class="btn-drop" id="btnDrop">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        Soltar
+      </button>
+    </div>
+  </aside>
+
+  <!-- Selo Flutuante Toque e Experimente -->
+  <div class="tag-badge" id="tagBadge" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>Toque e experimente</span>
+  </div>
+
+  <!-- Dock Flutuante Inferior -->
+  <nav class="dock-wrapper" id="dock" aria-label="Controles de empilhamento">
+    <button class="dock-btn" id="btnPick" title="Pegar próximo seixo da margem (Atalho: 1 a 6)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+      <span>Pegar pedra</span>
+    </button>
+
+    <button class="dock-btn" id="btnRotate" title="Girar pedra suspensa (Atalho: R)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+      <span>Girar</span>
+    </button>
+
+    <button class="dock-btn" id="btnBalance" aria-pressed="false" title="Mostrar ponto de equilíbrio e centro de massa (Atalho: E)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+      <span>Ponto de equilíbrio</span>
+    </button>
+
+    <button class="dock-btn" id="btnPhoto" title="Fotografar torre de pedras (Atalho: F ou P)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span>Fotografar</span>
+    </button>
+
+    <button class="dock-btn" id="btnReset" title="Devolver todas as pedras à margem (Atalho: C)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>Recomeçar</span>
+    </button>
+
+    <div class="dock-sep" aria-hidden="true"></div>
+
+    <!-- Indicador de Respiração e Ritmo -->
+    <div class="breath-indicator" id="breathIndicator" title="Ritmo respiratório da correnteza">
+      <span class="breath-circle" id="breathCircle"></span>
+      <span id="breathText">Inspirar</span>
+    </div>
+
+    <div class="dock-sep" aria-hidden="true"></div>
+
+    <button class="dock-btn dock-icon-btn" id="btnSound" aria-pressed="true" title="Som ligado/desligado (Atalho: M)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      <span class="sr-only">Som</span>
+    </button>
+
+    <button class="dock-btn dock-icon-btn" id="btnSettings" title="Ajustes e Qualidade">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="sr-only">Ajustes</span>
+    </button>
+  </nav>
+
+  <!-- Toast -->
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+
+  <!-- Modal Ajustes -->
+  <dialog id="dlgSettings" aria-labelledby="settingsTitle">
+    <div class="dlg-card">
+      <button class="dlg-close" data-close aria-label="Fechar">×</button>
+      <h2 id="settingsTitle">Ajustes da Experiência</h2>
+      <p>Configure a qualidade visual, personalização de marca e preferências de som.</p>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Qualidade Gráfica</div>
+          <div class="setting-sub">Alta ativa reflexos completos; Leve economiza bateria.</div>
+        </div>
+        <div class="seg-control" id="segQuality">
+          <button class="seg-btn" data-val="alta">Alta</button>
+          <button class="seg-btn" data-val="equilibrada">Equilibrada</button>
+          <button class="seg-btn" data-val="leve">Leve</button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Marca do Ambiente</div>
+          <div class="setting-sub">Altera cores, textos e acentos 3D em tempo real.</div>
+        </div>
+        <div class="seg-control" id="segBrand">
+          <button class="seg-btn active" data-val="casaSeixo">Casa Seixo</button>
+          <button class="seg-btn" data-val="neutro">Neutro</button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Som e Correnteza</div>
+          <div class="setting-sub">Web Audio procedural calibrado a −24 dBFS.</div>
+        </div>
+        <div class="seg-control" id="segSound">
+          <button class="seg-btn" data-val="on">Ligado</button>
+          <button class="seg-btn" data-val="off">Mudo</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modal Sobre -->
+  <dialog id="dlgAbout" aria-labelledby="aboutTitle">
+    <div class="dlg-card">
+      <button class="dlg-close" data-close aria-label="Fechar">×</button>
+      <h2 id="aboutTitle">Sobre esta Experiência</h2>
+      <p id="aboutDescription">Casa Seixo é um espaço dedicado ao mindfulness, yoga e psicoterapia corporal. Esta experiência convida a desacelerar e experimentar o equilíbrio paciente.</p>
+      <p><strong>Privacidade:</strong> Nenhum dado pessoal ou de rastreamento é coletado. Apenas suas preferências de exibição são guardadas localmente no seu aparelho (<code>amb3d_rochas-em-equilibrio_v1</code>). As fotografias feitas ficam apenas no seu navegador.</p>
+    </div>
+  </dialog>
+
+  <!-- Fallback 2D se WebGL falhar -->
+  <div id="fallback-view">
+    <div class="fallback-card">
+      <h2>Rochas em Equilíbrio (Modo Acessível)</h2>
+      <p>Seu navegador está no modo simplificado 2D. Você ainda pode interagir com os seixos e agendar seus horários.</p>
+      <img src="26a63d91-3c0a-4444-b6ef-799d8a80e009.webp" alt="Rochas em equilíbrio na margem do rio" class="fallback-image">
+      <div class="fallback-grid" id="fallbackGrid">
+        <button data-rock="0">1 · Ardósia</button>
+        <button data-rock="1">2 · Ocre</button>
+        <button data-rock="2">3 · Basalto</button>
+        <button data-rock="3">4 · Musgosa</button>
+        <button data-rock="4">5 · Arenito</button>
+        <button data-rock="5">6 · Quartzo</button>
+      </div>
+      <button class="btn-cta" style="margin-top:20px; width:100%" id="btnCtaFallback">Ver horários</button>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay">
+    <div class="loading-card">
+      <h2>Acomodando as águas…</h2>
+      <p>Preparando a margem do rio e os seixos</p>
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
+
+  <script>
+/*BRAND*/
+  </script>
+  <script type="module">
+/*APP*/
+  </script>
+</body>
+</html>

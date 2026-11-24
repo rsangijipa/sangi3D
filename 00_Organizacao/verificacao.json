@@ -1,0 +1,11 @@
+{
+  "arquivos_anteriores_conferidos": 1306,
+  "alteracoes_intencionais": [
+    "launcher/server.mjs: caminhos e descoberta das coleções",
+    "launcher/index.html: acesso ao catálogo de pendências"
+  ],
+  "divergencias": [],
+  "entradas_html": 76,
+  "prompts_auditados": 209,
+  "pendencias_distintas": 105
+}

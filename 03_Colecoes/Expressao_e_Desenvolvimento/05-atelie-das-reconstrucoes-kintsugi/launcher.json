@@ -1,0 +1,10 @@
+{
+  "id":"05-atelie-das-reconstrucoes-kintsugi",
+  "title":"Ateliê das Reconstruções · Kintsugi",
+  "category":"Gestalt e expressiva",
+  "description":"Oficina interativa de cerâmica. Reúna fragmentos, aplique laca e experimente o acabamento dourado.",
+  "entry":"dist/index.html",
+  "thumbnail":"miniatura.png",
+  "capabilities":["webgl2","fallback-dom","touch","keyboard","local-save","offline","session-events-v1"],
+  "status":"ready"
+}

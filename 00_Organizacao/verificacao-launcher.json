@@ -1,0 +1,10 @@
+{
+  "apps": 93,
+  "status": {
+    "ready": 64,
+    "concept": 29
+  },
+  "falhas": [],
+  "redirecionamentos_verificados": 12,
+  "nota": "Conferência do catálogo e respostas HTTP; não é teste completo da interação dos jogos."
+}

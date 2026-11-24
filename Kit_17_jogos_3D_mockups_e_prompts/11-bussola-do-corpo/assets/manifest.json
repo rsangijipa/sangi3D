@@ -1,0 +1,250 @@
+{
+  "version": 1,
+  "units": "m",
+  "up": "Y",
+  "assets": [
+    {
+      "id": "observatory",
+      "path": "assets/modelos/observatory.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 3719388,
+      "sha256": "2318109e2753798da9df61187a7acde9375ef78dd0752109bc653b2f3b22917b",
+      "lod": 0,
+      "material": "Estrutura do domo, piso e vigas de madeira",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "shelf",
+      "path": "assets/modelos/shelf.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 3525384,
+      "sha256": "7ee94f99067025c568f8892dd12394445b37b3704c4e796b85052a50cecc299f",
+      "lod": 0,
+      "material": "Carvalho e livros de papel",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "plant",
+      "path": "assets/modelos/plant.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 161476,
+      "sha256": "091e0144c1144ccc88ac874869392cbc94f1dfc7d4342254e630fe6b7d0d218f",
+      "lod": 0,
+      "material": "Folhagem e vaso de terracota",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "telescope",
+      "path": "assets/modelos/telescope.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 1998904,
+      "sha256": "55635e7c588db6640a328a34f22535f60506e72a7355967001f430f418b7b00f",
+      "lod": 0,
+      "material": "Carvalho, latão e lente",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "moon_lamp",
+      "path": "assets/modelos/moon_lamp.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 441512,
+      "sha256": "ce74b446d135438cd3a32c8d455d790195447c1ad0b0f13f8ec8620958e2967a",
+      "lod": 0,
+      "material": "Cerâmica lunar emissiva e base de latão",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "star_lamp",
+      "path": "assets/modelos/star_lamp.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 2099900,
+      "sha256": "df7bcc610e53a2c30b329e78b36612635db6bbc2144b13cd18a7acbbe9be65b2",
+      "lod": 0,
+      "material": "Cúpula translúcida, base de latão e pontos de luz",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "rug",
+      "path": "assets/modelos/rug.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 1410216,
+      "sha256": "b8884641ded3fe5443da1031f513dca8d1ead1fec3b8ee04f8ef46af903ae1e6",
+      "lod": 0,
+      "material": "Juta tramada",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "pouf",
+      "path": "assets/modelos/pouf.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 1117948,
+      "sha256": "cc053b9440ecd5025d0f1f5d0851ad87fc92073a4ec292f10c49ab7e476c6f1b",
+      "lod": 0,
+      "material": "Feltro de musgo e costuras",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "body_neutral",
+      "path": "assets/modelos/body_neutral.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 270164,
+      "sha256": "bc5e654d68212e6c62e3e578562193fdc0a8a43715952d65685e606574698ad6",
+      "lod": 0,
+      "material": "Figura em material fosco, com gesto de virar",
+      "pivot": "Plano de apoio da peça",
+      "animations": [
+        "Frente para costas"
+      ],
+      "collider": "region_proxy",
+      "fallback": "Mapa por lista em modo acessível",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "region_proxy",
+      "path": "assets/modelos/region_proxy.glb",
+      "category": "picking",
+      "license": "Criação original deste projeto",
+      "size": 162512,
+      "sha256": "19c3dae6371335d676a602b14826ee43156504bec9d35325cca6293d9c109885",
+      "lod": 0,
+      "material": "Faces separadas por região, usadas no raycast",
+      "pivot": "Plano de apoio da peça",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "orbital_ring",
+      "path": "assets/modelos/orbital_ring.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 37096,
+      "sha256": "c8926f9f0790fa912290e341757057f3944c328a7d3d27f14f440f10a0b8a2cd",
+      "lod": 0,
+      "material": "Aro de latão",
+      "pivot": "Centro da órbita",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "sensation_tokens",
+      "path": "assets/modelos/sensation_tokens.glb",
+      "category": "modelo 3D",
+      "license": "Criação original deste projeto",
+      "size": 763980,
+      "sha256": "53828fe0145c13bfb941504fa3a7640cda1049f5c2f59c0ab8ffaa743e5182d0",
+      "lod": 0,
+      "material": "Oito discos de cerâmica e símbolos gravados",
+      "pivot": "Centro da órbita",
+      "animations": [],
+      "collider": null,
+      "fallback": "Procedural em TypeScript",
+      "validator": {
+        "errors": 0,
+        "warnings": 0,
+        "warningCodes": []
+      }
+    },
+    {
+      "id": "paper",
+      "path": "assets/paper.webp",
+      "category": "textura da interface",
+      "license": "Criação original deste projeto",
+      "size": 37142,
+      "sha256": "9ff18dcc43fd0f1fabf8145a97ac4961827ab8e09d6933edc840b9cce1b6fb12",
+      "lod": 0,
+      "material": "Papel creme com fibras",
+      "animations": [],
+      "collider": null,
+      "fallback": "Cor de papel em CSS"
+    }
+  ]
+}

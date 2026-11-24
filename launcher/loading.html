@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#14100d" />
+  <title>Preparando…</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #14100d; --card: #211b16; --line: rgba(220, 190, 150, 0.16); --line-strong: rgba(220, 190, 150, 0.32);
+      --text: #f5ede0; --muted: #b5a691; --faint: #7d705f; --gold: #dfba7c; --error: #e58b74;
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+      background: var(--bg) radial-gradient(ellipse 70% 50% at 50% 35%, rgba(223, 186, 124, 0.10), transparent 70%);
+      color: var(--text); font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif; font-size: 15px;
+    }
+    .box { width: 100%; max-width: 520px; text-align: center; }
+    .orb { width: 92px; height: 92px; margin: 0 auto 28px; position: relative; }
+    .orb::before, .orb::after {
+      content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent;
+      border-top-color: var(--gold); animation: spin 1.4s linear infinite;
+    }
+    .orb::after { inset: 14px; border-top-color: transparent; border-bottom-color: rgba(223, 186, 124, .55); animation-duration: 2.1s; animation-direction: reverse; }
+    .orb span { position: absolute; inset: 34px; border-radius: 50%; background: var(--gold); opacity: .85; animation: pulse 1.8s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 50% { transform: scale(.6); opacity: .4; } }
+    .error .orb::before, .error .orb::after { animation: none; border-color: var(--error); opacity: .5; }
+    .error .orb span { animation: none; background: var(--error); }
+    .eyebrow { color: var(--gold); font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 8px; }
+    h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(34px, 7vw, 48px); line-height: 1.05; margin: 0; }
+    .step { color: var(--muted); margin: 14px 0 0; min-height: 1.5em; }
+    .meta { color: var(--faint); font-size: 13px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .bar { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 26px auto 0; max-width: 320px; }
+    .bar i { display: block; height: 100%; width: 35%; background: var(--gold); border-radius: 3px; animation: slide 1.6s ease-in-out infinite; }
+    @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+    .error .bar { display: none; }
+    .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+    .btn {
+      font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer;
+      text-decoration: none; border: 1px solid var(--line-strong); background: transparent; color: var(--text);
+    }
+    .btn.primary { background: var(--gold); border-color: var(--gold); color: #1e1a16; }
+    .btn:not(.primary):hover { border-color: var(--gold); }
+    details { margin-top: 22px; text-align: left; }
+    summary { cursor: pointer; color: var(--faint); font-size: 13px; text-align: center; }
+    pre {
+      margin: 10px 0 0; max-height: 260px; overflow: auto; padding: 12px 14px; border-radius: 10px; background: #0e0b09;
+      border: 1px solid var(--line); color: var(--muted); font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+    }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="box" id="box">
+    <div class="orb" aria-hidden="true"><span></span></div>
+    <p class="eyebrow" id="eyebrow">Preparando o jogo</p>
+    <h1 id="name">…</h1>
+    <p class="step" id="step" role="status" aria-live="polite">Conferindo os arquivos…</p>
+    <p class="meta" id="meta"></p>
+    <div class="bar" aria-hidden="true"><i></i></div>
+    <div class="actions">
+      <a class="btn" href="/" id="back">← Voltar ao launcher</a>
+      <a class="btn" id="old" hidden>Abrir versão anterior</a>
+      <button class="btn primary" id="retry" hidden>Tentar de novo</button>
+    </div>
+    <details id="logbox" hidden>
+      <summary>Ver detalhes do build</summary>
+      <pre id="log"></pre>
+    </details>
+  </main>
+  <script>
+    const id = location.pathname.split('/').filter(Boolean)[1];
+    const $ = (s) => document.getElementById(s);
+    const STEP = {
+      queued: 'Na fila — outro jogo está sendo preparado',
+      installing: 'Instalando dependências (só na primeira vez)',
+      building: 'Compilando o jogo',
+      ready: 'Pronto! Abrindo…',
+      idle: 'Conferindo os arquivos…',
+    };
+    let timer;
+
+    function fmt(s) { return s < 60 ? `${s}s` : `${Math.floor(s / 60)}min ${String(s % 60).padStart(2, '0')}s`; }
+
+    async function poll() {
+      let d;
+      try { d = await fetch(`/api/build/${id}`, { cache: 'no-store' }).then((r) => { if (!r.ok) throw 0; return r.json(); }); }
+      catch { $('step').textContent = 'Sem conexão com o launcher. Ele ainda está aberto?'; timer = setTimeout(poll, 2000); return; }
+
+      document.title = `Preparando ${d.name}…`;
+      $('name').textContent = d.name;
+
+      if (d.state === 'ready') { $('step').textContent = STEP.ready; location.replace(d.appUrl); return; }
+
+      const isError = d.state === 'error';
+      $('box').classList.toggle('error', isError);
+      $('eyebrow').textContent = isError ? 'Não deu para compilar' : 'Preparando o jogo';
+      $('step').textContent = isError
+        ? (d.hasDist ? 'O código atual tem um erro. Você pode abrir a última versão que funcionava.' : 'O código atual tem um erro e ainda não existe uma versão compilada.')
+        : (STEP[d.state] || d.step || STEP.idle) + (d.state === 'queued' && d.position > 1 ? ` (posição ${d.position})` : '');
+      $('meta').textContent = !isError && d.startedAt && d.state !== 'queued' ? `${fmt(Math.round((Date.now() - d.startedAt) / 1000))} — costuma levar menos de 1 minuto` : '';
+      $('old').hidden = !(isError && d.hasDist);
+      $('old').href = d.appUrl;
+      $('retry').hidden = !isError;
+      $('logbox').hidden = !d.log;
+      $('log').textContent = d.log || '';
+      if (isError) { $('logbox').open = !d.hasDist; return; }
+      timer = setTimeout(poll, 1000);
+    }
+
+    $('retry').addEventListener('click', async () => {
+      $('retry').hidden = true;
+      $('box').classList.remove('error');
+      $('step').textContent = 'Tentando de novo…';
+      await fetch(`/api/build/${id}/retry`, { cache: 'no-store' }).catch(() => {});
+      clearTimeout(timer); poll();
+    });
+    poll();
+  </script>
+</body>
+</html>

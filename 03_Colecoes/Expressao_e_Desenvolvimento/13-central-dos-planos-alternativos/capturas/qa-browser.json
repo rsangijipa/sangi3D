@@ -1,0 +1,96 @@
+{
+  "project": "13-central-dos-planos-alternativos",
+  "checks": [
+    "WebGL2 inicializado",
+    "bloqueio preventivo e viagem na rota alternativa",
+    "pausa congela simulação",
+    "exportação JSON voluntária",
+    "reinício exige confirmação",
+    "1920×1080, 1280×720, 390×844, 360×640, tablet e paisagem",
+    "reload offline com cache local"
+  ],
+  "errors": [],
+  "network": [],
+  "hardware": "Chrome headless · ANGLE SwiftShader (software)",
+  "captures": [
+    "desktop-inicial.png",
+    "desktop-interacao.png",
+    "mobile-390x844.png",
+    "mobile-360x640.png"
+  ],
+  "viewports": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "scroll": false,
+      "canvas": 1920,
+      "header": 93.75
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scroll": false,
+      "canvas": 390,
+      "header": 111
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "scroll": false,
+      "canvas": 360,
+      "header": 111
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "scroll": false,
+      "canvas": 844,
+      "header": 122.5
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "scroll": false,
+      "canvas": 768,
+      "header": 122.5
+    }
+  ],
+  "lastViewport": {
+    "width": 768,
+    "height": 1024,
+    "scroll": false,
+    "canvas": 768,
+    "header": 122.5
+  },
+  "diagnostics": {
+    "calls": 50,
+    "triangles": 32456,
+    "geometries": 41,
+    "textures": 13,
+    "p50": 333.10000000000036,
+    "p95": 633.1000000000058,
+    "dpr": 1,
+    "quality": "Equilibrada",
+    "renderer": "WebGL2",
+    "viewport": [
+      768,
+      1024
+    ]
+  },
+  "lightDiagnostics": {
+    "calls": 52,
+    "triangles": 33632,
+    "geometries": 41,
+    "textures": 11,
+    "p50": 333.10000000000036,
+    "p95": 708,
+    "dpr": 0.7725206757391315,
+    "quality": "Leve",
+    "renderer": "WebGL2",
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  "pass": true
+}

@@ -1,0 +1,3800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Termômetro da Ansiedade · Jardins da TCC 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #06141a;
+      --panel-bg: rgba(10, 32, 40, 0.84);
+      --panel-bg-strong: rgba(8, 27, 34, 0.94);
+      --card-bg: rgba(18, 52, 63, 0.56);
+      --card-hover: rgba(25, 70, 84, 0.72);
+      --border-soft: rgba(126, 214, 223, 0.22);
+      --border-active: rgba(73, 210, 208, 0.75);
+      --border-gold: rgba(216, 183, 122, 0.48);
+      --cyan: #49d2d0;
+      --cyan-bright: #75ece9;
+      --gold: #d8b77a;
+      --gold-warm: #f0c975;
+      --ivory: #f4ebdd;
+      --text-main: #eef4f3;
+      --text-muted: #b3cbd0;
+      --text-dim: #7f9ea5;
+      --shadow-panel: 0 24px 60px rgba(2, 10, 14, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --radius-pill: 999px;
+      --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 35% 30%, #0d2a38 0%, #06141a 70%, #030b0f 100%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* 3D Canvas Container */
+    #scene-stage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      touch-action: none;
+      cursor: grab;
+    }
+    #scene-stage.dragging { cursor: grabbing; }
+    #scene-stage.pointer { cursor: pointer; }
+    #scene-stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* WebGL Fallback */
+    #webgl-fallback {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: none;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 96px 6% 40px;
+      background: radial-gradient(circle at 32% 45%, #123847 0%, #081c24 52%, #040e13 100%);
+    }
+    #webgl-fallback.visible { display: flex; }
+    .fallback-thermometer-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: min(360px, 52vw);
+      padding: 28px 24px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-panel);
+      text-align: center;
+    }
+    .fallback-tube {
+      position: relative;
+      width: 58px;
+      height: 260px;
+      border-radius: 30px;
+      border: 2px solid rgba(190, 238, 244, 0.45);
+      background: rgba(6, 20, 26, 0.7);
+      overflow: hidden;
+      box-shadow: inset 0 0 18px rgba(73, 210, 208, 0.25);
+    }
+    .fallback-liquid {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      height: 50%;
+      border-radius: 24px;
+      background: linear-gradient(to top, #28c6d8, #f2c96b);
+      transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease;
+    }
+
+    /* Loading Overlay */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: radial-gradient(circle at 50% 45%, #0e2c38 0%, #051117 100%);
+      transition: opacity 0.55s ease, visibility 0.55s ease;
+    }
+    #loading-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loader-ring {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 2px solid rgba(73, 210, 208, 0.18);
+      border-top-color: var(--cyan);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-title {
+      font-family: var(--font-serif);
+      font-size: 1.55rem;
+      color: var(--ivory);
+      letter-spacing: 0.02em;
+    }
+    .loader-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    /* Top HUD Bar */
+    .top-hud {
+      position: fixed;
+      top: calc(16px + var(--safe-top));
+      left: 20px;
+      right: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .brand-pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 18px 9px 11px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      box-shadow: 0 12px 32px rgba(2, 10, 14, 0.45);
+    }
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, rgba(73, 210, 208, 0.22), rgba(16, 47, 56, 0.8));
+      border: 1px solid rgba(73, 210, 208, 0.35);
+      color: var(--cyan-bright);
+      flex-shrink: 0;
+    }
+    .brand-text h1 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.42rem;
+      font-weight: 600;
+      line-height: 1.05;
+      color: var(--ivory);
+      letter-spacing: 0.01em;
+    }
+    .brand-text p {
+      margin: 2px 0 0;
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .controls-bar {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .hud-btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 38px;
+      padding: 0 13px;
+      border-radius: 13px;
+      border: 1px solid var(--border-soft);
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
+      box-shadow: 0 8px 22px rgba(2, 10, 14, 0.36);
+    }
+    .hud-btn:hover {
+      background: var(--card-hover);
+      border-color: rgba(126, 214, 223, 0.5);
+    }
+    .hud-btn:active { transform: translateY(1px); }
+    .hud-btn.active {
+      border-color: var(--border-active);
+      color: var(--cyan-bright);
+      background: rgba(17, 64, 74, 0.84);
+    }
+    .hud-btn.icon-only {
+      width: 38px;
+      padding: 0;
+      justify-content: center;
+    }
+    .hud-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+    .hud-badge {
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(73, 210, 208, 0.16);
+      color: var(--cyan-bright);
+      border: 1px solid rgba(73, 210, 208, 0.28);
+    }
+
+    /* Focus visibility */
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 2px solid var(--cyan-bright);
+      outline-offset: 2px;
+    }
+
+    /* Bottom-left Environment Card */
+    .env-card {
+      position: fixed;
+      left: 20px;
+      bottom: calc(20px + var(--safe-bottom));
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 18px 11px 14px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(2, 10, 14, 0.45);
+      max-width: 310px;
+      pointer-events: auto;
+    }
+    .env-card-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(73, 210, 208, 0.12);
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+    .env-card-kicker {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+    .env-card-quote {
+      margin-top: 2px;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1.02rem;
+      color: var(--ivory);
+    }
+
+    /* Scene Object Hover Tooltip & Contemplative Toast */
+    #object-tooltip {
+      position: fixed;
+      z-index: 25;
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: rgba(7, 24, 31, 0.92);
+      border: 1px solid var(--border-active);
+      color: var(--ivory);
+      font-size: 0.78rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -130%);
+      transition: opacity 0.18s ease;
+      white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    }
+    #object-tooltip.visible { opacity: 1; }
+
+    #scene-toast {
+      position: fixed;
+      left: 20px;
+      bottom: calc(96px + var(--safe-bottom));
+      z-index: 26;
+      max-width: 360px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: var(--panel-bg-strong);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border-gold);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+    #scene-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .toast-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .toast-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold-warm);
+    }
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .toast-close:hover { color: var(--ivory); background: rgba(255,255,255,0.08); }
+    .toast-body {
+      margin: 0;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+
+    /* Right Therapeutic Panel (Desktop ~39% / max 450px) */
+    .therapy-panel {
+      position: fixed;
+      top: calc(74px + var(--safe-top));
+      right: 20px;
+      bottom: calc(20px + var(--safe-bottom));
+      width: min(448px, 40vw);
+      min-width: 340px;
+      z-index: 18;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-panel);
+      overflow: hidden;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease;
+    }
+    .therapy-panel.highlight-pulse {
+      border-color: var(--border-active);
+      box-shadow: 0 24px 60px rgba(2, 10, 14, 0.65), 0 0 0 1px rgba(73, 210, 208, 0.35), 0 0 28px rgba(73, 210, 208, 0.16);
+    }
+
+    /* Mobile sheet handle (hidden on desktop) */
+    .sheet-handle-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px 8px;
+      border-bottom: 1px solid rgba(126, 214, 223, 0.14);
+      cursor: pointer;
+      background: rgba(8, 28, 36, 0.6);
+      flex-shrink: 0;
+    }
+    .sheet-pill {
+      width: 42px;
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(179, 203, 208, 0.45);
+      margin: 0 auto;
+    }
+    .sheet-toggle-label {
+      font-size: 0.76rem;
+      color: var(--cyan-bright);
+      font-weight: 500;
+    }
+
+    .panel-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px 24px 18px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(73, 210, 208, 0.32) transparent;
+    }
+    .panel-scroll::-webkit-scrollbar { width: 6px; }
+    .panel-scroll::-webkit-scrollbar-thumb {
+      background: rgba(73, 210, 208, 0.28);
+      border-radius: 99px;
+    }
+
+    .panel-kicker {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin: 0 0 4px;
+    }
+    .panel-title {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.9rem;
+      font-weight: 600;
+      line-height: 1.08;
+      color: var(--ivory);
+    }
+    .panel-subtitle {
+      margin: 4px 0 14px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* Progress Bar */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #3acbd2 0%, #86d9b8 55%, #e7c275 100%);
+      transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .step-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 7px 0 14px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .step-badge-chip {
+      font-size: 0.72rem;
+      color: var(--gold);
+      background: rgba(216, 183, 122, 0.12);
+      border: 1px solid rgba(216, 183, 122, 0.26);
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    /* Context Card */
+    .context-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: var(--radius-md);
+      background: var(--card-bg);
+      border: 1px solid rgba(126, 214, 223, 0.18);
+      margin-bottom: 18px;
+    }
+    .context-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--text-muted);
+      display: grid;
+      place-items: center;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .context-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--ivory);
+      margin-bottom: 3px;
+    }
+    .context-text {
+      margin: 0;
+      font-size: 0.83rem;
+      line-height: 1.48;
+      color: var(--text-muted);
+    }
+
+    /* Section Question */
+    .question-heading {
+      margin: 0 0 12px;
+      font-family: var(--font-serif);
+      font-size: 1.38rem;
+      font-weight: 600;
+      line-height: 1.22;
+      color: var(--ivory);
+    }
+    .sub-question {
+      margin: 18px 0 10px;
+      font-family: var(--font-serif);
+      font-size: 1.18rem;
+      font-weight: 600;
+      color: var(--ivory);
+    }
+    .helper-hint {
+      margin: -4px 0 10px;
+      font-size: 0.77rem;
+      color: var(--text-dim);
+    }
+
+    /* Intensity Slider Control */
+    .slider-box {
+      padding: 12px 14px 10px;
+      border-radius: var(--radius-md);
+      background: rgba(12, 37, 46, 0.65);
+      border: 1px solid rgba(126, 214, 223, 0.18);
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .slider-track-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    input[type="range"].intensity-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #38c6d9 0%, #4fd1b5 35%, #f2c96b 60%, #f09a4b 80%, #eb7a67 100%);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].intensity-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--cyan-bright);
+      box-shadow: 0 0 14px rgba(73, 210, 208, 0.75);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"].intensity-range::-webkit-slider-thumb:hover { transform: scale(1.1); }
+    input[type="range"].intensity-range::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--cyan-bright);
+      box-shadow: 0 0 14px rgba(73, 210, 208, 0.75);
+      cursor: pointer;
+    }
+    .slider-scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      padding: 0 2px;
+    }
+    .intensity-readout {
+      min-width: 68px;
+      padding: 7px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border-gold);
+      background: rgba(14, 34, 42, 0.85);
+      text-align: center;
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--gold-warm);
+      flex-shrink: 0;
+    }
+    .intensity-desc {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.77rem;
+      color: var(--text-muted);
+    }
+    .color-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .quick-step-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .mini-step-btn {
+      width: 26px;
+      height: 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ivory);
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .mini-step-btn:hover { background: rgba(73, 210, 208, 0.16); border-color: var(--border-active); }
+
+    /* Option Grids & Cards */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .options-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .option-chip {
+      appearance: none;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 13px;
+      border: 1px solid rgba(126, 214, 223, 0.22);
+      background: rgba(15, 44, 54, 0.62);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .option-chip:hover {
+      background: var(--card-hover);
+      border-color: rgba(126, 214, 223, 0.45);
+    }
+    .option-chip.selected {
+      background: rgba(21, 77, 89, 0.78);
+      border-color: var(--border-active);
+      box-shadow: 0 0 0 1px rgba(73, 210, 208, 0.25), 0 6px 18px rgba(73, 210, 208, 0.14);
+      color: #ffffff;
+    }
+    .option-chip.full-span { grid-column: 1 / -1; }
+    .chip-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(73, 210, 208, 0.12);
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+    .chip-icon svg { width: 15px; height: 15px; }
+    .chip-body { flex: 1; min-width: 0; }
+    .chip-title {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+    .chip-desc {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+    .chip-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(179, 203, 208, 0.35);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: transparent;
+      transition: all 0.18s ease;
+    }
+    .option-chip.selected .chip-check {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: #052028;
+    }
+
+    /* Text Inputs */
+    .field-group { margin-top: 12px; }
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.79rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .text-input, .text-area {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 12px;
+      border: 1px solid rgba(126, 214, 223, 0.24);
+      background: rgba(7, 23, 30, 0.72);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      line-height: 1.48;
+      resize: vertical;
+      user-select: text;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .text-input:focus, .text-area:focus {
+      border-color: var(--border-active);
+      background: rgba(9, 29, 37, 0.88);
+    }
+    .text-input::placeholder, .text-area::placeholder { color: var(--text-dim); }
+
+    /* Resource Visual Guide Card */
+    .resource-guide {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 13px;
+      background: rgba(19, 57, 68, 0.56);
+      border: 1px solid rgba(216, 183, 122, 0.28);
+      font-size: 0.82rem;
+      line-height: 1.48;
+      color: var(--ivory);
+    }
+    .resource-guide strong { color: var(--gold-warm); font-weight: 600; }
+
+    /* Step 5 Summary & Comparison */
+    .compare-box {
+      padding: 14px 16px;
+      border-radius: 15px;
+      background: rgba(11, 35, 44, 0.74);
+      border: 1px solid rgba(126, 214, 223, 0.22);
+      margin-bottom: 14px;
+    }
+    .compare-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      font-weight: 600;
+    }
+    .compare-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 76px 1fr 48px;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+    }
+    .compare-track {
+      height: 12px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+    .compare-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+    .compare-val {
+      text-align: right;
+      font-weight: 600;
+      color: var(--gold-warm);
+    }
+    .compare-note {
+      margin: 10px 0 0;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .summary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .summary-item {
+      padding: 10px 13px;
+      border-radius: 12px;
+      background: rgba(16, 46, 56, 0.5);
+      border: 1px solid rgba(126, 214, 223, 0.14);
+    }
+    .summary-item-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 3px;
+    }
+    .summary-item-val {
+      font-size: 0.84rem;
+      color: var(--text-main);
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .summary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .preview-toggle-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .pill-mini {
+      flex: 1;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .pill-mini.active {
+      background: rgba(73, 210, 208, 0.18);
+      border-color: var(--border-active);
+      color: var(--cyan-bright);
+    }
+
+    /* Footer Navigation inside Panel */
+    .panel-footer {
+      padding: 14px 24px 16px;
+      border-top: 1px solid rgba(126, 214, 223, 0.14);
+      background: rgba(7, 24, 31, 0.58);
+      flex-shrink: 0;
+    }
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .btn-secondary {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 11px 16px;
+      border-radius: 13px;
+      border: 1px solid rgba(126, 214, 223, 0.25);
+      background: rgba(16, 47, 56, 0.6);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(24, 68, 82, 0.78);
+      border-color: rgba(126, 214, 223, 0.5);
+    }
+    .btn-secondary:disabled { opacity: 0.42; cursor: not-allowed; }
+
+    .btn-primary {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 13px;
+      border: 1px solid rgba(117, 236, 233, 0.6);
+      background: linear-gradient(135deg, #5ce0dc 0%, #36b8c4 100%);
+      color: #05222a;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(73, 210, 208, 0.28);
+      transition: filter 0.2s ease, transform 0.15s ease;
+    }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.07); }
+    .btn-primary:active:not(:disabled) { transform: translateY(1px); }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+    .privacy-note {
+      margin: 11px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    /* Modals (Help & Export / Reset Confirmation) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 12, 16, 0.74);
+      backdrop-filter: blur(8px);
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      width: min(520px, 94vw);
+      max-height: 86vh;
+      overflow-y: auto;
+      padding: 24px 26px;
+      border-radius: 20px;
+      background: var(--panel-bg-strong);
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-panel);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      color: var(--ivory);
+    }
+    .modal-body {
+      font-size: 0.86rem;
+      line-height: 1.56;
+      color: var(--text-muted);
+    }
+    .modal-body ul { padding-left: 18px; margin: 10px 0; }
+    .modal-body li { margin-bottom: 6px; }
+    .modal-body strong { color: var(--ivory); }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    /* Responsive: Tablet & Mobile */
+    @media (max-width: 960px) {
+      .therapy-panel {
+        width: min(390px, 44vw);
+        min-width: 310px;
+      }
+      .hud-btn span.btn-label { display: none; }
+      .hud-btn { padding: 0 10px; }
+    }
+
+    @media (max-width: 768px) {
+      .top-hud {
+        top: calc(10px + var(--safe-top));
+        left: 12px;
+        right: 12px;
+        flex-wrap: wrap;
+      }
+      .brand-pill {
+        padding: 7px 12px 7px 9px;
+        gap: 9px;
+      }
+      .brand-icon { width: 32px; height: 32px; }
+      .brand-text h1 { font-size: 1.15rem; }
+      .brand-text p { font-size: 0.58rem; letter-spacing: 0.12em; }
+      .controls-bar { gap: 6px; }
+      .hud-btn { height: 34px; padding: 0 9px; border-radius: 10px; }
+      .hud-btn.icon-only { width: 34px; }
+      .env-card { display: none; }
+
+      .therapy-panel {
+        top: auto;
+        left: 10px;
+        right: 10px;
+        bottom: calc(10px + var(--safe-bottom));
+        width: auto;
+        min-width: 0;
+        height: 62vh;
+        max-height: calc(100vh - 90px);
+        border-radius: 20px;
+      }
+      .therapy-panel.collapsed {
+        height: auto;
+        transform: translateY(calc(100% - 48px));
+      }
+      .sheet-handle-bar { display: flex; }
+      .panel-scroll { padding: 16px 16px 14px; }
+      .panel-footer { padding: 12px 16px 14px; }
+      .options-grid { grid-template-columns: 1fr; }
+      #scene-toast {
+        left: 12px;
+        right: 12px;
+        bottom: auto;
+        top: calc(68px + var(--safe-top));
+        max-width: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.05s !important;
+        animation-duration: 0.05s !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-overlay" role="status" aria-live="polite">
+    <div class="loader-ring" aria-hidden="true"></div>
+    <div class="loader-title">Observatório das Sensações</div>
+    <div class="loader-sub">Preparando o ambiente 3D…</div>
+  </div>
+
+  <!-- 3D Viewport -->
+  <div id="scene-stage" aria-label="Cenário 3D interativo do Observatório das Sensações com o Termômetro da Ansiedade"></div>
+
+  <!-- WebGL Fallback -->
+  <div id="webgl-fallback" role="region" aria-label="Visualização alternativa do Termômetro da Ansiedade">
+    <div class="fallback-thermometer-wrap">
+      <div class="env-card-kicker">Modo Compatível 2D</div>
+      <div class="fallback-tube" aria-hidden="true">
+        <div id="fallback-liquid" class="fallback-liquid"></div>
+      </div>
+      <div id="fallback-value" style="font-family:var(--font-serif);font-size:1.5rem;color:var(--gold-warm);">5 / 10</div>
+      <p style="margin:0;font-size:0.82rem;color:var(--text-muted);line-height:1.45;">
+        Seu dispositivo está sem aceleração WebGL ativa. Você pode continuar toda a atividade terapêutica normalmente usando o painel ao lado.
+      </p>
+    </div>
+  </div>
+
+  <!-- Top HUD -->
+  <header class="top-hud">
+    <div class="brand-pill">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
+          <circle cx="11.5" cy="17.5" r="1.5" fill="currentColor"></circle>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Termômetro da Ansiedade</h1>
+        <p>Jardins da TCC · Experiência 3D</p>
+      </div>
+    </div>
+
+    <nav class="controls-bar" aria-label="Controles do ambiente 3D">
+      <button id="btn-camera" class="hud-btn" type="button" title="Recentralizar câmera (R)" aria-label="Recentralizar câmera">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+        <span class="btn-label">Câmera</span>
+      </button>
+
+      <button id="btn-motion" class="hud-btn" type="button" aria-pressed="false" title="Alternar animações ambientais">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="5 9 2 12 5 15"></polyline>
+          <polyline points="9 5 12 2 15 5"></polyline>
+          <polyline points="15 19 12 22 9 19"></polyline>
+          <polyline points="19 9 22 12 19 15"></polyline>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="12" y1="2" x2="12" y2="22"></line>
+        </svg>
+        <span class="btn-label">Movimento</span>
+      </button>
+
+      <button id="btn-quality" class="hud-btn" type="button" title="Alternar qualidade gráfica (Alto, Médio, Econômico)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span class="btn-label">Qualidade</span>
+        <span id="quality-badge" class="hud-badge">Alto</span>
+      </button>
+
+      <button id="btn-sound" class="hud-btn" type="button" aria-pressed="false" title="Ativar ou silenciar som ambiente">
+        <svg id="sound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <span class="btn-label">Som</span>
+      </button>
+
+      <button id="btn-capture" class="hud-btn icon-only" type="button" title="Capturar imagem do cenário 3D" aria-label="Capturar imagem do cenário">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </button>
+
+      <button id="btn-help" class="hud-btn icon-only" type="button" title="Ajuda e orientações" aria-label="Ajuda e orientações">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Bottom-Left Environment Plaque -->
+  <aside class="env-card" aria-label="Identificação do cenário">
+    <div class="env-card-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+      </svg>
+    </div>
+    <div>
+      <div class="env-card-kicker">Observatório das Sensações</div>
+      <div class="env-card-quote">Observar não é julgar</div>
+    </div>
+  </aside>
+
+  <!-- Hover Tooltip & Contemplative Toast -->
+  <div id="object-tooltip" role="tooltip"></div>
+  <div id="scene-toast" role="status" aria-live="polite">
+    <div class="toast-header">
+      <span id="toast-title" class="toast-title">Observação</span>
+      <button id="toast-close" class="toast-close" type="button" aria-label="Fechar mensagem">✕</button>
+    </div>
+    <p id="toast-body" class="toast-body"></p>
+  </div>
+
+  <!-- Right Therapeutic Panel -->
+  <main id="therapy-panel" class="therapy-panel" aria-label="Painel terapêutico do Termômetro da Ansiedade">
+    <div id="sheet-handle" class="sheet-handle-bar" role="button" tabindex="0" aria-expanded="true" aria-label="Recolher ou expandir painel terapêutico">
+      <span class="sheet-toggle-label" id="sheet-toggle-text">Recolher painel</span>
+      <div class="sheet-pill" aria-hidden="true"></div>
+      <span class="sheet-toggle-label" id="sheet-step-mini">Etapa 1/5</span>
+    </div>
+
+    <div id="panel-scroll" class="panel-scroll">
+      <p class="panel-kicker">Exploração Orientada</p>
+      <h2 class="panel-title">Termômetro da Ansiedade</h2>
+      <p id="panel-subtitle" class="panel-subtitle">Reconheça o volume da sua experiência</p>
+
+      <div class="progress-track" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1" id="progress-bar">
+        <div id="progress-fill" class="progress-fill" style="width:20%"></div>
+      </div>
+      <div class="step-meta-row">
+        <span id="step-counter">Etapa 1 de 5</span>
+        <span id="step-name-badge" class="step-badge-chip">Situação</span>
+      </div>
+
+      <!-- Dynamic Step Content -->
+      <div id="step-content"></div>
+    </div>
+
+    <footer class="panel-footer">
+      <div id="nav-row" class="nav-row">
+        <button id="btn-back" class="btn-secondary" type="button">← Voltar</button>
+        <button id="btn-next" class="btn-primary" type="button">Continuar →</button>
+      </div>
+      <p class="privacy-note">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Respostas salvas localmente · Não é prontuário
+      </p>
+    </footer>
+  </main>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="help-modal-title">Como explorar o Observatório</h2>
+        <button id="btn-close-help" class="toast-close" type="button" aria-label="Fechar ajuda">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>O <strong>Termômetro da Ansiedade</strong> convida a notar a intensidade de uma experiência sem julgá-la como certa ou errada. As cores representam apenas variações de intensidade de 0 a 10.</p>
+        <ul>
+          <li><strong>Câmera 3D:</strong> arraste com o mouse (ou dedo) para girar, use a roda do mouse (ou pinça) para aproximar e clique em <strong>Câmera</strong> para retornar ao enquadramento inicial.</li>
+          <li><strong>Termômetro central:</strong> clique diretamente no tubo de vidro para aproximar e destacar o controle de intensidade.</li>
+          <li><strong>Objetos contemplativos:</strong> clique no <strong>Telescópio</strong> para observar o céu noturno, no <strong>Globo Armilar</strong> para girá-lo suavemente e nas <strong>Luminárias</strong> para alternar entre dois níveis de luz quente.</li>
+          <li><strong>Acessibilidade e privacidade:</strong> o som inicia desligado, as animações podem ser reduzidas no botão <strong>Movimento</strong> e seus registros permanecem exclusivamente no seu dispositivo.</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-ok-help" class="btn-primary" type="button">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export / Reset Confirmation Modal -->
+  <div id="confirm-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="confirm-modal-title">Confirmar ação</h2>
+        <button id="btn-close-confirm" class="toast-close" type="button" aria-label="Fechar">✕</button>
+      </div>
+      <div id="confirm-modal-body" class="modal-body"></div>
+      <div class="modal-actions">
+        <button id="btn-cancel-confirm" class="btn-secondary" type="button">Cancelar</button>
+        <button id="btn-accept-confirm" class="btn-primary" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       JARDINS DA TCC 3D — TERMÔMETRO DA ANSIEDADE (OBSERVATÓRIO DAS SENSAÇÕES)
+       Arquitetura preservada: GAME_ID, META, SceneEngine, buildScene(),
+       makeGame(), renderGame(), game.data, game.updateVisual(), localStorage,
+       Exportação JSON, Raycasting, Câmera Orbital, Som e Qualidade.
+       ========================================================================= */
+
+    const GAME_ID = 'termometro_ansiedade';
+    const STORAGE_KEY = 'tcc3d_session_termometro';
+    const LEGACY_KEYS = ['jardins_tcc_termometro', 'tcc_termometro_ansiedade', '04_termometro_da_ansiedade'];
+
+    const META = {
+      id: GAME_ID,
+      title: 'Termômetro da Ansiedade',
+      subtitle: 'Jardins da TCC · Experiência 3D',
+      environment: 'Observatório das Sensações',
+      tagline: 'Observar não é julgar',
+      version: '2.0.0'
+    };
+
+    const SITUATIONS = [
+      {
+        id: 'falar_publico',
+        label: 'Falar em público',
+        context: 'Imagine que chegou a sua vez de apresentar uma ideia diante de um grupo atento em uma sala silenciosa.',
+        icon: '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>'
+      },
+      {
+        id: 'conhecer_alguem',
+        label: 'Conhecer alguém',
+        context: 'Imagine que você vai conversar pela primeira vez com uma pessoa nova em um encontro ou evento.',
+        icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+      },
+      {
+        id: 'tarefa_nova',
+        label: 'Fazer uma tarefa nova',
+        context: 'Imagine que você precisa iniciar uma atividade diferente do habitual, cujos passos ainda não domina totalmente.',
+        icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
+      },
+      {
+        id: 'esperar_resultado',
+        label: 'Esperar um resultado',
+        context: 'Imagine que você já fez a sua parte e agora aguarda uma resposta ou retorno importante sem poder antecipá-lo.',
+        icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'
+      }
+    ];
+
+    const SIGNALS = [
+      {
+        id: 'respiracao',
+        label: 'Respiração diferente',
+        icon: '<path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>'
+      },
+      {
+        id: 'musculos',
+        label: 'Músculos tensos',
+        icon: '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/>'
+      },
+      {
+        id: 'pensamentos',
+        label: 'Pensamentos acelerados',
+        icon: '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.54z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.54z"/>'
+      },
+      {
+        id: 'temperatura',
+        label: 'Frio ou calor',
+        icon: '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>'
+      },
+      {
+        id: 'nenhum',
+        label: 'Nenhum sinal claro',
+        exclusive: true,
+        icon: '<circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/>'
+      },
+      {
+        id: 'outro',
+        label: 'Outro',
+        icon: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+      }
+    ];
+
+    const RESOURCES = [
+      {
+        id: 'observar',
+        label: 'Observar e descrever o que sinto',
+        guide: 'Nomeie brevemente o que aparece no corpo ou na mente (por exemplo: "noto o peito apertado" ou "percebo um pensamento de pressa"), sem precisar julgá-lo.',
+        icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+      },
+      {
+        id: 'respirar',
+        label: 'Respirar sem prender o ar',
+        guide: 'Experimente deixar o ar entrar confortavelmente e sair um pouco mais devagar por 2 ou 3 ciclos, apenas notando o movimento natural da respiração.',
+        icon: '<path d="M12 22c4-4 8-7.5 8-12a8 8 0 1 0-16 0c0 4.5 4 8 8 12z"/>'
+      },
+      {
+        id: 'companhia',
+        label: 'Pedir companhia ou ajuda',
+        guide: 'Pense em quem poderia estar por perto ou oferecer apoio prático ou escuta nesse momento, mesmo que em um gesto pequeno.',
+        icon: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>'
+      },
+      {
+        id: 'informacoes',
+        label: 'Lembrar de informações verificáveis',
+        guide: 'Diferencie o que é um fato observável agora daquilo que ainda é apenas uma previsão ou suposição sobre o que pode acontecer.',
+        icon: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'
+      },
+      {
+        id: 'dividir',
+        label: 'Dividir uma tarefa em partes menores',
+        guide: 'Em vez de olhar para o todo de uma vez, identifique qual seria apenas o primeiro passo concreto e alcançável.',
+        icon: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>'
+      },
+      {
+        id: 'nenhum_recurso',
+        label: 'Prefiro não experimentar nenhum recurso agora',
+        guide: 'Tudo bem apenas observar como você está neste momento, sem precisar aplicar nenhuma estratégia agora.',
+        icon: '<circle cx="12" cy="12" r="9"/><path d="M9 12h6"/>'
+      }
+    ];
+
+    /* Intensity Color Palette (non-judgmental) */
+    function getIntensityVisual(value) {
+      const v = Math.max(0, Math.min(10, Number(value) || 0));
+      if (v <= 2) return { hex: '#38c6d9', name: 'Azul-turquesa suave', band: 'Intensidade baixa' };
+      if (v <= 4) return { hex: '#4fd1b5', name: 'Verde-água', band: 'Intensidade leve a moderada' };
+      if (v <= 6) return { hex: '#f2c96b', name: 'Amarelo-dourado', band: 'Intensidade moderada' };
+      if (v <= 8) return { hex: '#f09a4b', name: 'Âmbar', band: 'Intensidade elevada' };
+      return { hex: '#eb7a67', name: 'Coral quente', band: 'Intensidade muito elevada' };
+    }
+
+    function lerpColorHex(v) {
+      const stops = [
+        { p: 0,  c: new THREE.Color('#38c6d9') },
+        { p: 2,  c: new THREE.Color('#38c6d9') },
+        { p: 4,  c: new THREE.Color('#4fd1b5') },
+        { p: 6,  c: new THREE.Color('#f2c96b') },
+        { p: 8,  c: new THREE.Color('#f09a4b') },
+        { p: 10, c: new THREE.Color('#eb7a67') }
+      ];
+      const clamped = Math.max(0, Math.min(10, v));
+      for (let i = 0; i < stops.length - 1; i++) {
+        if (clamped >= stops[i].p && clamped <= stops[i + 1].p) {
+          const t = (clamped - stops[i].p) / Math.max(0.0001, stops[i + 1].p - stops[i].p);
+          return stops[i].c.clone().lerp(stops[i + 1].c, t);
+        }
+      }
+      return stops[stops.length - 1].c.clone();
+    }
+
+    /* =========================================================================
+       SOUND ENGINE (Web Audio API — OFF by default, gentle non-alarming tones)
+       ========================================================================= */
+    class SoundEngine {
+      constructor() {
+        this.enabled = false;
+        this.ctx = null;
+        this.ambientGain = null;
+        this.ambientOscs = [];
+      }
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        this.ctx = new AudioCtx();
+        this.ambientGain = this.ctx.createGain();
+        this.ambientGain.gain.value = 0.0001;
+        this.ambientGain.connect(this.ctx.destination);
+
+        // Soft nocturnal harmonic drone (C3 + G3 + D4, ultra-gentle)
+        const freqs = [130.81, 196.0, 293.66];
+        freqs.forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          const filter = this.ctx.createBiquadFilter();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = f;
+          filter.type = 'lowpass';
+          filter.frequency.value = 420;
+          g.gain.value = idx === 0 ? 0.032 : idx === 1 ? 0.02 : 0.012;
+          osc.connect(filter);
+          filter.connect(g);
+          g.connect(this.ambientGain);
+          osc.start();
+          this.ambientOscs.push(osc);
+        });
+      }
+      toggle() {
+        this.enabled = !this.enabled;
+        if (this.enabled) {
+          this.init();
+          if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+          if (this.ambientGain && this.ctx) {
+            this.ambientGain.gain.cancelScheduledValues(this.ctx.currentTime);
+            this.ambientGain.gain.linearRampToValueAtTime(0.65, this.ctx.currentTime + 0.8);
+          }
+          this.playChime(523.25, 0.08);
+        } else if (this.ambientGain && this.ctx) {
+          this.ambientGain.gain.cancelScheduledValues(this.ctx.currentTime);
+          this.ambientGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.4);
+        }
+        return this.enabled;
+      }
+      playChime(freq = 440, vol = 0.06) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.exponentialRampToValueAtTime(vol, now + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+          osc.connect(g);
+          g.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.5);
+        } catch (e) {}
+      }
+      playLevelTone(val) {
+        // Gentle pentatonic glass note mapped to 0–10
+        const scale = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3, 784.0, 880.0, 987.8];
+        this.playChime(scale[Math.max(0, Math.min(10, Math.round(val)))], 0.045);
+      }
+    }
+
+    /* =========================================================================
+       PROCEDURAL PBR TEXTURES (Marble, Stone, Wood, Brass, Rug, Night Sky)
+       ========================================================================= */
+    const TextureFactory = {
+      createMarble(w = 512, h = 512, tint = '#d8d2c6') {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = tint;
+        ctx.fillRect(0, 0, w, h);
+
+        // Soft tonal mottling
+        for (let i = 0; i < 65; i++) {
+          const x = Math.random() * w;
+          const y = Math.random() * h;
+          const r = 40 + Math.random() * 140;
+          const grd = ctx.createRadialGradient(x, y, 4, x, y, r);
+          const tone = Math.random() > 0.5 ? 'rgba(255,250,242,0.14)' : 'rgba(95,105,112,0.10)';
+          grd.addColorStop(0, tone);
+          grd.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = grd;
+          ctx.fillRect(x - r, y - r, r * 2, r * 2);
+        }
+
+        // Delicate organic marble veins
+        for (let v = 0; v < 22; v++) {
+          ctx.beginPath();
+          let x = Math.random() * w;
+          let y = Math.random() * h;
+          ctx.moveTo(x, y);
+          for (let s = 0; s < 14; s++) {
+            x += (Math.random() - 0.35) * 65;
+            y += (Math.random() - 0.5) * 55;
+            ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = v % 3 === 0 ? 'rgba(170,152,126,0.22)' : 'rgba(90,104,114,0.18)';
+          ctx.lineWidth = 0.7 + Math.random() * 2.1;
+          ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      },
+
+      createStone(w = 256, h = 256) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#c5bfb4';
+        ctx.fillRect(0, 0, w, h);
+        for (let i = 0; i < 1800; i++) {
+          const shade = 165 + Math.floor(Math.random() * 55);
+          ctx.fillStyle = `rgba(${shade},${shade - 4},${shade - 10},0.22)`;
+          ctx.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 4, 2 + Math.random() * 4);
+        }
+        // Subtle architectural fluting lines
+        ctx.fillStyle = 'rgba(70,66,60,0.08)';
+        for (let x = 0; x < w; x += 24) {
+          ctx.fillRect(x, 0, 4, h);
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      },
+
+      createWood(w = 256, h = 256) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#4e3322';
+        ctx.fillRect(0, 0, w, h);
+        for (let y = 0; y < h; y += 2) {
+          const wave = Math.sin(y * 0.08) * 10;
+          ctx.fillStyle = y % 4 === 0 ? 'rgba(32,18,10,0.28)' : 'rgba(110,74,48,0.18)';
+          ctx.fillRect(0, y + (wave % 2), w, 1.5);
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      },
+
+      createRug(w = 512, h = 512) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        const grd = ctx.createRadialGradient(w / 2, h / 2, 30, w / 2, h / 2, w / 2);
+        grd.addColorStop(0, '#144c54');
+        grd.addColorStop(0.75, '#0f3c44');
+        grd.addColorStop(0.92, '#174f57');
+        grd.addColorStop(1, '#0b2b32');
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, w, h);
+
+        // Textile weave grain
+        for (let i = 0; i < 6000; i++) {
+          const bright = Math.random() > 0.5 ? 'rgba(120,210,212,0.08)' : 'rgba(4,16,20,0.16)';
+          ctx.fillStyle = bright;
+          ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+        }
+        // Subtle woven ornamental concentric ring
+        ctx.strokeStyle = 'rgba(216, 183, 122, 0.25)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(w / 2, h / 2, w * 0.43, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      },
+
+      createSkyDome(w = 1024, h = 512) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        const bg = ctx.createLinearGradient(0, 0, 0, h);
+        bg.addColorStop(0, '#040b18');
+        bg.addColorStop(0.35, '#0a1c36');
+        bg.addColorStop(0.65, '#12304c');
+        bg.addColorStop(0.85, '#1c3e58');
+        bg.addColorStop(1, '#0a1824');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+
+        // Milky Way diagonal band
+        ctx.save();
+        ctx.translate(w * 0.45, h * 0.25);
+        ctx.rotate(-0.32);
+        for (let i = 0; i < 40; i++) {
+          const x = (Math.random() - 0.5) * w * 0.9;
+          const y = (Math.random() - 0.5) * 90;
+          const r = 45 + Math.random() * 90;
+          const neb = ctx.createRadialGradient(x, y, 2, x, y, r);
+          neb.addColorStop(0, i % 2 === 0 ? 'rgba(130, 185, 245, 0.09)' : 'rgba(195, 180, 230, 0.06)');
+          neb.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = neb;
+          ctx.fillRect(x - r, y - r, r * 2, r * 2);
+        }
+        ctx.restore();
+
+        // Soft moonlit clouds near horizon
+        for (let i = 0; i < 28; i++) {
+          const x = Math.random() * w;
+          const y = h * 0.52 + Math.random() * (h * 0.22);
+          const r = 38 + Math.random() * 75;
+          const cl = ctx.createRadialGradient(x, y, 4, x, y, r);
+          cl.addColorStop(0, 'rgba(120, 165, 200, 0.14)');
+          cl.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = cl;
+          ctx.fillRect(x - r, y - r, r * 2, r * 2);
+        }
+
+        // Stars
+        for (let i = 0; i < 1400; i++) {
+          const x = Math.random() * w;
+          const y = Math.random() * h * 0.78;
+          const sz = Math.random() < 0.08 ? 2.2 : 0.7 + Math.random() * 1.1;
+          const alpha = 0.35 + Math.random() * 0.65;
+          const tint = Math.random() < 0.2 ? `rgba(255,235,195,${alpha})` : `rgba(218,238,255,${alpha})`;
+          ctx.fillStyle = tint;
+          ctx.beginPath();
+          ctx.arc(x, y, sz, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Distant mountain silhouette band + subtle warm valley lights
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 12) {
+          const m1 = Math.sin(x * 0.012) * 26 + Math.cos(x * 0.031) * 14 + Math.sin(x * 0.07) * 6;
+          ctx.lineTo(x, h * 0.78 - Math.abs(m1));
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fillStyle = '#091826';
+        ctx.fill();
+
+        // Tiny warm distant lights in the valley
+        for (let i = 0; i < 36; i++) {
+          const x = Math.random() * w;
+          const y = h * 0.78 + Math.random() * 16;
+          ctx.fillStyle = 'rgba(255, 208, 130, 0.75)';
+          ctx.beginPath();
+          ctx.arc(x, y, 1.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      },
+
+      createScaleTexture(activeValue = 5) {
+        const w = 256, h = 1024;
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+
+        const padTop = 54, padBot = 54;
+        const usableH = h - padTop - padBot;
+        const activeInt = Math.round(activeValue);
+
+        for (let i = 0; i <= 50; i++) {
+          const frac = i / 50;
+          const y = h - padBot - frac * usableH;
+          const isMajor = i % 5 === 0;
+          const num = i / 5;
+          const isActive = isMajor && num === activeInt;
+
+          ctx.beginPath();
+          ctx.moveTo(14, y);
+          ctx.lineTo(isMajor ? 62 : 38, y);
+          ctx.strokeStyle = isActive ? '#f5ca6d' : (isMajor ? 'rgba(244,235,221,0.92)' : 'rgba(210,232,236,0.48)');
+          ctx.lineWidth = isActive ? 5 : (isMajor ? 3 : 1.8);
+          ctx.stroke();
+
+          if (isMajor) {
+            ctx.font = isActive ? '700 54px "Inter", sans-serif' : '500 44px "Inter", sans-serif';
+            ctx.fillStyle = isActive ? '#f7cf74' : 'rgba(244, 235, 221, 0.94)';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = isActive ? 'rgba(245, 200, 90, 0.85)' : 'rgba(5, 20, 28, 0.9)';
+            ctx.shadowBlur = isActive ? 16 : 8;
+            ctx.fillText(String(num), 78, y + 2);
+            ctx.shadowBlur = 0;
+          }
+        }
+        return c;
+      },
+
+      createSoftParticle() {
+        const c = document.createElement('canvas');
+        c.width = 64; c.height = 64;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+        g.addColorStop(0, 'rgba(255,255,255,1)');
+        g.addColorStop(0.4, 'rgba(180,245,250,0.55)');
+        g.addColorStop(1, 'rgba(180,245,250,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 64, 64);
+        return new THREE.CanvasTexture(c);
+      }
+    };
+
+    /* =========================================================================
+       CAMERA CONTROLLER (Smooth Orbit, Touch Pinch, Collisions, Presets)
+       ========================================================================= */
+    class CameraController {
+      constructor(camera, domElement) {
+        this.camera = camera;
+        this.dom = domElement;
+
+        // Default framing: Thermometer slightly left of center so right panel stays clear
+        this.presets = {
+          default:     { target: new THREE.Vector3(1.15, 2.55, 0.0),  radius: 7.1, theta: 0.16,  phi: 1.44 },
+          mobile:      { target: new THREE.Vector3(0.0, 2.35, 0.0),   radius: 7.4, theta: 0.08,  phi: 1.44 },
+          thermometer: { target: new THREE.Vector3(0.55, 2.65, 0.0),  radius: 4.9, theta: 0.12,  phi: 1.46 },
+          telescope:   { target: new THREE.Vector3(2.9, 1.85, -3.5),  radius: 3.4, theta: -0.45, phi: 1.38 },
+          armillary:   { target: new THREE.Vector3(-3.0, 1.55, 1.25), radius: 2.9, theta: 0.72,  phi: 1.34 }
+        };
+
+        const initPreset = window.innerWidth <= 768 ? this.presets.mobile : this.presets.default;
+        this.current = {
+          target: initPreset.target.clone(),
+          radius: initPreset.radius,
+          theta: initPreset.theta,
+          phi: initPreset.phi
+        };
+        this.desired = {
+          target: initPreset.target.clone(),
+          radius: initPreset.radius,
+          theta: initPreset.theta,
+          phi: initPreset.phi
+        };
+
+        this.isDragging = false;
+        this.pointerDownPos = { x: 0, y: 0 };
+        this.lastPos = { x: 0, y: 0 };
+        this.dragMoved = false;
+        this.touches = new Map();
+        this.lastPinchDist = null;
+        this.reducedMotion = false;
+
+        this.bindEvents();
+        this.applyCameraImmediate();
+      }
+
+      bindEvents() {
+        this.dom.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0 && e.pointerType === 'mouse') return;
+          this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (this.touches.size === 1) {
+            this.isDragging = true;
+            this.dragMoved = false;
+            this.pointerDownPos = { x: e.clientX, y: e.clientY };
+            this.lastPos = { x: e.clientX, y: e.clientY };
+            this.dom.classList.add('dragging');
+          } else if (this.touches.size === 2) {
+            this.isDragging = false;
+            this.lastPinchDist = this.getPinchDistance();
+          }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (!this.touches.has(e.pointerId)) return;
+          this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          if (this.touches.size === 2) {
+            const dist = this.getPinchDistance();
+            if (this.lastPinchDist !== null) {
+              const delta = this.lastPinchDist - dist;
+              this.desired.radius = this.clampRadius(this.desired.radius + delta * 0.015);
+            }
+            this.lastPinchDist = dist;
+            this.dragMoved = true;
+            return;
+          }
+
+          if (!this.isDragging) return;
+          const dx = e.clientX - this.lastPos.x;
+          const dy = e.clientY - this.lastPos.y;
+          if (Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y) > 5) {
+            this.dragMoved = true;
+          }
+          this.desired.theta -= dx * 0.0052;
+          this.desired.phi = Math.max(0.75, Math.min(1.62, this.desired.phi - dy * 0.0042));
+          this.lastPos = { x: e.clientX, y: e.clientY };
+        });
+
+        const endPointer = (e) => {
+          this.touches.delete(e.pointerId);
+          if (this.touches.size < 2) this.lastPinchDist = null;
+          if (this.touches.size === 0) {
+            this.isDragging = false;
+            this.dom.classList.remove('dragging');
+          }
+        };
+        window.addEventListener('pointerup', endPointer);
+        window.addEventListener('pointercancel', endPointer);
+
+        this.dom.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          this.desired.radius = this.clampRadius(this.desired.radius + e.deltaY * 0.0038);
+        }, { passive: false });
+      }
+
+      getPinchDistance() {
+        const pts = Array.from(this.touches.values());
+        return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      }
+
+      clampRadius(r) { return Math.max(3.2, Math.min(8.2, r)); }
+
+      goTo(presetName) {
+        const key = presetName === 'default' && window.innerWidth <= 768 ? 'mobile' : presetName;
+        const p = this.presets[key] || this.presets.default;
+        this.desired.target.copy(p.target);
+        this.desired.radius = p.radius;
+        this.desired.theta = p.theta;
+        this.desired.phi = p.phi;
+      }
+
+      applyCameraImmediate() {
+        const { target, radius, theta, phi } = this.current;
+        const x = target.x + radius * Math.sin(phi) * Math.sin(theta);
+        const y = Math.max(0.85, target.y + radius * Math.cos(phi));
+        const z = target.z + radius * Math.sin(phi) * Math.cos(theta);
+        // Keep inside observatory dome (radius 7.7)
+        const horizR = Math.hypot(x, z);
+        const scale = horizR > 7.6 ? 7.6 / horizR : 1;
+        this.camera.position.set(x * scale, y, z * scale);
+        this.camera.lookAt(target);
+      }
+
+      update(dt) {
+        const speed = this.reducedMotion ? 1.0 : Math.min(1, dt * 5.2);
+        this.current.target.lerp(this.desired.target, speed);
+        this.current.radius += (this.desired.radius - this.current.radius) * speed;
+        this.current.theta += (this.desired.theta - this.current.theta) * speed;
+        this.current.phi += (this.desired.phi - this.current.phi) * speed;
+        this.applyCameraImmediate();
+      }
+    }
+
+    /* =========================================================================
+       SCENE ENGINE (WebGL lifecycle, quality profiles, visibility pause, capture)
+       ========================================================================= */
+    class SceneEngine {
+      constructor(container) {
+        this.container = container;
+        this.qualityOrder = ['high', 'medium', 'eco'];
+        this.qualityLabels = { high: 'Alto', medium: 'Médio', eco: 'Econômico' };
+        this.quality = 'high';
+        this.reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this.paused = false;
+        this.webglSupported = true;
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controller = null;
+        this.handles = null;
+        this.rafId = null;
+        this.lastTime = 0;
+        this.elapsed = 0;
+        this.fpsSamples = [];
+
+        this.init();
+      }
+
+      init() {
+        if (typeof THREE === 'undefined') {
+          this.activateFallback();
+          return;
+        }
+        try {
+          this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: false,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: true
+          });
+        } catch (err) {
+          this.activateFallback();
+          return;
+        }
+
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.FogExp2(0x071822, 0.022);
+
+        const w = this.container.clientWidth || window.innerWidth;
+        const h = this.container.clientHeight || window.innerHeight;
+        this.camera = new THREE.PerspectiveCamera(44, w / h, 0.1, 140);
+
+        this.renderer.setSize(w, h);
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.12;
+        this.renderer.physicallyCorrectLights = true;
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        this.container.appendChild(this.renderer.domElement);
+        this.controller = new CameraController(this.camera, this.container);
+        this.controller.reducedMotion = this.reducedMotion;
+
+        this.handles = buildScene(this);
+        this.applyQuality(this.quality);
+
+        window.addEventListener('resize', () => this.onResize());
+        document.addEventListener('visibilitychange', () => {
+          this.paused = document.hidden;
+          if (!this.paused) this.lastTime = performance.now();
+        });
+
+        this.start();
+      }
+
+      activateFallback() {
+        this.webglSupported = false;
+        const fb = document.getElementById('webgl-fallback');
+        if (fb) fb.classList.add('visible');
+      }
+
+      applyQuality(level) {
+        this.quality = level;
+        if (!this.renderer || !this.handles) return;
+        const dpr = window.devicePixelRatio || 1;
+        if (level === 'high') {
+          this.renderer.setPixelRatio(Math.min(dpr, 2));
+          this.renderer.shadowMap.enabled = true;
+          this.handles.setQualityDetail('high');
+        } else if (level === 'medium') {
+          this.renderer.setPixelRatio(Math.min(dpr, 1.35));
+          this.renderer.shadowMap.enabled = true;
+          this.handles.setQualityDetail('medium');
+        } else {
+          this.renderer.setPixelRatio(1);
+          this.renderer.shadowMap.enabled = false;
+          this.handles.setQualityDetail('eco');
+        }
+      }
+
+      cycleQuality() {
+        const idx = (this.qualityOrder.indexOf(this.quality) + 1) % this.qualityOrder.length;
+        this.applyQuality(this.qualityOrder[idx]);
+        return this.qualityLabels[this.quality];
+      }
+
+      setReducedMotion(val) {
+        this.reducedMotion = !!val;
+        if (this.controller) this.controller.reducedMotion = this.reducedMotion;
+      }
+
+      onResize() {
+        if (!this.renderer || !this.camera) return;
+        const w = this.container.clientWidth || window.innerWidth;
+        const h = this.container.clientHeight || window.innerHeight;
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h);
+      }
+
+      captureSnapshot() {
+        if (!this.renderer) return null;
+        this.renderer.render(this.scene, this.camera);
+        return this.renderer.domElement.toDataURL('image/png');
+      }
+
+      start() {
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+        this.lastTime = performance.now();
+        const loop = (now) => {
+          this.rafId = requestAnimationFrame(loop);
+          if (this.paused) return;
+          const dt = Math.min(0.05, (now - this.lastTime) / 1000);
+          this.lastTime = now;
+          this.elapsed += dt;
+
+          if (this.controller) this.controller.update(dt);
+          if (this.handles && this.handles.update) {
+            this.handles.update(dt, this.elapsed, this.reducedMotion);
+          }
+          if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+          }
+        };
+        this.rafId = requestAnimationFrame(loop);
+      }
+    }
+
+    /* =========================================================================
+       BUILD SCENE — OBSERVATÓRIO DAS SENSAÇÕES 3D
+       ========================================================================= */
+    function buildScene(engine) {
+      const scene = engine.scene;
+      const interactables = [];
+
+      // Shared PBR Textures
+      const marbleTex = TextureFactory.createMarble(512, 512, '#d9d2c5');
+      marbleTex.repeat.set(4, 4);
+      const plinthMarbleTex = TextureFactory.createMarble(512, 512, '#cfc6b8');
+      const stoneTex = TextureFactory.createStone(256, 256);
+      stoneTex.repeat.set(2, 4);
+      const woodTex = TextureFactory.createWood(256, 256);
+      const rugTex = TextureFactory.createRug(512, 512);
+      const skyTex = TextureFactory.createSkyDome(1024, 512);
+      const particleTex = TextureFactory.createSoftParticle();
+
+      // Shared Materials
+      const matBrass = new THREE.MeshStandardMaterial({
+        color: 0xc8a464, metalness: 0.86, roughness: 0.28
+      });
+      const matBrassDark = new THREE.MeshStandardMaterial({
+        color: 0x7a623c, metalness: 0.78, roughness: 0.38
+      });
+      const matIron = new THREE.MeshStandardMaterial({
+        color: 0x1b2b33, metalness: 0.72, roughness: 0.42
+      });
+      const matStone = new THREE.MeshStandardMaterial({
+        map: stoneTex, color: 0xd9d2c5, roughness: 0.82, metalness: 0.04
+      });
+      const matMarble = new THREE.MeshStandardMaterial({
+        map: marbleTex, color: 0xe6dfd2, roughness: 0.24, metalness: 0.06
+      });
+      const matPlinthMarble = new THREE.MeshStandardMaterial({
+        map: plinthMarbleTex, color: 0xdad0c0, roughness: 0.28, metalness: 0.08
+      });
+      const matWood = new THREE.MeshStandardMaterial({
+        map: woodTex, color: 0x6a452d, roughness: 0.46, metalness: 0.05
+      });
+      const matVelvet = new THREE.MeshStandardMaterial({
+        color: 0x16443f, roughness: 0.88, metalness: 0.02
+      });
+      const matLeaf = new THREE.MeshStandardMaterial({
+        color: 0x2d5e3e, roughness: 0.65, metalness: 0.02, side: THREE.DoubleSide
+      });
+      const matLeafLight = new THREE.MeshStandardMaterial({
+        color: 0x3f7a4d, roughness: 0.58, metalness: 0.02, side: THREE.DoubleSide
+      });
+      const matCeramic = new THREE.MeshStandardMaterial({
+        color: 0x8f6b54, roughness: 0.52, metalness: 0.06
+      });
+
+      /* 1. NIGHT SKY DOME & STARFIELD */
+      const skyMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(55, 40, 24),
+        new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })
+      );
+      scene.add(skyMesh);
+
+      const starGeo = new THREE.BufferGeometry();
+      const starCount = 420;
+      const starPos = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI * 0.48;
+        const r = 42 + Math.random() * 6;
+        starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        starPos[i * 3 + 1] = r * Math.cos(phi) + 2;
+        starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+      }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+      const starPoints = new THREE.Points(starGeo, new THREE.PointsMaterial({
+        map: particleTex, color: 0xd9ecff, size: 0.48, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending
+      }));
+      scene.add(starPoints);
+
+      /* 2. CINEMATIC LIGHTING */
+      const hemiLight = new THREE.HemisphereLight(0x6da7d6, 0x1f2a2e, 0.85);
+      scene.add(hemiLight);
+
+      // Cool lunar key light streaming through the dome
+      const moonLight = new THREE.DirectionalLight(0x8ec5ff, 1.9);
+      moonLight.position.set(5, 13, -7);
+      moonLight.castShadow = true;
+      moonLight.shadow.mapSize.set(1024, 1024);
+      moonLight.shadow.camera.near = 2;
+      moonLight.shadow.camera.far = 28;
+      moonLight.shadow.camera.left = -9;
+      moonLight.shadow.camera.right = 9;
+      moonLight.shadow.camera.top = 9;
+      moonLight.shadow.camera.bottom = -9;
+      moonLight.shadow.bias = -0.0008;
+      scene.add(moonLight);
+
+      // Warm rim / interior fill lights (toggled by lamps)
+      const warmLights = [];
+      const lampBulbs = [];
+      let lampMode = 0; // 0 = Acolhedora, 1 = Contemplativa
+
+      /* 3. FLOOR & CIRCULAR TEXTILE RUG */
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(9.2, 9.2, 0.25, 64), matMarble);
+      floor.position.y = -0.125;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const rug = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.25, 3.3, 0.035, 64),
+        new THREE.MeshStandardMaterial({ map: rugTex, roughness: 0.94, metalness: 0.02 })
+      );
+      rug.position.y = 0.018;
+      rug.receiveShadow = true;
+      scene.add(rug);
+
+      /* 4. CIRCULAR COLONNADE, PARAPET & GLAZED OBSERVATORY DOME */
+      const colRadius = 8.15;
+      const colCount = 8;
+      const corniceY = 5.45;
+
+      // Low circular stone parapet wall with marble coping
+      const parapet = new THREE.Mesh(
+        new THREE.CylinderGeometry(colRadius + 0.18, colRadius + 0.22, 1.05, 48, 1, true),
+        new THREE.MeshStandardMaterial({ map: stoneTex, color: 0xcbc3b4, roughness: 0.82, side: THREE.DoubleSide })
+      );
+      parapet.position.y = 0.525;
+      scene.add(parapet);
+
+      const parapetLedge = new THREE.Mesh(
+        new THREE.TorusGeometry(colRadius + 0.08, 0.16, 12, 64),
+        matPlinthMarble
+      );
+      parapetLedge.rotation.x = Math.PI / 2;
+      parapetLedge.position.y = 1.08;
+      scene.add(parapetLedge);
+
+      // Upper entablature / stone cornice ring
+      const cornice = new THREE.Mesh(
+        new THREE.TorusGeometry(colRadius, 0.34, 16, 64),
+        matStone
+      );
+      cornice.rotation.x = Math.PI / 2;
+      cornice.position.y = corniceY;
+      scene.add(cornice);
+
+      const corniceTrim = new THREE.Mesh(
+        new THREE.TorusGeometry(colRadius - 0.12, 0.12, 10, 64),
+        matBrassDark
+      );
+      corniceTrim.rotation.x = Math.PI / 2;
+      corniceTrim.position.y = corniceY - 0.28;
+      scene.add(corniceTrim);
+
+      // Columns + Wall Sconces
+      const lampGroup = new THREE.Group();
+      scene.add(lampGroup);
+
+      for (let i = 0; i < colCount; i++) {
+        const angle = (i / colCount) * Math.PI * 2 + Math.PI / 8;
+        const cx = Math.cos(angle) * colRadius;
+        const cz = Math.sin(angle) * colRadius;
+
+        const colGroup = new THREE.Group();
+        colGroup.position.set(cx, 0, cz);
+        colGroup.lookAt(0, 0, 0);
+
+        const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.55, 0.82), matStone);
+        plinth.position.y = 0.275;
+        plinth.castShadow = true;
+        plinth.receiveShadow = true;
+        colGroup.add(plinth);
+
+        const baseTorus = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.09, 10, 24), matStone);
+        baseTorus.rotation.x = Math.PI / 2;
+        baseTorus.position.y = 0.6;
+        colGroup.add(baseTorus);
+
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.33, 4.35, 20), matStone);
+        shaft.position.y = 2.8;
+        shaft.castShadow = true;
+        shaft.receiveShadow = true;
+        colGroup.add(shaft);
+
+        const capital = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.3, 0.42, 20), matStone);
+        capital.position.y = 5.1;
+        colGroup.add(capital);
+
+        scene.add(colGroup);
+
+        // Warm wall sconce lanterns on 4 visible columns
+        if (i === 1 || i === 3 || i === 5 || i === 7) {
+          const sconce = new THREE.Group();
+          const inward = new THREE.Vector3(-cx, 0, -cz).normalize();
+          sconce.position.set(cx + inward.x * 0.48, 3.05, cz + inward.z * 0.48);
+
+          const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.14), matBrassDark);
+          sconce.add(bracket);
+
+          const glassMat = new THREE.MeshStandardMaterial({
+            color: 0xffdf9e, emissive: 0xffa844, emissiveIntensity: 1.8, roughness: 0.25, transparent: true, opacity: 0.92
+          });
+          const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.08, 0.28, 12), glassMat);
+          lantern.position.y = 0.06;
+          lantern.userData = { interactive: true, type: 'lamp', label: 'Luminária — alternar iluminação quente' };
+          sconce.add(lantern);
+          interactables.push(lantern);
+          lampBulbs.push(glassMat);
+
+          const cap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.12, 12), matBrassDark);
+          cap.position.y = 0.24;
+          sconce.add(cap);
+
+          const pLight = new THREE.PointLight(0xffb45c, 4.2, 9.5, 1.8);
+          pLight.position.set(0, 0.05, 0);
+          sconce.add(pLight);
+          warmLights.push(pLight);
+
+          lampGroup.add(sconce);
+        }
+      }
+
+      // Window vertical mullions between columns
+      for (let i = 0; i < colCount; i++) {
+        const a1 = (i / colCount) * Math.PI * 2 + Math.PI / 8;
+        const aMid = a1 + Math.PI / colCount;
+        const mx = Math.cos(aMid) * (colRadius + 0.08);
+        const mz = Math.sin(aMid) * (colRadius + 0.08);
+        const mullion = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 4.35, 8), matIron);
+        mullion.position.set(mx, 3.25, mz);
+        scene.add(mullion);
+      }
+
+      // Glazed Observatory Dome (curved ribs + latitude rings + semi-transparent glass shell)
+      const domeGroup = new THREE.Group();
+      domeGroup.position.y = corniceY;
+      scene.add(domeGroup);
+
+      const domeRadius = colRadius;
+      const domeGlass = new THREE.Mesh(
+        new THREE.SphereGeometry(domeRadius - 0.06, 36, 20, 0, Math.PI * 2, 0, Math.PI * 0.48),
+        new THREE.MeshPhysicalMaterial({
+          color: 0x6ea8cc,
+          transparent: true,
+          opacity: 0.14,
+          roughness: 0.08,
+          metalness: 0.1,
+          side: THREE.BackSide,
+          depthWrite: false
+        })
+      );
+      domeGroup.add(domeGlass);
+
+      // 12 Curved Meridian Iron Ribs
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const curvePts = [];
+        for (let s = 0; s <= 18; s++) {
+          const t = (s / 18) * (Math.PI * 0.44);
+          curvePts.push(new THREE.Vector3(
+            Math.cos(angle) * domeRadius * Math.cos(t),
+            domeRadius * Math.sin(t),
+            Math.sin(angle) * domeRadius * Math.cos(t)
+          ));
+        }
+        const curve = new THREE.CatmullRomCurve3(curvePts);
+        const rib = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.075, 8, false), matIron);
+        domeGroup.add(rib);
+      }
+
+      // Latitude Rings + Zenith Oculus
+      [0.16, 0.31, 0.44].forEach((lat) => {
+        const r = domeRadius * Math.cos(lat * Math.PI);
+        const y = domeRadius * Math.sin(lat * Math.PI);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.065, 8, 64), matIron);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = y;
+        domeGroup.add(ring);
+      });
+
+      /* 5. HERO OBJECT — MONUMENTAL 3D INTERACTIVE THERMOMETER (~4.6m tall) */
+      const thermoGroup = new THREE.Group();
+      thermoGroup.position.set(0, 0, 0);
+      scene.add(thermoGroup);
+
+      // Two-tiered circular stone & marble plinth with warm golden under-glow
+      const step1 = new THREE.Mesh(new THREE.CylinderGeometry(1.52, 1.58, 0.18, 48), matPlinthMarble);
+      step1.position.y = 0.09;
+      step1.castShadow = true;
+      step1.receiveShadow = true;
+      thermoGroup.add(step1);
+
+      const ledRing1 = new THREE.Mesh(
+        new THREE.TorusGeometry(1.28, 0.022, 10, 64),
+        new THREE.MeshBasicMaterial({ color: 0xffd27d })
+      );
+      ledRing1.rotation.x = Math.PI / 2;
+      ledRing1.position.y = 0.19;
+      thermoGroup.add(ledRing1);
+
+      const step2 = new THREE.Mesh(new THREE.CylinderGeometry(1.24, 1.28, 0.16, 48), matPlinthMarble);
+      step2.position.y = 0.27;
+      step2.castShadow = true;
+      step2.receiveShadow = true;
+      thermoGroup.add(step2);
+
+      // Brushed Brass Turned Collar Base
+      const brassBasePts = [
+        new THREE.Vector2(0.0, 0.35),
+        new THREE.Vector2(0.76, 0.35),
+        new THREE.Vector2(0.74, 0.44),
+        new THREE.Vector2(0.62, 0.50),
+        new THREE.Vector2(0.56, 0.62),
+        new THREE.Vector2(0.64, 0.72),
+        new THREE.Vector2(0.58, 0.76)
+      ];
+      const brassCollar = new THREE.Mesh(new THREE.LatheGeometry(brassBasePts, 40), matBrass);
+      brassCollar.castShadow = true;
+      brassCollar.receiveShadow = true;
+      thermoGroup.add(brassCollar);
+
+      // Outer Glass Bulb & Tube (LatheGeometry with smooth neck + rounded dome top)
+      const bulbCenterY = 1.18;
+      const bulbRadius = 0.56;
+      const tubeRadius = 0.34;
+      const tubeBottomY = 1.62;
+      const tubeTopY = 4.42;
+
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0xdff7ff,
+        transparent: true,
+        opacity: 0.24,
+        roughness: 0.06,
+        metalness: 0.05,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.06,
+        reflectivity: 0.95,
+        depthWrite: false,
+        side: THREE.FrontSide
+      });
+
+      const outerBulb = new THREE.Mesh(new THREE.SphereGeometry(bulbRadius, 36, 28), glassMat);
+      outerBulb.position.y = bulbCenterY;
+      thermoGroup.add(outerBulb);
+
+      const outerTube = new THREE.Mesh(
+        new THREE.CylinderGeometry(tubeRadius, tubeRadius, tubeTopY - tubeBottomY, 36, 1, true),
+        glassMat
+      );
+      outerTube.position.y = (tubeBottomY + tubeTopY) * 0.5;
+      thermoGroup.add(outerTube);
+
+      const outerCap = new THREE.Mesh(
+        new THREE.SphereGeometry(tubeRadius, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+        glassMat
+      );
+      outerCap.position.y = tubeTopY;
+      thermoGroup.add(outerCap);
+
+      // Subtle rim specular glass highlight shell
+      const glassHighlightMat = new THREE.MeshBasicMaterial({
+        color: 0x9de8f5, transparent: true, opacity: 0.09, side: THREE.BackSide, depthWrite: false
+      });
+      const highlightTube = new THREE.Mesh(
+        new THREE.CylinderGeometry(tubeRadius * 1.03, tubeRadius * 1.03, tubeTopY - tubeBottomY, 32, 1, true),
+        glassHighlightMat
+      );
+      highlightTube.position.y = (tubeBottomY + tubeTopY) * 0.5;
+      thermoGroup.add(highlightTube);
+
+      // Delicate Brass Support Rings & Side Pins
+      [1.72, 3.05, 4.25].forEach((ry) => {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(tubeRadius + 0.025, 0.018, 10, 36), matBrass);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = ry;
+        thermoGroup.add(ring);
+      });
+      const sideRod = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 2.7, 10), matBrass);
+      sideRod.position.set(-tubeRadius - 0.055, 3.02, 0);
+      thermoGroup.add(sideRod);
+
+      // Invisible hit-volume for effortless raycasting click on thermometer
+      const thermoHitbox = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.68, 0.68, 4.4, 16),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      thermoHitbox.position.y = 2.4;
+      thermoHitbox.userData = { interactive: true, type: 'thermometer', label: 'Termômetro 3D — clicar para focar e registrar intensidade' };
+      thermoGroup.add(thermoHitbox);
+      interactables.push(thermoHitbox);
+
+      /* DYNAMIC LIQUID SHADER (Vertical smooth gradient + subtle wave shimmer) */
+      const liquidUniforms = {
+        uTime: { value: 0 },
+        uLevel: { value: 0.5 },
+        uTopColor: { value: new THREE.Color('#f2c96b') },
+        uBaseColor: { value: new THREE.Color('#22cfe0') },
+        uSlosh: { value: 0.0 }
+      };
+
+      const liquidShaderMat = new THREE.ShaderMaterial({
+        uniforms: liquidUniforms,
+        transparent: true,
+        vertexShader: `
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vViewPos;
+          uniform float uTime;
+          uniform float uSlosh;
+          void main() {
+            vUv = uv;
+            vec3 pos = position;
+            // Subtle curved meniscus wave near top of column
+            float topMask = smoothstep(0.82, 1.0, uv.y);
+            pos.y += sin(pos.x * 8.0 + uTime * 3.5) * 0.022 * uSlosh * topMask;
+            pos.y += cos(pos.z * 8.0 + uTime * 2.8) * 0.018 * uSlosh * topMask;
+            vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+            vViewPos = -mvPos.xyz;
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * mvPos;
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vViewPos;
+          uniform float uTime;
+          uniform vec3 uBaseColor;
+          uniform vec3 uTopColor;
+          void main() {
+            vec3 viewDir = normalize(vViewPos);
+            float fresnel = pow(1.0 - max(dot(normalize(vNormal), viewDir), 0.0), 2.2);
+            // Smooth vertical color gradient from turquoise base to current intensity hue
+            float grad = smoothstep(0.05, 0.96, vUv.y);
+            vec3 col = mix(uBaseColor, uTopColor, grad);
+            // Subtle internal shimmer
+            float shimmer = sin(vUv.y * 16.0 - uTime * 1.4) * 0.035;
+            col += shimmer;
+            // Soft luminous top meniscus rim
+            float topGlow = smoothstep(0.92, 1.0, vUv.y) * 0.24;
+            col += vec3(0.95, 0.96, 0.92) * (fresnel * 0.32 + topGlow);
+            gl_FragColor = vec4(col, 0.92);
+          }
+        `
+      });
+
+      // Spherical Bulb Liquid (always filled, luminous turquoise core)
+      const bulbLiquidMat = new THREE.MeshStandardMaterial({
+        color: 0x28d6e4,
+        emissive: 0x18a6bc,
+        emissiveIntensity: 0.95,
+        roughness: 0.16,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.93
+      });
+      const bulbLiquid = new THREE.Mesh(new THREE.SphereGeometry(bulbRadius - 0.06, 32, 24), bulbLiquidMat);
+      bulbLiquid.position.y = bulbCenterY;
+      thermoGroup.add(bulbLiquid);
+
+      // Liquid Column (unit height cylinder scaled smoothly from 0 to 10)
+      const scaleZeroY = 1.66;
+      const scaleMaxH = 2.66; // reaches y = 4.32 (safely inside tubeTopY = 4.42)
+      const liquidColGeo = new THREE.CylinderGeometry(tubeRadius - 0.055, tubeRadius - 0.055, 1, 32, 12, false);
+      liquidColGeo.translate(0, 0.5, 0); // pivot at bottom
+      const liquidColumn = new THREE.Mesh(liquidColGeo, liquidShaderMat);
+      liquidColumn.position.y = scaleZeroY;
+      liquidColumn.scale.y = 0.05;
+      thermoGroup.add(liquidColumn);
+
+      // Meniscus luminous cap disk
+      const meniscusMat = new THREE.MeshStandardMaterial({
+        color: 0xfff2cc, emissive: 0xf2c96b, emissiveIntensity: 1.1, roughness: 0.15, transparent: true, opacity: 0.9
+      });
+      const meniscus = new THREE.Mesh(new THREE.SphereGeometry(tubeRadius - 0.058, 28, 12), meniscusMat);
+      meniscus.scale.set(1, 0.14, 1);
+      meniscus.position.y = scaleZeroY + 0.05;
+      thermoGroup.add(meniscus);
+
+      // Internal Thermometer Glow Lights
+      const baseGlowLight = new THREE.PointLight(0x38d8e6, 3.8, 6.5, 1.8);
+      baseGlowLight.position.set(0, bulbCenterY, 0.35);
+      thermoGroup.add(baseGlowLight);
+
+      const liquidGlowLight = new THREE.PointLight(0xf2c96b, 3.2, 6.0, 1.8);
+      liquidGlowLight.position.set(0, scaleZeroY + 1.2, 0.45);
+      thermoGroup.add(liquidGlowLight);
+
+      // Subtle rising bubbles/particles inside liquid
+      const bubbleCount = 36;
+      const bubbleGeo = new THREE.BufferGeometry();
+      const bubblePos = new Float32Array(bubbleCount * 3);
+      const bubbleSpeeds = new Float32Array(bubbleCount);
+      for (let i = 0; i < bubbleCount; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * (tubeRadius - 0.12);
+        bubblePos[i * 3] = Math.cos(a) * r;
+        bubblePos[i * 3 + 1] = scaleZeroY + Math.random() * 1.3;
+        bubblePos[i * 3 + 2] = Math.sin(a) * r;
+        bubbleSpeeds[i] = 0.14 + Math.random() * 0.22;
+      }
+      bubbleGeo.setAttribute('position', new THREE.BufferAttribute(bubblePos, 3));
+      const bubblePoints = new THREE.Points(bubbleGeo, new THREE.PointsMaterial({
+        map: particleTex, color: 0xe6fbff, size: 0.09, transparent: true, opacity: 0.52, depthWrite: false, blending: THREE.AdditiveBlending
+      }));
+      thermoGroup.add(bubblePoints);
+
+      // Graduated 0–10 Scale Panel beside the tube
+      let lastScaleInt = -1;
+      const scaleCanvas = TextureFactory.createScaleTexture(5);
+      const scaleTex = new THREE.CanvasTexture(scaleCanvas);
+      scaleTex.encoding = THREE.sRGBEncoding;
+      const scalePlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.76, scaleMaxH + 0.3),
+        new THREE.MeshBasicMaterial({ map: scaleTex, transparent: true, depthWrite: false, side: THREE.DoubleSide })
+      );
+      scalePlane.position.set(tubeRadius + 0.36, scaleZeroY + scaleMaxH * 0.5, 0.08);
+      thermoGroup.add(scalePlane);
+
+      function updateScaleHighlight(val) {
+        const rounded = Math.round(val);
+        if (rounded === lastScaleInt) return;
+        lastScaleInt = rounded;
+        const fresh = TextureFactory.createScaleTexture(rounded);
+        const ctx = scaleCanvas.getContext('2d');
+        ctx.clearRect(0, 0, scaleCanvas.width, scaleCanvas.height);
+        ctx.drawImage(fresh, 0, 0);
+        scaleTex.needsUpdate = true;
+      }
+
+      /* 6. INTERACTIVE ASTRONOMICAL TELESCOPE ON TRIPOD (Right midground) */
+      const teleGroup = new THREE.Group();
+      teleGroup.position.set(2.9, 0, -3.55);
+      teleGroup.rotation.y = -0.58;
+      scene.add(teleGroup);
+
+      // Tripod legs
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.022, 1.55, 10), matWood);
+        leg.position.set(Math.cos(a) * 0.32, 0.72, Math.sin(a) * 0.32);
+        leg.rotation.z = Math.cos(a) * 0.36;
+        leg.rotation.x = -Math.sin(a) * 0.36;
+        leg.castShadow = true;
+        teleGroup.add(leg);
+      }
+      const teleMount = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.24, 16), matBrass);
+      teleMount.position.y = 1.44;
+      teleGroup.add(teleMount);
+
+      const teleTubeGroup = new THREE.Group();
+      teleTubeGroup.position.set(0, 1.62, 0);
+      teleTubeGroup.rotation.z = 0.44;
+      teleGroup.add(teleTubeGroup);
+
+      const teleBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.125, 1.55, 20),
+        new THREE.MeshStandardMaterial({ color: 0x1a2630, metalness: 0.65, roughness: 0.32 })
+      );
+      teleBody.rotation.z = Math.PI / 2;
+      teleBody.castShadow = true;
+      teleBody.userData = { interactive: true, type: 'telescope', label: 'Telescópio — observar o céu noturno' };
+      teleTubeGroup.add(teleBody);
+      interactables.push(teleBody);
+
+      const teleLensRing = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.135, 0.14, 20), matBrass);
+      teleLensRing.rotation.z = Math.PI / 2;
+      teleLensRing.position.x = 0.74;
+      teleTubeGroup.add(teleLensRing);
+
+      const teleEyepiece = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 0.26, 14), matBrass);
+      teleEyepiece.rotation.z = Math.PI / 2;
+      teleEyepiece.position.x = -0.86;
+      teleTubeGroup.add(teleEyepiece);
+
+      /* 7. LEFT MARBLE-TOPPED SIDE TABLE + ARMILLARY SPHERE + TCC BOOKS + BRASS LAMP */
+      const leftTable = new THREE.Group();
+      leftTable.position.set(-3.15, 0, 1.25);
+      scene.add(leftTable);
+
+      const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 0.90, 0.08, 32), matPlinthMarble);
+      tableTop.position.y = 0.92;
+      tableTop.castShadow = true;
+      tableTop.receiveShadow = true;
+      leftTable.add(tableTop);
+
+      const tableApron = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.72, 0.14, 28), matWood);
+      tableApron.position.y = 0.82;
+      leftTable.add(tableApron);
+
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.04, 0.86, 12), matWood);
+        leg.position.set(Math.cos(a) * 0.58, 0.43, Math.sin(a) * 0.58);
+        leg.castShadow = true;
+        leftTable.add(leg);
+      }
+
+      // Stacked TCC Books
+      const book1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.46, 0.085, 0.34),
+        new THREE.MeshStandardMaterial({ color: 0x174147, roughness: 0.75 })
+      );
+      book1.position.set(-0.26, 1.005, 0.22);
+      book1.rotation.y = 0.18;
+      leftTable.add(book1);
+
+      const book2 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.42, 0.075, 0.30),
+        new THREE.MeshStandardMaterial({ color: 0x5c2c24, roughness: 0.75 })
+      );
+      book2.position.set(-0.25, 1.085, 0.20);
+      book2.rotation.y = 0.26;
+      leftTable.add(book2);
+
+      // Interactive Aged Brass Armillary Sphere
+      const armillaryGroup = new THREE.Group();
+      armillaryGroup.position.set(-0.26, 1.12, 0.18);
+      leftTable.add(armillaryGroup);
+
+      const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.18, 20), matBrass);
+      armBase.position.y = 0.09;
+      armillaryGroup.add(armBase);
+
+      const armRings = new THREE.Group();
+      armRings.position.y = 0.48;
+      armillaryGroup.add(armRings);
+
+      const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.016, 10, 36), matBrass);
+      const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.014, 10, 36), matBrass);
+      r2.rotation.y = Math.PI / 2;
+      const r3 = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.012, 10, 36), matBrassDark);
+      r3.rotation.x = Math.PI / 2.6;
+      const armCore = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), matBrass);
+      armRings.add(r1, r2, r3, armCore);
+
+      const armHit = new THREE.Mesh(
+        new THREE.SphereGeometry(0.34, 14, 14),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      armHit.position.y = 0.48;
+      armHit.userData = { interactive: true, type: 'armillary', label: 'Globo Armilar — clicar para girar suavemente' };
+      armillaryGroup.add(armHit);
+      interactables.push(armHit);
+
+      // Brass Dome Table Lamp (interactive)
+      const deskLamp = new THREE.Group();
+      deskLamp.position.set(0.24, 0.96, -0.15);
+      leftTable.add(deskLamp);
+
+      const dlBase = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.06, 20), matBrass);
+      dlBase.position.y = 0.03;
+      const dlStem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.36, 12), matBrass);
+      dlStem.position.y = 0.21;
+      const dlShade = new THREE.Mesh(
+        new THREE.SphereGeometry(0.21, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.54),
+        matBrass
+      );
+      dlShade.position.y = 0.38;
+      dlShade.userData = { interactive: true, type: 'lamp', label: 'Luminária de mesa — alternar luz quente' };
+      interactables.push(dlShade);
+
+      const dlBulbMat = new THREE.MeshStandardMaterial({
+        color: 0xffe4aa, emissive: 0xffb347, emissiveIntensity: 2.0
+      });
+      const dlBulb = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), dlBulbMat);
+      dlBulb.position.y = 0.35;
+      lampBulbs.push(dlBulbMat);
+
+      const dlLight = new THREE.PointLight(0xffb45c, 4.6, 7.5, 1.8);
+      dlLight.position.set(0, 0.32, 0);
+      warmLights.push(dlLight);
+
+      deskLamp.add(dlBase, dlStem, dlShade, dlBulb, dlLight);
+
+      /* 8. FURNITURE (Comfortable Armchair + Curved Bookcase) */
+      const chair = new THREE.Group();
+      chair.position.set(-3.3, 0, 3.25);
+      chair.rotation.y = 0.78;
+      scene.add(chair);
+
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.24, 0.95), matVelvet);
+      seat.position.y = 0.52;
+      seat.castShadow = true;
+      const backrest = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.78, 0.22), matVelvet);
+      backrest.position.set(0, 0.92, -0.38);
+      backrest.rotation.x = -0.14;
+      backrest.castShadow = true;
+      chair.add(seat, backrest);
+
+      [-0.56, 0.56].forEach((ax) => {
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.88), matWood);
+        arm.position.set(ax, 0.78, -0.02);
+        const legF = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.76, 10), matWood);
+        legF.position.set(ax, 0.38, 0.36);
+        const legB = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.76, 10), matWood);
+        legB.position.set(ax, 0.38, -0.36);
+        chair.add(arm, legF, legB);
+      });
+
+      // Classical Wooden Bookcase on left-back wall
+      const shelfGroup = new THREE.Group();
+      shelfGroup.position.set(-5.8, 0, -2.9);
+      shelfGroup.rotation.y = 0.95;
+      scene.add(shelfGroup);
+
+      const shelfFrame = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.6, 0.42), matWood);
+      shelfFrame.position.y = 1.8;
+      shelfGroup.add(shelfFrame);
+
+      const bookColors = [0x1c4b4f, 0x6b2f26, 0x3b4d3b, 0x8b6b3e, 0x263954];
+      for (let row = 0; row < 4; row++) {
+        const sy = 0.75 + row * 0.75;
+        for (let b = 0; b < 9; b++) {
+          const bh = 0.36 + (b % 3) * 0.06;
+          const bk = new THREE.Mesh(
+            new THREE.BoxGeometry(0.16, bh, 0.32),
+            new THREE.MeshStandardMaterial({ color: bookColors[(row * 5 + b) % bookColors.length], roughness: 0.72 })
+          );
+          bk.position.set(-0.85 + b * 0.21, sy + bh * 0.5 - 0.16, 0.09);
+          shelfGroup.add(bk);
+        }
+      }
+
+      /* 9. NATURAL PLANTS & HANGING FOLIAGE (Organic subtle sway) */
+      const plantSwayNodes = [];
+
+      function addPottedPlant(x, y, z, scale = 1) {
+        const g = new THREE.Group();
+        g.position.set(x, y, z);
+        g.scale.setScalar(scale);
+
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.19, 0.38, 16), matCeramic);
+        pot.position.y = 0.19;
+        pot.castShadow = true;
+        g.add(pot);
+
+        const foliage = new THREE.Group();
+        foliage.position.y = 0.36;
+        g.add(foliage);
+
+        for (let i = 0; i < 9; i++) {
+          const a = (i / 9) * Math.PI * 2 + Math.random() * 0.4;
+          const h = 0.45 + Math.random() * 0.45;
+          const leaf = new THREE.Mesh(
+            new THREE.SphereGeometry(0.16, 10, 8),
+            i % 2 === 0 ? matLeaf : matLeafLight
+          );
+          leaf.scale.set(0.55, 1.55, 0.16);
+          leaf.position.set(Math.cos(a) * 0.22, h * 0.6, Math.sin(a) * 0.22);
+          leaf.rotation.set(0.45 * Math.sin(a), a, -0.45 * Math.cos(a));
+          foliage.add(leaf);
+        }
+
+        scene.add(g);
+        plantSwayNodes.push({ node: foliage, phase: Math.random() * Math.PI * 2, amp: 0.032 });
+      }
+
+      addPottedPlant(-2.65, 0.96, 1.62, 0.55); // On side table
+      addPottedPlant(-4.8, 0, 2.2, 1.35);
+      addPottedPlant(-4.6, 0, -4.4, 1.5);
+      addPottedPlant(4.6, 0, -4.1, 1.3);
+      addPottedPlant(5.2, 0, 1.9, 1.4);
+
+      // Hanging vines cascading from upper cornice
+      [-2.8, -1.6, 2.1, -3.7].forEach((angleVal, idx) => {
+        const vine = new THREE.Group();
+        const vx = Math.cos(angleVal) * (colRadius - 0.55);
+        const vz = Math.sin(angleVal) * (colRadius - 0.55);
+        vine.position.set(vx, corniceY - 0.25, vz);
+        for (let k = 0; k < 8; k++) {
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), k % 2 === 0 ? matLeaf : matLeafLight);
+          lf.scale.set(0.7, 1.2, 0.2);
+          lf.position.set(Math.sin(k * 0.8) * 0.12, -k * 0.22, Math.cos(k * 0.8) * 0.12);
+          lf.rotation.y = k * 0.9;
+          vine.add(lf);
+        }
+        scene.add(vine);
+        plantSwayNodes.push({ node: vine, phase: idx * 1.4, amp: 0.045 });
+      });
+
+      /* 10. AMBIENT FLOATING DUST MOTES */
+      const dustCount = 90;
+      const dustGeo = new THREE.BufferGeometry();
+      const dustPos = new Float32Array(dustCount * 3);
+      for (let i = 0; i < dustCount; i++) {
+        dustPos[i * 3] = (Math.random() - 0.5) * 11;
+        dustPos[i * 3 + 1] = 0.6 + Math.random() * 5.2;
+        dustPos[i * 3 + 2] = (Math.random() - 0.5) * 11;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+      const dustPoints = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+        map: particleTex, color: 0xf7e3b5, size: 0.11, transparent: true, opacity: 0.34, depthWrite: false, blending: THREE.AdditiveBlending
+      }));
+      scene.add(dustPoints);
+
+      /* ANIMATION STATE FOR THERMOMETER FLUID & INTERACTIVE OBJECTS */
+      let targetLevel = 5;
+      let currentLevel = 5;
+      let levelVelocity = 0;
+      let armillaryVelocity = 0.18;
+      let thermoHighlight = 0;
+
+      function setThermometerLevel(val, immediate = false) {
+        targetLevel = Math.max(0, Math.min(10, Number(val) || 0));
+        if (immediate) {
+          currentLevel = targetLevel;
+          levelVelocity = 0;
+        }
+        updateScaleHighlight(targetLevel);
+      }
+
+      function pulseThermometer() {
+        thermoHighlight = 1.0;
+      }
+
+      function spinArmillary() {
+        armillaryVelocity = Math.min(5.2, armillaryVelocity + 2.6);
+      }
+
+      function toggleLamps() {
+        lampMode = lampMode === 0 ? 1 : 0;
+        const mult = lampMode === 0 ? 1.0 : 0.48;
+        warmLights.forEach((l, idx) => {
+          l.intensity = (idx === warmLights.length - 1 ? 4.6 : 4.2) * mult;
+        });
+        lampBulbs.forEach((m) => {
+          m.emissiveIntensity = lampMode === 0 ? 1.9 : 0.85;
+        });
+        return lampMode === 0 ? 'Iluminação acolhedora' : 'Iluminação contemplativa suave';
+      }
+
+      function setQualityDetail(level) {
+        dustPoints.visible = level !== 'eco';
+        bubblePoints.visible = level !== 'eco';
+        starPoints.visible = level !== 'eco';
+        if (level === 'high') {
+          moonLight.shadow.mapSize.set(1024, 1024);
+        } else if (level === 'medium') {
+          moonLight.shadow.mapSize.set(512, 512);
+        }
+      }
+
+      function update(dt, elapsed, reducedMotion) {
+        // Spring-damped liquid height interpolation
+        if (reducedMotion) {
+          currentLevel += (targetLevel - currentLevel) * Math.min(1, dt * 10);
+          levelVelocity = 0;
+        } else {
+          const force = (targetLevel - currentLevel) * 26.0;
+          levelVelocity = (levelVelocity + force * dt) * Math.exp(-5.4 * dt);
+          currentLevel = Math.max(0, Math.min(10.15, currentLevel + levelVelocity * dt));
+        }
+
+        const norm = Math.max(0.018, Math.min(1.0, currentLevel / 10));
+        const colHeight = norm * scaleMaxH;
+        liquidColumn.scale.y = colHeight;
+        meniscus.position.y = scaleZeroY + colHeight;
+
+        const topCol = lerpColorHex(currentLevel);
+        liquidUniforms.uTime.value = reducedMotion ? 0 : elapsed;
+        liquidUniforms.uLevel.value = norm;
+        liquidUniforms.uTopColor.value.copy(topCol);
+        liquidUniforms.uSlosh.value = reducedMotion ? 0 : Math.min(1.6, Math.abs(levelVelocity) * 0.45 + 0.14);
+
+        meniscusMat.emissive.copy(topCol);
+        liquidGlowLight.color.copy(topCol);
+        liquidGlowLight.position.y = scaleZeroY + colHeight * 0.72;
+        liquidGlowLight.intensity = 2.6 + thermoHighlight * 2.2;
+
+        if (thermoHighlight > 0) {
+          thermoHighlight = Math.max(0, thermoHighlight - dt * 1.4);
+          glassHighlightMat.opacity = 0.09 + thermoHighlight * 0.18;
+        }
+
+        // Rising bubbles strictly inside the liquid column
+        if (!reducedMotion && bubblePoints.visible) {
+          const arr = bubbleGeo.attributes.position.array;
+          const maxY = scaleZeroY + Math.max(0.12, colHeight - 0.08);
+          for (let i = 0; i < bubbleCount; i++) {
+            arr[i * 3 + 1] += bubbleSpeeds[i] * dt * (1 + Math.abs(levelVelocity) * 0.35);
+            if (arr[i * 3 + 1] > maxY) {
+              arr[i * 3 + 1] = scaleZeroY + 0.04;
+            }
+          }
+          bubbleGeo.attributes.position.needsUpdate = true;
+        }
+
+        // Armillary sphere damped rotation
+        if (!reducedMotion) {
+          armRings.rotation.y += armillaryVelocity * dt;
+          armRings.rotation.x = Math.sin(elapsed * 0.35) * 0.12;
+          armillaryVelocity = Math.max(0.14, armillaryVelocity * Math.exp(-1.1 * dt));
+        }
+
+        // Subtle organic plant sway & dust drift
+        if (!reducedMotion) {
+          for (let i = 0; i < plantSwayNodes.length; i++) {
+            const p = plantSwayNodes[i];
+            p.node.rotation.z = Math.sin(elapsed * 0.85 + p.phase) * p.amp;
+          }
+          if (dustPoints.visible) {
+            dustPoints.rotation.y = elapsed * 0.015;
+          }
+        }
+      }
+
+      return {
+        interactables,
+        setThermometerLevel,
+        pulseThermometer,
+        spinArmillary,
+        toggleLamps,
+        setQualityDetail,
+        update
+      };
+    }
+
+    /* =========================================================================
+       MAKE GAME — THERAPEUTIC STATE, PERSISTENCE & LEGACY MIGRATION
+       ========================================================================= */
+    function makeGame(engine, sound) {
+      const defaultData = () => ({
+        step: 1,
+        situation: '',
+        before: 5,
+        signals: [],
+        signalOther: '',
+        resource: '',
+        resourceNotes: '',
+        after: 5,
+        afterNotes: '',
+        previewPhase: 'after',
+        updatedAt: new Date().toISOString()
+      });
+
+      const game = {
+        id: GAME_ID,
+        meta: META,
+        data: defaultData(),
+
+        migrate(raw) {
+          const base = defaultData();
+          if (!raw || typeof raw !== 'object') return base;
+          const merged = Object.assign(base, raw);
+
+          // Backward compatibility: convert legacy single string `signal` into `signals` array
+          if (!Array.isArray(merged.signals)) {
+            if (typeof raw.signal === 'string' && raw.signal.trim()) {
+              merged.signals = [raw.signal.trim()];
+            } else {
+              merged.signals = [];
+            }
+          }
+          merged.before = Math.max(0, Math.min(10, Number(merged.before ?? 5)));
+          merged.after = Math.max(0, Math.min(10, Number(merged.after ?? merged.before)));
+          merged.step = Math.max(1, Math.min(5, Number(merged.step || 1)));
+          return merged;
+        },
+
+        load() {
+          try {
+            let saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) {
+              for (const key of LEGACY_KEYS) {
+                const candidate = localStorage.getItem(key);
+                if (candidate) { saved = candidate; break; }
+              }
+            }
+            if (saved) {
+              this.data = this.migrate(JSON.parse(saved));
+            }
+          } catch (e) {
+            this.data = defaultData();
+          }
+        },
+
+        save() {
+          this.data.updatedAt = new Date().toISOString();
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+          } catch (e) {}
+        },
+
+        getActiveIntensity() {
+          if (this.data.step === 4) return this.data.after;
+          if (this.data.step === 5) {
+            return this.data.previewPhase === 'before' ? this.data.before : this.data.after;
+          }
+          return this.data.before;
+        },
+
+        updateVisual(immediate = false) {
+          const val = this.getActiveIntensity();
+          if (engine && engine.handles) {
+            engine.handles.setThermometerLevel(val, immediate);
+          }
+          // Update WebGL fallback if visible
+          const fbLiq = document.getElementById('fallback-liquid');
+          const fbVal = document.getElementById('fallback-value');
+          if (fbLiq && fbVal) {
+            const vis = getIntensityVisual(val);
+            fbLiq.style.height = `${Math.max(6, val * 9.4)}%`;
+            fbLiq.style.background = `linear-gradient(to top, #28c6d8, ${vis.hex})`;
+            fbVal.textContent = `${val} / 10`;
+          }
+        },
+
+        toggleSignal(signalId) {
+          const list = Array.isArray(this.data.signals) ? [...this.data.signals] : [];
+          const idx = list.indexOf(signalId);
+          if (signalId === 'nenhum') {
+            this.data.signals = idx >= 0 ? [] : ['nenhum'];
+          } else {
+            const clean = list.filter((s) => s !== 'nenhum');
+            const cIdx = clean.indexOf(signalId);
+            if (cIdx >= 0) clean.splice(cIdx, 1);
+            else clean.push(signalId);
+            this.data.signals = clean;
+          }
+          this.save();
+          sound.playChime(480, 0.03);
+        },
+
+        exportJSON() {
+          const sit = SITUATIONS.find((s) => s.id === this.data.situation);
+          const res = RESOURCES.find((r) => r.id === this.data.resource);
+          const sigLabels = (this.data.signals || []).map((id) => {
+            const found = SIGNALS.find((s) => s.id === id);
+            if (id === 'outro' && this.data.signalOther.trim()) {
+              return `Outro: ${this.data.signalOther.trim()}`;
+            }
+            return found ? found.label : id;
+          });
+
+          const payload = {
+            projeto: 'Jardins da TCC 3D',
+            atividade: META.title,
+            gameId: GAME_ID,
+            versao: META.version,
+            exportadoEm: new Date().toISOString(),
+            avisoPrivacidade: 'Registro pessoal/psicoeducativo exportado localmente. Pode conter informações sensíveis; não substitui prontuário ou avaliação clínica.',
+            registro: {
+              situacaoId: this.data.situation || null,
+              situacao: sit ? sit.label : 'Não informada',
+              intensidadeInicial: this.data.before,
+              intensidadePosterior: this.data.after,
+              sinaisPercebidos: sigLabels,
+              sinaisIds: this.data.signals,
+              outroSinal: this.data.signalOther || '',
+              recursoExploradoId: this.data.resource || null,
+              recursoExplorado: res ? res.label : 'Nenhum selecionado',
+              observacoesRecurso: this.data.resourceNotes || '',
+              observacoesFinais: this.data.afterNotes || ''
+            }
+          };
+
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `termometro_da_ansiedade_${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        },
+
+        reset() {
+          this.data = defaultData();
+          this.save();
+          this.updateVisual();
+        }
+      };
+
+      game.load();
+      return game;
+    }
+
+    /* =========================================================================
+       RENDER GAME — 5 THERAPEUTIC STEPS UI
+       ========================================================================= */
+    function escapeHTML(str) {
+      return String(str || '').replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function renderGame(game, engine, sound, showToast, openConfirm) {
+      const step = game.data.step;
+      const content = document.getElementById('step-content');
+      const subtitle = document.getElementById('panel-subtitle');
+      const progressFill = document.getElementById('progress-fill');
+      const progressBar = document.getElementById('progress-bar');
+      const stepCounter = document.getElementById('step-counter');
+      const stepBadge = document.getElementById('step-name-badge');
+      const stepMini = document.getElementById('sheet-step-mini');
+      const btnBack = document.getElementById('btn-back');
+      const btnNext = document.getElementById('btn-next');
+
+      const stepNames = ['Situação', 'Intensidade Inicial', 'Recursos', 'Nova Percepção', 'Registro Final'];
+      const subtitles = [
+        'Escolha um cenário para começar a observação',
+        'Reconheça o volume da sua experiência',
+        'Explore uma possibilidade no seu ritmo',
+        'Observe como a intensidade está neste momento',
+        'Síntese não julgadora da sua exploração'
+      ];
+
+      subtitle.textContent = subtitles[step - 1];
+      progressFill.style.width = `${(step / 5) * 100}%`;
+      progressBar.setAttribute('aria-valuenow', String(step));
+      stepCounter.textContent = `Etapa ${step} de 5`;
+      stepBadge.textContent = stepNames[step - 1];
+      if (stepMini) stepMini.textContent = `Etapa ${step}/5`;
+
+      btnBack.disabled = step === 1;
+      btnBack.style.visibility = step === 1 ? 'hidden' : 'visible';
+
+      if (step === 1) {
+        btnNext.textContent = 'Registrar intensidade →';
+        btnNext.disabled = !game.data.situation;
+      } else if (step === 2) {
+        btnNext.textContent = 'Explorar recursos →';
+        btnNext.disabled = false;
+      } else if (step === 3) {
+        btnNext.textContent = 'Nova percepção →';
+        btnNext.disabled = false;
+      } else if (step === 4) {
+        btnNext.textContent = 'Ver registro final →';
+        btnNext.disabled = false;
+      } else {
+        btnNext.textContent = 'Novo registro';
+        btnNext.disabled = false;
+      }
+
+      const activeSit = SITUATIONS.find((s) => s.id === game.data.situation);
+
+      if (step === 1) {
+        content.innerHTML = `
+          <div class="context-card">
+            <div class="context-icon" aria-hidden="true">i</div>
+            <div>
+              <div class="context-label">Contexto</div>
+              <p class="context-text">${activeSit
+                ? escapeHTML(activeSit.context)
+                : 'Selecione uma situação fictícia abaixo para imaginar como a ansiedade costuma se manifestar em você.'}</p>
+            </div>
+          </div>
+          <h3 class="question-heading">Qual situação você gostaria de observar hoje?</h3>
+          <div class="options-stack" role="radiogroup" aria-label="Escolha da situação">
+            ${SITUATIONS.map((s) => {
+              const sel = game.data.situation === s.id;
+              return `
+                <button type="button" class="option-chip ${sel ? 'selected' : ''}" data-situation="${s.id}" role="radio" aria-checked="${sel}">
+                  <span class="chip-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${s.icon}</svg></span>
+                  <span class="chip-body">
+                    <span class="chip-title">${escapeHTML(s.label)}</span>
+                    <span class="chip-desc">${escapeHTML(s.context)}</span>
+                  </span>
+                  <span class="chip-check" aria-hidden="true">✓</span>
+                </button>`;
+            }).join('')}
+          </div>
+        `;
+
+        content.querySelectorAll('[data-situation]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            game.data.situation = btn.getAttribute('data-situation');
+            game.save();
+            sound.playChime(523.25, 0.04);
+            renderGame(game, engine, sound, showToast, openConfirm);
+          });
+        });
+      }
+
+      else if (step === 2) {
+        const vis = getIntensityVisual(game.data.before);
+        const hasOther = (game.data.signals || []).includes('outro');
+        content.innerHTML = `
+          <div class="context-card">
+            <div class="context-icon" aria-hidden="true">i</div>
+            <div>
+              <div class="context-label">Situação escolhida · ${escapeHTML(activeSit ? activeSit.label : 'Exploração livre')}</div>
+              <p class="context-text">Agora, observe como você se sente ao imaginar essa situação e indique a intensidade no termômetro.</p>
+            </div>
+          </div>
+
+          <h3 class="question-heading">Quanto de ansiedade você percebe ao imaginar essa situação?</h3>
+          <div class="slider-box">
+            <div class="slider-row">
+              <div class="slider-track-wrap">
+                <input id="slider-before" class="intensity-range" type="range" min="0" max="10" step="1" value="${game.data.before}" aria-label="Intensidade inicial da ansiedade de 0 a 10" aria-valuetext="${game.data.before} de 10, ${vis.band}" />
+                <div class="slider-scale-labels"><span>0</span><span>5</span><span>10</span></div>
+              </div>
+              <div id="readout-before" class="intensity-readout">${game.data.before} / 10</div>
+            </div>
+            <div class="intensity-desc">
+              <span id="desc-before"><span class="color-dot" style="background:${vis.hex}"></span>${vis.band}</span>
+              <div class="quick-step-btns">
+                <button type="button" class="mini-step-btn" id="before-dec" aria-label="Diminuir intensidade">−</button>
+                <button type="button" class="mini-step-btn" id="before-inc" aria-label="Aumentar intensidade">+</button>
+              </div>
+            </div>
+          </div>
+
+          <h4 class="sub-question">Quais sinais você percebe?</h4>
+          <p class="helper-hint">Você pode marcar mais de uma opção.</p>
+          <div class="options-grid" role="group" aria-label="Sinais percebidos">
+            ${SIGNALS.map((sig) => {
+              const sel = (game.data.signals || []).includes(sig.id);
+              return `
+                <button type="button" class="option-chip ${sel ? 'selected' : ''}" data-signal="${sig.id}" aria-pressed="${sel}">
+                  <span class="chip-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${sig.icon}</svg></span>
+                  <span class="chip-body"><span class="chip-title">${escapeHTML(sig.label)}</span></span>
+                  <span class="chip-check" aria-hidden="true">✓</span>
+                </button>`;
+            }).join('')}
+          </div>
+
+          ${hasOther ? `
+            <div class="field-group">
+              <label class="field-label" for="input-signal-other">Qual outro sinal você percebe?</label>
+              <input id="input-signal-other" class="text-input" type="text" maxlength="160" placeholder="Descreva brevemente com suas palavras…" value="${escapeHTML(game.data.signalOther)}" />
+            </div>
+          ` : ''}
+        `;
+
+        const slider = document.getElementById('slider-before');
+        const updateBefore = (val) => {
+          const clamped = Math.max(0, Math.min(10, Number(val)));
+          game.data.before = clamped;
+          game.save();
+          game.updateVisual();
+          slider.value = clamped;
+          const v = getIntensityVisual(clamped);
+          slider.setAttribute('aria-valuetext', `${clamped} de 10, ${v.band}`);
+          document.getElementById('readout-before').textContent = `${clamped} / 10`;
+          document.getElementById('desc-before').innerHTML = `<span class="color-dot" style="background:${v.hex}"></span>${v.band}`;
+          sound.playLevelTone(clamped);
+        };
+        slider.addEventListener('input', (e) => updateBefore(e.target.value));
+        document.getElementById('before-dec').addEventListener('click', () => updateBefore(game.data.before - 1));
+        document.getElementById('before-inc').addEventListener('click', () => updateBefore(game.data.before + 1));
+
+        content.querySelectorAll('[data-signal]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            game.toggleSignal(btn.getAttribute('data-signal'));
+            renderGame(game, engine, sound, showToast, openConfirm);
+          });
+        });
+
+        const otherInput = document.getElementById('input-signal-other');
+        if (otherInput) {
+          otherInput.addEventListener('input', (e) => {
+            game.data.signalOther = e.target.value;
+            game.save();
+          });
+        }
+      }
+
+      else if (step === 3) {
+        const activeRes = RESOURCES.find((r) => r.id === game.data.resource);
+        content.innerHTML = `
+          <div class="context-card">
+            <div class="context-icon" aria-hidden="true">i</div>
+            <div>
+              <div class="context-label">Exploração sem obrigação</div>
+              <p class="context-text">Você pode escolher um recurso para experimentar com curiosidade — ou optar por não aplicar nenhum agora.</p>
+            </div>
+          </div>
+
+          <h3 class="question-heading">Qual recurso você gostaria de explorar?</h3>
+          <div class="options-stack" role="radiogroup" aria-label="Recursos de exploração">
+            ${RESOURCES.map((r) => {
+              const sel = game.data.resource === r.id;
+              return `
+                <button type="button" class="option-chip ${sel ? 'selected' : ''}" data-resource="${r.id}" role="radio" aria-checked="${sel}">
+                  <span class="chip-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${r.icon}</svg></span>
+                  <span class="chip-body"><span class="chip-title">${escapeHTML(r.label)}</span></span>
+                  <span class="chip-check" aria-hidden="true">✓</span>
+                </button>`;
+            }).join('')}
+          </div>
+
+          ${activeRes ? `
+            <div class="resource-guide">
+              <strong>Sugestão de prática:</strong> ${escapeHTML(activeRes.guide)}
+            </div>
+          ` : ''}
+
+          <div class="field-group">
+            <label class="field-label" for="input-resource-notes">Como foi experimentar (ou observar) isso? (opcional)</label>
+            <textarea id="input-resource-notes" class="text-area" rows="3" maxlength="500" placeholder="Anote qualquer percepção, sensação ou detalhe que chamou sua atenção…">${escapeHTML(game.data.resourceNotes)}</textarea>
+          </div>
+        `;
+
+        content.querySelectorAll('[data-resource]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            game.data.resource = btn.getAttribute('data-resource');
+            game.save();
+            sound.playChime(587.33, 0.04);
+            renderGame(game, engine, sound, showToast, openConfirm);
+          });
+        });
+
+        document.getElementById('input-resource-notes').addEventListener('input', (e) => {
+          game.data.resourceNotes = e.target.value;
+          game.save();
+        });
+      }
+
+      else if (step === 4) {
+        const vis = getIntensityVisual(game.data.after);
+        content.innerHTML = `
+          <div class="context-card">
+            <div class="context-icon" aria-hidden="true">i</div>
+            <div>
+              <div class="context-label">Nova leitura no termômetro</div>
+              <p class="context-text">A intensidade pode ter diminuído, permanecido igual ou aumentado. Qualquer percepção é válida e informativa.</p>
+            </div>
+          </div>
+
+          <h3 class="question-heading">Como está a intensidade agora?</h3>
+          <div class="slider-box">
+            <div class="slider-row">
+              <div class="slider-track-wrap">
+                <input id="slider-after" class="intensity-range" type="range" min="0" max="10" step="1" value="${game.data.after}" aria-label="Intensidade atual da ansiedade de 0 a 10" aria-valuetext="${game.data.after} de 10, ${vis.band}" />
+                <div class="slider-scale-labels"><span>0</span><span>5</span><span>10</span></div>
+              </div>
+              <div id="readout-after" class="intensity-readout">${game.data.after} / 10</div>
+            </div>
+            <div class="intensity-desc">
+              <span id="desc-after"><span class="color-dot" style="background:${vis.hex}"></span>${vis.band}</span>
+              <div class="quick-step-btns">
+                <button type="button" class="mini-step-btn" id="after-dec" aria-label="Diminuir intensidade">−</button>
+                <button type="button" class="mini-step-btn" id="after-inc" aria-label="Aumentar intensidade">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="input-after-notes">O que mudou ou permaneceu igual? (opcional)</label>
+            <textarea id="input-after-notes" class="text-area" rows="4" maxlength="500" placeholder="Você pode registrar pequenas mudanças no corpo, nos pensamentos ou notar que tudo seguiu parecido…">${escapeHTML(game.data.afterNotes)}</textarea>
+          </div>
+        `;
+
+        const slider = document.getElementById('slider-after');
+        const updateAfter = (val) => {
+          const clamped = Math.max(0, Math.min(10, Number(val)));
+          game.data.after = clamped;
+          game.save();
+          game.updateVisual();
+          slider.value = clamped;
+          const v = getIntensityVisual(clamped);
+          slider.setAttribute('aria-valuetext', `${clamped} de 10, ${v.band}`);
+          document.getElementById('readout-after').textContent = `${clamped} / 10`;
+          document.getElementById('desc-after').innerHTML = `<span class="color-dot" style="background:${v.hex}"></span>${v.band}`;
+          sound.playLevelTone(clamped);
+        };
+        slider.addEventListener('input', (e) => updateAfter(e.target.value));
+        document.getElementById('after-dec').addEventListener('click', () => updateAfter(game.data.after - 1));
+        document.getElementById('after-inc').addEventListener('click', () => updateAfter(game.data.after + 1));
+
+        document.getElementById('input-after-notes').addEventListener('input', (e) => {
+          game.data.afterNotes = e.target.value;
+          game.save();
+        });
+      }
+
+      else if (step === 5) {
+        const beforeVis = getIntensityVisual(game.data.before);
+        const afterVis = getIntensityVisual(game.data.after);
+        const activeRes = RESOURCES.find((r) => r.id === game.data.resource);
+        const sigText = (game.data.signals || []).length
+          ? game.data.signals.map((id) => {
+              const s = SIGNALS.find((x) => x.id === id);
+              if (id === 'outro' && game.data.signalOther.trim()) return `Outro (${game.data.signalOther.trim()})`;
+              return s ? s.label : id;
+            }).join(', ')
+          : 'Nenhum sinal registrado';
+
+        let neutralComparison = 'As duas leituras ficaram no mesmo nível — observar estabilidade também traz informações úteis.';
+        if (game.data.after < game.data.before) {
+          neutralComparison = `A segunda leitura ficou ${game.data.before - game.data.after} ponto(s) abaixo da inicial.`;
+        } else if (game.data.after > game.data.before) {
+          neutralComparison = `A segunda leitura ficou ${game.data.after - game.data.before} ponto(s) acima da inicial — notar oscilações faz parte da observação.`;
+        }
+
+        content.innerHTML = `
+          <div class="compare-box">
+            <div class="compare-header">
+              <span>Comparação das leituras</span>
+              <span>Escala 0–10</span>
+            </div>
+            <div class="compare-bars">
+              <div class="compare-row">
+                <span style="color:var(--text-muted)">Antes</span>
+                <div class="compare-track"><div class="compare-fill" style="width:${Math.max(4, game.data.before * 10)}%;background:${beforeVis.hex}"></div></div>
+                <span class="compare-val">${game.data.before} / 10</span>
+              </div>
+              <div class="compare-row">
+                <span style="color:var(--text-muted)">Depois</span>
+                <div class="compare-track"><div class="compare-fill" style="width:${Math.max(4, game.data.after * 10)}%;background:${afterVis.hex}"></div></div>
+                <span class="compare-val">${game.data.after} / 10</span>
+              </div>
+            </div>
+            <p class="compare-note">${escapeHTML(neutralComparison)}</p>
+            <div class="preview-toggle-row" role="group" aria-label="Visualizar leitura no termômetro 3D">
+              <button type="button" class="pill-mini ${game.data.previewPhase === 'before' ? 'active' : ''}" id="btn-show-before">Ver "Antes" no 3D</button>
+              <button type="button" class="pill-mini ${game.data.previewPhase === 'after' ? 'active' : ''}" id="btn-show-after">Ver "Depois" no 3D</button>
+            </div>
+          </div>
+
+          <div class="summary-list">
+            <div class="summary-item">
+              <div class="summary-item-label">Situação escolhida</div>
+              <div class="summary-item-val">${escapeHTML(activeSit ? activeSit.label : 'Não informada')}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-item-label">Sinais percebidos</div>
+              <div class="summary-item-val">${escapeHTML(sigText)}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-item-label">Recurso explorado</div>
+              <div class="summary-item-val">${escapeHTML(activeRes ? activeRes.label : 'Nenhum selecionado')}</div>
+            </div>
+            ${game.data.resourceNotes.trim() ? `
+              <div class="summary-item">
+                <div class="summary-item-label">Observações sobre o recurso</div>
+                <div class="summary-item-val">${escapeHTML(game.data.resourceNotes.trim())}</div>
+              </div>
+            ` : ''}
+            ${game.data.afterNotes.trim() ? `
+              <div class="summary-item">
+                <div class="summary-item-label">O que mudou ou permaneceu igual</div>
+                <div class="summary-item-val">${escapeHTML(game.data.afterNotes.trim())}</div>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="summary-actions">
+            <button type="button" class="btn-secondary" id="btn-review-step2">Revisar etapas</button>
+            <button type="button" class="btn-secondary" id="btn-export-json">Exportar JSON</button>
+          </div>
+        `;
+
+        document.getElementById('btn-show-before').addEventListener('click', () => {
+          game.data.previewPhase = 'before';
+          game.updateVisual();
+          renderGame(game, engine, sound, showToast, openConfirm);
+        });
+        document.getElementById('btn-show-after').addEventListener('click', () => {
+          game.data.previewPhase = 'after';
+          game.updateVisual();
+          renderGame(game, engine, sound, showToast, openConfirm);
+        });
+        document.getElementById('btn-review-step2').addEventListener('click', () => {
+          game.data.step = 2;
+          game.save();
+          renderGame(game, engine, sound, showToast, openConfirm);
+        });
+        document.getElementById('btn-export-json').addEventListener('click', () => {
+          openConfirm(
+            'Exportar registro em JSON',
+            '<p>O arquivo exportado conterá as respostas que você registrou nesta sessão. Como pode incluir <strong>informações pessoais sensíveis</strong>, guarde-o em um local seguro no seu dispositivo.</p>',
+            'Baixar JSON',
+            () => {
+              game.exportJSON();
+              showToast('Exportação concluída', 'Seu registro foi salvo localmente em formato JSON.');
+            }
+          );
+        });
+      }
+
+      game.updateVisual();
+    }
+
+    /* =========================================================================
+       BOOTSTRAP & SCENE INTERACTIONS (RAYCASTING, HUD, MOBILE SHEET)
+       ========================================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      const stage = document.getElementById('scene-stage');
+      const sound = new SoundEngine();
+      const engine = new SceneEngine(stage);
+      const game = makeGame(engine, sound);
+
+      // Expose preserved references on window for debugging/integration compatibility
+      window.GAME_ID = GAME_ID;
+      window.META = META;
+      window.SceneEngine = SceneEngine;
+      window.buildScene = buildScene;
+      window.makeGame = makeGame;
+      window.renderGame = renderGame;
+      window.game = game;
+
+      // Toast helper
+      const toastEl = document.getElementById('scene-toast');
+      const toastTitle = document.getElementById('toast-title');
+      const toastBody = document.getElementById('toast-body');
+      let toastTimer = null;
+      function showToast(title, msg, duration = 6500) {
+        toastTitle.textContent = title;
+        toastBody.textContent = msg;
+        toastEl.classList.add('visible');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('visible'), duration);
+      }
+      document.getElementById('toast-close').addEventListener('click', () => {
+        toastEl.classList.remove('visible');
+      });
+
+      // Confirm Modal helper (replaces native confirm/alert)
+      const confirmModal = document.getElementById('confirm-modal');
+      const confirmTitle = document.getElementById('confirm-modal-title');
+      const confirmBody = document.getElementById('confirm-modal-body');
+      const btnAcceptConfirm = document.getElementById('btn-accept-confirm');
+      let pendingConfirmAction = null;
+
+      function openConfirm(title, htmlBody, acceptLabel, onAccept) {
+        confirmTitle.textContent = title;
+        confirmBody.innerHTML = htmlBody;
+        btnAcceptConfirm.textContent = acceptLabel || 'Confirmar';
+        pendingConfirmAction = onAccept;
+        confirmModal.classList.add('open');
+      }
+      function closeConfirm() {
+        confirmModal.classList.remove('open');
+        pendingConfirmAction = null;
+      }
+      document.getElementById('btn-close-confirm').addEventListener('click', closeConfirm);
+      document.getElementById('btn-cancel-confirm').addEventListener('click', closeConfirm);
+      btnAcceptConfirm.addEventListener('click', () => {
+        const fn = pendingConfirmAction;
+        closeConfirm();
+        if (fn) fn();
+      });
+
+      // Help Modal
+      const helpModal = document.getElementById('help-modal');
+      document.getElementById('btn-help').addEventListener('click', () => helpModal.classList.add('open'));
+      document.getElementById('btn-close-help').addEventListener('click', () => helpModal.classList.remove('open'));
+      document.getElementById('btn-ok-help').addEventListener('click', () => helpModal.classList.remove('open'));
+      [helpModal, confirmModal].forEach((m) => {
+        m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
+      });
+
+      // Top HUD Buttons
+      document.getElementById('btn-camera').addEventListener('click', () => {
+        if (engine.controller) engine.controller.goTo('default');
+        showToast('Câmera recentralizada', 'Enquadramento inicial restaurado no Observatório das Sensações.', 3200);
+      });
+
+      const btnMotion = document.getElementById('btn-motion');
+      const syncMotionUI = () => {
+        btnMotion.classList.toggle('active', engine.reducedMotion);
+        btnMotion.setAttribute('aria-pressed', String(engine.reducedMotion));
+      };
+      syncMotionUI();
+      btnMotion.addEventListener('click', () => {
+        engine.setReducedMotion(!engine.reducedMotion);
+        syncMotionUI();
+        showToast(
+          engine.reducedMotion ? 'Movimento reduzido' : 'Animações ambientais ativas',
+          engine.reducedMotion ? 'Animações automáticas e oscilações ambientais foram suavizadas/desativadas.' : 'Movimento suave de partículas, líquido e plantas reativado.',
+          3600
+        );
+      });
+
+      document.getElementById('btn-quality').addEventListener('click', () => {
+        const label = engine.cycleQuality();
+        document.getElementById('quality-badge').textContent = label;
+        showToast('Qualidade gráfica', `Perfil ajustado para ${label}.`, 3000);
+      });
+
+      const btnSound = document.getElementById('btn-sound');
+      const soundIcon = document.getElementById('sound-icon');
+      btnSound.addEventListener('click', () => {
+        const on = sound.toggle();
+        btnSound.classList.toggle('active', on);
+        btnSound.setAttribute('aria-pressed', String(on));
+        soundIcon.innerHTML = on
+          ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>'
+          : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+      });
+
+      document.getElementById('btn-capture').addEventListener('click', () => {
+        const dataUrl = engine.captureSnapshot();
+        if (!dataUrl) {
+          showToast('Captura indisponível', 'A captura de cena requer o modo 3D ativo.');
+          return;
+        }
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `observatorio_sensacoes_${new Date().toISOString().slice(0, 10)}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Cena capturada', 'Imagem PNG salva no seu dispositivo.', 3200);
+      });
+
+      // Step Navigation Buttons
+      document.getElementById('btn-back').addEventListener('click', () => {
+        if (game.data.step > 1) {
+          game.data.step -= 1;
+          game.save();
+          renderGame(game, engine, sound, showToast, openConfirm);
+          document.getElementById('panel-scroll').scrollTop = 0;
+        }
+      });
+
+      document.getElementById('btn-next').addEventListener('click', () => {
+        if (game.data.step < 5) {
+          if (game.data.step === 3 && game.data.after === 5 && game.data.before !== 5 && !game.data.afterNotes) {
+            // Initialize Step 4 slider to current 'before' reading if not yet edited
+            game.data.after = game.data.before;
+          }
+          game.data.step += 1;
+          game.save();
+          renderGame(game, engine, sound, showToast, openConfirm);
+          document.getElementById('panel-scroll').scrollTop = 0;
+        } else {
+          openConfirm(
+            'Iniciar novo registro',
+            '<p>Deseja limpar as respostas atuais para iniciar uma nova exploração? Se quiser guardar este registro, você pode exportá-lo em JSON antes.</p>',
+            'Iniciar novo',
+            () => {
+              game.reset();
+              if (engine.controller) engine.controller.goTo('default');
+              renderGame(game, engine, sound, showToast, openConfirm);
+              showToast('Novo registro iniciado', 'Você pode escolher uma nova situação no seu ritmo.', 3200);
+            }
+          );
+        }
+      });
+
+      // Mobile Collapsible Bottom Sheet
+      const panelEl = document.getElementById('therapy-panel');
+      const sheetHandle = document.getElementById('sheet-handle');
+      const sheetToggleText = document.getElementById('sheet-toggle-text');
+      const toggleSheet = () => {
+        const collapsed = panelEl.classList.toggle('collapsed');
+        sheetHandle.setAttribute('aria-expanded', String(!collapsed));
+        sheetToggleText.textContent = collapsed ? 'Expandir painel' : 'Recolher painel';
+        if (engine.controller && window.innerWidth <= 768) {
+          engine.controller.goTo(collapsed ? 'mobile' : 'mobile');
+        }
+      };
+      sheetHandle.addEventListener('click', toggleSheet);
+      sheetHandle.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSheet(); }
+      });
+
+      // Raycasting for 3D Object Interactions (Hover & Click)
+      if (engine.webglSupported && engine.handles) {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const tooltip = document.getElementById('object-tooltip');
+
+        const getHit = (clientX, clientY) => {
+          const rect = stage.getBoundingClientRect();
+          mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+          mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+          raycaster.setFromCamera(mouse, engine.camera);
+          const hits = raycaster.intersectObjects(engine.handles.interactables, false);
+          return hits.length ? hits[0].object : null;
+        };
+
+        stage.addEventListener('pointermove', (e) => {
+          if (engine.controller && engine.controller.isDragging) {
+            tooltip.classList.remove('visible');
+            return;
+          }
+          const obj = getHit(e.clientX, e.clientY);
+          if (obj && obj.userData && obj.userData.label) {
+            stage.classList.add('pointer');
+            tooltip.textContent = obj.userData.label;
+            tooltip.style.left = `${e.clientX}px`;
+            tooltip.style.top = `${e.clientY}px`;
+            tooltip.classList.add('visible');
+          } else {
+            stage.classList.remove('pointer');
+            tooltip.classList.remove('visible');
+          }
+        });
+
+        stage.addEventListener('pointerup', (e) => {
+          if (engine.controller && engine.controller.dragMoved) return;
+          const obj = getHit(e.clientX, e.clientY);
+          if (!obj || !obj.userData) return;
+
+          const type = obj.userData.type;
+          if (type === 'thermometer') {
+            engine.handles.pulseThermometer();
+            engine.controller.goTo('thermometer');
+            sound.playLevelTone(game.getActiveIntensity());
+            panelEl.classList.remove('collapsed');
+            panelEl.classList.add('highlight-pulse');
+            setTimeout(() => panelEl.classList.remove('highlight-pulse'), 1400);
+
+            if (game.data.step === 1) {
+              if (!game.data.situation) game.data.situation = SITUATIONS[0].id;
+              game.data.step = 2;
+              game.save();
+              renderGame(game, engine, sound, showToast, openConfirm);
+            }
+            const activeSlider = document.getElementById('slider-before') || document.getElementById('slider-after');
+            if (activeSlider) activeSlider.focus();
+          } else if (type === 'telescope') {
+            engine.controller.goTo('telescope');
+            sound.playChime(659.25, 0.045);
+            showToast(
+              'Telescópio · Perspectiva',
+              'Observar pensamentos e sensações como quem contempla o céu noturno: você pode notar o que aparece sem precisar modificá-lo imediatamente.',
+              7500
+            );
+          } else if (type === 'armillary') {
+            engine.handles.spinArmillary();
+            engine.controller.goTo('armillary');
+            sound.playChime(392.0, 0.045);
+            showToast(
+              'Globo Armilar',
+              'Os ciclos e sensações se movem e se acomodam no próprio ritmo — sem pressa e sem competição.',
+              5500
+            );
+          } else if (type === 'lamp') {
+            const modeLabel = engine.handles.toggleLamps();
+            sound.playChime(523.25, 0.035);
+            showToast('Luminárias', `Ambiente ajustado para: ${modeLabel}.`, 3200);
+          }
+        });
+      }
+
+      // Keyboard shortcut: 'R' recenters camera when not typing in an input
+      window.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if (e.key === 'r' || e.key === 'R') {
+          if (engine.controller) engine.controller.goTo('default');
+        } else if (e.key === 'Escape') {
+          helpModal.classList.remove('open');
+          closeConfirm();
+          toastEl.classList.remove('visible');
+        }
+      });
+
+      // Initial render & smooth loader fade-out
+      renderGame(game, engine, sound, showToast, openConfirm);
+      game.updateVisual(true);
+      setTimeout(() => {
+        const loader = document.getElementById('loading-overlay');
+        if (loader) loader.classList.add('hidden');
+      }, 420);
+    });
+  </script>
+</body>
+</html>

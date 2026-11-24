@@ -1,0 +1,542 @@
+[
+  {
+    "id": "E01",
+    "nome": "Ateliê do Gesto Lento",
+    "status": "Existente — piloto",
+    "verbo": "moldar",
+    "assets": "argila, torno, estecas, esmaltes, forno, prateleira",
+    "evolucao": "Malha radial com conservação aproximada de volume, pincel localizado, umidade e espessura, rotação independente; esmaltação e queima simuladas; preservar exportação OBJ/PNG.",
+    "aceite": "Moldar, desfazer, esmaltar, salvar e reabrir uma peça; comparar malha e imagem exportadas; teste de arrasto prolongado.",
+    "prompt": "01_Prompts_Existentes/E01-atelie-do-gesto-lento.md"
+  },
+  {
+    "id": "E02",
+    "nome": "Ateliê dos Remendos e Transformações",
+    "status": "Existente — migração",
+    "verbo": "remendar",
+    "assets": "tecidos com trama, moldes, tesoura, agulha, linha, máquina, retalhos",
+    "evolucao": "Representar tecido em grade deformável leve e cortes por polígono; costura une bordas válidas; camadas e padrões de bordado; histórico de ações.",
+    "aceite": "Recortar dois retalhos, unir bordas, desfazer e restaurar; exportar composição sem bordas soltas involuntárias.",
+    "prompt": "01_Prompts_Existentes/E02-atelie-dos-remendos-e-transformacoes.md"
+  },
+  {
+    "id": "E03",
+    "nome": "Biblioteca das Histórias Inacabadas",
+    "status": "Existente — migração",
+    "verbo": "continuar",
+    "assets": "estantes, livros com páginas, marcador, mesa, luminária",
+    "evolucao": "Grafo de histórias com escolhas e final livre, livros folheáveis, editor de cenas e leitura opcional; nenhuma interpretação de finais.",
+    "aceite": "Percorrer dois ramos distintos e criar final próprio; retornar sem perda; exportar apenas por escolha.",
+    "prompt": "01_Prompts_Existentes/E03-biblioteca-das-historias-inacabadas.md"
+  },
+  {
+    "id": "E04",
+    "nome": "Cartografia do Corpo Sentido",
+    "status": "Existente — migração",
+    "verbo": "localizar e nomear",
+    "assets": "silhueta estilizada, anel de sensações, marcadores, plataforma",
+    "evolucao": "Integrar Bússola do Corpo como modo observatório; regiões selecionáveis, intensidade autodeclarada, camadas, comparação opcional sem inferência.",
+    "aceite": "Aplicar duas sensações em regiões distintas, comparar momentos, apagar registros, testar alternativa DOM.",
+    "prompt": "01_Prompts_Existentes/E04-cartografia-do-corpo-sentido.md"
+  },
+  {
+    "id": "E05",
+    "nome": "Casa da Árvore das Emoções",
+    "status": "Existente — migração",
+    "verbo": "habitar",
+    "assets": "árvore, cômodos, pontes, portas, móveis, pedras, plantas",
+    "evolucao": "Carregar cômodos por zona, câmera guiada com colisão, portas animadas, decoração por snap, clima e quarto personalizável; preservar recursos atuais.",
+    "aceite": "Visitar todos os cômodos, personalizar um, mudar clima, recuperar estado e liberar memória entre zonas.",
+    "prompt": "01_Prompts_Existentes/E05-casa-da-arvore-das-emocoes.md"
+  },
+  {
+    "id": "E06",
+    "nome": "Cidade das Conexões",
+    "status": "Existente — migração",
+    "verbo": "conectar",
+    "assets": "bairros, canais, pontes modulares, ilhas, personagens, barreiras",
+    "evolucao": "Integrar Arquitetura dos Vínculos como modo construtor; grafo navegável, encaixe e remoção de pontes, circulação sem cruzar água; implementar gravação real.",
+    "aceite": "Construir e remover conexão; rota responde ao grafo; salvar, recarregar e apagar sem inferência psicológica.",
+    "prompt": "01_Prompts_Existentes/E06-cidade-das-conexoes.md"
+  },
+  {
+    "id": "E07",
+    "nome": "Correio das Palavras Não Ditas",
+    "status": "Existente — piloto",
+    "verbo": "escrever e guardar",
+    "assets": "escrivaninha, papel, envelopes, selos, caixas, gavetas",
+    "evolucao": "Dobra de papel por animação articulada, envelopes e acervo; auditar armazenamento, criptografia, recuperação e exportação; sem envio externo automático.",
+    "aceite": "Criar carta, guardar voluntariamente, verificar reload, exportar/apagar; testar senha errada e não registrar texto em logs.",
+    "prompt": "01_Prompts_Existentes/E07-correio-das-palavras-nao-ditas.md"
+  },
+  {
+    "id": "E08",
+    "nome": "Estação das Escolhas",
+    "status": "Existente — migração",
+    "verbo": "escolher caminho",
+    "assets": "locomotivas, trilhos, plataformas, malas, bilhetes, estações",
+    "evolucao": "Mapa ferroviário ramificado, bagagem editável, movimento por spline, destinos narrativos; manter propósito simbólico distinto de Estação das Trocas.",
+    "aceite": "Escolher dois destinos, editar bagagem, retornar e repetir; todos os trilhos e transições funcionam.",
+    "prompt": "01_Prompts_Existentes/E08-estacao-das-escolhas.md"
+  },
+  {
+    "id": "E09",
+    "nome": "Estúdio das Sombras e da Luz",
+    "status": "Existente — migração",
+    "verbo": "projetar",
+    "assets": "tela translúcida, lanternas, marionetes articuladas, filtros",
+    "evolucao": "Sombras dependentes da geometria real e posição, juntas com limites, fontes graduais, timeline de projeções; modo sem movimento.",
+    "aceite": "Alterar posição/luz e observar sombra correspondente; compor sequência e reproduzir; sem flashes.",
+    "prompt": "01_Prompts_Existentes/E09-estudio-das-sombras-e-da-luz.md"
+  },
+  {
+    "id": "E10",
+    "nome": "Laboratório das Leis Imaginárias",
+    "status": "Existente — migração",
+    "verbo": "experimentar forças",
+    "assets": "câmara, esferas, anéis, ímãs, controles",
+    "evolucao": "Corpos rígidos e forças parametrizadas, massas e atrito, limites de velocidade, combinação de campos, seed e replay; distinguir fantasia de física real.",
+    "aceite": "Testar gravidade e repulsão, colisão, reset determinístico e estabilidade com parâmetros extremos.",
+    "prompt": "01_Prompts_Existentes/E10-laboratorio-das-leis-imaginarias.md"
+  },
+  {
+    "id": "E11",
+    "nome": "Laboratório dos Sons e Silêncios",
+    "status": "Existente — migração",
+    "verbo": "escutar e silenciar",
+    "assets": "tigelas, diapasão, carrilhões, mixer, ondas",
+    "evolucao": "Ressonância por material, síntese/loops locais, espacialização opcional, mixer e ondas, retirar afirmações terapêuticas não demonstradas sobre 432 Hz.",
+    "aceite": "Isolar instrumentos, combinar e silenciar; áudio nunca inicia sozinho; visual equivalente sem som.",
+    "prompt": "01_Prompts_Existentes/E11-laboratorio-dos-sons-e-silencios.md"
+  },
+  {
+    "id": "E12",
+    "nome": "Museu das Perspectivas",
+    "status": "Existente — migração",
+    "verbo": "reenquadrar",
+    "assets": "portais, espelhos, esculturas anamórficas, divisórias",
+    "evolucao": "Instalações ópticas coerentes com câmera, reflexos simplificados por qualidade, alinhamento com tolerância e manipulação de esculturas.",
+    "aceite": "Ver pelo ponto ideal e fora dele; girar elemento, resetar e visitar instalações sem atravessar paredes.",
+    "prompt": "01_Prompts_Existentes/E12-museu-das-perspectivas.md"
+  },
+  {
+    "id": "E13",
+    "nome": "Oficina dos Robôs Imperfeitos",
+    "status": "Existente — migração",
+    "verbo": "montar e reparar",
+    "assets": "robôs articulados, engrenagens, parafusos, ferramentas, bancada",
+    "evolucao": "Inventário e compatibilidade de peças, pivôs, encaixe por sockets, transmissão cinemática, corda e lubrificação simuladas; sem rotular imperfeição.",
+    "aceite": "Desmontar, remontar e acionar; impedir encaixes incompatíveis sem punição; salvar configuração.",
+    "prompt": "01_Prompts_Existentes/E13-oficina-dos-robos-imperfeitos.md"
+  },
+  {
+    "id": "E14",
+    "nome": "Planetário das Memórias",
+    "status": "Existente — migração",
+    "verbo": "constelar",
+    "assets": "cúpula, estrelas, telescópio, esfera armilar, mapa",
+    "evolucao": "Criação de estrelas, ligação em constelações, navegação e linha do tempo opcional; textos e memórias em sessão por padrão.",
+    "aceite": "Criar três estrelas, conectar, editar, ocultar, exportar mapa sem incluir relatos por padrão.",
+    "prompt": "01_Prompts_Existentes/E14-planetario-das-memorias.md"
+  },
+  {
+    "id": "E15",
+    "nome": "Santuário Zen 3D",
+    "status": "Existente — piloto",
+    "verbo": "contemplar",
+    "assets": "incenso, tigelas, velas, tecidos, almofadas, vegetação",
+    "evolucao": "Validar motor realista, fumaça contínua e luz motivada, chuva e vento opcionais, objetos responsivos, som com fade e presets.",
+    "aceite": "Medir três níveis, interagir com tigela/incenso, alternar presets, verificar pausa e retomada sem vazamento.",
+    "prompt": "01_Prompts_Existentes/E15-santuario-zen-3d.md"
+  },
+  {
+    "id": "E16",
+    "nome": "Teatro das Possibilidades",
+    "status": "Existente — migração",
+    "verbo": "encenar",
+    "assets": "palco, cortinas, fantoches, figurinos, cenários, focos",
+    "evolucao": "Integrar Teatro das Histórias Possíveis como modo de fantoches de vara; timeline de poses, luz e cenas; replay determinístico, texto opcional.",
+    "aceite": "Criar dois atos, editar ordem, reproduzir e exportar cena sem captar voz ou imagem por padrão.",
+    "prompt": "01_Prompts_Existentes/E16-teatro-das-possibilidades.md"
+  },
+  {
+    "id": "E17",
+    "nome": "Termômetro da Ansiedade",
+    "status": "Existente — migração",
+    "verbo": "graduar",
+    "assets": "termômetro, observatório, cartões, instrumentos, painel",
+    "evolucao": "Intensidade subjetiva, estratégias escolhidas, comparação voluntária, sem limiares diagnósticos; adaptar interface universal.",
+    "aceite": "Selecionar intensidade e estratégia, pular, comparar ou sair; reset e acessibilidade; nenhum rótulo clínico automático.",
+    "prompt": "01_Prompts_Existentes/E17-termometro-da-ansiedade.md"
+  },
+  {
+    "id": "E18",
+    "nome": "Vila dos Encontros",
+    "status": "Existente — piloto",
+    "verbo": "conversar",
+    "assets": "praça, padaria, escola, parque, personagens articulados",
+    "evolucao": "Integrar Cidade das Conversas como modo bairro; grafo de diálogos, respostas livres e opção de sair, múltiplas consequências plausíveis; retirar escore de assertividade.",
+    "aceite": "Percorrer respostas distintas, pedir ajuda, sair e repetir; verificar ausência de classificação moral e escore.",
+    "prompt": "01_Prompts_Existentes/E18-vila-dos-encontros.md"
+  },
+  {
+    "id": "T01",
+    "nome": "Cartografia dos Sons",
+    "status": "Novo terapêutico",
+    "verbo": "escutar e posicionar",
+    "assets": "maquete, escola, padaria, praça, ônibus, tokens",
+    "evolucao": "Grafo de ruas e marcador de escuta; PannerNode e fallback estéreo; comparação A/B com ganho limitado.",
+    "aceite": "Mover ônibus para perto/longe, comparar e silenciar tudo.",
+    "prompt": "02_Prompts_Terapeuticos/T01-cartografia-dos-sons.md"
+  },
+  {
+    "id": "T02",
+    "nome": "Laboratório de Camadas Sonoras",
+    "status": "Novo terapêutico",
+    "verbo": "mixar e isolar",
+    "assets": "rack, cápsulas, monitores, faders, oscilograma",
+    "evolucao": "Mixer por canal, solo/mute, FFT, escolha de foco; zero inicial e replay das configurações.",
+    "aceite": "Solo não deixa outras fontes ativas; mute geral e alternativa visual.",
+    "prompt": "02_Prompts_Terapeuticos/T02-laboratorio-de-camadas-sonoras.md"
+  },
+  {
+    "id": "T03",
+    "nome": "Observatório da Luz",
+    "status": "Novo terapêutico",
+    "verbo": "ajustar",
+    "assets": "pavilhão de vidro, persianas, prismas, dials",
+    "evolucao": "Exposição gradual, luz de cor/temperatura, vidro barato, comparação de presets sem flashes.",
+    "aceite": "Mudar intensidade, girar painel, abrir persiana e comparar; modo leve sem refração.",
+    "prompt": "02_Prompts_Terapeuticos/T03-observatorio-da-luz.md"
+  },
+  {
+    "id": "T04",
+    "nome": "Atlas das Texturas",
+    "status": "Novo terapêutico",
+    "verbo": "explorar materiais",
+    "assets": "vitrines, amostras, luz rasante, cartões",
+    "evolucao": "Cinco gestos com reações distintas e micro-relevo; coleção subjetiva; não simular sensação tátil como medida.",
+    "aceite": "Cinco gestos funcionam em amostras diversas; comparar com objeto real quando mediado.",
+    "prompt": "02_Prompts_Terapeuticos/T04-atlas-das-texturas.md"
+  },
+  {
+    "id": "T05",
+    "nome": "Estação das Trocas",
+    "status": "Novo terapêutico",
+    "verbo": "embarcar por regra",
+    "assets": "passageiros, vagões, quadro split-flap, bilhetes",
+    "evolucao": "FSM de regras anunciadas, arraste com snap, retorno suave e trilhos por spline.",
+    "aceite": "Trocar de regra com aviso; erro retorna sem punição; opção de pista.",
+    "prompt": "02_Prompts_Terapeuticos/T05-estacao-das-trocas.md"
+  },
+  {
+    "id": "T06",
+    "nome": "Oficina do Tempo",
+    "status": "Novo terapêutico",
+    "verbo": "estimar e comparar",
+    "assets": "relógio, ampulheta, ponteiro fantasma, cartões",
+    "evolucao": "Relógio monotônico, previsão editável e comparação descritiva; tarefa real fora do jogo; pausa configurável.",
+    "aceite": "Prever, medir, pausar e comparar durações; sem penalidade.",
+    "prompt": "02_Prompts_Terapeuticos/T06-oficina-do-tempo.md"
+  },
+  {
+    "id": "T07",
+    "nome": "Torre do Impulso",
+    "status": "Novo terapêutico — piloto",
+    "verbo": "aguardar o sinal",
+    "assets": "torre, tubos, esferas, comportas, painel",
+    "evolucao": "Rapier fixed step, CCD para esferas, sinal textual e por forma, troca de regra anunciada, replay por seed.",
+    "aceite": "Esfera não atravessa tubo; portão respeita estado; aguardar/liberar e resetar sem escore.",
+    "prompt": "02_Prompts_Terapeuticos/T07-torre-do-impulso.md"
+  },
+  {
+    "id": "T08",
+    "nome": "Porto das Decisões",
+    "status": "Novo terapêutico",
+    "verbo": "planejar carga e rota",
+    "assets": "barcos, guindastes, caixotes, cais, carta náutica",
+    "evolucao": "Capacidade por peso/volume simbólico, snap, grafo de rotas, água leve, planos A/B.",
+    "aceite": "Carregar até capacidade, bloquear rota inválida, simular dois planos e comparar.",
+    "prompt": "02_Prompts_Terapeuticos/T08-porto-das-decisoes.md"
+  },
+  {
+    "id": "T10",
+    "nome": "Meteorologia das Emoções",
+    "status": "Novo terapêutico",
+    "verbo": "compor clima",
+    "assets": "cúpula, dials cobre, céu, nuvens, chuva",
+    "evolucao": "Interpolar sol, nuvens, vento e chuva independentemente; boletim sem classificação.",
+    "aceite": "Combinar sol, chuva e noite; reduzir movimento; salvar boletim opcional.",
+    "prompt": "02_Prompts_Terapeuticos/T10-meteorologia-das-emocoes.md"
+  },
+  {
+    "id": "T11",
+    "nome": "Jardim dos Pensamentos",
+    "status": "Pendente",
+    "verbo": "plantar pensamento",
+    "assets": "origamis, jardim de papel, caderno",
+    "evolucao": "Manter em espera; comparar com Tribunal dos Pensamentos/Pensar Sentir e Agir; Rádio dos Pensamentos é alternativa não aprovada.",
+    "aceite": "Gate de decisão de identidade antes de produzir qualquer código.",
+    "prompt": "04_Pendencias/T11-jardim-dos-pensamentos.md"
+  },
+  {
+    "id": "T12",
+    "nome": "Ilha das Pausas",
+    "status": "Novo terapêutico",
+    "verbo": "escolher pausa",
+    "assets": "farol, chalé, gramado, garça, deck, jardim",
+    "evolucao": "Adotar mapa da planilha: farol respirar, chalé descansar, gramado alongar, deck desenhar, jardim escolher; câmera por spline e saída livre.",
+    "aceite": "Visitar cinco espaços, pular qualquer atividade, parar respiração e retornar sem ranking.",
+    "prompt": "02_Prompts_Terapeuticos/T12-ilha-das-pausas.md"
+  },
+  {
+    "id": "T14",
+    "nome": "Museu dos Pontos de Vista",
+    "status": "Novo terapêutico",
+    "verbo": "ver pelos olhos do outro",
+    "assets": "vitrines, personagens, divisórias, cartões",
+    "evolucao": "Câmera por personagem, cone de visão, raycast de oclusão e cartões de informação.",
+    "aceite": "Mover divisória altera visibilidade; separar viu/ouviu/não dá para saber.",
+    "prompt": "02_Prompts_Terapeuticos/T14-museu-dos-pontos-de-vista.md"
+  },
+  {
+    "id": "T15",
+    "nome": "Estúdio dos Limites",
+    "status": "Novo terapêutico",
+    "verbo": "ensaiar situação",
+    "assets": "palco, cadeiras, cortina, cartões, personagens",
+    "evolucao": "Roteiros editáveis, escolha de tom/distância, saída sempre disponível; respostas sem nota.",
+    "aceite": "Ensaiar dizer não, pedir ajuda, sair; fechar cortina a qualquer momento.",
+    "prompt": "02_Prompts_Terapeuticos/T15-estudio-dos-limites.md"
+  },
+  {
+    "id": "T16",
+    "nome": "Ensaio do Cotidiano",
+    "status": "Novo terapêutico",
+    "verbo": "preparar e percorrer",
+    "assets": "supermercado, corredores, produtos, caixa, pictogramas",
+    "evolucao": "Navmesh, lista editável, NPCs e fila; imprevistos opcionais e dial sensorial.",
+    "aceite": "Preparar lista, encontrar, pedir ajuda, esperar e pagar ficha; testar item em falta opcional.",
+    "prompt": "02_Prompts_Terapeuticos/T16-ensaio-do-cotidiano.md"
+  },
+  {
+    "id": "T19",
+    "nome": "Oficina do Ritmo Compartilhado",
+    "status": "Pendente",
+    "verbo": "alternar turnos",
+    "assets": "xilofone, tambores, animais de madeira, blocos",
+    "evolucao": "Recuperar oficina-do-ritmo.html; validar sequência até quatro sons, imitação/variação e modo cuidador.",
+    "aceite": "Não iniciar reconstrução até verificar fonte; depois alternância criança/adulto e mute.",
+    "prompt": "04_Pendencias/T19-oficina-do-ritmo-compartilhado.md"
+  },
+  {
+    "id": "T20",
+    "nome": "Casa das Memórias",
+    "status": "Novo terapêutico",
+    "verbo": "organizar lembranças",
+    "assets": "casa em corte, quatro cômodos, álbum, mala, molduras",
+    "evolucao": "Snap em prateleiras, gavetas, fotos locais opcionais, linha do tempo sem datas; privacidade forte.",
+    "aceite": "Guardar/omitir, reorganizar, exportar seletivamente e apagar; sem inferências.",
+    "prompt": "02_Prompts_Terapeuticos/T20-casa-das-memorias.md"
+  },
+  {
+    "id": "C01",
+    "nome": "Sala de Espera Sonora",
+    "status": "Novo comercial",
+    "verbo": "combinar sons",
+    "assets": "lareira, janela, vitrola, relógio, luminária, poltrona",
+    "evolucao": "Mixer espacial com cinco canais; gesto vertical com alternativa; respiração opcional sem retenção e saída imediata.",
+    "aceite": "Ativar/desativar cada canal, volume, interromper respiração e CTA.",
+    "prompt": "03_Prompts_Comerciais/C01-sala-de-espera-sonora.md"
+  },
+  {
+    "id": "C02",
+    "nome": "Mesa dos Objetos que Acalmam",
+    "status": "Novo comercial",
+    "verbo": "manipular",
+    "assets": "pêndulo de areia, berço de Newton, ampulheta líquida, tigela",
+    "evolucao": "Pêndulo com amortecimento e traço persistente, colisões e líquido aproximado; módulos independentes.",
+    "aceite": "Testar cada mecanismo, reset de um sem resetar os demais e mute.",
+    "prompt": "03_Prompts_Comerciais/C02-mesa-dos-objetos-que-acalmam.md"
+  },
+  {
+    "id": "C03",
+    "nome": "Rochas em Equilíbrio",
+    "status": "Novo comercial",
+    "verbo": "empilhar",
+    "assets": "seixos irregulares, água, margens, base",
+    "evolucao": "Corpos convexos, atrito, massa, centro de massa e CCD; água visual, quedas naturais.",
+    "aceite": "Empilhar três pedras, soltar e recuperar; testar estabilidade e colisão.",
+    "prompt": "03_Prompts_Comerciais/C03-rochas-em-equilibrio.md"
+  },
+  {
+    "id": "C04",
+    "nome": "Máquina de Escrever das Intenções",
+    "status": "Novo comercial",
+    "verbo": "datilografar",
+    "assets": "teclas, tipos, rolo, papel, carro, fita",
+    "evolucao": "Teclas articuladas, avanço de carro e papel, campainha opcional, edição acessível; texto local.",
+    "aceite": "Digitar com teclado/tela, retornar linha, exportar e apagar; sem enviar texto ao CTA.",
+    "prompt": "03_Prompts_Comerciais/C04-maquina-de-escrever-das-intencoes.md"
+  },
+  {
+    "id": "C05",
+    "nome": "Clepsidra do Foco",
+    "status": "Novo comercial",
+    "verbo": "organizar foco",
+    "assets": "vasos de vidro, válvulas, água, latão",
+    "evolucao": "Relógio monotônico independente de FPS, fluido visual sincronizado e pausas sem cobrança.",
+    "aceite": "Pausar/retomar após ocultar aba; fim suave e histórico opcional.",
+    "prompt": "03_Prompts_Comerciais/C05-clepsidra-do-foco.md"
+  },
+  {
+    "id": "C06",
+    "nome": "Caixa de Música Perfurada",
+    "status": "Novo comercial",
+    "verbo": "perfurar e tocar",
+    "assets": "fita, pente, manivela, cilindro, perfurador",
+    "evolucao": "Sequenciador por grade, notas originais e fita animada; sincronizar cursor e áudio.",
+    "aceite": "Editar padrão, tocar/parar, repetir e exportar sequência original.",
+    "prompt": "03_Prompts_Comerciais/C06-caixa-de-musica-perfurada.md"
+  },
+  {
+    "id": "C07",
+    "nome": "Copos Musicais",
+    "status": "Novo comercial",
+    "verbo": "afinar",
+    "assets": "oito taças, jarra, água, balcão",
+    "evolucao": "Nível de água altera frequência em modelo calibrado para gesto de toque; ressonância e indicação visual.",
+    "aceite": "Alterar água, ouvir notas diferentes, comparar e silenciar; nenhuma quebra punitiva.",
+    "prompt": "03_Prompts_Comerciais/C07-copos-musicais.md"
+  },
+  {
+    "id": "C08",
+    "nome": "Toca-Discos de Vinil",
+    "status": "Novo comercial — piloto",
+    "verbo": "tocar discos",
+    "assets": "prato, braço, cápsula, sulcos, capas, estante",
+    "evolucao": "FSM energia/prato/braço, inércia, 33/45 rpm e pitch; AudioBuffer original, scratch limitado e sincronização angular.",
+    "aceite": "Escolher disco, baixar braço, mudar velocidade, trocar lado, parar sem áudio residual.",
+    "prompt": "03_Prompts_Comerciais/C08-toca-discos-de-vinil.md"
+  },
+  {
+    "id": "C09",
+    "nome": "Varanda dos Sinos de Vento",
+    "status": "Novo comercial",
+    "verbo": "produzir vento",
+    "assets": "sinos bambu/metal/vidro, cordas, varanda",
+    "evolucao": "Pêndulos com amortecimento e rajadas; colisões com cooldown e polifonia limitada.",
+    "aceite": "Alterar vento, observar timbres e parar todos; sem sons abruptos.",
+    "prompt": "03_Prompts_Comerciais/C09-varanda-dos-sinos-de-vento.md"
+  },
+  {
+    "id": "C10",
+    "nome": "Máquina de Reação em Cadeia",
+    "status": "Novo comercial",
+    "verbo": "encadear",
+    "assets": "dominós, rampas, esfera, gangorra, polia, alavanca",
+    "evolucao": "Editor com sockets e snap, Rapier, teste passo a passo, replay por seed e reset.",
+    "aceite": "Construir cadeia de três mecanismos, iniciar, parar, corrigir e repetir.",
+    "prompt": "03_Prompts_Comerciais/C10-maquina-de-reacao-em-cadeia.md"
+  },
+  {
+    "id": "C11",
+    "nome": "Relógio Aberto",
+    "status": "Novo comercial",
+    "verbo": "explorar mecanismo",
+    "assets": "engrenagens, escape, mola, balanço, caixa",
+    "evolucao": "Transmissão cinemática por relações de dentes, vista explodida e corte, velocidade ajustável.",
+    "aceite": "Girar coroa, observar relações, desmontar e remontar visualmente.",
+    "prompt": "03_Prompts_Comerciais/C11-relogio-aberto.md"
+  },
+  {
+    "id": "C12",
+    "nome": "Pinball de Madeira",
+    "status": "Novo comercial",
+    "verbo": "rebater",
+    "assets": "mesa, flippers, bumpers, rampas, lançador",
+    "evolucao": "Rapier fixed step, CCD, flippers motorizados, reset de bola, placar opcional apenas comercial.",
+    "aceite": "Lançar, rebater, colidir com bumpers, perder e reiniciar bola; placar coerente.",
+    "prompt": "03_Prompts_Comerciais/C12-pinball-de-madeira.md"
+  },
+  {
+    "id": "C13",
+    "nome": "Trem de Engrenagens",
+    "status": "Novo comercial",
+    "verbo": "transmitir movimento",
+    "assets": "placa, eixos, engrenagens, manivela, moinho",
+    "evolucao": "Grafo de encaixes, razão e sentido de rotação por dentes, detectar travamento e explicar.",
+    "aceite": "Montar trem válido, inverter sentido, testar ciclo incompatível e corrigir.",
+    "prompt": "03_Prompts_Comerciais/C13-trem-de-engrenagens.md"
+  },
+  {
+    "id": "C14",
+    "nome": "Bancada da Manicure",
+    "status": "Novo comercial",
+    "verbo": "compor unhas",
+    "assets": "mãos estilizadas, esmaltes, pincéis, cabine, nail art",
+    "evolucao": "Formatos/cores/camadas com máscaras, undo, catálogo e preview; UV apenas simulado.",
+    "aceite": "Aplicar duas camadas, remover, trocar formato e exportar seleção para CTA mediante consentimento.",
+    "prompt": "03_Prompts_Comerciais/C14-bancada-da-manicure.md"
+  },
+  {
+    "id": "C15",
+    "nome": "Barista de Bancada",
+    "status": "Novo comercial",
+    "verbo": "preparar café",
+    "assets": "moedor, porta-filtro, máquina, xícara, leite",
+    "evolucao": "Estados moagem/dosagem/extração/espuma, partículas visuais e desenho de latte art; não afirmar precisão culinária.",
+    "aceite": "Preparar receita, ajustar fluxo, desenhar, limpar e repetir.",
+    "prompt": "03_Prompts_Comerciais/C15-barista-de-bancada.md"
+  },
+  {
+    "id": "C16",
+    "nome": "Bancada do Florista",
+    "status": "Novo comercial",
+    "verbo": "arranjar",
+    "assets": "flores, hastes, baldes, tesoura, embalagem",
+    "evolucao": "Curvas de haste, encaixes livres, corte de comprimento, composição de buquê e catálogo configurável.",
+    "aceite": "Combinar três flores, cortar, girar, embalar, exportar composição.",
+    "prompt": "03_Prompts_Comerciais/C16-bancada-do-florista.md"
+  },
+  {
+    "id": "C17",
+    "nome": "Maquete que se Monta",
+    "status": "Novo comercial",
+    "verbo": "construir em camadas",
+    "assets": "fundação, paredes, laje, telhado, móveis, materiais",
+    "evolucao": "Montagem por etapas com snap, corte/visita, acabamentos e luz solar; não é projeto estrutural.",
+    "aceite": "Montar, desfazer, trocar acabamento, visitar interior e voltar à vista geral.",
+    "prompt": "03_Prompts_Comerciais/C17-maquete-que-se-monta.md"
+  },
+  {
+    "id": "C18",
+    "nome": "Órgão do Perfumista",
+    "status": "Novo comercial",
+    "verbo": "compor notas",
+    "assets": "frascos, estante curva, pipetas, rótulos",
+    "evolucao": "Notas de saída/coração/fundo em proporções conceituais; visualização sem promessa de aroma real ou fórmula segura.",
+    "aceite": "Compor, editar proporções, rotular e exportar seleção; deixar claro limite sensorial.",
+    "prompt": "03_Prompts_Comerciais/C18-orgao-do-perfumista.md"
+  },
+  {
+    "id": "C19",
+    "nome": "Terrário de Vidro",
+    "status": "Novo comercial",
+    "verbo": "plantar",
+    "assets": "pote, substratos, plantas, pedras, ferramentas",
+    "evolucao": "Camadas, snap com limites do recipiente, umidade e crescimento ilustrativos; vidro simplificado.",
+    "aceite": "Montar camadas, plantar, mover, desfazer, alternar qualidade e exportar.",
+    "prompt": "03_Prompts_Comerciais/C19-terrario-de-vidro.md"
+  },
+  {
+    "id": "C20",
+    "nome": "Máquina de Garra de Brindes",
+    "status": "Novo comercial",
+    "verbo": "capturar",
+    "assets": "gabinete, garra, cápsulas, pelúcias, joystick",
+    "evolucao": "Controle XYZ com limites, garra e contatos, modo demonstração gratuito; cupons reais só com validação externa autorizada e regras transparentes.",
+    "aceite": "Mover, agarrar, soltar, reiniciar e testar limites; nunca fingir emissão real de prêmio.",
+    "prompt": "03_Prompts_Comerciais/C20-maquina-de-garra-de-brindes.md"
+  }
+]

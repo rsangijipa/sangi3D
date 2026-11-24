@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Planetário das Memórias — Experiência 3D Interativa</title>
+
+  <!-- Tailwind CSS & Three.js CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Barra Imersiva Compartilhada do Workspace -->
+  <link rel="stylesheet" href="shared/imersivo.css?v=3" />
+
+  <style>
+    :root {
+      --cor-cosmos: #38bdf8;
+      --cor-estrela: #fbbf24;
+      --cor-latao: #d4af37;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    .glass-observatory {
+      background: rgba(11, 15, 26, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+    }
+
+    .btn-cosmic {
+      transition: all 200ms cubic-bezier(.2,.6,.3,1);
+    }
+    .btn-cosmic:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(56, 189, 248, 0.3);
+    }
+
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -15px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: toastFade 3.2s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.4); border-radius: 9999px; }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- Canvas WebGL 3D -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI Superior -->
+  <header id="ui-top-bar" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <a href="/index.html" class="glass-observatory px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-white/10 flex items-center space-x-2 text-sky-200/90 transition" title="Voltar ao Launcher">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Launcher</span>
+      </a>
+      <div class="glass-observatory px-4 py-2 rounded-xl flex flex-col">
+        <span class="text-xs uppercase tracking-wider text-sky-400 font-bold">Ambiente 11 · Reconstrução Fiel</span>
+        <h1 class="text-sm font-semibold text-white/95">Planetário das Memórias</h1>
+      </div>
+    </div>
+
+    <!-- Indicador de Constelação Ativa -->
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <div class="glass-observatory px-3.5 py-2 rounded-xl flex items-center space-x-3">
+        <span class="text-lg">✨</span>
+        <div class="flex flex-col text-right">
+          <span class="text-[10px] uppercase font-bold text-sky-300/80 tracking-wider">Constelação</span>
+          <span id="badge-constellation-name" class="text-xs font-semibold text-amber-200">Constelação da Superação</span>
+        </div>
+      </div>
+
+      <button id="btn-sound-toggle" class="glass-observatory p-2.5 rounded-xl hover:bg-slate-800 text-sky-300 transition" title="Alternar Sons Cósmicos (M)">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12 0l-6-6m6 0l-6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Dock Inferior com Câmeras e Ações -->
+  <footer id="ui-bottom-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2.5 z-20 pointer-events-auto">
+    <div class="glass-observatory p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="cam-telescope" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 transition active">Telescópio</button>
+      <button id="cam-sky" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 transition">Cúpula Estelar</button>
+      <button id="cam-armillary" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 transition">Esfera Armilar</button>
+      <button id="cam-wide" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 transition">Observatório</button>
+    </div>
+
+    <div class="glass-observatory p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="btn-add-star" class="btn-cosmic px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 flex items-center space-x-1.5 transition">
+        <span>⭐</span>
+        <span>Batizar Estrela</span>
+      </button>
+
+      <button id="btn-drawer-toggle" class="btn-cosmic px-3.5 py-1.5 rounded-xl text-xs font-medium text-sky-200 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 flex items-center space-x-1.5 transition">
+        <span>🌌</span>
+        <span>Mapa de Memórias</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Dica de Interação -->
+  <div id="hint-bubble" class="absolute bottom-20 left-1/2 -translate-x-1/2 glass-observatory px-4 py-2 rounded-full text-xs font-medium text-sky-200/90 pointer-events-none transition-all duration-300 z-10 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+    <span>Clique nas estrelas brilhantes no céu ou no telescópio para conectar memórias</span>
+  </div>
+
+  <!-- Gaveta Lateral: Mapa Autobiográfico das Memórias -->
+  <aside id="info-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full glass-observatory border-l border-sky-500/30 z-30 translate-x-full transition-transform duration-300 flex flex-col p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-sky-500/20">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">🌌</span>
+        <h2 class="text-base font-bold text-sky-100">Céu Autobiográfico</h2>
+      </div>
+      <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-300 transition">✕</button>
+    </div>
+
+    <div class="space-y-4 pt-4 text-xs text-sky-200/90 leading-relaxed">
+      <section class="bg-sky-950/40 p-3.5 rounded-xl border border-sky-500/20">
+        <h3 class="font-bold text-sky-300 mb-1 text-sm">Constelações da Própria Vida</h3>
+        <p>
+          As estrelas isoladas no céu podem parecer distantes, mas quando traçamos linhas imaginárias
+          entre elas, revelam desenhos, animais lendários e heróis. Da mesma forma, nossas memórias
+          ganham novo sentido quando conectamos os aprendizados, pessoas queridas e momentos de superação.
+        </p>
+      </section>
+
+      <!-- Lista de Estrelas & Memórias Registradas -->
+      <section class="bg-black/30 p-3.5 rounded-xl border border-sky-500/20">
+        <h3 class="font-bold text-sky-300 mb-2">Estrelas da Sua Constelação</h3>
+        <div id="stars-list" class="space-y-2">
+          <div class="p-2 rounded-lg bg-sky-900/30 border border-sky-500/20">
+            <strong class="text-amber-300 block text-[11px]">Estrela Alfa: Uma Conquista Silenciosa</strong>
+            <p class="text-slate-300 text-[11px]">"O dia em que tive coragem de recomeçar mesmo sentindo receio."</p>
+          </div>
+          <div class="p-2 rounded-lg bg-sky-900/30 border border-sky-500/20">
+            <strong class="text-amber-300 block text-[11px]">Estrela Beta: Um Abraço Abrigo</strong>
+            <p class="text-slate-300 text-[11px]">"A pessoa que me escutou sem tentar me consertar."</p>
+          </div>
+          <div class="p-2 rounded-lg bg-sky-900/30 border border-sky-500/20">
+            <strong class="text-amber-300 block text-[11px]">Estrela Gama: O Sonho no Horizonte</strong>
+            <p class="text-slate-300 text-[11px]">"O projeto de vida que me faz acordar com esperança."</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-sky-950/40 p-3.5 rounded-xl border border-sky-500/20">
+        <h3 class="font-bold text-sky-300 mb-1">Batizar Nova Estrela de Memória</h3>
+        <input id="input-star-title" type="text" class="w-full bg-black/60 border border-sky-500/30 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-sky-400 mb-2" placeholder="Nome da memória..." />
+        <textarea id="input-star-desc" rows="3" class="w-full bg-black/60 border border-sky-500/30 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-sky-400 placeholder-sky-500/40" placeholder="Qual lembrança ou pessoa você ancora nesta estrela?"></textarea>
+        <button id="btn-save-star" class="mt-2 w-full py-2 bg-gradient-to-r from-sky-600 to-amber-500 hover:from-sky-500 hover:to-amber-400 text-slate-950 font-bold rounded-lg shadow transition">Gravar Estrela no Céu</button>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center space-y-2"></div>
+
+  <!-- Script Principal 3D -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+       * 1. ÁUDIO PROCEDURAL DO PLANETÁRIO (Web Audio API)
+       * ========================================================== */
+      class PlanetariumAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.spaceGain = null;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          this.ctx = new AudioContext();
+
+          // Sintetizador harmônico espacial profundo (Dó menor cósmico: 130.81Hz, 155.56Hz, 196.00Hz)
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          osc1.type = 'sine';
+          osc1.frequency.value = 130.81;
+          osc2.type = 'sine';
+          osc2.frequency.value = 196.00;
+
+          const gainNode = this.ctx.createGain();
+          gainNode.gain.value = 0.08;
+
+          this.spaceGain = this.ctx.createGain();
+          this.spaceGain.gain.value = 0.2;
+
+          osc1.connect(gainNode);
+          osc2.connect(gainNode);
+          gainNode.connect(this.spaceGain);
+          this.spaceGain.connect(this.ctx.destination);
+
+          osc1.start();
+          osc2.start();
+        }
+
+        playStarTwinkle(freq = 987.77) {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.65);
+        }
+
+        playTelescopeMove() {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.linearRampToValueAtTime(180, now + 0.2);
+
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.spaceGain && this.ctx) {
+            this.spaceGain.gain.value = this.enabled ? 0.2 : 0;
+          }
+          return this.enabled;
+        }
+      }
+
+      const audio = new PlanetariumAudioEngine();
+
+      /* ==========================================================
+       * 2. CENÁRIO THREE.JS (Observatório Astronômico na Montanha)
+       * ========================================================== */
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x040814);
+      scene.fog = new THREE.FogExp2(0x040814, 0.02);
+
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 70);
+      camera.position.set(0, 3.2, 5.8);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.02;
+      controls.minDistance = 2;
+      controls.maxDistance = 18;
+      controls.target.set(0, 1.8, 0);
+
+      /* ==========================================================
+       * 3. MATERIAIS PBR
+       * ========================================================== */
+      const matBrassPolished = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.25, metalness: 0.9 });
+      const matDarkStone     = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
+      const matDomeRoof      = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, metalness: 0.4 });
+      const matStarGlow      = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+      const matConstellationLine = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 });
+
+      /* ==========================================================
+       * 4. ILUMINAÇÃO ESTELAR
+       * ========================================================== */
+      const ambLight = new THREE.AmbientLight(0x1e293b, 0.85);
+      scene.add(ambLight);
+
+      const starLight = new THREE.PointLight(0x38bdf8, 1.5, 10);
+      starLight.position.set(0, 6, 0);
+      scene.add(starLight);
+
+      /* ==========================================================
+       * 5. CENOGRAFIA: OBSERVATÓRIO & TELESCÓPIO GIGANTE DE LATÃO
+       * ========================================================== */
+      const obsGroup = new THREE.Group();
+
+      // Piso circular de pedra do observatório
+      const floorGeo = new THREE.CylinderGeometry(5.2, 5.5, 0.3, 32);
+      floorGeo.translate(0, -0.15, 0);
+      const floor = new THREE.Mesh(floorGeo, matDarkStone);
+      floor.receiveShadow = true;
+      obsGroup.add(floor);
+
+      // Parede circular com abertura para o céu
+      const wallGeo = new THREE.CylinderGeometry(5.2, 5.2, 2.2, 32, 1, true, 0, Math.PI * 1.5);
+      wallGeo.translate(0, 1.1, 0);
+      const wall = new THREE.Mesh(wallGeo, matDomeRoof);
+      obsGroup.add(wall);
+
+      // Telescópio Gigante de Latão Montado em Pedestal Central
+      const telescopeGroup = new THREE.Group();
+      telescopeGroup.position.set(0, 0, 0);
+
+      // Pedestal
+      const baseGeo = new THREE.CylinderGeometry(0.5, 0.7, 0.8, 16);
+      baseGeo.translate(0, 0.4, 0);
+      const base = new THREE.Mesh(baseGeo, matBrassPolished);
+      base.castShadow = true;
+      telescopeGroup.add(base);
+
+      // Eixo e tubo inclinado apontando para o céu
+      const tubeGroup = new THREE.Group();
+      tubeGroup.position.set(0, 1.2, 0);
+      tubeGroup.rotation.x = -0.55; // inclinado para o alto
+
+      const tubeGeo = new THREE.CylinderGeometry(0.24, 0.18, 3.2, 20);
+      tubeGeo.rotateX(Math.PI / 2);
+      const tube = new THREE.Mesh(tubeGeo, matBrassPolished);
+      tube.castShadow = true;
+      tubeGroup.add(tube);
+
+      // Lente frontal luminosa
+      const lensGeo = new THREE.CircleGeometry(0.22, 18);
+      lensGeo.translate(0, 0, 1.61);
+      const matLens = new THREE.MeshBasicMaterial({ color: 0xbae6fd });
+      const lens = new THREE.Mesh(lensGeo, matLens);
+      tubeGroup.add(lens);
+
+      telescopeGroup.add(tubeGroup);
+      obsGroup.add(telescopeGroup);
+
+      // Esfera Armilar em suporte à direita
+      const armillaryGroup = new THREE.Group();
+      armillaryGroup.position.set(2.4, 0, 1.2);
+
+      const armStandGeo = new THREE.CylinderGeometry(0.08, 0.16, 0.9, 12);
+      armStandGeo.translate(0, 0.45, 0);
+      const armStand = new THREE.Mesh(armStandGeo, matBrassPolished);
+      armillaryGroup.add(armStand);
+
+      for (let r = 0; r < 3; r++) {
+        const ringGeo = new THREE.TorusGeometry(0.4, 0.02, 8, 24);
+        const ring = new THREE.Mesh(ringGeo, matBrassPolished);
+        ring.position.y = 1.0;
+        ring.rotation.x = r * (Math.PI / 3);
+        ring.rotation.y = r * 0.4;
+        armillaryGroup.add(ring);
+      }
+      obsGroup.add(armillaryGroup);
+
+      scene.add(obsGroup);
+
+      /* ==========================================================
+       * 6. CÚPULA CELESTE & ESTRELAS INTERATIVAS
+       * ========================================================== */
+      const stars = [];
+      const starCoords = [
+        { x: -2.8, y: 5.2, z: -3.5, name: 'Estrela Alfa (Conquista)' },
+        { x: -0.8, y: 6.1, z: -4.2, name: 'Estrela Beta (Abraço)' },
+        { x:  1.6, y: 5.8, z: -3.8, name: 'Estrela Gama (Sonho)' },
+        { x:  3.2, y: 4.8, z: -2.8, name: 'Estrela Delta (Resiliência)' },
+        { x:  0.2, y: 4.2, z: -2.5, name: 'Estrela Épsilon (Presença)' }
+      ];
+
+      starCoords.forEach((sc, idx) => {
+        const sGeo = new THREE.SphereGeometry(0.12, 12, 12);
+        const sMesh = new THREE.Mesh(sGeo, matStarGlow);
+        sMesh.position.set(sc.x, sc.y, sc.z);
+        sMesh.userData = { idx: idx, name: sc.name };
+        scene.add(sMesh);
+        stars.push(sMesh);
+      });
+
+      // Linhas da Constelação interligando as estrelas
+      const linePoints = [
+        stars[0].position,
+        stars[1].position,
+        stars[2].position,
+        stars[3].position,
+        stars[4].position,
+        stars[1].position // fecha triângulo
+      ];
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+      const constellationLine = new THREE.Line(lineGeo, matConstellationLine);
+      scene.add(constellationLine);
+
+      // Partículas de poeira estelar cósmica
+      const dustCount = 120;
+      const dustGeo = new THREE.BufferGeometry();
+      const dustPos = new Float32Array(dustCount * 3);
+      for (let d = 0; d < dustCount; d++) {
+        dustPos[d * 3]     = (Math.random() - 0.5) * 16;
+        dustPos[d * 3 + 1] = 2 + Math.random() * 8;
+        dustPos[d * 3 + 2] = (Math.random() - 0.5) * 16;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+      const matDust = new THREE.PointsMaterial({ color: 0x93c5fd, size: 0.05, transparent: true, opacity: 0.6 });
+      const dustMesh = new THREE.Points(dustGeo, matDust);
+      scene.add(dustMesh);
+
+      /* ==========================================================
+       * 7. CÂMERAS PRESET
+       * ========================================================== */
+      const camPresets = {
+        telescope: { pos: new THREE.Vector3(0, 2.2, 3.4), target: new THREE.Vector3(0, 1.6, 0) },
+        sky:       { pos: new THREE.Vector3(0, 1.8, 1.2), target: new THREE.Vector3(0, 5.5, -3.5) },
+        armillary: { pos: new THREE.Vector3(2.4, 1.6, 2.8), target: new THREE.Vector3(2.4, 1.0, 1.2) },
+        wide:      { pos: new THREE.Vector3(0, 3.2, 5.8), target: new THREE.Vector3(0, 1.8, 0) }
+      };
+
+      let targetCamPos = camPresets.telescope.pos.clone();
+      let targetCamLook = camPresets.telescope.target.clone();
+
+      function setCameraPreset(key) {
+        const p = camPresets[key];
+        targetCamPos.copy(p.pos);
+        targetCamLook.copy(p.target);
+
+        document.querySelectorAll('.btn-cam').forEach(b => b.classList.remove('active', 'bg-sky-500/20', 'text-white'));
+        const activeBtn = document.getElementById(`cam-${key}`);
+        if (activeBtn) activeBtn.classList.add('active', 'bg-sky-500/20', 'text-white');
+      }
+
+      /* ==========================================================
+       * 8. LÓGICA DE MEMÓRIAS & CONSTELAÇÃO
+       * ========================================================== */
+      function showToast(text) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'glass-observatory px-4 py-2.5 rounded-xl text-xs text-sky-200 border border-sky-400/40 shadow-xl toast-anim';
+        t.textContent = text;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      function selectStar(star) {
+        audio.playStarTwinkle();
+        star.scale.set(1.4, 1.4, 1.4);
+        setTimeout(() => star.scale.set(1, 1, 1), 250);
+        showToast(`✨ ${star.userData.name} selecionada no telescópio!`);
+      }
+
+      document.getElementById('btn-add-star').addEventListener('click', () => {
+        document.getElementById('info-drawer').classList.remove('translate-x-full');
+      });
+
+      document.getElementById('btn-save-star').addEventListener('click', () => {
+        const title = document.getElementById('input-star-title').value.trim();
+        const desc  = document.getElementById('input-star-desc').value.trim();
+        if (!title) {
+          showToast('⭐ Dê um nome à sua memória antes de batizar.');
+          return;
+        }
+
+        const list = document.getElementById('stars-list');
+        const card = document.createElement('div');
+        card.className = 'p-2 rounded-lg bg-sky-900/30 border border-sky-500/20';
+        card.innerHTML = `
+          <strong class="text-amber-300 block text-[11px]">${title}</strong>
+          <p class="text-slate-300 text-[11px]">"${desc || 'Memória ancorada no céu do observatório.'}"</p>
+        `;
+        list.appendChild(card);
+
+        audio.playStarTwinkle(1174.66);
+        showToast(`🌟 Memória "${title}" ancorada com sucesso no céu!`);
+        document.getElementById('input-star-title').value = '';
+        document.getElementById('input-star-desc').value = '';
+      });
+
+      /* ==========================================================
+       * 9. LISTENERS DA UI
+       * ========================================================== */
+      document.getElementById('cam-telescope').addEventListener('click', () => setCameraPreset('telescope'));
+      document.getElementById('cam-sky').addEventListener('click', () => setCameraPreset('sky'));
+      document.getElementById('cam-armillary').addEventListener('click', () => setCameraPreset('armillary'));
+      document.getElementById('cam-wide').addEventListener('click', () => setCameraPreset('wide'));
+
+      // Drawer
+      const drawer = document.getElementById('info-drawer');
+      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        drawer.classList.add('translate-x-full');
+      });
+
+      // Som
+      const btnSound = document.getElementById('btn-sound-toggle');
+      btnSound.addEventListener('click', () => {
+        const on = audio.toggle();
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+        showToast(on ? '🔊 Sons cósmicos ativados' : '🔇 Áudio silenciado');
+      });
+
+      // Raycast nas estrelas
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('#ui-top-bar, #ui-bottom-dock, #info-drawer, #toast-container')) return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        const hits = raycaster.intersectObjects(stars);
+        if (hits.length > 0) {
+          selectStar(hits[0].object);
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ==========================================================
+       * 10. LOOP DE ANIMAÇÃO
+       * ========================================================== */
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = clock.getDelta();
+        const elapsedTime = clock.getElapsedTime();
+
+        // 1. Câmera
+        camera.position.lerp(targetCamPos, 0.04);
+        controls.target.lerp(targetCamLook, 0.04);
+        controls.update();
+
+        // 2. Pulsação suave das estrelas
+        stars.forEach((s, idx) => {
+          const pulse = 1 + Math.sin(elapsedTime * 3 + idx) * 0.15;
+          s.scale.set(pulse, pulse, pulse);
+        });
+
+        // 3. Rotação suave da poeira cósmica
+        dustMesh.rotation.y += delta * 0.02;
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      setTimeout(() => {
+        const hint = document.getElementById('hint-bubble');
+        if (hint) {
+          hint.style.opacity = '0';
+          setTimeout(() => hint.remove(), 500);
+        }
+      }, 6500);
+
+    })();
+  </script>
+
+  <!-- Script Compartilhado de Barra Imersiva e Atalhos -->
+  <script src="shared/imersivo.js?v=3"></script>
+  <script>
+    if (window.Imersivo) {
+      Imersivo.init({
+        ambienteId: 'planetario-das-memorias',
+        titulo: 'Planetário das Memórias',
+        tema: 'planetario'
+      });
+    }
+  </script>
+</body>
+</html>

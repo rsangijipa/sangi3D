@@ -1,0 +1,2849 @@
+{
+  "data": "2026-11-24",
+  "aplicacoes": [
+    {
+      "nome": "Ateliê dos Remendos e Transformações 3D — Jardins do Sentir",
+      "caminho": "01_Jogos_HTML/atelie-dos-remendos-e-transformacoes/ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Bancada do Florista · Flor de Ipê",
+      "caminho": "01_Jogos_HTML/bancada-do-florista/bancada-do-florista.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Biblioteca das Histórias Inacabadas 3D — Jardins do Sentir",
+      "caminho": "01_Jogos_HTML/biblioteca-das-historias-inacabadas/biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Caixa de Música Perfurada — Loja Corda e Melodia",
+      "caminho": "01_Jogos_HTML/caixa-de-musica-perfurada/caixa_de_m_sica_perfurada_loja_corda_e_melodia.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Cidade das Conexões 3D — Jardins do Sentir",
+      "caminho": "01_Jogos_HTML/cidade-das-conexoes/cidade_das_conex_es_3d_jardins_do_sentir.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Correio das Palavras Não Ditas 3D — Jardins do Sentir",
+      "caminho": "01_Jogos_HTML/correio-das-palavras-nao-ditas/correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Correio das Palavras Não Ditas — Agência Postal 3D Fotorrealista",
+      "caminho": "01_Jogos_HTML/correio-das-palavras-nao-ditas-agencia-postal/correio_das_palavras_n_o_ditas_ag_ncia_postal_3d_fotorrealista.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Cozinha das Descobertas — Experiência 3D Fotorrealista",
+      "caminho": "01_Jogos_HTML/cozinha-das-descobertas/cozinha-das-descobertas.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Escada da Coragem — Jardins da TCC · Experiência 3D",
+      "caminho": "01_Jogos_HTML/escada-da-coragem/escada-da-coragem.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Escada da Coragem — Jardins da TCC · Experiência 3D",
+      "caminho": "01_Jogos_HTML/escada-da-coragem/escada_da_coragem_jardins_da_tcc_experi_ncia_3d.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Estufa das Borboletas",
+      "caminho": "01_Jogos_HTML/estufa-das-borboletas/estufa-das-borboletas.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Jardim dos Fungos — Microfloresta Interativa 3D",
+      "caminho": "01_Jogos_HTML/jardim-dos-fungos/jardim_dos_fungos_microfloresta_interativa_3d.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Lago 3D Interativo — Reflexos, Peixes e Autoestima",
+      "caminho": "01_Jogos_HTML/lago-3d-interativo/lago-3d-interativo.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Ateliê do Gesto Lento — Oficina 3D de Cerâmica e Presença | Instituto Gestaltear",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/atelie-do-gesto-lento.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Ateliê dos Remendos e Transformações — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/atelie-dos-remendos-e-transformacoes.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Biblioteca das Histórias Inacabadas — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/biblioteca-das-historias-inacabadas.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Cartografia do Corpo Sentido — Experiência 3D Somática",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/cartografia-do-corpo-sentido.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Casa da Árvore das Emoções — Morada do Sentir | Jardins do Sentir",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/casa-da-arvore-das-emocoes.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Cidade das Conexões — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/cidade-das-conexoes.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Correio das Palavras Não Ditas — Agência Postal 3D Fotorrealista",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/correio-das-palavras-nao-ditas.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Estação das Escolhas — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/estacao-das-escolhas.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Estúdio das Sombras e da Luz — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/estudio-das-sombras-e-da-luz.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Laboratório das Leis Imaginárias — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/laboratorio-das-leis-imaginarias.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Laboratório dos Sons e Silêncios — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/laboratorio-dos-sons-e-silencios.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Museu das Perspectivas — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/museu-das-perspectivas.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Oficina dos Robôs Imperfeitos — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/oficina-dos-robos-imperfeitos.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Planetário das Memórias — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/planetario-das-memorias.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Santuário Zen 3D — Meditação, Incenso & Iluminação Realista",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/santuario-zen-3d.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Teatro das Possibilidades — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/teatro-das-possibilidades.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Termômetro da Ansiedade · Jardins da TCC 3D",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/termometro-da-ansiedade.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Vila dos Encontros — Experiência 3D Interativa",
+      "caminho": "01_Jogos_HTML/Legado_Arquivado/ambientes-html/vila-dos-encontros.html",
+      "legado": true,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Maquete que se Monta — Ateliê Traço Arquitetura",
+      "caminho": "01_Jogos_HTML/maquete-que-se-monta/maquete_que_se_monta_ateli_tra_o_arquitetura.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Máquina de Garra de Brindes — Doce Mel Confeitaria",
+      "caminho": "01_Jogos_HTML/maquina-de-garra-de-brindes/m_quina_de_garra_de_brindes_doce_mel_confeitaria.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Moinho Hidráulico — Simulador 3D Interativo",
+      "caminho": "01_Jogos_HTML/moinho-hidraulico/moinho_hidr_ulico_simulador_3d_interativo.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Oficina das Velas Artesanais — Ateliê 3D Interativo",
+      "caminho": "01_Jogos_HTML/oficina-das-velas-artesanais/oficina_das_velas_artesanais_ateli_3d_interativo.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Oficina de Bonsais · 盆栽",
+      "caminho": "01_Jogos_HTML/oficina-de-bonsais/Oficina de Bonsais — HTML 3D interativo.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Oficina do Ritmo Compartilhado — Experiência 3D",
+      "caminho": "01_Jogos_HTML/oficina-do-ritmo/oficina-do-ritmo.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Paisagem Sonora 3D — Riacho e Pássaros",
+      "caminho": "01_Jogos_HTML/paisagem-sonora-3d/paisagem-sonora-3d.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Pensar, Sentir e Agir — Jardins da TCC • Experiência 3D",
+      "caminho": "01_Jogos_HTML/pensar-sentir-e-agir/pensar-sentir-e-agir.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Pensar, Sentir e Agir — Jardins da TCC • Experiência 3D",
+      "caminho": "01_Jogos_HTML/pensar-sentir-e-agir/pensar_sentir_e_agir_jardins_da_tcc_3d.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Pousada Vento Leve — Varanda dos Sinos de Vento",
+      "caminho": "01_Jogos_HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Semáforo das Emoções 3D — Praça do Semáforo",
+      "caminho": "01_Jogos_HTML/semaforo-das-emocoes/semaforo-das-emocoes.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Semáforo das Emoções 3D — Praça do Semáforo",
+      "caminho": "01_Jogos_HTML/semaforo-das-emocoes/sem_foro_das_emo_es_3d_pra_a_do_sem_foro.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Termômetro da Ansiedade · Jardins da TCC 3D",
+      "caminho": "01_Jogos_HTML/termometro-da-ansiedade/term_metro_da_ansiedade_jardins_da_tcc_3d.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Terrário de Vidro — Verde Miúdo Plantas",
+      "caminho": "01_Jogos_HTML/terrario-de-vidro/terr_rio_de_vidro_verde_mi_do_plantas.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Trem de Engrenagens — Escola Maker Faísca",
+      "caminho": "01_Jogos_HTML/trem-de-engrenagens/trem_de_engrenagens_escola_maker_fa_sca.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Tribunal dos Pensamentos 3D — Jardins da TCC",
+      "caminho": "01_Jogos_HTML/tribunal-dos-pensamentos/tribunal-dos-pensamentos.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Tribunal dos Pensamentos 3D — Jardins da TCC",
+      "caminho": "01_Jogos_HTML/tribunal-dos-pensamentos/tribunal_dos_pensamentos_3d_jardins_da_tcc.html",
+      "legado": false,
+      "projeto": false,
+      "build": false
+    },
+    {
+      "nome": "Ateliê do Gesto Lento — Oficina 3D de Cerâmica e Presença | Instituto Gestaltear",
+      "caminho": "02_Projetos/atelie-do-gesto-lento/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Ateliê do Gesto Lento — Oficina 3D de Cerâmica e Presença | Instituto Gestaltear",
+      "caminho": "02_Projetos/atelie-do-gesto-lento/referencia_3d/ateli_do_gesto_lento_oficina_3d_de_cer_mica_e_presen_a_instituto_gestaltear.html",
+      "legado": true,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Casa da Árvore das Emoções — Morada do Sentir | Jardins do Sentir",
+      "caminho": "02_Projetos/atelie-do-gesto-lento/referencia_3d/casa_da_rvore_das_emo_es_morada_do_sentir_jardins_do_sentir.html",
+      "legado": true,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Lago 3D Interativo — Reflexos, Peixes e Autoestima",
+      "caminho": "02_Projetos/atelie-do-gesto-lento/referencia_3d/lago_3d_interativo_reflexos_peixes_e_autoestima.backup.html",
+      "legado": true,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Paisagem Sonora 3D — Riacho e Pássaros",
+      "caminho": "02_Projetos/atelie-do-gesto-lento/referencia_3d/paisagem_sonora_3d_riacho_e_p_ssaros.backup.html",
+      "legado": true,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Santuário Zen 3D — Meditação, Incenso & Iluminação Realista",
+      "caminho": "02_Projetos/atelie-do-gesto-lento/referencia_3d/santu_rio_zen_3d_medita_o_incenso_ilumina_o_realista.backup.html",
+      "legado": true,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Ateliê das Máscaras Emocionais",
+      "caminho": "02_Projetos/ateliemascaras/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Jardim dos Ciclos",
+      "caminho": "02_Projetos/jardim-dos-ciclos/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Mochila da Travessia — Experiência 3D Interativa",
+      "caminho": "02_Projetos/mochila-da-travessia-projeto/mochila-da-travessia.html",
+      "legado": false,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Oficina dos Gestos Compartilhados",
+      "caminho": "02_Projetos/oficina-dos-gestos-compartilhados-projeto/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Território dos Vínculos",
+      "caminho": "02_Projetos/territorio-dos-vinculos/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Trilha do Mestre Mandou",
+      "caminho": "03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Ateliê das Reconstruções · Kintsugi",
+      "caminho": "03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Galeria dos Equilíbrios Impossíveis",
+      "caminho": "03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Tear dos Vínculos — Oficina 3D de tecelagem",
+      "caminho": "04-tear-dos-vinculos/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Sala de Espera Sonora",
+      "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/01_sala-de-espera-sonora/sala-de-espera-sonora.html",
+      "legado": false,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Mesa dos Objetos que Acalmam — Clínica Ponto Quieto",
+      "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/02_mesa-dos-objetos-que-acalmam/mesa-dos-objetos-que-acalmam.html",
+      "legado": false,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Casa Seixo Yoga e Terapia — Rochas em Equilíbrio 3D",
+      "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/03_rochas-em-equilibrio/rochas-em-equilibrio.html",
+      "legado": false,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Pinball de Madeira",
+      "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/12_pinball-de-madeira/pinball-de-madeira.html",
+      "legado": false,
+      "projeto": true,
+      "build": false
+    },
+    {
+      "nome": "Cartografia dos Sons — Experiência 3D Interativa",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Atlas das Texturas",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Laboratório de Camadas Sonoras — Mixagem Artesanal 3D",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Meteorologia das Emoções",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Porto das Decisões — Planejamento Náutico 3D",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Bússola do Corpo",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "12. Cidade das Conversas · Cidade de Miniaturas",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "Casa das Memórias",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    },
+    {
+      "nome": "17. Ensaio do Cotidiano · Mercadinho Acolhedor",
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/index.html",
+      "legado": false,
+      "projeto": true,
+      "build": true
+    }
+  ],
+  "prompts": [
+    {
+      "nome": "Oficina dos Gestos Compartilhados",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/01-oficina-dos-gestos-compartilhados/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "02_Projetos/oficina-dos-gestos-compartilhados-projeto/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Trilha do Mestre Mandou",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Ateliê das Máscaras Emocionais",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/03-atelie-das-mascaras-emocionais/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "02_Projetos/ateliemascaras/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Ateliê das Reconstruções — Kintsugi",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Galeria dos Equilíbrios Impossíveis",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Sala das Cadeiras Possíveis",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/07-sala-das-cadeiras-possiveis/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Sopraria das Transformações",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/08-sopraria-das-transformacoes/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Pavilhão dos Tecidos Flutuantes",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/09-pavilhao-dos-tecidos-flutuantes/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Agência de Investigação dos Pensamentos",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/10-agencia-de-investigacao-dos-pensamentos/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Rádio dos Pensamentos",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/11-radio-dos-pensamentos/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Máquina das Consequências",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/12-maquina-das-consequencias/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Central dos Planos Alternativos",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/13-central-dos-planos-alternativos/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Relojoaria das Prioridades",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/14-relojoaria-das-prioridades/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Farol da Atenção",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/15-farol-da-atencao/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Vale dos Balões Passageiros",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/16-vale-dos-baloes-passageiros/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Navegador dos Valores",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/17-navegador-dos-valores/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Areias do Impermanente",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "03_Colecoes/Expressao_e_Desenvolvimento/18-areias-do-impermanente/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Tear dos Vínculos",
+      "colecao": "Expressão e desenvolvimento (18)",
+      "prompt": "04-tear-dos-vinculos/PROMPT_IMPLEMENTACAO.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "04-tear-dos-vinculos/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Cartografia dos sons",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Atlas das texturas",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Laboratorio de camadas sonoras",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Observatorio da luz",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/04-observatorio-da-luz/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina do tempo",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/05-oficina-do-tempo/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Torre do impulso",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/06-torre-do-impulso/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ilha das pausas",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/07-ilha-das-pausas/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Meteorologia das emocoes",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Estacao das trocas",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/09-estacao-das-trocas/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Porto das decisoes",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Bussola do corpo",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Cidade das conversas",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Museu dos pontos de vista",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/13-museu-dos-pontos-de-vista/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estudio dos limites",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/14-estudio-dos-limites/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Casa das memorias",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Teatro das historias possiveis",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/16-teatro-das-historias-possiveis/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ensaio do cotidiano",
+      "colecao": "Kit 17 jogos",
+      "prompt": "Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/PROMPT.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Sala de Espera Sonora",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/01_sala-de-espera-sonora/01_sala-de-espera-sonora.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/01_sala-de-espera-sonora/sala-de-espera-sonora.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Mesa dos Objetos que Acalmam",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/02_mesa-dos-objetos-que-acalmam/02_mesa-dos-objetos-que-acalmam.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/02_mesa-dos-objetos-que-acalmam/mesa-dos-objetos-que-acalmam.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Rochas em Equilíbrio",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/03_rochas-em-equilibrio/03_rochas-em-equilibrio.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/03_rochas-em-equilibrio/rochas-em-equilibrio.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Máquina de Escrever das Intenções",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/04_maquina-de-escrever-das-intencoes/04_maquina-de-escrever-das-intencoes.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Clepsidra do Foco",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/05_clepsidra-do-foco/05_clepsidra-do-foco.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Caixa de Música Perfurada",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/06_caixa-de-musica-perfurada/06_caixa-de-musica-perfurada.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/caixa-de-musica-perfurada/caixa_de_m_sica_perfurada_loja_corda_e_melodia.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Copos Musicais",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/07_copos-musicais/07_copos-musicais.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Toca-Discos de Vinil",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/08_toca-discos-de-vinil/08_toca-discos-de-vinil.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Varanda dos Sinos de Vento",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/09_varanda-dos-sinos-de-vento/09_varanda-dos-sinos-de-vento.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Máquina de Reação em Cadeia",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/10_maquina-de-reacao-em-cadeia/10_maquina-de-reacao-em-cadeia.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Relógio Aberto",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/11_relogio-aberto/11_relogio-aberto.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Pinball de Madeira",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/12_pinball-de-madeira/12_pinball-de-madeira.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/12_pinball-de-madeira/pinball-de-madeira.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Trem de Engrenagens",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/13_trem-de-engrenagens/13_trem-de-engrenagens.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/trem-de-engrenagens/trem_de_engrenagens_escola_maker_fa_sca.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Bancada da Manicure",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/14_bancada-da-manicure/14_bancada-da-manicure.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Barista de Bancada",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/15_barista-de-bancada/15_barista-de-bancada.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Bancada do Florista",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/16_bancada-do-florista/16_bancada-do-florista.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/bancada-do-florista/bancada-do-florista.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Maquete que se Monta",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/17_maquete-que-se-monta/17_maquete-que-se-monta.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/maquete-que-se-monta/maquete_que_se_monta_ateli_tra_o_arquitetura.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Órgão do Perfumista",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/18_orgao-do-perfumista/18_orgao-do-perfumista.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Terrário de Vidro",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/19_terrario-de-vidro/19_terrario-de-vidro.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/terrario-de-vidro/terr_rio_de_vidro_verde_mi_do_plantas.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Máquina de Garra de Brindes",
+      "colecao": "Adultos e marcas (20)",
+      "prompt": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/20_maquina-de-garra-de-brindes/20_maquina-de-garra-de-brindes.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/maquina-de-garra-de-brindes/m_quina_de_garra_de_brindes_doce_mel_confeitaria.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Ateliê de Marmorização",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina das Velas Artesanais",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/oficina-das-velas-artesanais/oficina_das_velas_artesanais_ateli_3d_interativo.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Estúdio de Resina Cristalina",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Encadernadora de Histórias",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Xilogravura",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Laboratório de Aquarelas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Joias",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Tapeçarias",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ateliê de Esculturas de Gelo",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Miniaturas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Museu dos Autômatos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Escultura Cinética Infinita",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Caixa Registradora Mecânica",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Tipografia Mecânica",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Moinho Hidráulico",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/moinho-hidraulico/moinho_hidr_ulico_simulador_3d_interativo.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Oficina de Cofres Secretos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Fábrica de Brinquedos de Corda",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Laboratório dos Ímãs",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Mesa de Bilhar Mecânico",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Motores em Miniatura",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Aquapaisagismo",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Mundo Subterrâneo das Formigas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Jardim dos Fungos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/jardim-dos-fungos/jardim_dos_fungos_microfloresta_interativa_3d.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Escultor de Paisagens",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Bonsais",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/oficina-de-bonsais/Oficina de Bonsais — HTML 3D interativo.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Laboratório de Cristais",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Colmeia Transparente",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Gerador de Mundos Climáticos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Vulcão em Miniatura",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estufa das Borboletas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/estufa-das-borboletas/estufa-das-borboletas.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Órgão de Tubos Interativo",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio Analógico de Gravação",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Laboratório de Cimática",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Sintetizador Modular 3D",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Orquestra Mecânica",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Instrumentos de Corda",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Torre dos Carrilhões",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Sonoplastia",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Projetor de Música Visual",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Rádio Vintage Personalizável",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Construtor de Book Nooks",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ferromodelismo Digital",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Construtor de Casas sobre Rodas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Paisagismo Vivo",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Interiores Habitáveis",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Construtor de Vilarejos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Restaurador de Casas Antigas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Construtor de Castelos de Areia",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Cenografia",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Construtor de Parques de Diversão",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Chocolateria Interativa",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ateliê de Óculos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Calçados",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Composição de Tatuagens",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Presentes Personalizados",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Confeitaria de Bolos 3D",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Cabelos e Penteados",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Guitarras Personalizadas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Configurador de Motocicletas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Mesas Decoradas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Cinema das Versões Possíveis",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Torre de Controle da Atenção",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Televisão Social",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Lavanderia das Rotinas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Usina da Separação Criativa",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Figuras Articuladas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Laboratório de Receitas Secretas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Brinquedos Compartilhados",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Observatório dos Pequenos Acontecimentos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Máquina de Organizar Histórias",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Submarino de Exploração",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estação de Gravidade Zero",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Fábrica de Globos de Neve",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Caleidoscópio Infinito",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Mundos Dentro de Objetos",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina de Hologramas",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio de Vórtices",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Laboratório das Bolhas de Sabão",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Construtor de Máquinas Voadoras",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Museu dos Objetos Desmontáveis",
+      "colecao": "Coleção 80",
+      "prompt": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ateliê do Gesto Lento",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E01-atelie-do-gesto-lento.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "02_Projetos/atelie-do-gesto-lento/index.html",
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/atelie-do-gesto-lento.html",
+        "02_Projetos/atelie-do-gesto-lento/referencia_3d/ateli_do_gesto_lento_oficina_3d_de_cer_mica_e_presen_a_instituto_gestaltear.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Ateliê dos Remendos e Transformações",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E02-atelie-dos-remendos-e-transformacoes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/atelie-dos-remendos-e-transformacoes/ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir.html",
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/atelie-dos-remendos-e-transformacoes.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Biblioteca das Histórias Inacabadas",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E03-biblioteca-das-historias-inacabadas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/biblioteca-das-historias-inacabadas/biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir.html",
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/biblioteca-das-historias-inacabadas.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Cartografia do Corpo Sentido",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E04-cartografia-do-corpo-sentido.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/cartografia-do-corpo-sentido.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Casa da Árvore das Emoções",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E05-casa-da-arvore-das-emocoes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/casa-da-arvore-das-emocoes.html",
+        "02_Projetos/atelie-do-gesto-lento/referencia_3d/casa_da_rvore_das_emo_es_morada_do_sentir_jardins_do_sentir.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Cidade das Conexões",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E06-cidade-das-conexoes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/cidade-das-conexoes/cidade_das_conex_es_3d_jardins_do_sentir.html",
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/cidade-das-conexoes.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Correio das Palavras Não Ditas",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E07-correio-das-palavras-nao-ditas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/correio-das-palavras-nao-ditas/correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html",
+        "01_Jogos_HTML/correio-das-palavras-nao-ditas-agencia-postal/correio_das_palavras_n_o_ditas_ag_ncia_postal_3d_fotorrealista.html",
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/correio-das-palavras-nao-ditas.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Estação das Escolhas",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E08-estacao-das-escolhas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/estacao-das-escolhas.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Estúdio das Sombras e da Luz",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E09-estudio-das-sombras-e-da-luz.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/estudio-das-sombras-e-da-luz.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Laboratório das Leis Imaginárias",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E10-laboratorio-das-leis-imaginarias.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/laboratorio-das-leis-imaginarias.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Laboratório dos Sons e Silêncios",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E11-laboratorio-dos-sons-e-silencios.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/laboratorio-dos-sons-e-silencios.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Museu das Perspectivas",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E12-museu-das-perspectivas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/museu-das-perspectivas.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Oficina dos Robôs Imperfeitos",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E13-oficina-dos-robos-imperfeitos.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/oficina-dos-robos-imperfeitos.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Planetário das Memórias",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E14-planetario-das-memorias.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/planetario-das-memorias.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Santuário Zen 3D",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E15-santuario-zen-3d.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/santuario-zen-3d.html",
+        "02_Projetos/atelie-do-gesto-lento/referencia_3d/santu_rio_zen_3d_medita_o_incenso_ilumina_o_realista.backup.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Teatro das Possibilidades",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E16-teatro-das-possibilidades.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/teatro-das-possibilidades.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Termômetro da Ansiedade",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E17-termometro-da-ansiedade.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/termometro-da-ansiedade/term_metro_da_ansiedade_jardins_da_tcc_3d.html",
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/termometro-da-ansiedade.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Vila dos Encontros",
+      "colecao": "Plano 2.0 / 01_Prompts_Existentes",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/01_Prompts_Existentes/E18-vila-dos-encontros.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/vila-dos-encontros.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Cartografia dos Sons | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T01-cartografia-dos-sons.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Laboratório de Camadas Sonoras | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T02-laboratorio-de-camadas-sonoras.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Observatório da Luz | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T03-observatorio-da-luz.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Atlas das Texturas | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T04-atlas-das-texturas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Estação das Trocas | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T05-estacao-das-trocas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina do Tempo | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T06-oficina-do-tempo.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Torre do Impulso | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T07-torre-do-impulso.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Porto das Decisões | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T08-porto-das-decisoes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Meteorologia das Emoções | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T10-meteorologia-das-emocoes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Ilha das Pausas | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T12-ilha-das-pausas.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Museu dos Pontos de Vista | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T14-museu-dos-pontos-de-vista.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estúdio dos Limites | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T15-estudio-dos-limites.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ensaio do Cotidiano | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T16-ensaio-do-cotidiano.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Casa das Memórias | Produção 2.0",
+      "colecao": "Plano 2.0 / 02_Prompts_Terapeuticos",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/02_Prompts_Terapeuticos/T20-casa-das-memorias.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/index.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Sala de Espera Sonora | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C01-sala-de-espera-sonora.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/01_sala-de-espera-sonora/sala-de-espera-sonora.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Mesa dos Objetos que Acalmam | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C02-mesa-dos-objetos-que-acalmam.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/02_mesa-dos-objetos-que-acalmam/mesa-dos-objetos-que-acalmam.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Rochas em Equilíbrio | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C03-rochas-em-equilibrio.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/03_rochas-em-equilibrio/rochas-em-equilibrio.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Máquina de Escrever das Intenções | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C04-maquina-de-escrever-das-intencoes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Clepsidra do Foco | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C05-clepsidra-do-foco.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Caixa de Música Perfurada | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C06-caixa-de-musica-perfurada.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/caixa-de-musica-perfurada/caixa_de_m_sica_perfurada_loja_corda_e_melodia.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Copos Musicais | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C07-copos-musicais.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Toca-Discos de Vinil | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C08-toca-discos-de-vinil.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Varanda dos Sinos de Vento | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C09-varanda-dos-sinos-de-vento.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Máquina de Reação em Cadeia | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C10-maquina-de-reacao-em-cadeia.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Relógio Aberto | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C11-relogio-aberto.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Pinball de Madeira | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C12-pinball-de-madeira.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/12_pinball-de-madeira/pinball-de-madeira.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Trem de Engrenagens | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C13-trem-de-engrenagens.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/trem-de-engrenagens/trem_de_engrenagens_escola_maker_fa_sca.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Bancada da Manicure | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C14-bancada-da-manicure.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Barista de Bancada | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C15-barista-de-bancada.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Bancada do Florista | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C16-bancada-do-florista.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/bancada-do-florista/bancada-do-florista.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Maquete que se Monta | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C17-maquete-que-se-monta.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/maquete-que-se-monta/maquete_que_se_monta_ateli_tra_o_arquitetura.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Órgão do Perfumista | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C18-orgao-do-perfumista.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Terrário de Vidro | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C19-terrario-de-vidro.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/terrario-de-vidro/terr_rio_de_vidro_verde_mi_do_plantas.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Máquina de Garra de Brindes | Produção comercial 2.0",
+      "colecao": "Plano 2.0 / 03_Prompts_Comerciais",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/03_Prompts_Comerciais/C20-maquina-de-garra-de-brindes.md",
+      "evolucao": true,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/maquina-de-garra-de-brindes/m_quina_de_garra_de_brindes_doce_mel_confeitaria.html"
+      ],
+      "status": "Evolução 2.0 não verificada"
+    },
+    {
+      "nome": "Jardim dos Pensamentos",
+      "colecao": "Plano 2.0 / 04_Pendencias",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/04_Pendencias/T11-jardim-dos-pensamentos.md",
+      "evolucao": true,
+      "bloqueado": true,
+      "implementacoes": [],
+      "status": "Bloqueado no plano 2.0"
+    },
+    {
+      "nome": "Oficina do Ritmo Compartilhado",
+      "colecao": "Plano 2.0 / 04_Pendencias",
+      "prompt": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/04_Pendencias/T19-oficina-do-ritmo-compartilhado.md",
+      "evolucao": true,
+      "bloqueado": true,
+      "implementacoes": [
+        "01_Jogos_HTML/oficina-do-ritmo/oficina-do-ritmo.html"
+      ],
+      "status": "Bloqueado no plano 2.0"
+    },
+    {
+      "nome": "Cartografia dos sons",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/01_cartografia_dos_sons.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Laboratorio camadas sonoras",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/02_laboratorio_camadas_sonoras.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Observatorio da luz",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/03_observatorio_da_luz.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Atlas das texturas",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/04_atlas_das_texturas.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Estacao das trocas",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/05_estacao_das_trocas.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina do tempo",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/06_oficina_do_tempo.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Torre do impulso",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/07_torre_do_impulso.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Porto das decisoes",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/08_porto_das_decisoes.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Bussola do corpo",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/09_bussola_do_corpo.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Meteorologia das emocoes",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/10_meteorologia_das_emocoes.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Jardim dos pensamentos",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/11_jardim_dos_pensamentos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Bloqueado no plano 2.0"
+    },
+    {
+      "nome": "Ilha das pausas",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/12_ilha_das_pausas.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Cidade das conversas",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/13_cidade_das_conversas.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Museu dos pontos de vista",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/14_museu_dos_pontos_de_vista.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Estudio dos limites",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/15_estudio_dos_limites.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Ensaio do cotidiano",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/16_ensaio_do_cotidiano.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano/index.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Teatro das historias possiveis",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/17_teatro_das_historias_possiveis.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Arquitetura dos vinculos",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/18_arquitetura_dos_vinculos.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [],
+      "status": "Sem implementação local encontrada"
+    },
+    {
+      "nome": "Oficina do ritmo compartilhado",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/19_oficina_do_ritmo_compartilhado.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "01_Jogos_HTML/oficina-do-ritmo/oficina-do-ritmo.html"
+      ],
+      "status": "Implementação localizada"
+    },
+    {
+      "nome": "Casa das memorias",
+      "colecao": "Plano original de 20 recursos",
+      "prompt": "04_Prompts/Plano_20_Original/plano-20-recursos/20_casa_das_memorias.md",
+      "evolucao": false,
+      "bloqueado": false,
+      "implementacoes": [
+        "Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias/index.html"
+      ],
+      "status": "Implementação localizada"
+    }
+  ],
+  "movimentacoes": [
+    {
+      "origem": "01-oficina-dos-gestos-compartilhados",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/01-oficina-dos-gestos-compartilhados"
+    },
+    {
+      "origem": "02-trilha-do-mestre-mandou",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou"
+    },
+    {
+      "origem": "03-atelie-das-mascaras-emocionais",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/03-atelie-das-mascaras-emocionais"
+    },
+    {
+      "origem": "05-atelie-das-reconstrucoes-kintsugi",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi"
+    },
+    {
+      "origem": "06-galeria-dos-equilibrios-impossiveis",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis"
+    },
+    {
+      "origem": "07-sala-das-cadeiras-possiveis",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/07-sala-das-cadeiras-possiveis"
+    },
+    {
+      "origem": "08-sopraria-das-transformacoes",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/08-sopraria-das-transformacoes"
+    },
+    {
+      "origem": "09-pavilhao-dos-tecidos-flutuantes",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/09-pavilhao-dos-tecidos-flutuantes"
+    },
+    {
+      "origem": "10-agencia-de-investigacao-dos-pensamentos",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/10-agencia-de-investigacao-dos-pensamentos"
+    },
+    {
+      "origem": "11-radio-dos-pensamentos",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/11-radio-dos-pensamentos"
+    },
+    {
+      "origem": "12-maquina-das-consequencias",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/12-maquina-das-consequencias"
+    },
+    {
+      "origem": "13-central-dos-planos-alternativos",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/13-central-dos-planos-alternativos"
+    },
+    {
+      "origem": "14-relojoaria-das-prioridades",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/14-relojoaria-das-prioridades"
+    },
+    {
+      "origem": "15-farol-da-atencao",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/15-farol-da-atencao"
+    },
+    {
+      "origem": "16-vale-dos-baloes-passageiros",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/16-vale-dos-baloes-passageiros"
+    },
+    {
+      "origem": "17-navegador-dos-valores",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/17-navegador-dos-valores"
+    },
+    {
+      "origem": "18-areias-do-impermanente",
+      "destino": "03_Colecoes/Expressao_e_Desenvolvimento/18-areias-do-impermanente"
+    },
+    {
+      "origem": "ambientes-interativos-TODOS.md",
+      "destino": "04_Prompts/Compilados/ambientes-interativos-TODOS.md"
+    },
+    {
+      "origem": "atelie-do-gesto-lento",
+      "destino": "02_Projetos/atelie-do-gesto-lento"
+    },
+    {
+      "origem": "atelie-dos-remendos-e-transformacoes",
+      "destino": "01_Jogos_HTML/atelie-dos-remendos-e-transformacoes"
+    },
+    {
+      "origem": "ateliemascaras",
+      "destino": "02_Projetos/ateliemascaras"
+    },
+    {
+      "origem": "bancada-do-florista.html",
+      "destino": "01_Jogos_HTML/bancada-do-florista/bancada-do-florista.html"
+    },
+    {
+      "origem": "biblioteca-das-historias-inacabadas",
+      "destino": "01_Jogos_HTML/biblioteca-das-historias-inacabadas"
+    },
+    {
+      "origem": "caixa_de_m_sica_perfurada_loja_corda_e_melodia.html",
+      "destino": "01_Jogos_HTML/caixa-de-musica-perfurada/caixa_de_m_sica_perfurada_loja_corda_e_melodia.html"
+    },
+    {
+      "origem": "cidade-das-conexoes",
+      "destino": "01_Jogos_HTML/cidade-das-conexoes"
+    },
+    {
+      "origem": "confeitaria de bolos",
+      "destino": "05_Referencias/confeitaria de bolos"
+    },
+    {
+      "origem": "correio-das-palavras-nao-ditas",
+      "destino": "01_Jogos_HTML/correio-das-palavras-nao-ditas"
+    },
+    {
+      "origem": "correio-das-palavras-nao-ditas-agencia-postal",
+      "destino": "01_Jogos_HTML/correio-das-palavras-nao-ditas-agencia-postal"
+    },
+    {
+      "origem": "cozinha-das-descobertas",
+      "destino": "01_Jogos_HTML/cozinha-das-descobertas"
+    },
+    {
+      "origem": "escada-da-coragem",
+      "destino": "01_Jogos_HTML/escada-da-coragem"
+    },
+    {
+      "origem": "estufa das Borboletas",
+      "destino": "01_Jogos_HTML/estufa-das-borboletas/estufa-das-borboletas.html"
+    },
+    {
+      "origem": "jardim-dos-ciclos",
+      "destino": "02_Projetos/jardim-dos-ciclos"
+    },
+    {
+      "origem": "Kit_Producao_2.0",
+      "destino": "04_Prompts/Kit_Producao_2.0"
+    },
+    {
+      "origem": "lago-3d-interativo",
+      "destino": "01_Jogos_HTML/lago-3d-interativo"
+    },
+    {
+      "origem": "maquete_que_se_monta_ateli_tra_o_arquitetura.html",
+      "destino": "01_Jogos_HTML/maquete-que-se-monta/maquete_que_se_monta_ateli_tra_o_arquitetura.html"
+    },
+    {
+      "origem": "meu-buque.png",
+      "destino": "05_Referencias/meu-buque.png"
+    },
+    {
+      "origem": "mochila-da-travessia-projeto",
+      "destino": "02_Projetos/mochila-da-travessia-projeto"
+    },
+    {
+      "origem": "mockups",
+      "destino": "05_Referencias/mockups"
+    },
+    {
+      "origem": "m_quina_de_garra_de_brindes_doce_mel_confeitaria.html",
+      "destino": "01_Jogos_HTML/maquina-de-garra-de-brindes/m_quina_de_garra_de_brindes_doce_mel_confeitaria.html"
+    },
+    {
+      "origem": "Oficina de Bonsais — HTML 3D interativo.html",
+      "destino": "01_Jogos_HTML/oficina-de-bonsais/Oficina de Bonsais — HTML 3D interativo.html"
+    },
+    {
+      "origem": "oficina-do-ritmo",
+      "destino": "01_Jogos_HTML/oficina-do-ritmo"
+    },
+    {
+      "origem": "oficina-dos-gestos-compartilhados-projeto",
+      "destino": "02_Projetos/oficina-dos-gestos-compartilhados-projeto"
+    },
+    {
+      "origem": "oficina_das_velas_artesanais_ateli_3d_interativo.html",
+      "destino": "01_Jogos_HTML/oficina-das-velas-artesanais/oficina_das_velas_artesanais_ateli_3d_interativo.html"
+    },
+    {
+      "origem": "paisagem-sonora-3d",
+      "destino": "01_Jogos_HTML/paisagem-sonora-3d"
+    },
+    {
+      "origem": "pensar-sentir-e-agir",
+      "destino": "01_Jogos_HTML/pensar-sentir-e-agir"
+    },
+    {
+      "origem": "Prompts_completos_17_jogos.md",
+      "destino": "04_Prompts/Compilados/Prompts_completos_17_jogos.md"
+    },
+    {
+      "origem": "Recursos 3D — Conceitos, Mockups e Implementação.xlsx",
+      "destino": "05_Referencias/Recursos 3D — Conceitos, Mockups e Implementação.xlsx"
+    },
+    {
+      "origem": "semaforo-das-emocoes",
+      "destino": "01_Jogos_HTML/semaforo-das-emocoes"
+    },
+    {
+      "origem": "termometro-da-ansiedade",
+      "destino": "01_Jogos_HTML/termometro-da-ansiedade"
+    },
+    {
+      "origem": "territorio-dos-vinculos",
+      "destino": "02_Projetos/territorio-dos-vinculos"
+    },
+    {
+      "origem": "terr_rio_de_vidro_verde_mi_do_plantas.html",
+      "destino": "01_Jogos_HTML/terrario-de-vidro/terr_rio_de_vidro_verde_mi_do_plantas.html"
+    },
+    {
+      "origem": "trem_de_engrenagens_escola_maker_fa_sca.html",
+      "destino": "01_Jogos_HTML/trem-de-engrenagens/trem_de_engrenagens_escola_maker_fa_sca.html"
+    },
+    {
+      "origem": "tribunal-dos-pensamentos",
+      "destino": "01_Jogos_HTML/tribunal-dos-pensamentos"
+    },
+    {
+      "origem": "ambientes-interativos-adultos-e-marcas/80_Prompts_ThreeJS_Completos.md",
+      "destino": "04_Prompts/Colecao_80/80_Prompts_ThreeJS_Completos.md"
+    },
+    {
+      "origem": "ambientes-interativos-adultos-e-marcas/Catalogo_80_Prompts.html",
+      "destino": "04_Prompts/Colecao_80/Catalogo_80_Prompts.html"
+    },
+    {
+      "origem": "ambientes-interativos-adultos-e-marcas/jardim_dos_fungos_microfloresta_interativa_3d.html",
+      "destino": "01_Jogos_HTML/jardim-dos-fungos/jardim_dos_fungos_microfloresta_interativa_3d.html"
+    },
+    {
+      "origem": "ambientes-interativos-adultos-e-marcas/moinho_hidr_ulico_simulador_3d_interativo.html",
+      "destino": "01_Jogos_HTML/moinho-hidraulico/moinho_hidr_ulico_simulador_3d_interativo.html"
+    },
+    {
+      "origem": "ambientes-interativos-adultos-e-marcas/pousada_vento_leve_varanda_dos_sinos_de_vento.html",
+      "destino": "01_Jogos_HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html"
+    }
+  ],
+  "arquivos_extraidos": [
+    {
+      "arquivo": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/05_Referencias_Originais/ambientes-html.7z",
+      "destino": "01_Jogos_HTML/Legado_Arquivado",
+      "itens": 28
+    },
+    {
+      "arquivo": "04_Prompts/Kit_Producao_2.0/Plano_Mestre_2.0/05_Referencias_Originais/plano-20-recursos.7z",
+      "destino": "04_Prompts/Plano_20_Original",
+      "itens": 22
+    }
+  ],
+  "excecoes": [
+    {
+      "caminho": "04-tear-dos-vinculos",
+      "motivo": "Windows impediu a movimentação; preservado no local",
+      "erro": "[WinError 32] O arquivo já está sendo usado por outro processo: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\04-tear-dos-vinculos' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\03_Colecoes\\\\Expressao_e_Desenvolvimento\\\\04-tear-dos-vinculos'"
+    },
+    {
+      "caminho": "Kit_17_jogos_3D_mockups_e_prompts",
+      "motivo": "Windows impediu a movimentação; preservado no local",
+      "erro": "[WinError 5] Acesso negado: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\Kit_17_jogos_3D_mockups_e_prompts' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\03_Colecoes\\\\Kit_17_jogos_3D_mockups_e_prompts'"
+    },
+    {
+      "caminho": "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas",
+      "motivo": "Windows impediu a movimentação; preservado no local",
+      "erro": "[WinError 5] Acesso negado: 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\ambientes-interativos-adultos-e-marcas\\\\ambientes-interativos-adultos-e-marcas' -> 'C:\\\\Users\\\\aless\\\\Downloads\\\\Ambientes 3D\\\\04_Prompts\\\\Colecao_80\\\\ambientes-interativos-adultos-e-marcas'"
+    }
+  ]
+}

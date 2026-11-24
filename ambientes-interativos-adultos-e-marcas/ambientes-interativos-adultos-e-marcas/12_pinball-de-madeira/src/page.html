@@ -1,0 +1,46 @@
+<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Uma mesa artesanal de pinball em madeira e latão.">
+<meta name="theme-color" content="#190f0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232e1b14'/%3E%3Ccircle cx='12' cy='10' r='5' fill='%23ffc46a'/%3E%3Cpath d='M7 24l11-5m7 5-7-5' stroke='%23fff0ce' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>Pinball de Madeira</title><style>/*FONTS*/ /*STYLE*/</style>
+<script>/*BRAND*/</script><script type="importmap">/*IMPORTS*/</script></head>
+<body><main id="pinball">
+  <div id="world" aria-hidden="true"><img id="fallback-picture" alt="" hidden><div id="canvas"></div></div>
+  <header class="nav glass">
+    <a class="logo" href="#inicio" data-nav="inicio"></a>
+    <nav id="menu" aria-label="Navegação"><a data-nav="inicio" href="#inicio" aria-current="page">Início</a><a data-nav="servicos" href="#servicos">Serviços</a><a data-nav="sobre" href="#sobre">Sobre</a><a data-nav="contato" href="#contato">Contato</a></nav>
+    <button class="icon menu-button" type="button" data-action="menu" aria-label="Menu" aria-expanded="false" aria-controls="menu"></button>
+    <a class="cta" data-cta href="#contato"></a>
+  </header>
+  <a class="cta embed-cta" data-cta href="#contato" hidden></a>
+  <section class="intro" aria-labelledby="title">
+    <h1 id="title"></h1><p id="support"></p>
+    <section class="steps" id="steps" aria-label="Passos da rodada">
+      <button type="button" id="step-button" class="glass" data-action="steps" aria-expanded="true" aria-controls="step-list"></button>
+      <ol id="step-list"></ol>
+    </section>
+  </section>
+  <div id="hud" class="glass">
+    <div><span id="turn">Bola 1 de 3</span><strong id="points" aria-label="0 pontos">000000</strong></div>
+    <button type="button" class="quiet" data-action="reset" aria-label="Reiniciar rodada" title="Reiniciar rodada">↻</button>
+  </div>
+  <div class="bottom">
+    <div class="status-row">
+      <p class="hint glass" id="hint">Toque e experimente</p>
+      <button type="button" class="quiet glass" data-action="nudge" hidden>Destravar bola</button>
+    </div>
+    <div id="dock" class="glass" aria-label="Controles do pinball">
+      <button class="flip control" type="button" data-action="flip" data-index="0"><span aria-hidden="true">←</span><span>Flipper esquerdo</span></button>
+      <div class="center">
+        <button type="button" class="control launch" data-action="launch"><span>Lançar</span><i aria-hidden="true"></i></button>
+        <div class="center-row"><button class="control relax" type="button" data-action="relax" aria-pressed="false">Modo relax</button><button class="control icon" type="button" data-action="sound" aria-label="Ligar som" aria-pressed="false"></button></div>
+      </div>
+      <button class="flip control" type="button" data-action="flip" data-index="1"><span>Flipper direito</span><span aria-hidden="true">→</span></button>
+    </div>
+  </div>
+  <footer class="utility"><button type="button" class="quiet" data-action="controls">Atalhos</button><div><button type="button" class="quiet" data-action="settings">Ajustes</button><button type="button" class="quiet" data-action="collapse">Recolher</button></div></footer>
+  <div id="restore" class="glass" hidden><button type="button" class="quiet" data-action="collapse">Mostrar controles</button><button type="button" class="icon" data-action="sound" aria-label="Ligar som" aria-pressed="false"></button></div>
+  <p id="live" class="sr-only" role="status"></p>
+  <dialog class="glass" id="dialog" aria-labelledby="dialog-title"></dialog>
+</main><script type="module">/*APP*/</script></body></html>

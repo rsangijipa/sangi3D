@@ -1,0 +1,16 @@
+{
+  "id": "16-vale-dos-baloes-passageiros",
+  "title": "Vale dos Balões Passageiros",
+  "category": "ACT",
+  "description": "Observe os balões e, se quiser, associe a eles palavras. Você pode seguir a trilha mantendo os balões presentes.",
+  "entry": "dist/index.html",
+  "thumbnail": "miniatura.png",
+  "capabilities": [
+    "pause",
+    "resume",
+    "undo",
+    "export",
+    "fallback"
+  ],
+  "status": "implementation"
+}

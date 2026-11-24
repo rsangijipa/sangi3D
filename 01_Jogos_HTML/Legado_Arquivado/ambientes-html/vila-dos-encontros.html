@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vila dos Encontros — Experiência 3D Interativa</title>
+
+  <!-- Tailwind CSS & Three.js CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Barra Imersiva Compartilhada do Workspace -->
+  <link rel="stylesheet" href="shared/imersivo.css?v=3" />
+
+  <style>
+    :root {
+      --cor-vila: #f59e0b;
+      --cor-telha: #b45309;
+      --cor-fonte: #0284c7;
+      --cor-praca: #fef3c7;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0d151c;
+      color: #f1f5f9;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    .glass-village {
+      background: rgba(22, 27, 34, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    }
+
+    .btn-dialogue {
+      transition: all 200ms cubic-bezier(.2,.6,.3,1);
+    }
+    .btn-dialogue:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -15px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: toastFade 3.2s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.4); border-radius: 9999px; }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- Canvas WebGL 3D -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI Superior -->
+  <header id="ui-top-bar" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <a href="/index.html" class="glass-village px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-white/10 flex items-center space-x-2 text-amber-200/90 transition" title="Voltar ao Launcher">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Launcher</span>
+      </a>
+      <div class="glass-village px-4 py-2 rounded-xl flex flex-col">
+        <span class="text-xs uppercase tracking-wider text-amber-400 font-bold">Ambiente 09 · Reconstrução Fiel</span>
+        <h1 class="text-sm font-semibold text-white/95">Vila dos Encontros</h1>
+      </div>
+    </div>
+
+    <!-- Indicador de Assertividade & Autocuidado -->
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <div class="glass-village px-3.5 py-2 rounded-xl flex items-center space-x-3">
+        <div class="flex flex-col text-right">
+          <span class="text-[10px] uppercase font-bold text-amber-300/80 tracking-wider">Bússola de Limites</span>
+          <span id="label-assertiveness" class="text-xs font-semibold text-amber-100">Equilíbrio & Firmeza</span>
+        </div>
+        <div class="w-24 h-2.5 bg-black/50 rounded-full overflow-hidden border border-amber-500/30 p-0.5">
+          <div id="bar-assertiveness" class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full transition-all duration-300" style="width: 70%;"></div>
+        </div>
+      </div>
+
+      <button id="btn-sound-toggle" class="glass-village p-2.5 rounded-xl hover:bg-amber-950/40 text-amber-300 transition" title="Alternar Ambiência da Vila (M)">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12 0l-6-6m6 0l-6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Caixa de Diálogo Dinâmica (Quando um morador é selecionado) -->
+  <div id="dialogue-box" class="absolute bottom-24 left-1/2 -translate-x-1/2 w-[92%] sm:w-[580px] glass-village p-5 rounded-2xl z-20 pointer-events-auto hidden shadow-2xl border-2 border-amber-400/40">
+    <div class="flex items-center justify-between pb-2 border-b border-amber-500/20 mb-3">
+      <div class="flex items-center space-x-2.5">
+        <span id="npc-avatar" class="text-2xl">👵</span>
+        <div>
+          <h3 id="npc-name" class="font-bold text-sm text-amber-200">Dona Clara · Florista</h3>
+          <p id="npc-mood" class="text-[11px] text-amber-300/70">Aconchegante e atarefada</p>
+        </div>
+      </div>
+      <button id="btn-close-dialogue" class="p-1.5 rounded-lg hover:bg-white/10 text-amber-300">✕</button>
+    </div>
+
+    <!-- Mensagem do Personagem -->
+    <p id="npc-text" class="text-xs sm:text-sm text-slate-100 mb-4 leading-relaxed bg-black/30 p-3 rounded-xl border border-amber-500/20">
+      "Olá, vizinho! Que bom te ver por aqui. Chegaram sementes raras de lavanda, mas estou com as mãos tão cheias... você poderia carregar essa cesta pesada até a outra ponta da vila para mim agora?"
+    </p>
+
+    <!-- Opções de Prática de Comunicação & Limites -->
+    <div class="space-y-2">
+      <span class="text-[10px] uppercase font-bold text-amber-400/80 tracking-wider">Como você escolhe responder?</span>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button id="opt-passive" class="btn-dialogue text-left p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600 text-xs text-slate-200 flex flex-col">
+          <strong class="text-slate-300 font-bold mb-0.5">🕊️ Passivo</strong>
+          <span class="text-[11px] text-slate-400 leading-tight">"Ah... claro, posso sim (mesmo que eu esteja cansado e com pressa)..."</span>
+        </button>
+
+        <button id="opt-assertive" class="btn-dialogue text-left p-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400 text-xs text-amber-100 flex flex-col">
+          <strong class="text-amber-300 font-bold mb-0.5">⭐ Assertivo</strong>
+          <span class="text-[11px] text-amber-200/90 leading-tight">"Hoje estou no meio de um compromisso e não posso levar, mas posso ajudar mais tarde!"</span>
+        </button>
+
+        <button id="opt-aggressive" class="btn-dialogue text-left p-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/40 border border-rose-500/40 text-xs text-rose-200 flex flex-col">
+          <strong class="text-rose-400 font-bold mb-0.5">⚡ Ríspido</strong>
+          <span class="text-[11px] text-rose-300/80 leading-tight">"Não vê que estou ocupado? Peça para outra pessoa!"</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dock Inferior com Câmeras e Moradores -->
+  <footer id="ui-bottom-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2.5 z-20 pointer-events-auto">
+    <div class="glass-village p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="cam-square" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition active">Praça Central</button>
+      <button id="cam-clara" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition">Dona Clara (Flores)</button>
+      <button id="cam-bento" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition">Sr. Bento (Madeira)</button>
+      <button id="cam-julia" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition">Júlia (Desenho)</button>
+    </div>
+
+    <div class="glass-village p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="btn-fountain-wish" class="btn-dialogue px-3 py-1.5 rounded-xl text-xs font-medium text-sky-200 hover:bg-sky-500/20 flex items-center space-x-1.5 transition">
+        <span>🪙</span>
+        <span>Jogar Moeda na Fonte</span>
+      </button>
+
+      <button id="btn-drawer-toggle" class="btn-dialogue px-3.5 py-1.5 rounded-xl text-xs font-medium text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 flex items-center space-x-1.5 transition">
+        <span>📖</span>
+        <span>Guia de Habilidades Sociais</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Dica de Interação -->
+  <div id="hint-bubble" class="absolute bottom-20 left-1/2 -translate-x-1/2 glass-village px-4 py-2 rounded-full text-xs font-medium text-amber-200/90 pointer-events-none transition-all duration-300 z-10 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+    <span>Clique nos personagens da vila ou na fonte central para iniciar encontros e conversas</span>
+  </div>
+
+  <!-- Gaveta Lateral: Habilidades Sociais & Assertividade -->
+  <aside id="info-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full glass-village border-l border-amber-500/30 z-30 translate-x-full transition-transform duration-300 flex flex-col p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-amber-500/20">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">🏘️</span>
+        <h2 class="text-base font-bold text-amber-100">Guia de Encontros</h2>
+      </div>
+      <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-amber-500/20 text-amber-300 transition">✕</button>
+    </div>
+
+    <div class="space-y-4 pt-4 text-xs text-amber-200/90 leading-relaxed">
+      <section class="bg-amber-950/40 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-1 text-sm">O Que é Assertividade?</h3>
+        <p>
+          Assertividade é a capacidade de expressar nossos sentimentos, necessidades e limites de forma
+          clara, direta e honesta, sem agredir o outro nem se diminuir para agradar. É a ponte entre a
+          passividade (onde engolimos nossa verdade) e a agressividade (onde desrespeitamos o outro).
+        </p>
+      </section>
+
+      <section class="bg-black/30 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-2">Moradores da Vila</h3>
+        <ul class="space-y-2 text-slate-200">
+          <li class="p-2 rounded-lg bg-amber-900/30">
+            <strong>Dona Clara (Banca de Flores):</strong> Sempre cheia de pedidos gentis; ótima para treinar dizer 'não' com afeto.
+          </li>
+          <li class="p-2 rounded-lg bg-amber-900/30">
+            <strong>Sr. Bento (Marcenaria):</strong> Prático e focado em trocas; bom para negociar expectativas justas.
+          </li>
+          <li class="p-2 rounded-lg bg-amber-900/30">
+            <strong>Júlia (Perto da Fonte):</strong> Insegura sobre seus desenhos; convite para encorajamento e empatia mútua.
+          </li>
+        </ul>
+      </section>
+
+      <section class="bg-amber-950/40 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-1">Diário de Diálogos & Limites</h3>
+        <textarea id="social-notes" rows="4" class="w-full bg-black/60 border border-amber-500/30 rounded-lg p-2.5 text-xs text-amber-100 focus:outline-none focus:border-amber-400 placeholder-amber-500/40" placeholder="Com quem foi mais fácil estabelecer um limite hoje? O que sentiu ao escolher responder de forma assertiva?"></textarea>
+        <button id="btn-save-note" class="mt-2 w-full py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-semibold rounded-lg shadow transition">Registrar Reflexão</button>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center space-y-2"></div>
+
+  <!-- Script Principal 3D -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+       * 1. ÁUDIO PROCEDURAL DA VILA (Web Audio API)
+       * ========================================================== */
+      class VillageAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.fountainGain = null;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          this.ctx = new AudioContext();
+
+          // Som contínuo de água corrente suave da fonte
+          const bufferSize = this.ctx.sampleRate * 2;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.02;
+          }
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          noise.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 800;
+          filter.Q.value = 0.8;
+
+          this.fountainGain = this.ctx.createGain();
+          this.fountainGain.gain.value = 0.25;
+
+          noise.connect(filter);
+          filter.connect(this.fountainGain);
+          this.fountainGain.connect(this.ctx.destination);
+          noise.start();
+        }
+
+        playChime(note = 520) {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(note, now);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.25);
+        }
+
+        playCoin() {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1400, now);
+          osc.frequency.exponentialRampToValueAtTime(2600, now + 0.15);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.42);
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.fountainGain && this.ctx) {
+            this.fountainGain.gain.value = this.enabled ? 0.25 : 0;
+          }
+          return this.enabled;
+        }
+      }
+
+      const audio = new VillageAudioEngine();
+
+      /* ==========================================================
+       * 2. CENÁRIO THREE.JS
+       * ========================================================== */
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xa7c5eb);
+      scene.fog = new THREE.FogExp2(0xa7c5eb, 0.022);
+
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 80);
+      camera.position.set(0, 5.5, 9.5);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 - 0.05;
+      controls.minDistance = 2;
+      controls.maxDistance = 22;
+      controls.target.set(0, 1.2, 0);
+
+      /* ==========================================================
+       * 3. TEXTURAS & MATERIAIS PROCEDURAIS
+       * ========================================================== */
+      function createCobblestoneTexture() {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#c4b59d';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Pedras de calçamento
+        for (let x = 0; x < 512; x += 32) {
+          for (let y = 0; y < 512; y += 24) {
+            ctx.strokeStyle = '#8a7964';
+            ctx.lineWidth = 2;
+            ctx.fillStyle = Math.random() > 0.5 ? '#b8a890' : '#cfc0a6';
+            ctx.beginPath();
+            ctx.rect(x + 2, y + 2, 28, 20);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+        const texture = new THREE.CanvasTexture(c);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(6, 6);
+        return texture;
+      }
+
+      const matCobble = new THREE.MeshStandardMaterial({
+        map: createCobblestoneTexture(),
+        roughness: 0.85,
+        metalness: 0.05
+      });
+
+      const matPlasterWarm = new THREE.MeshStandardMaterial({ color: 0xf6e2b3, roughness: 0.9 });
+      const matPlasterRose = new THREE.MeshStandardMaterial({ color: 0xe8b4a0, roughness: 0.9 });
+      const matPlasterBlue = new THREE.MeshStandardMaterial({ color: 0xb0cbe3, roughness: 0.9 });
+      const matRoofTile    = new THREE.MeshStandardMaterial({ color: 0xb44c28, roughness: 0.75 });
+      const matWoodBeam    = new THREE.MeshStandardMaterial({ color: 0x4a2c16, roughness: 0.85 });
+      const matFoliage     = new THREE.MeshStandardMaterial({ color: 0x3d7a46, roughness: 0.8 });
+      const matWater       = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.85 });
+
+      /* ==========================================================
+       * 4. ILUMINAÇÃO SOLAR DA VILA
+       * ========================================================== */
+      const ambLight = new THREE.AmbientLight(0xfff7ed, 0.95);
+      scene.add(ambLight);
+
+      const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.8);
+      sunLight.position.set(8, 12, 6);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 1024;
+      sunLight.shadow.mapSize.height = 1024;
+      sunLight.shadow.camera.near = 0.5;
+      sunLight.shadow.camera.far = 30;
+      sunLight.shadow.camera.left = -10;
+      sunLight.shadow.camera.right = 10;
+      sunLight.shadow.camera.top = 10;
+      sunLight.shadow.camera.bottom = -10;
+      scene.add(sunLight);
+
+      /* ==========================================================
+       * 5. CENOGRAFIA: PRAÇA, CASAS, BANCAS E FONTE
+       * ========================================================== */
+      const villageGroup = new THREE.Group();
+
+      // Praça Central de Pedra
+      const squareGeo = new THREE.CylinderGeometry(8.5, 8.5, 0.2, 32);
+      const squareMesh = new THREE.Mesh(squareGeo, matCobble);
+      squareMesh.position.y = -0.1;
+      squareMesh.receiveShadow = true;
+      villageGroup.add(squareMesh);
+
+      // Casas em semicírculo ao redor
+      function createHouse(x, z, rotY, matWall, height = 3.2) {
+        const houseG = new THREE.Group();
+        houseG.position.set(x, 0, z);
+        houseG.rotation.y = rotY;
+
+        // Corpo da casa
+        const bodyGeo = new THREE.BoxGeometry(2.8, height, 2.2);
+        bodyGeo.translate(0, height / 2, 0);
+        const body = new THREE.Mesh(bodyGeo, matWall);
+        body.castShadow = true;
+        body.receiveShadow = true;
+        houseG.add(body);
+
+        // Telhado triangular
+        const roofGeo = new THREE.ConeGeometry(2.3, 1.4, 4);
+        roofGeo.rotateY(Math.PI / 4);
+        roofGeo.scale(1, 1, 0.75);
+        roofGeo.translate(0, height + 0.7, 0);
+        const roof = new THREE.Mesh(roofGeo, matRoofTile);
+        roof.castShadow = true;
+        houseG.add(roof);
+
+        // Porta de madeira
+        const doorGeo = new THREE.BoxGeometry(0.7, 1.4, 0.05);
+        const door = new THREE.Mesh(doorGeo, matWoodBeam);
+        door.position.set(0, 0.7, 1.12);
+        houseG.add(door);
+
+        // Janelas com floreiras
+        [-0.7, 0.7].forEach(wx => {
+          const winGeo = new THREE.BoxGeometry(0.5, 0.6, 0.06);
+          const win = new THREE.Mesh(winGeo, matWoodBeam);
+          win.position.set(wx, 2.1, 1.12);
+          houseG.add(win);
+        });
+
+        return houseG;
+      }
+
+      villageGroup.add(createHouse(-4.8, -4.2, 0.5, matPlasterWarm, 3.4));
+      villageGroup.add(createHouse(0, -6.2, 0, matPlasterRose, 3.8));
+      villageGroup.add(createHouse(4.8, -4.2, -0.5, matPlasterBlue, 3.2));
+
+      // Árvores da Praça
+      function createTree(x, z) {
+        const treeG = new THREE.Group();
+        treeG.position.set(x, 0, z);
+
+        const trunkGeo = new THREE.CylinderGeometry(0.14, 0.22, 1.6, 8);
+        trunkGeo.translate(0, 0.8, 0);
+        const trunk = new THREE.Mesh(trunkGeo, matWoodBeam);
+        trunk.castShadow = true;
+        treeG.add(trunk);
+
+        const foliageGeo = new THREE.DodecahedronGeometry(0.95);
+        foliageGeo.scale(1, 1.2, 1);
+        foliageGeo.translate(0, 2.2, 0);
+        const fol = new THREE.Mesh(foliageGeo, matFoliage);
+        fol.castShadow = true;
+        treeG.add(fol);
+
+        return treeG;
+      }
+
+      villageGroup.add(createTree(-6.5, 0));
+      villageGroup.add(createTree(6.5, 0));
+      villageGroup.add(createTree(-3.2, 4.5));
+      villageGroup.add(createTree(3.2, 4.5));
+
+      // Fonte Central de Pedra com Água
+      const fountainGroup = new THREE.Group();
+      fountainGroup.position.set(0, 0, 0);
+
+      const basinGeo = new THREE.CylinderGeometry(1.5, 1.65, 0.6, 18);
+      basinGeo.translate(0, 0.3, 0);
+      const basin = new THREE.Mesh(basinGeo, matCobble);
+      basin.castShadow = true;
+      basin.receiveShadow = true;
+      fountainGroup.add(basin);
+
+      const waterDiskGeo = new THREE.CylinderGeometry(1.36, 1.36, 0.05, 18);
+      waterDiskGeo.translate(0, 0.52, 0);
+      const waterDisk = new THREE.Mesh(waterDiskGeo, matWater);
+      fountainGroup.add(waterDisk);
+
+      // Coluna central da fonte
+      const pillarFountainGeo = new THREE.CylinderGeometry(0.25, 0.35, 1.3, 12);
+      pillarFountainGeo.translate(0, 0.65, 0);
+      const pillarFountain = new THREE.Mesh(pillarFountainGeo, matCobble);
+      fountainGroup.add(pillarFountain);
+
+      // Taça superior da fonte
+      const upperBowlGeo = new THREE.CylinderGeometry(0.65, 0.45, 0.3, 16);
+      upperBowlGeo.translate(0, 1.3, 0);
+      const upperBowl = new THREE.Mesh(upperBowlGeo, matCobble);
+      fountainGroup.add(upperBowl);
+
+      villageGroup.add(fountainGroup);
+
+      // Banca de Flores de Dona Clara
+      const stallGroup = new THREE.Group();
+      stallGroup.position.set(-3.2, 0, -1.8);
+
+      const tableStallGeo = new THREE.BoxGeometry(2.2, 0.8, 1.1);
+      tableStallGeo.translate(0, 0.4, 0);
+      const tableStall = new THREE.Mesh(tableStallGeo, matWoodBeam);
+      stallGroup.add(tableStall);
+
+      // Toldo listrado amarelo e branco
+      const canopyGeo = new THREE.ConeGeometry(1.6, 0.6, 4);
+      canopyGeo.rotateY(Math.PI / 4);
+      canopyGeo.scale(1.2, 1, 0.9);
+      canopyGeo.translate(0, 1.8, 0);
+      const matCanopy = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.6 });
+      const canopy = new THREE.Mesh(canopyGeo, matCanopy);
+      stallGroup.add(canopy);
+
+      villageGroup.add(stallGroup);
+
+      scene.add(villageGroup);
+
+      /* ==========================================================
+       * 6. PERSONAGENS DA VILA (NPCs INTERATIVOS)
+       * ========================================================== */
+      const npcs = [
+        {
+          id: 'clara',
+          name: 'Dona Clara · Florista',
+          avatar: '👵',
+          mood: 'Gentil e atarefada',
+          pos: new THREE.Vector3(-2.2, 0, -1.2),
+          color: 0xec4899,
+          camPos: new THREE.Vector3(-2.2, 1.6, 0.4),
+          camTarget: new THREE.Vector3(-2.2, 1.2, -1.2),
+          dialogue: '"Olá, querido! Que bom te ver. Chegaram vasos pesadíssimos de rosas e minhas costas doem... Você poderia largar seus afazeres agora e carregar três caixas até a padaria para mim?"',
+          passiveReply: '"Ah... tudo bem Dona Clara, eu levo sim (mesmo que eu atrase meu próprio almoço)..."',
+          passiveResult: 'Você aceitou sem poder. Dona Clara agradece, mas você se sente sobrecarregado.',
+          assertiveReply: '"Dona Clara, hoje estou no meio de um compromisso e não posso levar agora, mas se a senhora esperar 1 hora, eu volto e ajudo com carinho!"',
+          assertiveResult: 'Excelente! Você foi honesto, respeitou o seu tempo e ofereceu uma solução equilibrada.',
+          aggressiveReply: '"Não senhora, não sou seu carregador! Procure outro para fazer isso!"',
+          aggressiveResult: 'Você foi ríspido. Dona Clara ficou chateada e você sentiu culpa depois.'
+        },
+        {
+          id: 'bento',
+          name: 'Sr. Bento · Marceneiro',
+          avatar: '🧔',
+          mood: 'Focado e prático',
+          pos: new THREE.Vector3(3.2, 0, -1.5),
+          color: 0x3b82f6,
+          camPos: new THREE.Vector3(3.2, 1.6, 0.2),
+          camTarget: new THREE.Vector3(3.2, 1.2, -1.5),
+          dialogue: '"Ei, você aí! Preciso de ajuda para segurar essas vigas de madeira enquanto serro. Se você não segurar agora, vai estragar o corte!"',
+          passiveReply: '"Está bem... seguro aqui correndo o risco de me machucar..."',
+          passiveResult: 'Você colocou sua segurança e conforto de lado para evitar uma discussão.',
+          assertiveReply: '"Sr. Bento, com essa serra ligada é perigoso sem luvas. Vou pegar o sargento na bancada para prender a viga com segurança para nós dois!"',
+          assertiveResult: 'Perfeito! Firmeza e cuidado prático. Sr. Bento concordou e elogiou sua prudência.',
+          aggressiveReply: '"Se vira, Bento! Quem mandou começar a serrar sem planejar?"',
+          aggressiveResult: 'A agressividade gerou faísca desnecessária e cortou o diálogo com o vizinho.'
+        },
+        {
+          id: 'julia',
+          name: 'Júlia · Jovem Artista',
+          avatar: '👧',
+          mood: 'Tímida e insegura',
+          pos: new THREE.Vector3(1.2, 0, 1.6),
+          color: 0x10b981,
+          camPos: new THREE.Vector3(1.2, 1.4, 3.2),
+          camTarget: new THREE.Vector3(1.2, 1.0, 1.6),
+          dialogue: '"Oi... desculpa incomodar. Eu fiz este desenho da praça, mas acho que ficou tão feio... ninguém vai querer olhar. Você acha que eu devia rasgar tudo?"',
+          passiveReply: '"Ah... se você acha... você que sabe..."',
+          passiveResult: 'A passividade deixou Júlia sem suporte e ainda mais insegura.',
+          assertiveReply: '"Júlia, posso ver o carinho em cada traço. Que tal focar no que você gostou de desenhar em vez de procurar a perfeição?"',
+          assertiveResult: 'Lindo acolhimento! Você validou a expressão dela sem criar falsas cobranças.',
+          aggressiveReply: '"Se você já acha feio, por que veio me perguntar?"',
+          aggressiveResult: 'A rispidez fechou o espaço de confiança da jovem.'
+        }
+      ];
+
+      const npcMeshes = [];
+
+      function createCharacterMesh(npcData) {
+        const charG = new THREE.Group();
+        charG.position.copy(npcData.pos);
+
+        // Corpo
+        const bodyGeo = new THREE.CylinderGeometry(0.2, 0.28, 0.8, 12);
+        bodyGeo.translate(0, 0.5, 0);
+        const matChar = new THREE.MeshStandardMaterial({ color: npcData.color, roughness: 0.7 });
+        const body = new THREE.Mesh(bodyGeo, matChar);
+        body.castShadow = true;
+        charG.add(body);
+
+        // Cabeça
+        const headGeo = new THREE.SphereGeometry(0.18, 16, 16);
+        headGeo.translate(0, 1.05, 0);
+        const matHead = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.8 });
+        const head = new THREE.Mesh(headGeo, matHead);
+        head.castShadow = true;
+        charG.add(head);
+
+        // Cabelo / Chapéu
+        const hatGeo = new THREE.ConeGeometry(0.22, 0.2, 12);
+        hatGeo.translate(0, 1.22, 0);
+        const matHat = new THREE.MeshStandardMaterial({ color: 0x5a3d28 });
+        const hat = new THREE.Mesh(hatGeo, matHat);
+        charG.add(hat);
+
+        // Indicador flutuante acima da cabeça
+        const markerGeo = new THREE.SphereGeometry(0.06, 8, 8);
+        const matMarker = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+        const marker = new THREE.Mesh(markerGeo, matMarker);
+        marker.position.y = 1.45;
+        charG.add(marker);
+
+        charG.userData = { npc: npcData, marker: marker };
+        scene.add(charG);
+        npcMeshes.push(charG);
+        return charG;
+      }
+
+      npcs.forEach(createCharacterMesh);
+
+      /* ==========================================================
+       * 7. CONTROLES DE DIÁLOGO E ASSERTIVIDADE
+       * ========================================================== */
+      const state = {
+        assertivenessScore: 70, // 0 a 100
+        currentNpc: null,
+        activeCamera: 'square'
+      };
+
+      const dialogueBox = document.getElementById('dialogue-box');
+      const npcAvatarEl = document.getElementById('npc-avatar');
+      const npcNameEl   = document.getElementById('npc-name');
+      const npcMoodEl   = document.getElementById('npc-mood');
+      const npcTextEl   = document.getElementById('npc-text');
+
+      function showToast(text) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'glass-village px-4 py-2.5 rounded-xl text-xs text-amber-200 border border-amber-400/40 shadow-xl toast-anim';
+        t.textContent = text;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      function updateScoreUI() {
+        const bar = document.getElementById('bar-assertiveness');
+        const lbl = document.getElementById('label-assertiveness');
+        bar.style.width = `${state.assertivenessScore}%`;
+
+        if (state.assertivenessScore >= 75) {
+          lbl.textContent = 'Assertividade Alta & Saudável';
+          bar.className = 'h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-300';
+        } else if (state.assertivenessScore >= 45) {
+          lbl.textContent = 'Equilíbrio & Atenção';
+          bar.className = 'h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full transition-all duration-300';
+        } else {
+          lbl.textContent = 'Limite Fragilizado';
+          bar.className = 'h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-300';
+        }
+      }
+
+      function openDialogue(npc) {
+        state.currentNpc = npc;
+        npcAvatarEl.textContent = npc.avatar;
+        npcNameEl.textContent = npc.name;
+        npcMoodEl.textContent = npc.mood;
+        npcTextEl.textContent = npc.dialogue;
+
+        dialogueBox.classList.remove('hidden');
+        audio.playChime(440);
+
+        // Foca câmera no morador
+        targetCamPos.copy(npc.camPos);
+        targetCamLook.copy(npc.camTarget);
+      }
+
+      function closeDialogue() {
+        dialogueBox.classList.add('hidden');
+        state.currentNpc = null;
+      }
+
+      function handleResponse(type) {
+        if (!state.currentNpc) return;
+        const npc = state.currentNpc;
+
+        if (type === 'assertive') {
+          state.assertivenessScore = Math.min(100, state.assertivenessScore + 12);
+          audio.playChime(660);
+          showToast(`⭐ ${npc.assertiveResult}`);
+        } else if (type === 'passive') {
+          state.assertivenessScore = Math.max(10, state.assertivenessScore - 8);
+          audio.playChime(330);
+          showToast(`🕊️ ${npc.passiveResult}`);
+        } else if (type === 'aggressive') {
+          state.assertivenessScore = Math.max(10, state.assertivenessScore - 12);
+          audio.playChime(220);
+          showToast(`⚡ ${npc.aggressiveResult}`);
+        }
+
+        updateScoreUI();
+        closeDialogue();
+      }
+
+      /* ==========================================================
+       * 8. CÂMERAS PRESET
+       * ========================================================== */
+      const camPresets = {
+        square: { pos: new THREE.Vector3(0, 5.5, 9.5), target: new THREE.Vector3(0, 1.2, 0) },
+        clara:  { pos: new THREE.Vector3(-2.2, 1.6, 0.4), target: new THREE.Vector3(-2.2, 1.2, -1.2) },
+        bento:  { pos: new THREE.Vector3(3.2, 1.6, 0.2), target: new THREE.Vector3(3.2, 1.2, -1.5) },
+        julia:  { pos: new THREE.Vector3(1.2, 1.4, 3.2), target: new THREE.Vector3(1.2, 1.0, 1.6) }
+      };
+
+      let targetCamPos = camPresets.square.pos.clone();
+      let targetCamLook = camPresets.square.target.clone();
+
+      function setCameraPreset(key) {
+        state.activeCamera = key;
+        const p = camPresets[key];
+        targetCamPos.copy(p.pos);
+        targetCamLook.copy(p.target);
+
+        document.querySelectorAll('.btn-cam').forEach(b => b.classList.remove('active', 'bg-amber-500/20', 'text-white'));
+        const activeBtn = document.getElementById(`cam-${key}`);
+        if (activeBtn) activeBtn.classList.add('active', 'bg-amber-500/20', 'text-white');
+      }
+
+      /* ==========================================================
+       * 9. RAYCASTING DE CLIQUE NOS MORADORES
+       * ========================================================== */
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('#ui-top-bar, #ui-bottom-dock, #dialogue-box, #info-drawer, #toast-container')) return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        const hits = raycaster.intersectObjects(npcMeshes, true);
+        if (hits.length > 0) {
+          let root = hits[0].object;
+          while (root.parent && !root.userData.npc) {
+            root = root.parent;
+          }
+          if (root.userData && root.userData.npc) {
+            openDialogue(root.userData.npc);
+          }
+        }
+      });
+
+      /* ==========================================================
+       * 10. LISTENERS DA UI
+       * ========================================================== */
+      document.getElementById('opt-assertive').addEventListener('click', () => handleResponse('assertive'));
+      document.getElementById('opt-passive').addEventListener('click', () => handleResponse('passive'));
+      document.getElementById('opt-aggressive').addEventListener('click', () => handleResponse('aggressive'));
+      document.getElementById('btn-close-dialogue').addEventListener('click', closeDialogue);
+
+      document.getElementById('cam-square').addEventListener('click', () => setCameraPreset('square'));
+      document.getElementById('cam-clara').addEventListener('click', () => {
+        setCameraPreset('clara');
+        openDialogue(npcs[0]);
+      });
+      document.getElementById('cam-bento').addEventListener('click', () => {
+        setCameraPreset('bento');
+        openDialogue(npcs[1]);
+      });
+      document.getElementById('cam-julia').addEventListener('click', () => {
+        setCameraPreset('julia');
+        openDialogue(npcs[2]);
+      });
+
+      document.getElementById('btn-fountain-wish').addEventListener('click', () => {
+        audio.playCoin();
+        showToast('🪙 Moeda lançada na fonte com um desejo de paz nas relações...');
+      });
+
+      // Drawer
+      const drawer = document.getElementById('info-drawer');
+      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        drawer.classList.add('translate-x-full');
+      });
+      document.getElementById('btn-save-note').addEventListener('click', () => {
+        const val = document.getElementById('social-notes').value;
+        if (val.trim()) {
+          showToast('💾 Reflexão registrada no diário de habilidades sociais.');
+        } else {
+          showToast('✏️ Escreva uma reflexão antes de salvar.');
+        }
+      });
+
+      // Som
+      const btnSound = document.getElementById('btn-sound-toggle');
+      btnSound.addEventListener('click', () => {
+        const on = audio.toggle();
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+        showToast(on ? '🔊 Sons da vila ativados' : '🔇 Áudio silenciado');
+      });
+
+      // Teclado
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.key === 'Escape') {
+          closeDialogue();
+        } else if (e.key.toLowerCase() === 'm') {
+          btnSound.click();
+        } else if (e.key.toLowerCase() === '1') {
+          setCameraPreset('square');
+        } else if (e.key.toLowerCase() === '2') {
+          setCameraPreset('clara');
+        } else if (e.key.toLowerCase() === '3') {
+          setCameraPreset('bento');
+        } else if (e.key.toLowerCase() === '4') {
+          setCameraPreset('julia');
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ==========================================================
+       * 11. LOOP DE ANIMAÇÃO
+       * ========================================================== */
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = clock.getDelta();
+        const elapsedTime = clock.getElapsedTime();
+
+        // 1. Suavização de câmera
+        camera.position.lerp(targetCamPos, 0.04);
+        controls.target.lerp(targetCamLook, 0.04);
+        controls.update();
+
+        // 2. Animação da água da fonte
+        waterDisk.rotation.y += delta * 0.2;
+
+        // 3. Flutuação suave dos marcadores dos moradores
+        npcMeshes.forEach((mesh, idx) => {
+          const marker = mesh.userData.marker;
+          if (marker) {
+            marker.position.y = 1.45 + Math.sin(elapsedTime * 3 + idx) * 0.05;
+          }
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      setTimeout(() => {
+        const hint = document.getElementById('hint-bubble');
+        if (hint) {
+          hint.style.opacity = '0';
+          setTimeout(() => hint.remove(), 500);
+        }
+      }, 6500);
+
+    })();
+  </script>
+
+  <!-- Script Compartilhado de Barra Imersiva e Atalhos -->
+  <script src="shared/imersivo.js?v=3"></script>
+  <script>
+    if (window.Imersivo) {
+      Imersivo.init({
+        ambienteId: 'vila-dos-encontros',
+        titulo: 'Vila dos Encontros',
+        tema: 'vila'
+      });
+    }
+  </script>
+</body>
+</html>

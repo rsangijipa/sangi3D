@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mesa dos Objetos que Acalmam — Clínica Ponto Quieto</title>
+  <meta name="description" content="Ambiente 3D sensorial e contemplativo com pêndulo de areia, berço de Newton, ampulheta líquida e tigela tibetana.">
+  <link rel="icon" href="data:,">
+
+  <!-- Fontes do Projeto: Cormorant Garamond + Karla -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Karla:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="src/style.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./node_modules/three/build/three.module.js",
+      "three/addons/": "./node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="canvas-container" tabindex="0" aria-label="Cena 3D interativa da Mesa dos Objetos que Acalmam"></div>
+
+  <div id="ui-overlay">
+    <!-- 1. Barra de Navegação Superior (Oculta em ?embed=1) -->
+    <header class="navbar-topo interativo" role="banner">
+      <div class="nav-brand">
+        <a href="#inicio" id="logo-marca" class="nav-logo-text">Clínica Ponto Quieto</a>
+      </div>
+      <nav class="nav-links" aria-label="Navegação Principal">
+        <a href="#inicio" class="nav-link">Início</a>
+        <a href="#servicos" class="nav-link">Serviços</a>
+        <a href="#sobre" class="nav-link">Sobre</a>
+        <a href="#contato" class="nav-link">Contato</a>
+      </nav>
+      <div class="nav-actions">
+        <button id="btn-audio" class="btn-icon-subtle" title="Ligar / Desligar Som (M)" aria-label="Alternar Áudio">
+          <svg viewBox="0 0 24 24" id="icon-audio"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        </button>
+        <button id="btn-camera" class="btn-icon-subtle" title="Alternar Enquadramento da Câmera (C)" aria-label="Mudar Câmera">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M3 7V5a2 2 0 0 1 2-2h2m12 0h2a2 2 0 0 1 2 2v2m0 10v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path></svg>
+        </button>
+        <button id="btn-foto" class="btn-icon-subtle" title="Fotografia Zen em PNG (F)" aria-label="Tirar Foto">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </button>
+        <button id="btn-ajustes" class="btn-icon-subtle" title="Ajustes e Qualidade" aria-label="Abrir Ajustes">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button id="btn-sobre" class="btn-icon-subtle" title="Sobre e Privacidade" aria-label="Informações da Experiência">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
+        <a href="#conhecer-espaco" id="btn-cta-nav" class="btn-cta">Conhecer o espaço</a>
+      </div>
+    </header>
+
+    <!-- 2. Hero Editorial à Esquerda -->
+    <main class="hero-editorial" role="main">
+      <h1 id="titulo-hero" class="hero-titulo">Mexa devagar.</h1>
+      <p id="subtitulo-hero" class="hero-subtitulo">Um espaço interativo para desacelerar a mente e encontrar o seu ritmo natural.</p>
+
+      <!-- Cartão de Passos Guiados -->
+      <section class="cartao-passos interativo" aria-label="Passos da Experiência">
+        <div class="passo-item ativo" id="passo-1" data-objeto="pendulo">
+          <span class="passo-numero">1 ·</span>
+          <span class="passo-txt">Empurre o pêndulo</span>
+        </div>
+        <div class="passo-item" id="passo-2" data-objeto="tigela">
+          <span class="passo-numero">2 ·</span>
+          <span class="passo-txt">Toque o gongo</span>
+        </div>
+        <div class="passo-item" id="passo-3" data-objeto="ampulheta">
+          <span class="passo-numero">3 ·</span>
+          <span class="passo-txt">Gire a ampulheta</span>
+        </div>
+        <div class="passo-item" id="passo-4" data-objeto="alisar">
+          <span class="passo-numero">4 ·</span>
+          <span class="passo-txt">Desenhe na areia</span>
+        </div>
+      </section>
+    </main>
+
+    <!-- Selo Flutuante "Toque e experimente" -->
+    <div class="selo-dica" id="selo-dica" aria-hidden="true">
+      <span>Toque e experimente 👆</span>
+    </div>
+
+    <!-- 3. Dock Inferior Centralizado -->
+    <footer class="dock-container" role="contentinfo">
+      <nav class="dock-bar interativo" aria-label="Objetos Sensoriais">
+        <button class="dock-btn ativo" id="dock-pendulo" data-objeto="pendulo" aria-label="Pêndulo de Areia">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"></circle><line x1="12" y1="7" x2="12" y2="17"></line><path d="M12 17l-3 4h6z"></path><path d="M4 22h16"></path></svg>
+          <span>Pêndulo</span>
+        </button>
+
+        <button class="dock-btn" id="dock-newton" data-objeto="berco" aria-label="Berço de Newton">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M5 6v12M19 6v12M3 20h18"></path><circle cx="8" cy="14" r="1.5"></circle><circle cx="10" cy="14" r="1.5"></circle><circle cx="12" cy="14" r="1.5"></circle><circle cx="14" cy="14" r="1.5"></circle><circle cx="16" cy="14" r="1.5"></circle></svg>
+          <span>Berço de Newton</span>
+        </button>
+
+        <button class="dock-btn" id="dock-ampulheta" data-objeto="ampulheta" aria-label="Ampulheta Líquida">
+          <svg viewBox="0 0 24 24"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path></svg>
+          <span>Ampulheta</span>
+        </button>
+
+        <button class="dock-btn" id="dock-tigela" data-objeto="tigela" aria-label="Tigela Tibetana">
+          <svg viewBox="0 0 24 24"><path d="M3 11a9 9 0 0 0 18 0H3z"></path><path d="M7 20h10"></path><line x1="18" y1="5" x2="13" y2="11"></line></svg>
+          <span>Tigela</span>
+        </button>
+
+        <button class="dock-btn" id="dock-alisar" data-objeto="alisar" aria-label="Alisar Areia com Rastelo">
+          <svg viewBox="0 0 24 24"><path d="M3 18h18M6 18v-4M10 18v-4M14 18v-4M18 18v-4M12 14V4"></path></svg>
+          <span>Alisar areia</span>
+        </button>
+      </nav>
+    </footer>
+  </div>
+
+  <!-- Modal Sobre / Privacidade -->
+  <div class="modal-backdrop" id="modal-sobre" role="dialog" aria-modal="true" aria-labelledby="sobre-titulo">
+    <div class="modal-janela">
+      <button class="modal-fechar" id="fechar-sobre" aria-label="Fechar">&times;</button>
+      <h2 class="modal-titulo" id="sobre-titulo">Sobre esta experiência</h2>
+      <div class="modal-conteudo">
+        <p><strong>Mesa dos Objetos que Acalmam</strong> é um ambiente tridimensional imersivo projetado para pausas meditativas, desaceleração do sistema nervoso e mindfulness sensorial.</p>
+        <br>
+        <p><strong>Privacidade e Ética:</strong> Esta experiência roda 100% no seu dispositivo. Nenhum dado pessoal, gravação de áudio ou histórico de interação é coletado ou transmitido para servidores externos.</p>
+        <br>
+        <p><strong>Atalhos de Teclado:</strong><br>
+        • <strong>1 a 4:</strong> Foco nos objetos sensoriais<br>
+        • <strong>Espaço:</strong> Empurrar o pêndulo<br>
+        • <strong>R / A:</strong> Alisar a areia com o rastelo<br>
+        • <strong>C:</strong> Alternar câmera<br>
+        • <strong>M:</strong> Ativar / desativar áudio seguro<br>
+        • <strong>F:</strong> Baixar fotografia zen em PNG</p>
+      </div>
+      <button class="btn-cta" id="btn-entendido-sobre">Compreendi</button>
+    </div>
+  </div>
+
+  <!-- Modal Ajustes -->
+  <div class="modal-backdrop" id="modal-ajustes" role="dialog" aria-modal="true" aria-labelledby="ajustes-titulo">
+    <div class="modal-janela">
+      <button class="modal-fechar" id="fechar-ajustes" aria-label="Fechar">&times;</button>
+      <h2 class="modal-titulo" id="ajustes-titulo">Ajustes da Experiência</h2>
+      <div class="modal-conteudo">
+        <label style="display:block; margin-bottom:12px;"><strong>Preset Visual de Marca:</strong></label>
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+          <button class="btn-cta" id="btn-marca-ponto">Clínica Ponto Quieto</button>
+          <button class="btn-cta" id="btn-marca-neutro">Tema Neutro</button>
+        </div>
+
+        <label style="display:block; margin-bottom:12px;"><strong>Qualidade Gráfica:</strong></label>
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+          <button class="btn-cta" id="btn-qualidade-alta">Alta (Cinema)</button>
+          <button class="btn-cta" id="btn-qualidade-equilibrada">Equilibrada</button>
+          <button class="btn-cta" id="btn-qualidade-leve">Leve</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+[
+  {
+    "profile": "1280x720",
+    "calls": 62,
+    "triangles": 122109,
+    "width": 1280,
+    "height": 720,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": 20.75
+  },
+  {
+    "profile": "1920x1080",
+    "calls": 62,
+    "triangles": 122109,
+    "width": 1286,
+    "height": 723,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": null
+  },
+  {
+    "profile": "390x844",
+    "calls": 52,
+    "triangles": 121209,
+    "width": 390,
+    "height": 515,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": 7.850000001490116
+  },
+  {
+    "profile": "360x640",
+    "calls": 62,
+    "triangles": 122109,
+    "width": 360,
+    "height": 390,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": null
+  },
+  {
+    "profile": "430x932",
+    "calls": 49,
+    "triangles": 119297,
+    "width": 430,
+    "height": 569,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": null
+  },
+  {
+    "profile": "768x1024",
+    "calls": 62,
+    "triangles": 122109,
+    "width": 768,
+    "height": 625,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": null
+  },
+  {
+    "profile": "844x390",
+    "calls": 62,
+    "triangles": 122109,
+    "width": 844,
+    "height": 390,
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "tier": "media",
+    "averageMs": null
+  }
+]

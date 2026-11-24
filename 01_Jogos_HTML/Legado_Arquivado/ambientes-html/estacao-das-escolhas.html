@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Estação das Escolhas — Experiência 3D Interativa</title>
+
+  <!-- Tailwind CSS & Three.js CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Barra Imersiva Compartilhada do Workspace -->
+  <link rel="stylesheet" href="shared/imersivo.css?v=3" />
+
+  <style>
+    :root {
+      --cor-estacao: #eab308;
+      --cor-ferro: #1e293b;
+      --cor-tijolo: #881337;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b1118;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    .glass-station {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(234, 179, 8, 0.28);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+    }
+
+    .btn-train {
+      transition: all 200ms cubic-bezier(.2,.6,.3,1);
+    }
+    .btn-train:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(234, 179, 8, 0.25);
+    }
+
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -15px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: toastFade 3.2s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(234, 179, 8, 0.4); border-radius: 9999px; }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- Canvas WebGL 3D -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI Superior -->
+  <header id="ui-top-bar" class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <a href="/index.html" class="glass-station px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-white/10 flex items-center space-x-2 text-amber-200/90 transition" title="Voltar ao Launcher">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Launcher</span>
+      </a>
+      <div class="glass-station px-4 py-2 rounded-xl flex flex-col">
+        <span class="text-xs uppercase tracking-wider text-amber-400 font-bold">Ambiente 05 · Reconstrução Fiel</span>
+        <h1 class="text-sm font-semibold text-white/95">Estação das Escolhas</h1>
+      </div>
+    </div>
+
+    <!-- Relógio & Painel Rápido de Partidas -->
+    <div class="flex items-center space-x-3 pointer-events-auto">
+      <div class="glass-station px-3.5 py-2 rounded-xl flex items-center space-x-3">
+        <span class="text-lg">⏳</span>
+        <div class="flex flex-col text-right">
+          <span class="text-[10px] uppercase font-bold text-amber-300/80 tracking-wider">Status do Embarque</span>
+          <span id="badge-train-status" class="text-xs font-semibold text-amber-100">Trens aguardando na plataforma</span>
+        </div>
+      </div>
+
+      <button id="btn-sound-toggle" class="glass-station p-2.5 rounded-xl hover:bg-slate-800 text-amber-300 transition" title="Alternar Sons da Estação (M)">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12 0l-6-6m6 0l-6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Painel de Partidas das 3 Plataformas (Estilo Painel Ferroviário Mecânico) -->
+  <div id="board-panel" class="absolute top-20 right-4 glass-station p-3.5 rounded-2xl z-20 pointer-events-auto max-w-xs space-y-2 border border-amber-500/30">
+    <div class="flex items-center justify-between pb-1.5 border-b border-amber-500/20">
+      <span class="text-xs font-bold uppercase tracking-wider text-amber-300">Painel de Destinos</span>
+      <span class="text-[10px] bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded-full font-bold">3 Rotas</span>
+    </div>
+
+    <div class="space-y-1.5">
+      <button class="btn-route w-full text-left p-2 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 border border-amber-500/30 text-xs text-amber-100 flex items-center justify-between active" data-platform="1">
+        <div>
+          <strong class="text-amber-300 block text-[11px]">Plataforma 1 · Expresso da Coragem</strong>
+          <span class="text-[10px] text-amber-200/70">Novos desafios e horizontes</span>
+        </div>
+        <span class="text-base">🚀</span>
+      </button>
+
+      <button class="btn-route w-full text-left p-2 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-700 text-xs text-slate-200 flex items-center justify-between" data-platform="2">
+        <div>
+          <strong class="text-sky-300 block text-[11px]">Plataforma 2 · Trem do Repouso</strong>
+          <span class="text-[10px] text-slate-300/70">Pausa, autocuidado e cura</span>
+        </div>
+        <span class="text-base">🌿</span>
+      </button>
+
+      <button class="btn-route w-full text-left p-2 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-700 text-xs text-slate-200 flex items-center justify-between" data-platform="3">
+        <div>
+          <strong class="text-rose-300 block text-[11px]">Plataforma 3 · Rota do Diálogo</strong>
+          <span class="text-[10px] text-slate-300/70">Reconciliação e conversa aberta</span>
+        </div>
+        <span class="text-base">💬</span>
+      </button>
+    </div>
+
+    <button id="btn-depart" class="w-full py-2 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-bold text-xs rounded-xl shadow flex items-center justify-center space-x-1.5 transition">
+      <span>🔔</span>
+      <span>Dar Sinal de Partida</span>
+    </button>
+  </div>
+
+  <!-- Dock Inferior com Câmeras e Ações -->
+  <footer id="ui-bottom-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2.5 z-20 pointer-events-auto">
+    <div class="glass-station p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="cam-overview" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition active">Estação Completa</button>
+      <button id="cam-train1" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition">Plat. 1 (Coragem)</button>
+      <button id="cam-train2" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition">Plat. 2 (Repouso)</button>
+      <button id="cam-train3" class="btn-cam px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 transition">Plat. 3 (Diálogo)</button>
+    </div>
+
+    <div class="glass-station p-1.5 rounded-2xl flex items-center space-x-1.5">
+      <button id="btn-whistle" class="btn-train px-3 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-500/20 flex items-center space-x-1.5 transition">
+        <span>🚂</span>
+        <span>Apito do Trem</span>
+      </button>
+
+      <button id="btn-drawer-toggle" class="btn-train px-3.5 py-1.5 rounded-xl text-xs font-medium text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 flex items-center space-x-1.5 transition">
+        <span>🧳</span>
+        <span>Organizar Bagagem</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Dica de Interação -->
+  <div id="hint-bubble" class="absolute bottom-20 left-1/2 -translate-x-1/2 glass-station px-4 py-2 rounded-full text-xs font-medium text-amber-200/90 pointer-events-none transition-all duration-300 z-10 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+    <span>Clique nos trens, nas malas da plataforma ou no painel para selecionar sua rota</span>
+  </div>
+
+  <!-- Gaveta Lateral: Bagagens & Tomada de Decisão -->
+  <aside id="info-drawer" class="fixed top-0 right-0 w-full sm:w-96 h-full glass-station border-l border-amber-500/30 z-30 translate-x-full transition-transform duration-300 flex flex-col p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-amber-500/20">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">🧳</span>
+        <h2 class="text-base font-bold text-amber-100">Bagagem de Transição</h2>
+      </div>
+      <button id="btn-close-drawer" class="p-2 rounded-lg hover:bg-amber-500/20 text-amber-300 transition">✕</button>
+    </div>
+
+    <div class="space-y-4 pt-4 text-xs text-amber-200/90 leading-relaxed">
+      <section class="bg-amber-950/40 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-amber-300 mb-1 text-sm">O Que Você Escolhe Levar?</h3>
+        <p>
+          Em cada encruzilhada da vida, não podemos carregar tudo o que já fomos. Toda partida exige
+          discernimento: separar o que é essencial para o novo caminho e aquilo que já pode ser deixado
+          em paz na plataforma.
+        </p>
+      </section>
+
+      <section class="bg-black/30 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-emerald-400 mb-1">Mala de Mão: O Que Eu Levo Comigo</h3>
+        <input id="luggage-keep" type="text" class="w-full bg-black/60 border border-emerald-500/30 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" placeholder="Ex: Minha determinação, quem me apoia..." value="Minha integridade e curiosidade" />
+      </section>
+
+      <section class="bg-black/30 p-3.5 rounded-xl border border-amber-500/20">
+        <h3 class="font-bold text-rose-400 mb-1">Na Plataforma: O Que Eu Deixo Para Trás</h3>
+        <input id="luggage-leave" type="text" class="w-full bg-black/60 border border-rose-500/30 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-rose-400" placeholder="Ex: Culpa por erros antigos, pressa excessiva..." value="O medo paralisante de errar" />
+      </section>
+
+      <button id="btn-save-luggage" class="w-full py-2 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-bold text-xs rounded-xl shadow transition">
+        Confirmar Bagagem da Escolha
+      </button>
+    </div>
+  </aside>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center space-y-2"></div>
+
+  <!-- Script Principal 3D -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+       * 1. ÁUDIO PROCEDURAL DA ESTAÇÃO (Web Audio API)
+       * ========================================================== */
+      class StationAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.ambGain = null;
+        }
+
+        init() {
+          if (this.ctx) return;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          this.ctx = new AudioContext();
+
+          // Ambiência contínua de caldeira e vapor da estação
+          const bufferSize = this.ctx.sampleRate * 2;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.015;
+          }
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          noise.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 400;
+
+          this.ambGain = this.ctx.createGain();
+          this.ambGain.gain.value = 0.2;
+
+          noise.connect(filter);
+          filter.connect(this.ambGain);
+          this.ambGain.connect(this.ctx.destination);
+          noise.start();
+        }
+
+        playWhistle() {
+          if (!this.enabled) return;
+          this.init();
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc1.type = 'triangle';
+          osc2.type = 'sine';
+          osc1.frequency.setValueAtTime(466.16, now); // Sib
+          osc2.frequency.setValueAtTime(587.33, now); // Ré
+
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.3, now + 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 1.65);
+          osc2.stop(now + 1.65);
+        }
+
+        playBell() {
+          if (!this.enabled) return;
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.45);
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.ambGain && this.ctx) {
+            this.ambGain.gain.value = this.enabled ? 0.2 : 0;
+          }
+          return this.enabled;
+        }
+      }
+
+      const audio = new StationAudioEngine();
+
+      /* ==========================================================
+       * 2. CENÁRIO THREE.JS
+       * ========================================================== */
+      const canvas = document.getElementById('webgl-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a1017);
+      scene.fog = new THREE.FogExp2(0x0a1017, 0.025);
+
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 70);
+      camera.position.set(0, 4.2, 9.5);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.02;
+      controls.minDistance = 2;
+      controls.maxDistance = 24;
+      controls.target.set(0, 1.2, 0);
+
+      /* ==========================================================
+       * 3. MATERIAIS PBR
+       * ========================================================== */
+      const matIronTruss  = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.6, metalness: 0.85 });
+      const matPlatform   = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.85 });
+      const matRail       = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.9 });
+      const matBrass      = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.4, metalness: 0.85 });
+      const matTrainBody1 = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.5, metalness: 0.7 });
+      const matTrainBody2 = new THREE.MeshStandardMaterial({ color: 0x065f46, roughness: 0.5, metalness: 0.7 });
+      const matTrainBody3 = new THREE.MeshStandardMaterial({ color: 0x881337, roughness: 0.5, metalness: 0.7 });
+
+      /* ==========================================================
+       * 4. ILUMINAÇÃO DA ESTAÇÃO
+       * ========================================================== */
+      const ambLight = new THREE.AmbientLight(0x2d3748, 0.8);
+      scene.add(ambLight);
+
+      // Luz solar suave vinda da claraboia de vidro arqueada
+      const skylight = new THREE.DirectionalLight(0xfff7ed, 1.3);
+      skylight.position.set(2, 9, 3);
+      skylight.castShadow = true;
+      skylight.shadow.mapSize.width = 1024;
+      skylight.shadow.mapSize.height = 1024;
+      scene.add(skylight);
+
+      /* ==========================================================
+       * 5. ARQUITETURA DA ESTAÇÃO: ARCOS VITORIANOS & TRILHOS
+       * ========================================================== */
+      const stationGroup = new THREE.Group();
+
+      // Piso Principal e Plataformas
+      const floorGeo = new THREE.BoxGeometry(16, 0.2, 18);
+      floorGeo.translate(0, -0.1, 0);
+      const floor = new THREE.Mesh(floorGeo, matPlatform);
+      floor.receiveShadow = true;
+      stationGroup.add(floor);
+
+      // Arcos de Ferro da Cobertura Vitoriana
+      for (let z = -6; z <= 6; z += 4) {
+        const archGeo = new THREE.TorusGeometry(5.5, 0.12, 8, 24, Math.PI);
+        const arch = new THREE.Mesh(archGeo, matIronTruss);
+        arch.position.set(0, 0, z);
+        stationGroup.add(arch);
+      }
+
+      // Trilhos de Trem (3 Linhas Ferroviárias)
+      const trackX = [-3.8, 0, 3.8];
+      trackX.forEach(tx => {
+        [-0.4, 0.4].forEach(offset => {
+          const railGeo = new THREE.BoxGeometry(0.08, 0.1, 16);
+          const rail = new THREE.Mesh(railGeo, matRail);
+          rail.position.set(tx + offset, 0.05, 0);
+          stationGroup.add(rail);
+        });
+      });
+
+      // Relógio Central Suspenso da Estação
+      const clockGroup = new THREE.Group();
+      clockGroup.position.set(0, 4.6, -5.5);
+
+      const clockFrameGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.16, 24);
+      clockFrameGeo.rotateX(Math.PI / 2);
+      const clockFrame = new THREE.Mesh(clockFrameGeo, matBrass);
+      clockGroup.add(clockFrame);
+
+      const clockFaceGeo = new THREE.CircleGeometry(0.72, 24);
+      const matFace = new THREE.MeshBasicMaterial({ color: 0xfffbeb });
+      const clockFace = new THREE.Mesh(clockFaceGeo, matFace);
+      clockFace.position.z = 0.09;
+      clockGroup.add(clockFace);
+
+      stationGroup.add(clockGroup);
+
+      // Malas de Viagem na Plataforma
+      const luggageGroup = new THREE.Group();
+      luggageGroup.position.set(-1.8, 0.1, 1.2);
+
+      const bagGeo = new THREE.BoxGeometry(0.6, 0.35, 0.4);
+      const matLeather = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
+      const bag = new THREE.Mesh(bagGeo, matLeather);
+      bag.castShadow = true;
+      luggageGroup.add(bag);
+
+      stationGroup.add(luggageGroup);
+
+      scene.add(stationGroup);
+
+      /* ==========================================================
+       * 6. OS 3 TRENS DAS ESCOLHAS (LOCOMOTIVAS A VAPOR)
+       * ========================================================== */
+      const trains = [];
+
+      function createLocomotive(x, matBody, routeName, platformNum) {
+        const trainG = new THREE.Group();
+        trainG.position.set(x, 0.1, -1.5);
+
+        // Caldeira cilíndrica da locomotiva
+        const boilerGeo = new THREE.CylinderGeometry(0.55, 0.55, 2.8, 18);
+        boilerGeo.rotateX(Math.PI / 2);
+        boilerGeo.translate(0, 0.85, 0);
+        const boiler = new THREE.Mesh(boilerGeo, matBody);
+        boiler.castShadow = true;
+        trainG.add(boiler);
+
+        // Cabine do Maquinista
+        const cabGeo = new THREE.BoxGeometry(1.2, 1.4, 1.1);
+        cabGeo.translate(0, 1.1, -1.2);
+        const cab = new THREE.Mesh(cabGeo, matIronTruss);
+        cab.castShadow = true;
+        trainG.add(cab);
+
+        // Chaminé da locomotiva
+        const stackGeo = new THREE.CylinderGeometry(0.18, 0.14, 0.7, 14);
+        stackGeo.translate(0, 1.6, 1.0);
+        const stack = new THREE.Mesh(stackGeo, matIronTruss);
+        trainG.add(stack);
+
+        // Farol Dourado Dianteiro
+        const lampGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.2, 12);
+        lampGeo.rotateX(Math.PI / 2);
+        lampGeo.translate(0, 0.85, 1.45);
+        const lamp = new THREE.Mesh(lampGeo, matBrass);
+        trainG.add(lamp);
+
+        const light = new THREE.PointLight(0xfffae6, 1.8, 4);
+        light.position.set(0, 0.85, 1.6);
+        trainG.add(light);
+
+        trainG.userData = { platform: platformNum, name: routeName, initialZ: -1.5, isDeparting: false };
+        scene.add(trainG);
+        trains.push(trainG);
+        return trainG;
+      }
+
+      const train1 = createLocomotive(-3.8, matTrainBody1, 'Expresso da Coragem', 1);
+      const train2 = createLocomotive(0, matTrainBody2, 'Trem do Repouso', 2);
+      const train3 = createLocomotive(3.8, matTrainBody3, 'Rota do Diálogo', 3);
+
+      /* ==========================================================
+       * 7. CÂMERAS PRESET
+       * ========================================================== */
+      const camPresets = {
+        overview: { pos: new THREE.Vector3(0, 4.2, 9.5), target: new THREE.Vector3(0, 1.2, 0) },
+        train1:   { pos: new THREE.Vector3(-3.8, 2.2, 4.2), target: new THREE.Vector3(-3.8, 1.1, 0) },
+        train2:   { pos: new THREE.Vector3(0, 2.2, 4.2), target: new THREE.Vector3(0, 1.1, 0) },
+        train3:   { pos: new THREE.Vector3(3.8, 2.2, 4.2), target: new THREE.Vector3(3.8, 1.1, 0) }
+      };
+
+      let targetCamPos = camPresets.overview.pos.clone();
+      let targetCamLook = camPresets.overview.target.clone();
+
+      function setCameraPreset(key) {
+        const p = camPresets[key];
+        targetCamPos.copy(p.pos);
+        targetCamLook.copy(p.target);
+
+        document.querySelectorAll('.btn-cam').forEach(b => b.classList.remove('active', 'bg-amber-500/20', 'text-white'));
+        const activeBtn = document.getElementById(`cam-${key}`);
+        if (activeBtn) activeBtn.classList.add('active', 'bg-amber-500/20', 'text-white');
+      }
+
+      /* ==========================================================
+       * 8. LÓGICA DE ESCOLHA & PARTIDA
+       * ========================================================== */
+      let selectedPlatform = 1;
+
+      function showToast(text) {
+        const c = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'glass-station px-4 py-2.5 rounded-xl text-xs text-amber-200 border border-amber-400/40 shadow-xl toast-anim';
+        t.textContent = text;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      function selectPlatform(num) {
+        selectedPlatform = num;
+        document.querySelectorAll('.btn-route').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.platform) === num);
+          b.classList.toggle('bg-amber-950/40', parseInt(b.dataset.platform) === num);
+          b.classList.toggle('border-amber-500/30', parseInt(b.dataset.platform) === num);
+        });
+
+        audio.playBell();
+        setCameraPreset(`train${num}`);
+        const t = trains[num - 1];
+        showToast(`📍 Rota Selecionada: Plataforma ${num} — ${t.userData.name}`);
+      }
+
+      function departTrain() {
+        audio.playWhistle();
+        const t = trains[selectedPlatform - 1];
+        t.userData.isDeparting = true;
+        document.getElementById('badge-train-status').textContent = `Partindo: ${t.userData.name}!`;
+
+        showToast(`🚂 Sinal verde! ${t.userData.name} iniciou sua viagem rumo ao destino escolhido.`);
+
+        setTimeout(() => {
+          t.userData.isDeparting = false;
+          t.position.z = t.userData.initialZ;
+          document.getElementById('badge-train-status').textContent = 'Trens aguardando na plataforma';
+        }, 5000);
+      }
+
+      /* ==========================================================
+       * 9. LISTENERS DA UI
+       * ========================================================== */
+      document.querySelectorAll('.btn-route').forEach(b => {
+        b.addEventListener('click', () => selectPlatform(parseInt(b.dataset.platform)));
+      });
+
+      document.getElementById('btn-depart').addEventListener('click', departTrain);
+      document.getElementById('btn-whistle').addEventListener('click', () => {
+        audio.playWhistle();
+        showToast('🚂 Apito clássico ecoando pelos trilhos da estação!');
+      });
+
+      document.getElementById('cam-overview').addEventListener('click', () => setCameraPreset('overview'));
+      document.getElementById('cam-train1').addEventListener('click', () => selectPlatform(1));
+      document.getElementById('cam-train2').addEventListener('click', () => selectPlatform(2));
+      document.getElementById('cam-train3').addEventListener('click', () => selectPlatform(3));
+
+      // Drawer
+      const drawer = document.getElementById('info-drawer');
+      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        drawer.classList.add('translate-x-full');
+      });
+      document.getElementById('btn-save-luggage').addEventListener('click', () => {
+        showToast('🧳 Bagagem confirmada com clareza e coragem!');
+        drawer.classList.add('translate-x-full');
+      });
+
+      // Som
+      const btnSound = document.getElementById('btn-sound-toggle');
+      btnSound.addEventListener('click', () => {
+        const on = audio.toggle();
+        document.getElementById('icon-sound-on').classList.toggle('hidden', !on);
+        document.getElementById('icon-sound-off').classList.toggle('hidden', on);
+        showToast(on ? '🔊 Sons da estação ativados' : '🔇 Áudio silenciado');
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ==========================================================
+       * 10. LOOP DE ANIMAÇÃO
+       * ========================================================== */
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = clock.getDelta();
+
+        // 1. Câmera
+        camera.position.lerp(targetCamPos, 0.04);
+        controls.target.lerp(targetCamLook, 0.04);
+        controls.update();
+
+        // 2. Movimento suave do trem que estiver partindo
+        trains.forEach(t => {
+          if (t.userData.isDeparting) {
+            t.position.z += delta * 4.5;
+          }
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      setTimeout(() => {
+        const hint = document.getElementById('hint-bubble');
+        if (hint) {
+          hint.style.opacity = '0';
+          setTimeout(() => hint.remove(), 500);
+        }
+      }, 6500);
+
+    })();
+  </script>
+
+  <!-- Script Compartilhado de Barra Imersiva e Atalhos -->
+  <script src="shared/imersivo.js?v=3"></script>
+  <script>
+    if (window.Imersivo) {
+      Imersivo.init({
+        ambienteId: 'estacao-das-escolhas',
+        titulo: 'Estação das Escolhas',
+        tema: 'estacao'
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "Ateliê do Gesto Lento — Instituto Gestaltear",
+  "short_name": "Ateliê 3D",
+  "description": "Oficina 3D interativa de cerâmica, modelagem tátil de argila e presença.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#16110d",
+  "theme_color": "#16110d",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
