@@ -1,0 +1,15 @@
+@media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+  [data-sangi-scroll-dock] {
+    box-sizing: border-box;
+    max-inline-size: calc(100vw - 1rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+    overflow-x: auto !important;
+    justify-content: start !important;
+    overscroll-behavior-inline: contain;
+    touch-action: pan-x pinch-zoom;
+    scrollbar-width: thin;
+  }
+
+  [data-sangi-scroll-dock] > * {
+    flex-shrink: 0 !important;
+  }
+}

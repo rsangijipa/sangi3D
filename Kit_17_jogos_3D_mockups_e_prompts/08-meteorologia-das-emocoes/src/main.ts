@@ -94,6 +94,12 @@ function main(): void {
       URL.revokeObjectURL(url);
       audioManager.playUiClick('confirm');
     },
+    onStart: (mode) => {
+      state = reducer(state, { type: 'START_SESSION' });
+      state = reducer(state, { type: 'SET_MODE', mode });
+      ensureAudio();
+      dispatch({ type: 'TOGGLE_STEP', step: 'compose' });
+    },
     onStepChange: (step) => dispatch({ type: 'TOGGLE_STEP', step }),
   };
 

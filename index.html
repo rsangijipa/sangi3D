@@ -3,34 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#14100d" />
+  <meta name="theme-color" content="#0e151b" />
   <title>Ambientes 3D — Sangi3D</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23dfba7c'/%3E%3Cpath d='M16 7c-4 5-4 13 0 18 4-5 4-13 0-18z' fill='%2314100d'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%239ff6df'/%3E%3Cpath d='m16 6 9 5v10l-9 5-9-5V11zm-9 5 9 5 9-5m-9 5v10' fill='none' stroke='%230e151b' stroke-width='1.7' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #14100d;
-      --bg-2: #1a1511;
-      --side: #17120f;
-      --card: #211b16;
-      --card-hover: #2a221c;
-      --line: rgba(220, 190, 150, 0.12);
-      --line-strong: rgba(220, 190, 150, 0.30);
-      --text: #f5ede0;
-      --muted: #b5a691;
-      --faint: #857765;
-      --gold: #dfba7c;
-      --gold-soft: rgba(223, 186, 124, 0.14);
+      --bg: #0e151b;
+      --bg-2: #121c24;
+      --side: #101a21;
+      --card: #15212a;
+      --card-hover: #1a2a34;
+      --line: #a1c9d622;
+      --line-strong: #a1c9d64b;
+      --text: #ecf5f6;
+      --muted: #adc0c8;
+      --faint: #94a8b2;
+      --accent: #9ff6df;
+      --accent-soft: #9ff6df1e;
       --ready: #9cc59a;
       --build: #e3a86b;
       --concept: #a9a0c9;
       --error: #e58b74;
       --radius: 14px;
       --side-w: 248px;
-      --serif: 'Cormorant Garamond', Georgia, serif;
-      --sans: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+      --sans: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -44,7 +43,7 @@
     }
     a { color: inherit; }
     button { font: inherit; color: inherit; }
-    :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
     /* ---------- Layout ---------- */
@@ -55,10 +54,9 @@
       padding: max(26px, calc(16px + var(--safe-top))) 16px max(20px, calc(16px + var(--safe-bottom))) max(16px, calc(12px + var(--safe-left)));
       display: flex; flex-direction: column; gap: 22px;
     }
-    .brand { padding: 0 8px; }
-    .brand small { display: block; color: var(--gold); font-size: 10.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
-    .brand b { display: block; font-family: var(--serif); font-weight: 500; font-size: 32px; line-height: 1.05; margin-top: 4px; }
-    .brand b em { color: var(--gold); }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px 5px; }
+    .brand img { width: 36px; height: 36px; }
+    .brand b { font-size: 17px; font-weight: 800; letter-spacing: -.04em; }
     .nav-title { color: var(--faint); font-size: 10.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; padding: 0 10px; margin: 0 0 6px; }
     .nav { display: flex; flex-direction: column; gap: 1px; }
     .nav button {
@@ -66,16 +64,16 @@
       padding: 8px 10px; border-radius: 9px; color: var(--muted); font-size: 13.5px; font-weight: 500; cursor: pointer;
       min-height: 38px;
     }
-    .nav button:hover { background: rgba(255, 240, 220, 0.04); color: var(--text); }
-    .nav button[aria-current="true"] { background: var(--gold-soft); color: var(--text); }
+    .nav button:hover { background: var(--bg-2); color: var(--text); }
+    .nav button[aria-current="true"] { background: var(--accent-soft); color: var(--text); }
     .nav .sw { width: 9px; height: 9px; border-radius: 3px; flex: none; }
     .nav .ic { width: 16px; height: 16px; flex: none; color: var(--faint); }
-    .nav button[aria-current="true"] .ic { color: var(--gold); }
+    .nav button[aria-current="true"] .ic { color: var(--accent); }
     .nav .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .nav .n { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
     .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 4px; padding: 14px 10px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
     .side-foot a { color: var(--muted); text-decoration: none; padding: 2px 0; }
-    .side-foot a:hover { color: var(--gold); }
+    .side-foot a:hover { color: var(--accent); }
     .side-foot p { margin: 8px 0 0; color: var(--faint); font-size: 11.5px; }
 
     main {
@@ -85,15 +83,28 @@
     .topbar {
       position: sticky; top: 0; z-index: 10; margin: 0 -32px;
       padding: max(14px, calc(8px + var(--safe-top))) max(32px, calc(16px + var(--safe-right))) 14px max(32px, calc(16px + var(--safe-left)));
-      background: rgba(20, 16, 13, 0.90); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
+      background: #0e151bf0; backdrop-filter: blur(14px); border-bottom: 1px solid var(--line);
       display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
     }
+    .tabs { display: flex; align-items: center; gap: 4px; }
+    .tabs button, .release-filters button {
+      display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px;
+      border: 1px solid transparent; border-radius: 9px; background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 800;
+    }
+    .tabs button:hover, .release-filters button:hover { color: var(--text); border-color: var(--line); }
+    .tabs button[aria-current="true"], .release-filters button[aria-pressed="true"] {
+      color: var(--accent); background: var(--accent-soft); border-color: var(--line-strong);
+    }
+    .tabs .ic { width: 16px; height: 16px; }
+    .release-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 22px; }
+    .release-filters[hidden], .ctl[hidden] { display: none; }
     .search { position: relative; flex: 1 1 240px; max-width: 420px; }
     .search input {
       width: 100%; padding: 9px 40px 9px 36px; border-radius: 10px; border: 1px solid var(--line-strong);
       background: var(--bg-2); color: var(--text); font: inherit; font-size: 13.5px; outline: none;
     }
-    .search input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+    .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
     .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); }
     .search kbd { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
     .spacer { flex: 1; }
@@ -104,37 +115,50 @@
     }
     .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 9px; overflow: hidden; }
     .seg button { border: 0; background: transparent; padding: 7px 9px; cursor: pointer; color: var(--faint); display: grid; place-items: center; }
-    .seg button[aria-pressed="true"] { background: var(--gold-soft); color: var(--gold); }
+    .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
     .btn {
       display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
       padding: 7px 13px; border-radius: 9px; text-decoration: none; cursor: pointer; border: 1px solid var(--line-strong);
       background: transparent; color: var(--text);
     }
-    .btn:hover { border-color: var(--gold); }
-    .btn.primary { background: var(--gold); border-color: var(--gold); color: #1e1a16; }
-    .btn.primary:hover { background: #ecc98d; }
+    .btn:hover { border-color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #0e2421; }
+    .btn.primary:hover { background: #c4ffef; }
     .btn.sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
     kbd { font-family: inherit; border: 1px solid var(--line-strong); border-radius: 5px; padding: 0 5px; font-size: 11px; color: var(--faint); }
 
     /* ---------- Page head ---------- */
-    .head { padding: 34px 0 6px; display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
-    .head h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(34px, 4.4vw, 52px); line-height: 1; margin: 0; letter-spacing: -.01em; }
-    .head h1 em { color: var(--gold); }
+    .head { padding: 34px 0 24px; display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+    .head h1 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; line-height: 1.05; margin: 0; letter-spacing: -.055em; }
     .head p { color: var(--muted); margin: 8px 0 0; max-width: 620px; }
     .stats { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); font-size: 12.5px; margin-left: auto; }
     .stats b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
     .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
     .dot.busy { animation: blink 1s ease-in-out infinite; }
     @keyframes blink { 50% { opacity: .25; } }
+    .feature {
+      position: relative; isolation: isolate; display: flex; align-items: center; min-height: 300px;
+      border: 1px solid var(--line-strong); border-radius: calc(var(--radius) + 4px); overflow: hidden;
+      background: var(--bg-2);
+    }
+    .feature .thumb, .feature::after { position: absolute; inset: 0; z-index: -1; }
+    .feature .thumb { width: 72%; left: auto; aspect-ratio: auto; }
+    .feature .thumb img { object-position: center 55%; }
+    .feature::after { content: ''; background: linear-gradient(90deg, #111c25 24%, #111c25ec 35%, #111c251a 76%); }
+    .feature-content { width: min(100%, 470px); padding: clamp(24px, 4vw, 52px); }
+    .feature-category { color: var(--accent); font-size: 12px; font-weight: 800; }
+    .feature h2 { font-size: clamp(29px, 4vw, 46px); line-height: 1.05; letter-spacing: -.06em; margin: 8px 0; }
+    .feature p { margin: 0 0 20px; color: #d4e5ec; }
 
     /* ---------- Sections ---------- */
-    section.group { margin-top: 38px; }
+    section.group { margin-top: 32px; }
+    #list > .group:first-child { margin-top: 0; }
     .group-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
     .group-head .sw { width: 10px; height: 10px; border-radius: 3px; }
-    .group-head h2 { font-family: var(--serif); font-weight: 500; font-size: 28px; margin: 0; line-height: 1.1; }
+    .group-head h2 { font-weight: 800; font-size: clamp(18px, 2vw, 23px); margin: 0; line-height: 1.2; letter-spacing: -.035em; }
     .group-head span { color: var(--faint); font-size: 12.5px; }
     .group-head .more { margin-left: auto; font-size: 12.5px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 0; }
-    .group-head .more:hover { color: var(--gold); }
+    .group-head .more:hover { color: var(--accent); }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 16px; }
     .rail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(232px, 260px); gap: 16px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
 
@@ -145,7 +169,7 @@
     }
     .card.ready:hover { transform: translateY(-3px); border-color: var(--line-strong); background: var(--card-hover); box-shadow: 0 14px 32px -16px rgba(0,0,0,.6); }
     .card.muted .thumb { filter: saturate(.6) brightness(.8); }
-    .thumb { position: relative; aspect-ratio: 16 / 10; background: var(--bg-2); overflow: hidden; }
+    .thumb { position: relative; aspect-ratio: 16 / 9; background: var(--bg-2); overflow: hidden; }
     .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
     .card.ready:hover .thumb img, .card.ready:hover .art svg { transform: scale(1.04); }
     .art { position: absolute; inset: 0; }
@@ -155,18 +179,21 @@
       padding: 3px 8px; border-radius: 999px; background: rgba(14, 11, 9, 0.85); backdrop-filter: blur(6px); border: 1px solid var(--line);
       display: inline-flex; align-items: center; gap: 4px; z-index: 2;
     }
+    .badge.release-new { color: #a2f7dc; }
+    .badge.release-updated { color: #bed7ff; }
+    .meta .release-new { color: #a2f7dc; }
+    .meta .release-updated { color: #bed7ff; }
     .fav {
       position: absolute; top: 7px; right: 7px; z-index: 3; width: 32px; height: 32px; border-radius: 50%;
-      border: 1px solid var(--line); background: rgba(14, 11, 9, 0.75); backdrop-filter: blur(6px);
-      display: grid; place-items: center; cursor: pointer; color: var(--muted); opacity: 0; transition: opacity .15s, color .15s;
+      border: 1px solid var(--line-strong); background: #0e151be8; backdrop-filter: blur(6px);
+      display: grid; place-items: center; cursor: pointer; color: var(--text); transition: color .15s;
     }
-    .card:hover .fav, .card:focus-within .fav, .fav[aria-pressed="true"] { opacity: 1; }
-    .fav[aria-pressed="true"] { color: var(--gold); }
-    .fav:hover { color: var(--gold); }
+    .fav[aria-pressed="true"] { color: var(--accent); }
+    .fav:hover { color: var(--accent); }
     .card .cover { position: absolute; inset: 0; z-index: 1; border: 0; background: transparent; cursor: pointer; width: 100%; }
     .card .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; position: relative; z-index: 2; pointer-events: none; }
     .card .body a, .card .body button, .card .body details { pointer-events: auto; }
-    .card h3 { font-family: var(--serif); font-size: 21px; font-weight: 600; line-height: 1.15; margin: 0; }
+    .card h3 { font-size: 17px; font-weight: 800; line-height: 1.25; margin: 0; letter-spacing: -.025em; }
     .card .sub { color: var(--muted); font-size: 12px; }
     .card .desc { color: var(--muted); font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .meta { display: flex; gap: 10px; align-items: center; color: var(--faint); font-size: 11.5px; flex-wrap: wrap; }
@@ -177,7 +204,7 @@
     .versions summary { cursor: pointer; user-select: none; }
     .versions summary:hover { color: var(--muted); }
     .versions a { display: block; padding: 3px 0; color: var(--muted); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .versions a:hover { color: var(--gold); }
+    .versions a:hover { color: var(--accent); }
 
     /* ---------- List row ---------- */
     .list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
@@ -189,7 +216,7 @@
     .row.ready:hover { background: var(--card-hover); }
     .row .thumb { aspect-ratio: 16 / 10; border-radius: 7px; }
     .row.muted .thumb { filter: saturate(.6) brightness(.8); }
-    .row h3 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; line-height: 1.15; }
+    .row h3 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.25; }
     .row .info { min-width: 0; }
     .row .desc { -webkit-line-clamp: 1; }
     .row .actions { padding: 0; margin: 0; flex-wrap: nowrap; }
@@ -198,7 +225,7 @@
     .row .fav { position: relative; top: auto; right: auto; opacity: 1; width: 28px; height: 28px; }
 
     .empty { color: var(--muted); text-align: center; padding: 80px 0; }
-    .empty b { display: block; font-family: var(--serif); font-size: 26px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .empty b { display: block; font-family: var(--sans); font-size: 26px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
     .toast {
       position: fixed; left: 50%; bottom: max(24px, calc(16px + var(--safe-bottom))); transform: translateX(-50%) translateY(20px); opacity: 0;
       background: var(--card-hover); border: 1px solid var(--line-strong); padding: 10px 16px; border-radius: 999px;
@@ -217,7 +244,7 @@
     .player-modal[hidden] { display: none !important; }
     @keyframes playerFadeIn { from { opacity: 0; } to { opacity: 1; } }
     .player-bar {
-      min-height: 52px; background: rgba(20, 16, 13, 0.96); backdrop-filter: blur(14px);
+      min-height: 52px; background: #0e151bf5; backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between;
       padding: max(6px, var(--safe-top)) max(16px, var(--safe-right)) 6px max(16px, var(--safe-left));
       gap: 12px; z-index: 2; flex: none;
@@ -226,14 +253,17 @@
       display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;
     }
     .player-title b {
-      font-family: var(--serif); font-size: 19px; font-weight: 500; color: var(--text);
+      font-family: var(--sans); font-size: 19px; font-weight: 500; color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .badge-mini {
-      font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--gold-soft);
-      color: var(--gold); border: 1px solid var(--line); white-space: nowrap; flex: none;
+      font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft);
+      color: var(--accent); border: 1px solid var(--line); white-space: nowrap; flex: none;
     }
     .player-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+    #gameActions { display: flex; align-items: center; gap: 8px; }
+    #gameActions:empty { display: none; }
+    #gameMenuToggle, #gameMenu { display: none; }
     .player-body { position: relative; flex: 1; width: 100%; min-height: 0; background: #0b0907; overflow: hidden; }
     .player-frame-container, .player-frame { width: 100%; height: 100%; border: 0; display: block; background: #000; }
     .player-loader {
@@ -242,20 +272,63 @@
     }
     .player-loader.fade-out { opacity: 0; pointer-events: none; }
     .spinner {
-      width: 32px; height: 32px; border: 3px solid var(--line-strong); border-top-color: var(--gold);
+      width: 32px; height: 32px; border: 3px solid var(--line-strong); border-top-color: var(--accent);
       border-radius: 50%; animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .player-loader p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+    @media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+      .player-bar { min-height: 56px; gap: 8px; }
+      .player-bar .btn, #gameMenu .btn { min-block-size: 44px; min-inline-size: 44px; }
+      .player-title .badge-mini { display: none; }
+      #gameMenuToggle { display: inline-flex; }
+      #gameMenu:not([hidden]) {
+        display: block; position: absolute; z-index: 4;
+        inset: auto max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
+        max-block-size: 74%; overflow-y: auto; overscroll-behavior-y: contain;
+        background: var(--bg-2); border: 1px solid var(--line-strong); border-radius: var(--radius);
+        box-shadow: 0 -12px 48px #000a;
+      }
+      .game-menu-heading {
+        display: flex; justify-content: space-between; align-items: center; gap: 8px;
+        padding: 8px 12px; position: sticky; top: 0; z-index: 1;
+        background: var(--bg-2); border-bottom: 1px solid var(--line);
+      }
+      .game-menu-heading h2 { margin: 0; font: 600 23px/1.2 var(--sans); }
+      .game-menu-options { padding: 12px; }
+      .game-menu-controls {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); gap: 8px;
+      }
+      .game-menu-controls button {
+        font-size: 13px; text-align: start; min-block-size: 44px; padding: 8px 10px;
+        border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card);
+        overflow-wrap: anywhere; cursor: pointer;
+      }
+      .game-menu-controls button:active { background: var(--accent-soft); }
+      .game-menu-controls button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+      .game-menu-options p { margin: 0; color: var(--muted); }
+      .game-menu-actions {
+        display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px;
+        position: sticky; bottom: 0; background: var(--bg-2); border-top: 1px solid var(--line);
+      }
+      #gameMenu .game-menu-actions .btn { display: inline-flex; }
+      .nav button, #menuBtn { min-block-size: 44px; }
+      .search input { font-size: 16px; }
+    }
+    @media (orientation: landscape) and (max-height: 540px) {
+      #gameMenu:not([hidden]) { left: auto; inline-size: min(400px, 60vw); max-block-size: 94%; }
+    }
 
     /* ---------- Responsive ---------- */
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
       aside {
         position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw); z-index: 30; transform: translateX(-102%);
-        transition: transform .22s ease; box-shadow: 20px 0 40px rgba(0,0,0,.5);
+        visibility: hidden; overscroll-behavior: contain;
+        transition: transform .22s ease, visibility .22s; box-shadow: 20px 0 40px rgba(0,0,0,.5);
       }
-      body.nav-open aside { transform: none; }
+      body.nav-open aside { transform: none; visibility: visible; }
       body.nav-open::after { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 25; }
       .menu-btn { display: inline-flex; }
       main { padding: 0 16px 60px; }
@@ -263,6 +336,22 @@
       .search { max-width: none; order: 3; flex-basis: 100%; }
       .search kbd { display: none; }
       .stats { margin-left: 0; }
+    }
+    @media (max-width: 650px) {
+      .topbar { gap: 8px; }
+      .tabs { flex: 1; }
+      .tabs button { min-height: 44px; padding: 0 9px; }
+      .topbar .spacer { display: none; }
+      .topbar .ctl { order: 4; }
+      .topbar .seg { order: 5; margin-left: auto; }
+      .topbar #random { padding: 9px; }
+      .topbar #random .lbl { display: none; }
+      .feature { align-items: flex-end; min-height: 340px; }
+      .feature .thumb { width: 100%; bottom: 70px; }
+      .feature::after { background: linear-gradient(0deg, #111c25 18%, #111c25d9 38%, #111c2500 80%); }
+      .feature-content { padding: 22px; }
+      .release-filters button { min-height: 44px; }
+      .fav { width: 44px; height: 44px; }
     }
     @media (max-width: 560px) {
       .grid { grid-template-columns: 1fr; }
@@ -278,42 +367,45 @@
 <body>
   <div class="app">
     <aside id="side" aria-label="Navegação">
-      <div class="brand"><small>Launcher</small><b>Ambientes <em>3D</em></b></div>
+      <div class="brand"><img id="brandIcon" alt="" /><b>Ambientes 3D</b></div>
       <div>
-        <p class="nav-title">Explorar</p>
-        <nav class="nav" id="navMain"></nav>
+        <p class="nav-title">Minha biblioteca</p>
+        <nav class="nav" id="navMain" aria-label="Minha biblioteca"></nav>
       </div>
       <div>
-        <p class="nav-title">Coleções</p>
-        <nav class="nav" id="navCols"></nav>
+        <p class="nav-title">Categorias</p>
+        <nav class="nav" id="navCategories" aria-label="Categorias"></nav>
       </div>
       <div>
         <p class="nav-title">Acervo</p>
-        <nav class="nav" id="navArchive"></nav>
+        <nav class="nav" id="navArchive" aria-label="Acervo"></nav>
       </div>
       <div class="side-foot">
         <a href="/00_Organizacao/CATALOGO.html">Catálogo de prompts ↗</a>
         <a href="/00_Organizacao/PENDENTES.md" target="_blank" rel="noopener">Prompts pendentes ↗</a>
         <a href="/04_Prompts/PROMPT_MELHORIA_AMBIENTES.md" target="_blank" rel="noopener">Plano de melhoria ↗</a>
-        <p>Servidor local · a lista se atualiza sozinha.</p>
       </div>
     </aside>
 
     <main>
       <div class="topbar">
-        <button class="btn menu-btn" id="menuBtn" aria-label="Abrir navegação" aria-controls="side">
+        <button class="btn menu-btn" id="menuBtn" aria-label="Navegação do catálogo" aria-controls="side" aria-expanded="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </button>
+        <nav class="tabs" id="navTabs" aria-label="Navegação principal">
+          <button type="button" data-view="all">Explorar</button>
+          <button type="button" data-view="releases">Lançamentos</button>
+        </nav>
         <label class="search">
           <span class="sr">Buscar ambiente</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="q" type="search" placeholder="Buscar por nome, tema ou coleção" autocomplete="off" />
+          <input id="q" type="search" placeholder="Buscar por nome ou tema" autocomplete="off" />
           <kbd>/</kbd>
         </label>
         <div class="spacer"></div>
-        <label class="ctl"><span class="lbl">Ordenar</span>
+        <label class="ctl" id="sortControl"><span class="lbl">Ordenar</span>
           <select id="sort" aria-label="Ordenar">
-            <option value="colecao">Por coleção</option>
+            <option value="categoria">Por categoria</option>
             <option value="az">A–Z</option>
             <option value="recentes">Atualizados</option>
           </select>
@@ -322,7 +414,7 @@
           <button data-layout="grid" aria-label="Grade" title="Grade"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
           <button data-layout="list" aria-label="Lista" title="Lista"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
         </div>
-        <button class="btn" id="random" title="Abrir um ambiente aleatório">
+        <button class="btn" id="random" title="Abrir um ambiente aleatório" aria-label="Surpreenda-me">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
           <span class="lbl">Surpreenda-me</span>
         </button>
@@ -330,13 +422,18 @@
 
       <div class="head">
         <div>
-          <h1 id="title">Ambientes <em>3D</em></h1>
-          <p id="lede">Todas as experiências interativas num só lugar.</p>
+          <h1 id="title" tabindex="-1">Explore os Ambientes 3D</h1>
+          <p id="lede">Encontre jogos, oficinas e mundos interativos por tema.</p>
         </div>
-        <div class="stats" id="stats"></div>
+        <div class="stats" id="stats" role="status"></div>
       </div>
 
-      <div id="list"></div>
+      <div class="release-filters" id="releaseFilters" role="group" aria-label="Tipo de lançamento" hidden>
+        <button type="button" data-release="all" aria-pressed="true">Todos</button>
+        <button type="button" data-release="new" aria-pressed="false">Novos</button>
+        <button type="button" data-release="updated" aria-pressed="false">Atualizados</button>
+      </div>
+      <div id="list"><p class="empty">Carregando catálogo…</p></div>
     </main>
   </div>
 
@@ -349,16 +446,19 @@
       </button>
       <div class="player-title">
         <b id="playerAppName">Ambiente 3D</b>
-        <span id="playerAppCol" class="badge-mini">Coleção</span>
+        <span id="playerAppCol" class="badge-mini">Categoria</span>
       </div>
       <div class="player-actions">
-        <button class="btn sm" id="mutePlayerBtn" title="Alternar som" aria-pressed="false">
-          <svg class="ic-sound" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          <span class="lbl-sound">Som</span>
-        </button>
-        <a class="btn sm" id="openTabBtn" href="#" target="_blank" rel="noopener" title="Abrir em aba avulsa">
-          <span>Aba avulsa</span> ↗
-        </a>
+        <button class="btn sm" type="button" id="gameMenuToggle" aria-controls="gameMenu" aria-expanded="false">Menu</button>
+        <div id="gameActions">
+          <button class="btn sm" id="mutePlayerBtn" title="Alternar som" aria-pressed="false">
+            <svg class="ic-sound" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <span class="lbl-sound">Som</span>
+          </button>
+          <a class="btn sm" id="openTabBtn" href="#" target="_blank" rel="noopener" title="Abrir em aba avulsa">
+            <span>Aba avulsa</span> ↗
+          </a>
+        </div>
       </div>
     </div>
     <div class="player-body">
@@ -367,11 +467,24 @@
         <p id="playerStatusText">Carregando ambiente 3D…</p>
       </div>
       <div id="playerFrameContainer" class="player-frame-container"></div>
+      <section id="gameMenu" aria-labelledby="gameMenuTitle" hidden>
+        <header class="game-menu-heading">
+          <h2 id="gameMenuTitle">Menu do jogo</h2>
+          <button class="btn sm" type="button" id="closeGameMenu">Fechar</button>
+        </header>
+        <div class="game-menu-options">
+          <p id="gameMenuNotice">Os controles aparecem aqui quando estiverem visíveis no jogo.</p>
+          <div class="game-menu-controls" id="gameMenuControls"></div>
+        </div>
+        <div class="game-menu-actions" id="mobileGameActions"></div>
+      </section>
     </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="./shared/mobile-game-menu.js"></script>
+  <script src="./shared/launcher-catalog.js"></script>
   <script>
     const STATUS = {
       ready: { label: 'Pronto', color: 'var(--ready)' },
@@ -385,13 +498,12 @@
       error: { label: 'Erro no build', color: 'var(--error)' },
     };
     const KIND = { project: 'Projeto', build: 'Build', html: 'HTML', game: 'Jogo', source: 'Código', concept: 'Conceito' };
-    const COL_HUE = {
-      'Jardins da TCC': 145, 'Jardins do Sentir': 330, 'Projetos 3D': 32, 'Kit 17 jogos 3D': 200,
-      'Ambientes avulsos': 48, 'Adultos e marcas': 12, 'Expressão e desenvolvimento': 265, 'Legado arquivado': 30,
-    };
-    const ARCHIVE = 'Legado arquivado';
+    const { categories, describe } = window.SangiLauncherCatalog;
+    const RELEASE_LABEL = { new: 'Novo', updated: 'Atualizado' };
+    const FEATURE_ID = '01_jogos_html-cidade-submersa-cidade-submersa-html';
     const ICONS = {
       all: '<path d="M3 11 12 4l9 7v9H3z"/><path d="M9 20v-6h6v6"/>',
+      releases: '<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3ZM19 15v6m-3-3h6"/>',
       fav: '<path d="m12 4 2.5 5.2 5.7.8-4.1 4 1 5.6L12 17l-5.1 2.6 1-5.6-4.1-4 5.7-.8z"/>',
       recent: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
       concept: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
@@ -404,10 +516,13 @@
       get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
       set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
     };
+    const previousView = store.get('launcher.view', 'all');
+    const previousSort = store.get('launcher.sort', 'categoria');
     const state = {
       apps: [], q: '',
-      view: store.get('launcher.view', 'all'),
-      sort: store.get('launcher.sort', 'colecao'),
+      view: previousView === 'col:Legado arquivado' ? 'archive' : previousView,
+      sort: ['categoria', 'az', 'recentes'].includes(previousSort) ? previousSort : 'categoria',
+      releaseFilter: 'all',
       layout: store.get('launcher.layout', 'grid'),
       fav: new Set(store.get('launcher.fav', [])),
       recent: store.get('launcher.recent', []),
@@ -415,19 +530,20 @@
       isMuted: false,
     };
     const $ = (s) => document.querySelector(s);
+    $('#brandIcon').src = $('link[rel="icon"]').href;
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
     const cleanName = (n) => String(n ?? '').replace(/^\d+[.)\s-]+\s*/, '');
-    const colHue = (c) => COL_HUE[c] ?? hash(c) % 360;
-    const swatch = (c) => `hsl(${colHue(c)}, 45%, 58%)`;
+    const swatch = (category) => `hsl(${category.hue}, 65%, 68%)`;
 
     function hash(str) { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h; }
     function rng(seed) { let s = seed || 1; return () => ((s = Math.imul(s ^ (s >>> 15), 2246822507) ^ Math.imul(s ^ (s >>> 13), 3266489909)) >>> 0) / 4294967296; }
 
-    function art(name, collection) {
+    let artId = 0;
+    function art({ name, category }) {
       const r = rng(hash(name));
-      const h = (colHue(collection) + Math.round(r() * 50 - 25) + 360) % 360;
+      const h = (category.hue + Math.round(r() * 50 - 25) + 360) % 360;
       const h2 = (h + 30 + Math.round(r() * 40)) % 360;
       const sunX = 40 + r() * 240, sunY = 40 + r() * 50, sunR = 18 + r() * 22;
       const layers = [0, 1, 2].map((i) => {
@@ -438,14 +554,14 @@
       }).join('');
       const specks = Array.from({ length: 14 }, () => `<circle cx="${(r() * 320).toFixed(0)}" cy="${(r() * 110).toFixed(0)}" r="${(r() * 1.4 + .4).toFixed(1)}" fill="hsla(${h2},80%,90%,${(r() * .6 + .2).toFixed(2)})"/>`).join('');
       const initial = cleanName(name).replace(/^(O|A|Os|As)\s+/i, '').charAt(0).toUpperCase();
-      const id = 'g' + hash(name + collection);
+      const id = 'catalog-art-' + (++artId);
       return `<div class="art"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(${h2},40%,26%)"/><stop offset="1" stop-color="hsl(${h},35%,14%)"/></linearGradient>
         <radialGradient id="${id}s"><stop offset="0" stop-color="hsla(${h2},85%,82%,.95)"/><stop offset="1" stop-color="hsla(${h2},85%,70%,0)"/></radialGradient></defs>
         <rect width="320" height="200" fill="url(#${id})"/>${specks}
         <circle cx="${sunX.toFixed(0)}" cy="${sunY.toFixed(0)}" r="${sunR.toFixed(0)}" fill="url(#${id}s)"/>
         ${layers}
-        <text x="24" y="64" font-family="'Cormorant Garamond', Georgia, serif" font-size="44" font-weight="600" fill="hsla(${h2},90%,92%,.75)">${initial}</text>
+        <text x="24" y="64" font-family="system-ui, sans-serif" font-size="44" font-weight="600" fill="hsla(${h2},90%,92%,.75)">${esc(initial)}</text>
       </svg></div>`;
     }
 
@@ -459,18 +575,20 @@
       return new Date(ts).toLocaleDateString('pt-BR');
     }
     function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''; }
+    const releaseDate = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
     function statusOf(a) { return (a.kind === 'project' && BUILD[a.build?.state]) || STATUS[a.status]; }
-    function thumbOf(a) {
+    function thumbOf(a, eager = false) {
       return a.thumb
-        ? `<img src="${esc(a.thumb)}" alt="" loading="lazy" decoding="async" data-fallback="${esc(a.id)}" onerror="handleThumbError(this, '${esc(a.name)}', '${esc(a.collection)}')" />`
-        : art(a.name, a.collection);
+        ? `<img src="${esc(a.thumb)}" alt="" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" data-fallback="${esc(a.id)}" />`
+        : art(a);
     }
-    function handleThumbError(img, name, col) {
-      if (!img || img.dataset.hasFallback) return;
-      img.dataset.hasFallback = '1';
-      img.replaceWith(document.createRange().createContextualFragment(art(name, col)));
-    }
+    $('#list').addEventListener('error', (event) => {
+      const img = event.target;
+      if (!img.dataset?.fallback) return;
+      const app = state.apps.find((entry) => entry.id === img.dataset.fallback);
+      if (app) img.replaceWith(document.createRange().createContextualFragment(art(app)));
+    }, true);
 
     function actionsOf(a, compact) {
       let html = '';
@@ -490,62 +608,75 @@
       const on = state.fav.has(a.id);
       return `<button class="fav" data-fav="${esc(a.id)}" aria-pressed="${on}" aria-label="${on ? 'Remover dos' : 'Adicionar aos'} favoritos: ${esc(cleanName(a.name))}" title="Favorito">${on ? STAR : STAR_O}</button>`;
     }
-    function metaOf(a) {
+    function metaOf(a, showStatus = false) {
       const bits = [];
-      if (state.view !== 'col:' + a.collection && state.sort !== 'colecao') bits.push(`<span><span class="dot" style="background:${swatch(a.collection)}"></span>${esc(a.collection)}</span>`);
-      bits.push(`<span class="tag">${KIND[a.kind] ?? a.kind}</span>`);
-      bits.push(`<span>${relTime(a.mtime)}</span>`);
+      const status = statusOf(a);
+      if (showStatus && status && status !== STATUS.ready) bits.push(`<span><span class="dot${status.busy ? ' busy' : ''}" style="background:${status.color}"></span>${status.label}</span>`);
+      bits.push(`<span><span class="dot" style="background:${swatch(a.category)}"></span>${esc(a.category.label)}</span>`);
+      if (state.view === 'releases' && a.release) {
+        const { date, type } = a.release;
+        if (showStatus) bits.push(`<span class="release-${type}">${RELEASE_LABEL[type]}</span>`);
+        bits.push(`<time datetime="${date}">${releaseDate.format(new Date(date))}</time>`);
+      } else if (state.sort === 'recentes' && a.mtime) {
+        bits.push(`<span>${relTime(a.mtime)}</span>`);
+      } else if (!isMain(a)) {
+        bits.push(`<span class="tag">${esc(KIND[a.kind] ?? a.kind)}</span>`);
+      }
       return `<div class="meta">${bits.join('')}</div>`;
     }
 
     function card(a) {
       const st = statusOf(a), ready = a.status === 'ready';
-      const badge = (ready && !st?.busy && st === STATUS.ready) ? '' : `<span class="badge"><span class="dot${st?.busy ? ' busy' : ''}" style="background:${st?.color ?? 'var(--concept)'}"></span>${st?.label ?? 'Info'}</span>`;
+      const badge = st && st !== STATUS.ready
+        ? `<span class="badge"><span class="dot${st.busy ? ' busy' : ''}" style="background:${st.color}"></span>${st.label}</span>`
+        : state.view === 'releases' && a.release ? `<span class="badge release-${a.release.type}">${RELEASE_LABEL[a.release.type]}</span>` : '';
       const cover = ready ? `<button class="cover" data-play="${esc(a.id)}" aria-label="Abrir ${esc(cleanName(a.name))}" tabindex="-1"></button>` : '';
       return `<article class="card ${ready ? 'ready' : 'muted'}">${cover}
         <div class="thumb">${thumbOf(a)}${badge}${favBtn(a)}</div>
         <div class="body">
           <h3>${esc(cleanName(a.name))}</h3>
           ${metaOf(a)}
-          ${a.subtitle ? `<div class="sub">${esc(a.subtitle)}</div>` : ''}
+          ${a.subtitle && a.subtitle !== 'Sangi3D' ? `<div class="sub">${esc(a.subtitle)}</div>` : ''}
           ${a.description ? `<div class="desc">${esc(cleanName(a.description))}</div>` : ''}
           <div class="actions">${actionsOf(a)}</div>
         </div>
       </article>`;
     }
     function row(a) {
-      const st = statusOf(a), ready = a.status === 'ready';
+      const ready = a.status === 'ready';
       const cover = ready ? `<button class="cover" data-play="${esc(a.id)}" aria-label="Abrir ${esc(cleanName(a.name))}" tabindex="-1"></button>` : '';
       return `<div class="row ${ready ? 'ready' : 'muted'}">${cover}
         <div class="thumb">${thumbOf(a)}</div>
         <div class="info"><h3>${esc(cleanName(a.name))}</h3>
-          <div class="meta">${st === STATUS.ready ? '' : `<span><span class="dot${st?.busy ? ' busy' : ''}" style="background:${st?.color}"></span>${st?.label}</span>`}<span><span class="dot" style="background:${swatch(a.collection)}"></span>${esc(a.collection)}</span><span class="tag">${KIND[a.kind] ?? a.kind}</span></div>
-          ${a.description || a.subtitle ? `<div class="desc">${esc(cleanName(a.description || a.subtitle))}</div>` : ''}</div>
+          ${metaOf(a, true)}
+          ${a.description || (a.subtitle && a.subtitle !== 'Sangi3D') ? `<div class="desc">${esc(cleanName(a.description || a.subtitle))}</div>` : ''}</div>
         <div class="actions">${favBtn(a)}${actionsOf(a, true)}</div>
       </div>`;
     }
 
     // ---------- Filtros ----------
-    const isMain = (a) => a.status === 'ready' && a.collection !== ARCHIVE;
+    const isMain = (a) => a.status === 'ready' && a.category.id !== 'archive';
+    const isRelease = (a) => isMain(a) && a.release;
+    const byName = (a, b) => cleanName(a.name).localeCompare(cleanName(b.name), 'pt-BR');
     function pool() {
       const v = state.view;
       if (v === 'all') return state.apps.filter(isMain);
+      if (v === 'releases') return state.apps.filter((a) => isRelease(a) && (state.releaseFilter === 'all' || a.release.type === state.releaseFilter));
       if (v === 'fav') return state.apps.filter((a) => state.fav.has(a.id));
       if (v === 'recent') {
         const byId = new Map(state.apps.map((a) => [a.id, a]));
         return state.recent.map((r) => byId.get(r.id)).filter(Boolean);
       }
       if (v === 'concept') return state.apps.filter((a) => a.status !== 'ready');
-      if (v.startsWith('col:')) {
-        const c = v.slice(4);
-        return state.apps.filter((a) => a.collection === c && (a.status === 'ready' || c === ARCHIVE));
-      }
+      if (v === 'archive') return state.apps.filter((a) => a.category.id === 'archive');
+      if (v.startsWith('cat:')) return state.apps.filter((a) => isMain(a) && a.category.id === v.slice(4));
       return [];
     }
-    function matches(a, q) { return !q || norm(`${a.fullTitle} ${a.description} ${a.collection} ${a.path}`).includes(q); }
+    function matches(a, q) { return !q || norm(`${a.name} ${a.fullTitle} ${a.description ?? ''} ${a.category.label} ${a.path}`).includes(q); }
     function sorted(list) {
-      const by = { az: (a, b) => cleanName(a.name).localeCompare(cleanName(b.name), 'pt'), recentes: (a, b) => b.mtime - a.mtime };
-      return by[state.sort] ? [...list].sort(by[state.sort]) : list;
+      if (state.view === 'recent') return list;
+      if (state.view === 'releases') return [...list].sort((a, b) => b.release.date.localeCompare(a.release.date) || byName(a, b));
+      return [...list].sort(state.sort === 'recentes' ? (a, b) => b.mtime - a.mtime || byName(a, b) : byName);
     }
 
     // ---------- Navegação ----------
@@ -553,51 +684,49 @@
       return `<button data-view="${esc(key)}" aria-current="${state.view === key}">${lead}<span class="lbl">${esc(label)}</span><span class="n">${n}</span></button>`;
     }
     const icon = (k) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
+    for (const button of document.querySelectorAll('#navTabs button')) button.insertAdjacentHTML('afterbegin', icon(button.dataset.view));
     function renderNav() {
-      const cols = [...new Set(state.apps.map((a) => a.collection))].filter((c) => c !== ARCHIVE);
-      const readyIn = (c) => state.apps.filter((a) => a.collection === c && a.status === 'ready').length;
-      const valid = ['all', 'fav', 'recent', 'concept', 'col:' + ARCHIVE, ...cols.map((c) => 'col:' + c)];
+      const counts = new Map();
+      for (const app of state.apps.filter(isMain)) counts.set(app.category.id, (counts.get(app.category.id) ?? 0) + 1);
+      const valid = ['all', 'releases', 'fav', 'recent', 'concept', 'archive', ...categories.map((c) => 'cat:' + c.id)];
       if (!valid.includes(state.view)) state.view = 'all';
+      for (const button of document.querySelectorAll('#navTabs button')) {
+        button.setAttribute('aria-current', String(button.dataset.view === state.view));
+      }
       const recentN = state.recent.filter((r) => state.apps.some((a) => a.id === r.id)).length;
       $('#navMain').innerHTML =
-        navBtn('all', 'Todos os ambientes', state.apps.filter(isMain).length, icon('all')) +
         navBtn('fav', 'Favoritos', state.apps.filter((a) => state.fav.has(a.id)).length, icon('fav')) +
-        navBtn('recent', 'Abertos recentemente', recentN, icon('recent'));
-      $('#navCols').innerHTML = cols.filter((c) => readyIn(c)).map((c) =>
-        navBtn('col:' + c, c, readyIn(c), `<span class="sw" style="background:${swatch(c)}"></span>`)).join('');
+        navBtn('recent', 'Histórico', recentN, icon('recent'));
+      $('#navCategories').innerHTML = categories.filter((c) => counts.has(c.id)).map((c) =>
+        navBtn('cat:' + c.id, c.label, counts.get(c.id), `<span class="sw" style="background:${swatch(c)}"></span>`)).join('');
       $('#navArchive').innerHTML =
         navBtn('concept', 'Conceitos e pendentes', state.apps.filter((a) => a.status !== 'ready').length, icon('concept')) +
-        navBtn('col:' + ARCHIVE, 'Versões arquivadas', state.apps.filter((a) => a.collection === ARCHIVE).length, icon('archive'));
+        navBtn('archive', 'Versões arquivadas', state.apps.filter((a) => a.category.id === 'archive').length, icon('archive'));
     }
 
-    function renderHead() {
+    function renderHead(count, searching) {
       const v = state.view;
-      const T = {
-        all: ['Ambientes <em>3D</em>', 'Todas as experiências interativas prontas para abrir. Use o menu para filtrar por coleção.'],
-        fav: ['Seus <em>favoritos</em>', 'Clique na estrela de qualquer card para guardar aqui.'],
-        recent: ['Abertos <em>recentemente</em>', 'Os últimos ambientes que você abriu neste navegador.'],
-        concept: ['Conceitos e <em>pendentes</em>', 'Prompts em planejamento e projetos em design para consulta e implementação.'],
+      const headings = {
+        all: ['Explore os Ambientes 3D', 'Encontre jogos, oficinas e mundos interativos por tema.'],
+        releases: ['Lançamentos', 'Veja as estreias e as novas versões do catálogo.'],
+        fav: ['Seus favoritos', 'Use a estrela de qualquer ambiente para guardá-lo aqui.'],
+        recent: ['Histórico', 'Os últimos ambientes que você abriu neste navegador.'],
+        concept: ['Conceitos e pendentes', 'Prompts e projetos em planejamento.'],
+        archive: ['Versões arquivadas', 'Versões anteriores disponíveis para consulta.'],
       };
-      let [t, l] = T[v] ?? [];
-      if (v.startsWith('col:')) {
-        const c = v.slice(4);
-        t = esc(c);
-        const n = state.apps.filter((a) => a.collection === c && (a.status === 'ready' || c === ARCHIVE)).length;
-        l = c === ARCHIVE ? 'Versões antigas guardadas para referência. As versões atuais estão nas coleções.' : `${plural(n, 'ambiente pronto', 'ambientes prontos')} nesta coleção.`;
-      }
-      $('#title').innerHTML = t; $('#lede').textContent = l;
-      const ready = state.apps.filter(isMain).length;
-      const concept = state.apps.filter((a) => a.status === 'concept').length;
-      const busyN = state.apps.filter((a) => BUILD[a.build?.state]?.busy).length;
-      $('#stats').innerHTML = `<span><span class="dot" style="background:var(--ready)"></span><b>${ready}</b> prontos</span>
-        <span><span class="dot" style="background:var(--concept)"></span><b>${concept}</b> conceitos</span>
-        ${busyN ? `<span><span class="dot busy" style="background:var(--build)"></span><b>${busyN}</b> compilando</span>` : ''}`;
+      const [title, lede] = headings[v] ?? [categories.find((c) => 'cat:' + c.id === v).label, ''];
+      $('#title').textContent = searching && v === 'all' ? 'Resultados da busca' : title;
+      $('#lede').textContent = searching ? '' : lede;
+      $('#lede').hidden = !$('#lede').textContent;
+      $('#stats').textContent = plural(count, 'ambiente', 'ambientes');
+      $('#releaseFilters').hidden = v !== 'releases';
+      $('#sortControl').hidden = v === 'recent' || v === 'releases';
     }
 
     function block(title, apps, opts = {}) {
       if (!apps.length) return '';
-      const sw = opts.col ? `<span class="sw" style="background:${swatch(opts.col)}"></span>` : '';
-      const more = opts.more ? `<button class="more" data-view="${esc(opts.more)}">Ver tudo →</button>` : '';
+      const sw = opts.category ? `<span class="sw" style="background:${swatch(opts.category)}"></span>` : '';
+      const more = opts.more ? `<button class="more" data-view="${esc(opts.more)}" aria-label="Ver tudo em ${title}">Ver tudo →</button>` : '';
       const body = state.layout === 'list' && !opts.rail
         ? `<div class="list">${apps.map(row).join('')}</div>`
         : `<div class="${opts.rail ? 'rail' : 'grid'}">${apps.map(card).join('')}</div>`;
@@ -605,46 +734,95 @@
       return `<section class="group">${head}${body}</section>`;
     }
 
+    function feature(app) {
+      if (!app) return '';
+      return `<section class="feature" aria-labelledby="featuredTitle">
+        <div class="thumb">${thumbOf(app, true)}</div>
+        <div class="feature-content">
+          <div class="feature-category">${esc(app.category.label)}</div>
+          <h2 id="featuredTitle">${esc(cleanName(app.name))}</h2>
+          <p>Mergulhe e explore um cenário de ruínas subaquáticas.</p>
+          <button class="btn primary" data-play="${esc(app.id)}">Explorar ambiente <span aria-hidden="true">→</span></button>
+        </div>
+      </section>`;
+    }
+
+    function categoryBlocks(list) {
+      const groups = new Map();
+      for (const app of list) {
+        const key = app.category.id;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(app);
+      }
+      return categories.map((category) => {
+        const apps = groups.get(category.id);
+        return apps ? block(esc(category.label), apps, { category, more: 'cat:' + category.id }) : '';
+      }).join('');
+    }
+
     function render() {
       renderNav();
-      renderHead();
       document.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.layout === state.layout));
       $('#sort').value = state.sort;
       const q = norm(state.q.trim());
-      let list = pool().filter((a) => matches(a, q));
-      if (q && state.view === 'all') list = state.apps.filter((a) => matches(a, q));
+      const list = sorted((q && state.view === 'all' ? state.apps : pool()).filter((a) => matches(a, q)));
+      renderHead(list.length, Boolean(q));
       if (!list.length) {
-        const msg = state.view === 'fav' ? ['Nenhum favorito ainda', 'Passe o mouse num card e clique na estrela.']
+        const msg = q ? ['Nada encontrado', `Nenhum ambiente corresponde a “${esc(state.q.trim())}”.`]
+          : state.view === 'fav' ? ['Nenhum favorito ainda', 'Use a estrela para guardar seus ambientes preferidos.']
           : state.view === 'recent' ? ['Nada aberto ainda', 'Os ambientes que você abrir aparecem aqui.']
-          : ['Nada encontrado', state.q ? `Nenhum ambiente corresponde a “${esc(state.q)}”.` : 'Esta seção está vazia.'];
+          : state.view === 'releases' ? ['Sem lançamentos neste filtro', 'Selecione Todos para ver as novidades do catálogo.']
+          : ['Esta seção está vazia', ''];
         $('#list').innerHTML = `<div class="empty"><b>${msg[0]}</b>${msg[1]}</div>`;
         return;
       }
       let html = '';
-      if (state.view === 'all' && !q && state.sort === 'colecao') {
-        const byId = new Map(state.apps.map((a) => [a.id, a]));
-        const recent = state.recent.map((r) => byId.get(r.id)).filter((a) => a && a.status === 'ready').slice(0, 8);
-        if (recent.length) html += block('Continuar explorando', recent, { rail: true, more: 'recent' });
-      }
-      if (state.view === 'recent' || state.sort !== 'colecao') {
-        html += block(state.view === 'recent' ? 'Histórico' : state.sort === 'az' ? 'De A a Z' : 'Atualizados recentemente', state.view === 'recent' ? list : sorted(list));
+      if (state.view === 'all' && !q && state.sort === 'categoria') {
+        html = feature(list.find((a) => a.id === FEATURE_ID));
+        const recent = state.recent.map((r) => list.find((a) => a.id === r.id)).filter(Boolean).slice(0, 8);
+        if (recent.length) html += block('Continuar explorando', recent, { rail: state.layout === 'grid', more: 'recent' });
+        html += categoryBlocks(list);
       } else {
-        const groups = new Map();
-        for (const a of list) { if (!groups.has(a.collection)) groups.set(a.collection, []); groups.get(a.collection).push(a); }
-        const single = state.view.startsWith('col:') && groups.size === 1;
-        html += [...groups].map(([name, apps]) => block(esc(name), apps, { col: name, noHead: single, more: state.view === 'all' && groups.size > 1 ? 'col:' + name : null })).join('');
+        html = block('', list, { noHead: true });
       }
       $('#list').innerHTML = html;
     }
 
     function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); }
-    function setView(v) { state.view = v; store.set('launcher.view', v); document.body.classList.remove('nav-open'); render(); window.scrollTo({ top: 0 }); }
+    function setNavOpen(open) {
+      document.body.classList.toggle('nav-open', open);
+      $('#menuBtn').setAttribute('aria-expanded', String(open));
+    }
+    function setView(view) {
+      state.view = view;
+      store.set('launcher.view', view);
+      setNavOpen(false);
+      render();
+      $('#title').focus({ preventScroll: true });
+      window.scrollTo({ top: 0 });
+    }
     function remember(id) {
       state.recent = [{ id, at: Date.now() }, ...state.recent.filter((r) => r.id !== id)].slice(0, 24);
       store.set('launcher.recent', state.recent);
     }
 
     // ---------- Player Modal & Ciclo de Vida ----------
+    const mobileGameMenu = window.SangiMobileGameMenu?.mount({
+      player: $('#playerModal'),
+      toggle: $('#gameMenuToggle'),
+      sheet: $('#gameMenu'),
+      list: $('#gameMenuControls'),
+      notice: $('#gameMenuNotice'),
+      closeButton: $('#closeGameMenu'),
+      getFrame: () => $('#playerFrameContainer iframe'),
+    });
+    const mobilePlayer = matchMedia('(max-width: 640px), (pointer: coarse) and (max-width: 1024px)');
+    function placePlayerActions() {
+      const actions = mobilePlayer.matches ? $('#mobileGameActions') : $('#gameActions');
+      actions.append($('#mutePlayerBtn'), $('#openTabBtn'));
+    }
+    mobilePlayer.addEventListener('change', placePlayerActions);
+    if (mobileGameMenu) placePlayerActions();
     function openApp(id, opener = document.activeElement) {
       const app = state.apps.find((a) => a.id === id);
       if (!app || !app.url || app.status !== 'ready') return;
@@ -653,7 +831,7 @@
 
       state.activeAppId = app.id;
       $('#playerAppName').textContent = cleanName(app.name);
-      $('#playerAppCol').textContent = app.collection;
+      $('#playerAppCol').textContent = app.category.label;
       $('#openTabBtn').href = app.url;
 
       const modal = $('#playerModal');
@@ -674,6 +852,7 @@
       let loaded = false;
       iframe.onload = () => {
         loaded = true;
+        mobileGameMenu?.attach(iframe);
         setTimeout(() => { if (iframe.isConnected) loader.classList.add('fade-out'); }, 350);
       };
       setTimeout(() => { if (!loaded && iframe.isConnected) loader.classList.add('fade-out'); }, 4000);
@@ -691,6 +870,7 @@
     function closeApp() {
       const modal = $('#playerModal');
       if (modal.hidden) return;
+      mobileGameMenu?.close(false);
 
       const container = $('#playerFrameContainer');
       const iframe = container.querySelector('iframe');
@@ -729,9 +909,9 @@
         // Garante exclusão de autorreferência mesmo em cache
         const cleanApps = apps.filter(a => a.id !== 'index-html' && a.url !== '/index.html' && a.name !== 'Ambientes');
         busy = cleanApps.some((a) => BUILD[a.build?.state]?.busy);
-        const sig = JSON.stringify(cleanApps.map((a) => [a.id, a.status, a.mtime, a.versions?.length, a.build?.state]));
+        const sig = JSON.stringify(cleanApps);
         if (sig === lastSig) return;
-        lastSig = sig; state.apps = cleanApps; render();
+        lastSig = sig; state.apps = cleanApps.map(describe); render();
 
         // Checa se deve abrir jogo indicado na URL hash
         if (location.hash.startsWith('#play=') && !state.activeAppId) {
@@ -741,17 +921,26 @@
           }
         }
       } catch {
-        if (!state.apps.length) $('#list').innerHTML = '<div class="empty"><b>Servidor indisponível</b>Abra pelo arquivo <b style="display:inline;font:inherit;color:var(--gold)">Abrir Launcher.cmd</b>.</div>';
+        if (!state.apps.length) $('#list').innerHTML = '<div class="empty"><b>Servidor indisponível</b>Abra pelo arquivo <b style="display:inline;font:inherit;color:var(--accent)">Abrir Launcher.cmd</b>.</div>';
       }
     }
 
     // ---------- Eventos Globais ----------
     $('#q').addEventListener('input', (e) => { state.q = e.target.value; render(); });
     $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; store.set('launcher.sort', state.sort); render(); });
+    $('#releaseFilters').addEventListener('click', (event) => {
+      const filter = event.target.closest('[data-release]');
+      if (!filter) return;
+      state.releaseFilter = filter.dataset.release;
+      for (const button of $('#releaseFilters').querySelectorAll('button')) {
+        button.setAttribute('aria-pressed', String(button === filter));
+      }
+      render();
+    });
     document.querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('click', () => {
       state.layout = b.dataset.layout; store.set('launcher.layout', state.layout); render();
     }));
-    $('#menuBtn').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+    $('#menuBtn').addEventListener('click', () => setNavOpen(!document.body.classList.contains('nav-open')));
     $('#closePlayerBtn').addEventListener('click', closeApp);
 
     $('#mutePlayerBtn').addEventListener('click', () => {
@@ -768,7 +957,7 @@
       // Fecha menu mobile ao clicar fora ou em item de navegação
       if (document.body.classList.contains('nav-open') && !e.target.closest('#menuBtn')) {
         if (!e.target.closest('aside') || e.target.closest('[data-view]')) {
-          document.body.classList.remove('nav-open');
+          setNavOpen(false);
         }
       }
       const v = e.target.closest('[data-view]'); if (v) return setView(v.dataset.view);
@@ -809,8 +998,13 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (!$('#gameMenu').hidden) { mobileGameMenu?.close(); return; }
         if (!$('#playerModal').hidden) { closeApp(); return; }
-        document.body.classList.remove('nav-open');
+        if (document.body.classList.contains('nav-open')) {
+          setNavOpen(false);
+          $('#menuBtn').focus();
+          return;
+        }
         if (document.activeElement === $('#q')) { $('#q').value = ''; state.q = ''; render(); $('#q').blur(); }
       }
       if (e.key === '/' && document.activeElement !== $('#q') && $('#playerModal').hidden) {

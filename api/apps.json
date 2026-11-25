@@ -471,10 +471,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes.webp",
     "order": 8,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\08-meteorologia-das-emocoes",
-    "mtime": 1795494609189.2725,
+    "mtime": 1795570590479.7632,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes",
-    "contentHash": "bed19095befbb3bf"
+    "contentHash": "417d0317f37ac4e7"
   },
   {
     "name": "Estação das Trocas",
@@ -649,10 +649,10 @@
     "thumb": "/01_Jogos_HTML/arquipelago-celestial/arquipelago-celestial.jpg",
     "order": 999,
     "path": "01_Jogos_HTML\\arquipelago-celestial\\arquipelago-celestial.html",
-    "mtime": 1795556396000,
+    "mtime": 1795561137866.381,
     "versions": [],
     "id": "01_jogos_html-arquipelago-celestial-arquipelago-celestial-html",
-    "contentHash": "46f4b163b4901c67"
+    "contentHash": "b51b544f7f927590"
   },
   {
     "name": "Bancada do Florista",
@@ -1056,23 +1056,6 @@
     ],
     "id": "01_jogos_html-semaforo-das-emocoes-semaforo-das-emocoes-html",
     "contentHash": "351e826935ed3b22"
-  },
-  {
-    "name": "Terrário de Vidro",
-    "subtitle": "Verde Miúdo Plantas",
-    "fullTitle": "Terrário de Vidro — Verde Miúdo Plantas",
-    "url": "/01_Jogos_HTML/terrario-de-vidro/terr_rio_de_vidro_verde_mi_do_plantas.html",
-    "status": "ready",
-    "kind": "html",
-    "collection": "Ambientes avulsos",
-    "thumb": "/launcher/capas/01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html.webp",
-    "order": 999,
-    "path": "01_Jogos_HTML\\terrario-de-vidro\\terr_rio_de_vidro_verde_mi_do_plantas.html",
-    "mtime": 1795503026604.2854,
-    "versions": [],
-    "id": "01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html",
-    "canonicalRole": "canonical",
-    "contentHash": "dd1c24e21d79dc4c"
   },
   {
     "name": "Terrário de Vidro (Ateliê Expandido)",
