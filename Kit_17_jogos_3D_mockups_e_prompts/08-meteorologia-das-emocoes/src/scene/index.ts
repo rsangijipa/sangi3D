@@ -238,12 +238,8 @@ export class Scene3D {
     inst.instanceMatrix.needsUpdate = true;
   }
 
-  private isDisposed = false;
-
   onResize(mobile: boolean): void {
-    if (this.isDisposed) return;
     const canvas = this.renderer.domElement;
-    if (!canvas.clientWidth || !canvas.clientHeight) return;
     this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
@@ -252,7 +248,6 @@ export class Scene3D {
   }
 
   render(): void {
-    if (this.isDisposed) return;
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -261,8 +256,6 @@ export class Scene3D {
   }
 
   dispose(): void {
-    if (this.isDisposed) return;
-    this.isDisposed = true;
     this.controls.dispose();
     this.tweenManager.clear();
     this.sky.dispose();

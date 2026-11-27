@@ -3,7 +3,6 @@
  * Orquestra estado, cena 3D, entrada e UI. Um comando por interacao.
  */
 
-import './style.css';
 import { createState, reducer, type GameState, type Action } from './game/state.js';
 import { Scene3D } from './scene/index.js';
 import { InputController } from './input/actions.js';
@@ -114,7 +113,6 @@ function main(): void {
     }
   }
   function dispatch(action: Action): void {
-    if (disposed) return;
     state = reducer(state, action);
     scene.setTargetWeather(state.weather);
     syncAudio();
@@ -205,7 +203,6 @@ function main(): void {
   uiManager.openStartOverlay();
 
   window.addEventListener('resize', () => {
-    if (disposed) return;
     scene.onResize(isMobile());
   });
 }
