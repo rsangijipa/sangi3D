@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Uma máquina de escrever vintage para digitar, carimbar e guardar uma intenção da semana.">
+<title>Máquina de Escrever das Intenções — Sangi3D</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./typewriter.css">
+<style>
+  html, body { touch-action: manipulation; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  #scene, .canvas-container { width: 100%; height: 100%; }
+</style>
+<script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+<main>
+  <section id="scene" class="canvas-container" aria-label="Escrivaninha com máquina de escrever 3D">
+    <a class="back" id="launcher-link" href="/">← Launcher</a>
+    <button type="button" id="sound" aria-pressed="false">Som desligado</button>
+    <div class="brand"><span>ATELIER</span><strong>Palavra Viva</strong></div>
+    <p id="scene-status" hidden></p>
+  </section>
+  <section class="panel" aria-labelledby="title">
+    <header>
+      <p class="eyebrow">MÁQUINA DE ESCREVER DAS INTENÇÕES</p>
+      <h1 id="title">Escreva uma intenção.</h1>
+      <p>Escolha algo que você quer fazer esta semana e coloque em palavras.</p>
+    </header>
+    <ol id="steps" aria-label="Etapas"><li>Escreva</li><li>Releia</li><li>Carimbe ou dobre</li><li>Guarde</li></ol>
+    <div class="paper" id="paper-card">
+      <label for="type-input">Sua folha</label>
+      <textarea id="type-input" maxlength="210" rows="4" spellcheck="false" autocomplete="off" placeholder="Esta semana eu vou…"></textarea>
+      <div id="typed-text" hidden></div>
+      <div class="paper-footer"><span id="stamp-mark" hidden>INTENÇÃO</span><output id="counter">0 / 210</output></div>
+    </div>
+    <div class="dock">
+      <button id="keyboard-toggle" type="button" aria-expanded="false" aria-controls="keyboard">Teclado virtual</button>
+      <button id="return" type="button">Retorno do carro</button>
+      <button id="stamp" type="button">Carimbar</button>
+      <button id="fold" type="button">Dobrar e guardar</button>
+      <button id="download" type="button" class="primary">Baixar imagem</button>
+      <button id="reset" type="button" class="subdued">Nova folha</button>
+    </div>
+    <div id="keyboard" hidden aria-label="Teclado virtual"></div>
+    <p id="help-msg" role="status">O texto fica nesta página até você sair.</p>
+  </section>
+</main>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/Sistema/shared/vendor/three.module.js"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from '/Sistema/shared/vendor/three.module.js';
+  import { MaterialFactory } from '/Sistema/shared/engine/materials.js';
+  import { ResponsiveAudio } from '/Sistema/shared/engine/audio.js';
+  import './typewriter.js';
+
+  window.addEventListener('pointerdown', () => {});
+  window.addEventListener('sangi:dispose', () => {
+    if (window.desk && typeof window.desk.dispose === 'function') {
+      window.desk.dispose();
+    }
+  });
+</script>
+</body>
+</html>

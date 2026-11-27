@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Correio das Palavras Não Ditas 3D — Jardins do Sentir</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    (function () {
+      var threeSrc = location.protocol !== 'file:'
+        ? '../../../Sistema/shared/vendor/three-r128.min.js'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.write('<script src="' + threeSrc + '"><\/script>');
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="../../../Sistema/shared/sangi-bridge.js" defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #140f0c;
+      color: #f6ead9;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .serif {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+
+    .glass {
+      background: rgba(26, 19, 14, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(235, 198, 145, 0.25);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+    }
+
+    .pill {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .pill:hover {
+      border-color: rgba(235, 198, 145, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .pill.active {
+      background: linear-gradient(135deg, #a64638, #70261e);
+      color: #fff;
+      border-color: #f4b2a7;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 86px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 40;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(235, 198, 145, 0.3);
+      border-radius: 99px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="canvas-container"></div>
+
+  <header class="fixed top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+    <div class="glass rounded-2xl px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
+      <div class="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-300/35 flex items-center justify-center text-lg">
+        ✉️</div>
+      <div>
+        <h1 class="serif text-xl font-semibold text-amber-50 leading-tight">Correio das Palavras Não Ditas</h1>
+        <p class="text-[11px] text-amber-200/75">Jardins do Sentir 3D · Escrita expressiva, selo de cera e alívio
+          emocional</p>
+      </div>
+    </div>
+    <div class="glass rounded-2xl px-3 py-2 flex items-center gap-2 pointer-events-auto">
+      <select id="quality-select"
+        class="bg-black/35 text-xs text-amber-100 border border-amber-200/25 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer">
+        <option value="high">Qualidade: Alta (PBR + 2K)</option>
+        <option value="balanced" selected>Qualidade: Equilibrada</option>
+        <option value="eco">Qualidade: Econômica</option>
+      </select>
+      <button id="btn-audio"
+        class="pill px-2.5 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-white/5 text-amber-100">🔊
+        Som</button>
+    </div>
+  </header>
+
+  <!-- Left Letter Composer -->
+  <aside
+    class="fixed left-4 top-24 bottom-24 z-20 w-80 glass rounded-2xl p-4 flex flex-col gap-3 overflow-y-auto custom-scroll">
+    <div>
+      <label class="block text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1">Para quem (ou para
+        qual parte de você)?</label>
+      <input id="letter-to" type="text" maxlength="60" placeholder="Ex.: Para o meu eu de alguns anos atrás..."
+        class="w-full rounded-xl bg-black/35 border border-amber-200/25 px-3 py-2 text-xs text-amber-50 outline-none focus:border-amber-400" />
+    </div>
+
+    <div>
+      <label class="block text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1">Carta que
+        precisava ganhar voz</label>
+      <textarea id="letter-body" rows="4"
+        placeholder="Escreva livremente o que ficou guardado. Nenhuma carta sai deste ambiente..."
+        class="w-full rounded-xl bg-black/35 border border-amber-200/25 p-3 text-xs text-amber-50 outline-none focus:border-amber-400 resize-none"></textarea>
+    </div>
+
+    <div>
+      <div class="text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1.5">Cor do Selo de Cera
+      </div>
+      <div class="flex gap-2" id="seal-bar">
+        <button data-seal="#a62c2b" class="pill active px-2.5 py-1 rounded-lg text-[11px] border border-rose-300/40">🔴
+          Desabafo</button>
+        <button data-seal="#2c6e58"
+          class="pill px-2.5 py-1 rounded-lg text-[11px] border border-emerald-300/30 bg-white/5">🟢 Perdão</button>
+        <button data-seal="#c48a2b"
+          class="pill px-2.5 py-1 rounded-lg text-[11px] border border-amber-300/30 bg-white/5">🟡 Gratidão</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2 pt-1">
+      <button id="btn-send-tube"
+        class="pill w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-600 to-rose-700 text-white border border-amber-300/40">💨
+        Lacrar e Enviar pelo Tubo Pneumático</button>
+      <button id="btn-store-chest"
+        class="pill w-full py-2 px-3 rounded-xl text-xs font-semibold bg-amber-900/50 hover:bg-amber-800/60 text-amber-100 border border-amber-300/30">🗝️
+        Guardar no Baú Secreto da Bancada</button>
+    </div>
+
+    <div class="border-t border-amber-200/15 pt-3">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold">Cartas Registradas</span>
+        <span id="letter-count" class="text-[11px] text-amber-200/70">2 no escaninho</span>
+      </div>
+      <ul id="letter-log" class="space-y-1.5 text-xs max-h-36 overflow-y-auto custom-scroll pr-1"></ul>
+    </div>
+  </aside>
+
+  <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass rounded-2xl px-4 py-2 flex items-center gap-2">
+    <button data-cam="desk" class="pill active px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🕯️ Balcão
+      Postal</button>
+    <button data-cam="tube" class="pill px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">💨 Tubo
+      Pneumático</button>
+    <button data-cam="chest" class="pill px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🗝️ Baú &
+      Carteiro</button>
+    <span class="hidden md:inline text-[11px] text-amber-200/70 pl-2 border-l border-amber-200/20">Clique nas cartas dos
+      escaninhos para ler · Clique no baú ou no gnomo carteiro</span>
+  </footer>
+
+  <!-- Read Letter Modal -->
+  <div id="read-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/65 backdrop-blur-sm p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-6 border border-amber-200/35">
+      <div class="flex justify-between items-start mb-2">
+        <span id="read-dest" class="text-[11px] uppercase tracking-widest text-amber-300 font-semibold"></span>
+        <button id="close-read" class="text-amber-200 hover:text-white text-lg">✕</button>
+      </div>
+      <p id="read-text"
+        class="serif italic text-xl text-amber-50 leading-relaxed bg-black/30 rounded-xl p-4 border border-amber-200/20 mb-4">
+      </p>
+      <div id="read-meta" class="text-[11px] text-amber-200/70"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="glass rounded-full px-5 py-2 text-xs text-amber-50 font-medium border border-amber-300/35">
+  </div>
+
+  <script>
+    (() => {
+      if (window.Imersivo && typeof window.Imersivo.init === 'function') {
+        try { window.Imersivo.init({ id: 'correio-palavras', title: 'Correio das Palavras Não Ditas' }); } catch (e) { }
+      }
+
+      // --- Audio ---
+      let audioCtx = null, audioEnabled = true;
+      function ensureAudio() {
+        if (!audioEnabled) return null;
+        if (!audioCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) audioCtx = new AC(); }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+      function playPneumaticWhoosh() {
+        const ctx = ensureAudio(); if (!ctx) return;
+        const now = ctx.currentTime;
+        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.9), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) {
+          const p = i / d.length;
+          d[i] = (Math.random() * 2 - 1) * Math.sin(p * Math.PI) * 0.3;
+        }
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass';
+        f.frequency.setValueAtTime(280, now); f.frequency.exponentialRampToValueAtTime(1900, now + 0.5); f.frequency.exponentialRampToValueAtTime(420, now + 0.85);
+        src.connect(f).connect(ctx.destination); src.start(now);
+      }
+      function playChestLatch() {
+        const ctx = ensureAudio(); if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now); osc.frequency.exponentialRampToValueAtTime(110, now + 0.14);
+        g.gain.setValueAtTime(0.16, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.connect(g).connect(ctx.destination); osc.start(now); osc.stop(now + 0.18);
+      }
+
+      const toastEl = document.getElementById('toast');
+      let toastTimer = null;
+      function showToast(m) {
+        toastEl.textContent = m; toastEl.classList.add('show');
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800);
+      }
+
+      // --- Procedural PBR Textures ---
+      function makeWalnutTexture(size = 512) {
+        const c = document.createElement('canvas'); c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#3c2416'; ctx.fillRect(0, 0, size, size);
+        for (let y = 0; y < size; y++) {
+          ctx.strokeStyle = y % 2 ? '#25150c' : '#573623';
+          ctx.globalAlpha = 0.18;
+          ctx.beginPath(); ctx.moveTo(0, y);
+          for (let x = 0; x <= size; x += 48) ctx.lineTo(x, y + Math.sin(x * 0.015 + y * 0.025) * 3);
+          ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
+      function makePostEnv(renderer) {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+        const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+        const ctx = c.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 0, 256);
+        g.addColorStop(0, '#2a1f1b'); g.addColorStop(0.5, '#7a5233'); g.addColorStop(1, '#17100c');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 256);
+        ctx.fillStyle = '#ffd58c'; ctx.fillRect(200, 90, 95, 55);
+        const tex = new THREE.CanvasTexture(c);
+        tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
+        const rt = pmrem.fromEquirectangular(tex);
+        tex.dispose(); pmrem.dispose();
+        return rt.texture;
+      }
+
+      // --- Scene & Renderer ---
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#140f0c');
+      scene.fog = new THREE.FogExp2('#140f0c', 0.044);
+
+      const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 80);
+      camera.position.set(0.3, 3.0, 5.2);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+
+      scene.environment = makePostEnv(renderer);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true; controls.dampingFactor = 0.06;
+      controls.target.set(0.1, 1.05, -0.2);
+      controls.minDistance = 2.2; controls.maxDistance = 10.5;
+      controls.maxPolarAngle = Math.PI * 0.48;
+
+      // --- Lighting ---
+      scene.add(new THREE.HemisphereLight('#f2c794', '#21150f', 0.55));
+      const candlePt = new THREE.PointLight('#ffaa4a', 2.8, 12, 1.5);
+      candlePt.position.set(-1.1, 1.65, 0.4);
+      candlePt.castShadow = true; candlePt.shadow.mapSize.set(1024, 1024);
+      scene.add(candlePt);
+
+      const overhead = new THREE.DirectionalLight('#ffe4ba', 1.15);
+      overhead.position.set(3.5, 6.5, 3.5);
+      overhead.castShadow = true; overhead.shadow.mapSize.set(2048, 2048);
+      overhead.shadow.bias = -0.0005; overhead.shadow.normalBias = 0.02;
+      scene.add(overhead);
+
+      // --- Post Office Desk & Pigeonhole Sorter ---
+      const walnutMat = new THREE.MeshStandardMaterial({ map: makeWalnutTexture(512), roughness: 0.62, metalness: 0.05 });
+      const brassMat = new THREE.MeshStandardMaterial({ color: '#d4a24c', metalness: 0.9, roughness: 0.22 });
+      const leatherMat = new THREE.MeshStandardMaterial({ color: '#451d1e', roughness: 0.72 });
+
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.2, 3.0), walnutMat);
+      desk.position.set(0, 0.9, 0); desk.receiveShadow = true; desk.castShadow = true; scene.add(desk);
+      const blotter = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.02, 1.25), leatherMat);
+      blotter.position.set(-0.2, 1.01, 0.2); blotter.receiveShadow = true; scene.add(blotter);
+
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 8), new THREE.MeshStandardMaterial({ color: '#2b1e17', roughness: 0.92 }));
+      backWall.position.set(0, 3.2, -1.65); backWall.receiveShadow = true; scene.add(backWall);
+
+      // Pigeonhole Sorter Rack on Back of Desk
+      const rack = new THREE.Group();
+      rack.position.set(-0.6, 1.0, -1.05);
+      for (let r = 0; r <= 3; r++) {
+        const shelf = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.07, 0.56), walnutMat);
+        shelf.position.set(0, r * 0.58, 0); shelf.castShadow = true; rack.add(shelf);
+      }
+      for (let c = 0; c <= 4; c++) {
+        const div = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.8, 0.56), walnutMat);
+        div.position.set(-1.56 + c * 0.78, 0.9, 0); rack.add(div);
+      }
+      scene.add(rack);
+
+      // --- Tall Curved Glass-and-Brass Pneumatic Tube Network ---
+      const tubePath = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(1.95, 1.02, -0.35),
+        new THREE.Vector3(1.95, 2.35, -0.35),
+        new THREE.Vector3(2.2, 3.35, -0.55),
+        new THREE.Vector3(3.15, 4.15, -0.95),
+        new THREE.Vector3(4.2, 5.2, -1.1)
+      ]);
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: '#d9eff5', roughness: 0.08, metalness: 0.1, transmission: 0.75, transparent: true, opacity: 0.45
+      });
+      const glassTube = new THREE.Mesh(new THREE.TubeGeometry(tubePath, 48, 0.17, 20, false), glassMat);
+      scene.add(glassTube);
+
+      // Brass collars & intake chamber
+      const intakeBase = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.24, 24), brassMat);
+      intakeBase.position.set(1.95, 1.12, -0.35); intakeBase.castShadow = true; scene.add(intakeBase);
+      [0.2, 0.45, 0.7].forEach(u => {
+        const pt = tubePath.getPoint(u);
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.025, 10, 24), brassMat);
+        collar.position.copy(pt); collar.rotation.x = Math.PI / 2; scene.add(collar);
+      });
+
+      // Glowing Brass Pneumatic Capsule
+      const capsule = new THREE.Group();
+      const capBody = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.34, 18), brassMat);
+      const capGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.116, 0.116, 0.1, 18), new THREE.MeshBasicMaterial({ color: '#ffdb8a' }));
+      capsule.add(capBody, capGlow);
+      capsule.visible = false;
+      scene.add(capsule);
+
+      // --- Ornate Lockable Wooden Secret Chest (Baú Secreto) with Animated Lid ---
+      const chestGroup = new THREE.Group();
+      chestGroup.position.set(1.38, 1.0, 0.58); chestGroup.rotation.y = -0.35; chestGroup.name = 'secretChest';
+      const chestBase = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.38, 0.54), walnutMat);
+      chestBase.position.y = 0.19; chestBase.castShadow = true; chestGroup.add(chestBase);
+      const chestLock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.04), brassMat);
+      chestLock.position.set(0, 0.32, 0.28); chestGroup.add(chestLock);
+
+      const lidPivot = new THREE.Group();
+      lidPivot.position.set(0, 0.38, -0.27);
+      const lidBox = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.86, 18, 1, false, 0, Math.PI), walnutMat);
+      lidBox.rotation.z = Math.PI / 2; lidBox.position.set(0, 0, 0.27); lidBox.castShadow = true;
+      lidPivot.add(lidBox);
+      chestGroup.add(lidPivot);
+      scene.add(chestGroup);
+
+      // --- Cozy Articulated Gnome Postmaster with Lantern & Blink ---
+      const gnome = new THREE.Group();
+      gnome.position.set(-2.15, 1.0, 0.35); gnome.rotation.y = 0.55; gnome.name = 'gnome';
+      const coatMat = new THREE.MeshStandardMaterial({ color: '#2b4d47', roughness: 0.85 });
+      const beardMat = new THREE.MeshStandardMaterial({ color: '#ebe4d8', roughness: 0.92 });
+      const hatMat = new THREE.MeshStandardMaterial({ color: '#8f342d', roughness: 0.88 });
+      const skinMat = new THREE.MeshStandardMaterial({ color: '#e3b596', roughness: 0.72 });
+
+      const gBody = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 0.54, 18), coatMat);
+      gBody.position.y = 0.27; gBody.castShadow = true; gnome.add(gBody);
+      const gHeadPivot = new THREE.Group(); gHeadPivot.position.y = 0.62;
+      const gHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 16), skinMat); gHeadPivot.add(gHead);
+      const gNose = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), skinMat); gNose.position.set(0, -0.01, 0.17); gHeadPivot.add(gNose);
+      const gBeard = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.32, 16), beardMat);
+      gBeard.rotation.x = Math.PI; gBeard.position.set(0, -0.17, 0.08); gHeadPivot.add(gBeard);
+      const gHat = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.48, 20), hatMat);
+      gHat.position.set(0, 0.3, -0.02); gHat.rotation.x = -0.15; gHat.castShadow = true; gHeadPivot.add(gHat);
+      // Tiny brass spectacles
+      [-0.065, 0.065].forEach(ox => {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.007, 8, 16), brassMat);
+        rim.position.set(ox, 0.03, 0.16); gHeadPivot.add(rim);
+      });
+      gnome.add(gHeadPivot);
+      scene.add(gnome);
+
+      // Flickering Desk Candle
+      const candleBase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.04, 18), brassMat);
+      candleBase.position.set(-1.1, 1.02, 0.42); scene.add(candleBase);
+      const candleWax = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.34, 14), new THREE.MeshStandardMaterial({ color: '#f5e8cf', roughness: 0.6 }));
+      candleWax.position.set(-1.1, 1.2, 0.42); scene.add(candleWax);
+      const flame = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 12), new THREE.MeshBasicMaterial({ color: '#ffcf6b' }));
+      flame.scale.set(0.65, 1.75, 0.65); flame.position.set(-1.1, 1.44, 0.42); scene.add(flame);
+
+      // Active Parchment Envelope on Desk
+      const activeLetter = new THREE.Group();
+      activeLetter.position.set(-0.2, 1.04, 0.2);
+      const envPaper = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.015, 0.44), new THREE.MeshStandardMaterial({ color: '#f2e5ca', roughness: 0.85 }));
+      envPaper.castShadow = true; activeLetter.add(envPaper);
+      const waxSealMat = new THREE.MeshStandardMaterial({ color: '#a62c2b', roughness: 0.35, metalness: 0.1 });
+      const waxSeal = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.07, 0.02, 18), waxSealMat);
+      waxSeal.position.set(0, 0.014, 0); activeLetter.add(waxSeal);
+      scene.add(activeLetter);
+
+      // Spark particle trail for pneumatic launch
+      const sparks = [];
+      function spawnSparks(pos) {
+        for (let i = 0; i < 6; i++) {
+          const sp = new THREE.Mesh(new THREE.SphereGeometry(0.022, 6, 6), new THREE.MeshBasicMaterial({ color: '#ffd880', transparent: true, opacity: 1 }));
+          sp.position.copy(pos);
+          scene.add(sp);
+          sparks.push({ mesh: sp, vx: (Math.random() - 0.5) * 0.7, vy: (Math.random() - 0.5) * 0.5, vz: (Math.random() - 0.5) * 0.7, life: 1.0 });
+        }
+      }
+
+      // --- Clickable Stored Letters in Pigeonholes ---
+      const storedLetters = [
+        { to: 'Para o cansaço desta semana', body: 'Você fez o melhor que pôde com a energia que tinha. Agora pode soltar os ombros um pouco.', dest: 'Escaninho de Acolhimento', color: '#2c6e58' },
+        { to: 'Para uma conversa que não aconteceu', body: 'Eu queria ter dito que aquilo me doeu, mas também que eu ainda valorizo o que construímos.', dest: 'Escaninho das Palavras Guardadas', color: '#a62c2b' }
+      ];
+      const pigeonLetters = new THREE.Group();
+      scene.add(pigeonLetters);
+
+      function rebuildPigeonLetters() {
+        while (pigeonLetters.children.length) pigeonLetters.remove(pigeonLetters.children[0]);
+        storedLetters.slice(-8).forEach((lt, idx) => {
+          const col = idx % 4, row = Math.floor(idx / 4);
+          const env = new THREE.Group();
+          env.position.set(-1.77 + col * 0.78, 1.15 + row * 0.58, -0.96);
+          const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.28), new THREE.MeshStandardMaterial({ color: '#f3e7cf', roughness: 0.85 }));
+          body.userData.letter = lt; env.add(body);
+          const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.015, 14), new THREE.MeshStandardMaterial({ color: lt.color, roughness: 0.35 }));
+          seal.position.y = 0.025; seal.userData.letter = lt; env.add(seal);
+          pigeonLetters.add(env);
+        });
+        document.getElementById('letter-count').textContent = `${storedLetters.length} carta${storedLetters.length === 1 ? '' : 's'}`;
+        const ul = document.getElementById('letter-log'); ul.innerHTML = '';
+        storedLetters.slice().reverse().forEach(lt => {
+          const li = document.createElement('li');
+          li.className = 'pill bg-white/5 border border-amber-200/15 rounded-lg px-2.5 py-1.5';
+          li.innerHTML = `<div class="text-[10px] font-semibold text-amber-300">${lt.to}</div><div class="text-[10px] text-amber-100/70">${lt.dest}</div>`;
+          li.addEventListener('click', () => openReadModal(lt));
+          ul.appendChild(li);
+        });
+      }
+      rebuildPigeonLetters();
+
+      const readModal = document.getElementById('read-modal');
+      function openReadModal(lt) {
+        document.getElementById('read-dest').textContent = lt.to;
+        document.getElementById('read-text').textContent = `“${lt.body}”`;
+        document.getElementById('read-meta').textContent = `Destino simbólico: ${lt.dest}`;
+        readModal.classList.replace('hidden', 'flex');
+      }
+      document.getElementById('close-read').addEventListener('click', () => readModal.classList.replace('flex', 'hidden'));
+
+      // --- Animation States (Pneumatic Launch & Chest Lid) ---
+      let tubeAnim = -1;
+      let chestOpenTimer = 0;
+      let gnomeNod = 0;
+      let selectedSeal = '#a62c2b';
+
+      document.getElementById('seal-bar').querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedSeal = btn.dataset.seal;
+          waxSealMat.color.set(selectedSeal);
+          document.getElementById('seal-bar').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      function submitLetter(mode) {
+        const to = document.getElementById('letter-to').value.trim() || 'Para alguém importante';
+        const body = document.getElementById('letter-body').value.trim();
+        if (!body) return showToast('Escreva algumas palavras na carta antes de lacrar.');
+        storedLetters.push({
+          to, body,
+          dest: mode === 'tube' ? 'Enviada pelo Tubo Pneumático' : 'Guardada no Baú Secreto',
+          color: selectedSeal
+        });
+        document.getElementById('letter-to').value = '';
+        document.getElementById('letter-body').value = '';
+        rebuildPigeonLetters();
+        gnomeNod = 1.0;
+
+        if (mode === 'tube') {
+          tubeAnim = 0;
+          capsule.visible = true;
+          playPneumaticWhoosh();
+          showToast('💨 Carta lacrada e disparada pelo tubo pneumático!');
+        } else {
+          chestOpenTimer = 2.6;
+          playChestLatch();
+          showToast('🗝️ Carta guardada com segurança no Baú Secreto.');
+        }
+      }
+
+      document.getElementById('btn-send-tube').addEventListener('click', () => submitLetter('tube'));
+      document.getElementById('btn-store-chest').addEventListener('click', () => submitLetter('chest'));
+      document.getElementById('btn-audio').addEventListener('click', (e) => {
+        audioEnabled = !audioEnabled; e.target.textContent = audioEnabled ? '🔊 Som' : '🔇 Mudo';
+      });
+      document.getElementById('quality-select').addEventListener('change', (e) => {
+        const q = e.target.value;
+        renderer.setPixelRatio(q === 'high' ? Math.min(window.devicePixelRatio, 2) : q === 'balanced' ? Math.min(window.devicePixelRatio, 1.5) : 1);
+      });
+
+      const CAM_VIEWS = {
+        desk: { pos: new THREE.Vector3(0.3, 3.0, 5.2), target: new THREE.Vector3(0.1, 1.05, -0.2) },
+        tube: { pos: new THREE.Vector3(0.8, 3.2, 4.4), target: new THREE.Vector3(2.1, 2.3, -0.4) },
+        chest: { pos: new THREE.Vector3(-0.3, 2.2, 3.4), target: new THREE.Vector3(0.2, 1.25, 0.3) }
+      };
+      let camAnim = null;
+      document.querySelectorAll('[data-cam]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const v = CAM_VIEWS[btn.dataset.cam];
+          camAnim = { fromPos: camera.position.clone(), toPos: v.pos.clone(), fromT: controls.target.clone(), toT: v.target.clone(), t: 0 };
+          document.querySelectorAll('[data-cam]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      // 3D Raycasting on Pigeonhole Letters, Chest & Gnome
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let downXY = null;
+      renderer.domElement.addEventListener('pointerdown', (e) => { downXY = { x: e.clientX, y: e.clientY }; });
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (!downXY || Math.hypot(e.clientX - downXY.x, e.clientY - downXY.y) > 7) return;
+        pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects([pigeonLetters, chestGroup, gnome], true);
+        if (!hits.length) return;
+        let obj = hits[0].object;
+        if (obj.userData && obj.userData.letter) { openReadModal(obj.userData.letter); return; }
+        while (obj && !obj.name && obj.parent) obj = obj.parent;
+        if (obj && obj.name === 'secretChest') {
+          chestOpenTimer = 2.4; playChestLatch();
+          showToast('🗝️ O Baú Secreto guarda apenas o que você escolher manter protegido.');
+        } else if (obj && obj.name === 'gnome') {
+          gnomeNod = 1.0;
+          showToast('🧙‍♂️ O carteiro acena: “Aqui nenhuma palavra é julgada ou enviada sem seu consentimento.”');
+        }
+      });
+
+      // --- Animation Loop ---
+      const clock = new THREE.Clock();
+      let rafId = null;
+      let isPaused = false;
+      let isDisposed = false;
+
+      function animate() {
+        if (isPaused || isDisposed) return;
+        rafId = requestAnimationFrame(animate);
+        const dt = Math.min(clock.getDelta(), 0.05);
+        const t = clock.elapsedTime;
+
+        if (camAnim) {
+          camAnim.t = Math.min(1, camAnim.t + dt * 2.1);
+          const ease = 1 - Math.pow(1 - camAnim.t, 3);
+          camera.position.lerpVectors(camAnim.fromPos, camAnim.toPos, ease);
+          controls.target.lerpVectors(camAnim.fromT, camAnim.toT, ease);
+          if (camAnim.t >= 1) camAnim = null;
+        }
+        controls.update();
+
+        // Candle flicker
+        const f = Math.sin(t * 12) * 0.14 + Math.cos(t * 21) * 0.08;
+        candlePt.intensity = 2.8 + f;
+        flame.scale.set(0.65 + f * 0.1, 1.75 + f * 0.3, 0.65 + f * 0.1);
+
+        // Pneumatic capsule rocket physics along spline
+        if (tubeAnim >= 0) {
+          tubeAnim += dt * 0.85;
+          const u = Math.min(1, tubeAnim * tubeAnim); // Accelerating upward
+          const pt = tubePath.getPoint(u);
+          const tan = tubePath.getTangent(u);
+          capsule.position.copy(pt);
+          capsule.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tan);
+          if (Math.random() < 0.65) spawnSparks(pt);
+          if (tubeAnim >= 1.05) { tubeAnim = -1; capsule.visible = false; }
+        }
+
+        // Secret chest lid smooth hinge
+        const targetLid = chestOpenTimer > 0 ? -1.15 : 0;
+        if (chestOpenTimer > 0) chestOpenTimer = Math.max(0, chestOpenTimer - dt);
+        lidPivot.rotation.x += (targetLid - lidPivot.rotation.x) * Math.min(1, dt * 6);
+
+        // Gnome gentle breathing & friendly nod
+        if (gnomeNod > 0) gnomeNod = Math.max(0, gnomeNod - dt * 1.4);
+        gHeadPivot.rotation.x = Math.sin(gnomeNod * Math.PI * 2) * 0.25;
+        gHeadPivot.rotation.y = Math.sin(t * 0.8) * 0.12;
+
+        // Sparks
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const sp = sparks[i];
+          sp.life -= dt * 1.6;
+          sp.mesh.position.x += sp.vx * dt;
+          sp.mesh.position.y += sp.vy * dt;
+          sp.mesh.position.z += sp.vz * dt;
+          sp.mesh.material.opacity = Math.max(0, sp.life);
+          if (sp.life <= 0) { scene.remove(sp.mesh); sp.mesh.geometry.dispose(); sp.mesh.material.dispose(); sparks.splice(i, 1); }
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      function onResize() {
+        if (isDisposed) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', onResize);
+
+      function disposeAll() {
+        if (isDisposed) return;
+        isDisposed = true;
+        isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        window.removeEventListener('resize', onResize);
+        controls.dispose();
+        renderer.dispose();
+        if (audioCtx) {
+          const ctx = audioCtx;
+          audioCtx = null;
+          ctx.close().catch(() => { });
+        }
+      }
+
+      window.__SANGI_QA__ = {
+        get info() {
+          return {
+            calls: renderer?.info?.render?.calls ?? 0,
+            triangles: renderer?.info?.render?.triangles ?? 0,
+            paused: isPaused,
+            disposed: isDisposed
+          };
+        }
+      };
+
+      window.addEventListener('sangi:pause', () => {
+        isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      });
+      window.addEventListener('sangi:resume', () => {
+        if (isDisposed || !isPaused) return;
+        isPaused = false;
+        clock.getDelta();
+        animate();
+      });
+      window.addEventListener('sangi:mute', (e) => {
+        audioEnabled = !e?.detail?.muted;
+      });
+      window.addEventListener('sangi:quality', (e) => {
+        const q = String(e?.detail?.quality || '').toUpperCase();
+        const isEco = q === 'LOW';
+        renderer.setPixelRatio(isEco ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.shadowMap.enabled = !isEco;
+      });
+      window.addEventListener('sangi:reset', () => {
+        camera.position.set(0.3, 3.0, 5.2);
+        controls.target.set(0, 0.9, 0);
+        controls.update();
+      });
+      window.addEventListener('sangi:dispose', disposeAll);
+
+      animate();
+    })();
+  </script>
+</body>
+
+</html>

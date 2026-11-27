@@ -1,0 +1,3995 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oficina de Estofados — Simulador 3D Interativo</title>
+<meta name="description" content="Simulador de estofamento em que você escolhe o tecido, alinha a trama e fixa o revestimento de uma poltrona.">
+  <style>
+    :root {
+      --bg: #171412;
+      --panel: rgba(27, 23, 20, 0.92);
+      --panel-solid: #1b1714;
+      --surface: #26201c;
+      --surface-hover: #332b25;
+      --border: rgba(236, 221, 200, 0.14);
+      --border-strong: rgba(236, 221, 200, 0.28);
+      --text: #f5efe6;
+      --muted: #b8aa99;
+      --accent: #d98a4a;
+      --accent-hover: #e69d60;
+      --accent-soft: rgba(217, 138, 74, 0.16);
+      --ok: #68b587;
+      --warn: #e0b354;
+      --danger: #d96b62;
+      --focus: #f4c078;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    /* Layout principal */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 1fr 370px;
+      grid-template-rows: 56px 1fr;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Barra superior */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 14px;
+      background: var(--panel-solid);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #d98a4a, #945323);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+      margin-top: -2px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    /* Botões padrão (alvo mínimo 44px em altura/toque onde interativo principal) */
+    button, .btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0 12px;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--surface-hover);
+      border-color: var(--border-strong);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #19120c;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: #ffd9b3;
+    }
+
+    .btn-compact {
+      min-height: 44px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .btn-danger {
+      border-color: rgba(217, 107, 98, 0.45);
+      color: #f4a49d;
+    }
+
+    /* Área do Viewport 3D */
+    .viewport-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 42%, #2c241e 0%, #151210 100%);
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #sceneCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+    }
+
+    /* HUD flutuante no viewport */
+    .hud-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .hud-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .pill {
+      background: rgba(22, 18, 15, 0.84);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      flex-shrink: 0;
+    }
+
+    .dot.warn { background: var(--warn); }
+
+    .cam-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .cam-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      pointer-events: auto;
+      background: rgba(22, 18, 15, 0.82);
+      backdrop-filter: blur(8px);
+      padding: 5px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .cam-buttons button {
+      min-height: 44px;
+      padding: 0 10px;
+      font-size: 12px;
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .cam-buttons button.btn-active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .hint-chip {
+      pointer-events: auto;
+      background: rgba(22, 18, 15, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 300px;
+    }
+
+    /* Toast de feedback */
+    .toast-region {
+      position: absolute;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      pointer-events: none;
+      width: min(440px, calc(100% - 24px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toast {
+      background: rgba(26, 22, 19, 0.96);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      box-shadow: var(--shadow);
+      animation: fadeSlide 0.2s ease;
+      text-align: center;
+    }
+
+    .toast.warn { border-color: var(--warn); color: #ffe6ad; }
+    .toast.ok { border-color: var(--ok); color: #d6f5e3; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Painel lateral */
+    .sidebar {
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 15, 13, 0.65);
+    }
+
+    .step-btn {
+      min-height: 44px;
+      min-width: 0;
+      padding: 4px 2px;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 10px;
+      color: var(--muted);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .step-btn .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .step-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .step-btn.active .step-num {
+      background: var(--accent);
+      color: #19120c;
+      border-color: var(--accent);
+    }
+
+    .step-btn.done .step-num {
+      background: var(--ok);
+      color: #102418;
+      border-color: var(--ok);
+    }
+
+    .sidebar-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: rgba(38, 32, 28, 0.72);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .badge.ok {
+      background: rgba(104, 181, 135, 0.16);
+      border-color: rgba(104, 181, 135, 0.5);
+      color: #b7ebd0;
+    }
+
+    .desc {
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .swatch-card {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px;
+      min-height: 68px;
+      text-align: left;
+      gap: 4px;
+    }
+
+    .swatch-preview {
+      width: 100%;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .swatch-name {
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+
+    .swatch-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .control-label strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 32px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .part-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: rgba(18, 15, 13, 0.55);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .part-tabs button {
+      min-height: 44px;
+      background: transparent;
+      border-color: transparent;
+      font-size: 12.5px;
+    }
+
+    .part-tabs button.btn-active {
+      background: var(--surface-hover);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric-box {
+      background: rgba(18, 15, 13, 0.55);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+    }
+
+    .metric-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    #oscilloscope {
+      width: 100%;
+      height: 86px;
+      background: #14110f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: block;
+    }
+
+    .sidebar-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      background: rgba(18, 15, 13, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Drawer / Modal de opções e ajuda */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--panel-solid);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: 100%;
+      max-height: 86vh;
+      overflow-y: auto;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .modal p, .modal li {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .modal ul {
+      padding-left: 18px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    /* Fallback 2D caso WebGL2/Three.js falhe */
+    .fallback-view {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #1a1613;
+      text-align: center;
+      gap: 12px;
+      z-index: 8;
+    }
+
+    .fallback-view.active {
+      display: flex;
+    }
+
+    #fallbackCanvas {
+      width: min(520px, 100%);
+      height: 300px;
+      background: #231d19;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+    }
+
+    /* Mobile drawer toggle */
+    .mobile-panel-toggle {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: 56px 54% 46%;
+      }
+      .sidebar {
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+      .brand-sub { display: none; }
+      .hint-chip { display: none; }
+      .cam-buttons button {
+        padding: 0 8px;
+        font-size: 11px;
+      }
+      .topbar-actions .hide-sm {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Barra Superior -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">OE</div>
+        <div>
+          <div class="brand-title">Oficina de Estofados</div>
+          <span class="brand-sub">Modo realista · Espuma por densidade, tecido fio/viés e iluminação PBR</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions" role="toolbar" aria-label="Ações da oficina">
+        <button id="btnUndo" class="btn-compact" title="Desfazer última ação (Ctrl+Z)" disabled>
+          ↶ <span class="hide-sm">Desfazer</span>
+        </button>
+        <button id="btnLightMode" class="btn-compact" title="Alternar iluminação de inspeção">
+          ☀ <span class="hide-sm" id="lightLabel">Luz Natural</span>
+        </button>
+        <button id="btnAudio" class="btn-compact" title="Ativar ou silenciar áudio sintetizado" aria-pressed="false">
+          🔇 <span class="hide-sm">Áudio</span>
+        </button>
+        <button id="btnSettings" class="btn-compact" title="Desempenho, estado JSON e aproximações físicas">
+          ⚙ <span class="hide-sm">Opções</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Viewport 3D -->
+    <main class="viewport-wrap" id="viewportWrap">
+      <canvas id="sceneCanvas" tabindex="0" aria-label="Cena 3D interativa da poltrona na oficina de estofados"></canvas>
+
+      <!-- Fallback HTML/2D se WebGL2 ou Three.js indisponível -->
+      <section class="fallback-view" id="fallbackView" aria-live="polite">
+        <h2 style="margin:0;font-size:18px;">Modo de Recuperação 2D (HTML)</h2>
+        <p id="fallbackReason" class="desc" style="max-width:460px;">
+          WebGL2 ou a biblioteca 3D externa não pôde ser carregada. Você ainda pode testar a seleção de tecido, alinhamento da trama, padrões de grampeamento e a curva de pressão/amortecimento abaixo.
+        </p>
+        <canvas id="fallbackCanvas" width="520" height="300"></canvas>
+      </section>
+
+      <!-- HUD Superior -->
+      <div class="hud-top">
+        <div class="hud-group">
+          <div class="pill" id="statusPill">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Etapa 1/5 · Escolha o tecido</span>
+          </div>
+          <div class="pill" id="perfPill" title="Tempo de quadro e chamadas de desenho">
+            <span id="perfText">60 fps</span>
+          </div>
+        </div>
+        <div class="hud-group">
+          <button id="btnInteractionMode" class="btn-compact" title="Alternar entre girar câmera e pressionar tecido">
+            ✋ <span id="modeLabel">Modo: Orbitar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Toasts acessíveis -->
+      <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- Barra de Câmeras -->
+      <div class="cam-bar">
+        <div class="cam-buttons" role="group" aria-label="Predefinições de câmera">
+          <button data-cam="geral" class="btn-active" title="Visão geral da poltrona (Tecla 1)">1. Geral</button>
+          <button data-cam="assento" title="Close do assento e trama (Tecla 2)">2. Assento</button>
+          <button data-cam="encosto" title="Close do encosto (Tecla 3)">3. Encosto</button>
+          <button data-cam="costura" title="Detalhe de costuras e grampos (Tecla 4)">4. Costuras</button>
+        </div>
+        <div class="hint-chip" id="hintChip">
+          Arraste para orbitar · Roda/pinça para zoom · Na etapa 5, clique na poltrona ou segure <strong>Espaço</strong> para pressionar.
+        </div>
+      </div>
+    </main>
+
+    <!-- Painel de Fluxo Jogável -->
+    <aside class="sidebar" aria-label="Controles da Oficina de Estofados">
+      <nav class="stepper" aria-label="Etapas do estofamento">
+        <button class="step-btn active" data-step="0">
+          <span class="step-num">1</span>
+          <span>Tecido</span>
+        </button>
+        <button class="step-btn" data-step="1">
+          <span class="step-num">2</span>
+          <span>Trama</span>
+        </button>
+        <button class="step-btn" data-step="2">
+          <span class="step-num">3</span>
+          <span>Lados</span>
+        </button>
+        <button class="step-btn" data-step="3">
+          <span class="step-num">4</span>
+          <span>Cantos</span>
+        </button>
+        <button class="step-btn" data-step="4">
+          <span class="step-num">5</span>
+          <span>Pressão</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-body" id="sidebarBody">
+        <!-- Seletor de Peça Ativa (Assento vs Encosto) -->
+        <div class="part-tabs" role="tablist" aria-label="Parte da poltrona em edição">
+          <button id="tabAssento" role="tab" aria-selected="true" class="btn-active" data-part="assento">
+            Assento <span id="badgeAssento" class="badge">0/6</span>
+          </button>
+          <button id="tabEncosto" role="tab" aria-selected="false" data-part="encosto">
+            Encosto <span id="badgeEncosto" class="badge">0/6</span>
+          </button>
+        </div>
+
+        <!-- ETAPA 1: SELECIONAR TECIDO -->
+        <section class="card step-panel" data-panel="0">
+          <div class="card-header">
+            <h2 class="card-title">1. Selecionar Tecido e Acabamento</h2>
+            <span class="badge ok" id="fabricBadge">Linho Cru</span>
+          </div>
+          <p class="desc">
+            Compare o <strong>linho</strong> (trama orientada de urdidura e fio) com a <strong>imitação de couro</strong> (mapa próprio de rugosidade com poros acetinados). Use o botão de luz acima para inspecionar sob luz rasante.
+          </p>
+          <div class="grid-2" role="radiogroup" aria-label="Tipo de revestimento">
+            <button class="swatch-card btn-active" data-fabric="linho_cru">
+              <div class="swatch-preview" style="background: repeating-linear-gradient(0deg, #d7cab5 0 2px, #c4b59d 2px 4px), repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 4px);"></div>
+              <span class="swatch-name">Linho Cru</span>
+              <span class="swatch-meta">Trama orientada · Fosco</span>
+            </button>
+            <button class="swatch-card" data-fabric="linho_salvia">
+              <div class="swatch-preview" style="background: repeating-linear-gradient(0deg, #8b9a87 0 2px, #778673 2px 4px);"></div>
+              <span class="swatch-name">Linho Sálvia</span>
+              <span class="swatch-meta">Trama orientada · Fibra</span>
+            </button>
+            <button class="swatch-card" data-fabric="couro_caramelo">
+              <div class="swatch-preview" style="background: linear-gradient(135deg, #a66232, #7a421e 60%, #b5713f);"></div>
+              <span class="swatch-name">Couro Caramelo</span>
+              <span class="swatch-meta">Mapa de rugosidade</span>
+            </button>
+            <button class="swatch-card" data-fabric="couro_cafe">
+              <div class="swatch-preview" style="background: linear-gradient(135deg, #4b3428, #2e1f17 60%, #5c4132);"></div>
+              <span class="swatch-name">Couro Café</span>
+              <span class="swatch-meta">Poros · Brilho acetinado</span>
+            </button>
+          </div>
+          <div class="toggle-row">
+            <span style="font-size:12.5px;">Exibir costuras duplas visíveis</span>
+            <button id="btnToggleSeams" class="btn-compact btn-active" aria-pressed="true">Visíveis</button>
+          </div>
+        </section>
+
+        <!-- ETAPA 2: ALINHAR A TRAMA -->
+        <section class="card step-panel" data-panel="1" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">2. Alinhar a Trama</h2>
+            <span class="badge" id="alignStatusBadge">Desalinhada</span>
+          </div>
+          <p class="desc">
+            Gire e centralize o corte do tecido sobre a espuma até alinhar a trama com o eixo frontal da armação (tolerância ±2°).
+          </p>
+          <div class="control-row">
+            <div class="control-label">
+              <span>Ângulo da trama</span>
+              <strong id="valAngle">14°</strong>
+            </div>
+            <input type="range" id="rangeAngle" min="-45" max="45" step="1" value="14" aria-label="Ângulo da trama em graus" />
+          </div>
+          <div class="control-row">
+            <div class="control-label">
+              <span>Centralização lateral</span>
+              <strong id="valOffset">12%</strong>
+            </div>
+            <input type="range" id="rangeOffset" min="-30" max="30" step="1" value="12" aria-label="Deslocamento lateral da trama" />
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Rigidez no eixo de tração</span>
+              <span class="metric-val" id="metricAxisStiff">100%</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Fios trabalhando no viés</span>
+              <span class="metric-val" id="metricBias">0%</span>
+            </div>
+          </div>
+          <p class="desc" style="font-size:11.5px;">
+            Tecido plano estica pouco no fio (urdidura/trama) e muito no viés (45°). Com a trama girada, a tração dos grampos passa a puxar parte no viés: o pano cede, deforma e enruga na diagonal.
+          </p>
+          <div class="grid-2">
+            <button id="btnAutoAlign">✦ Alinhar no Esquadro</button>
+            <button id="btnToggleGuide" class="btn-active" aria-pressed="true">Guia Visual: On</button>
+          </div>
+        </section>
+
+        <!-- ETAPA 3: FIXAR DOIS LADOS -->
+        <section class="card step-panel" data-panel="2" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">3. Padrão de Grampeamento e 2 Lados</h2>
+            <span class="badge" id="sidesBadge">0/2 lados</span>
+          </div>
+          <p class="desc">
+            Escolha o padrão de grampeamento e fixe dois lados opostos. Os dois padrões criam distribuições de tensão e <strong>dobras diferentes</strong> na malha.
+          </p>
+          <div class="grid-2" role="radiogroup" aria-label="Padrão de grampeamento">
+            <button id="btnPatternUniform" class="btn-active" data-pattern="cruzado" style="flex-direction:column;padding:8px;min-height:62px;">
+              <strong>Cruzado Uniforme</strong>
+              <span style="font-size:11px;color:var(--muted);">Centro → bordas · Liso</span>
+            </button>
+            <button id="btnPatternFan" data-pattern="sequencial" style="flex-direction:column;padding:8px;min-height:62px;">
+              <strong>Sequencial em Leque</strong>
+              <span style="font-size:11px;color:var(--muted);">Ponta a ponta · Dobras</span>
+            </button>
+          </div>
+
+          <div class="grid-2">
+            <button id="btnStapleFront" data-side="front">📌 Fixar Frente</button>
+            <button id="btnStapleBack" data-side="back">📌 Fixar Fundo</button>
+            <button id="btnStapleLeft" data-side="left">📌 Fixar Esquerda</button>
+            <button id="btnStapleRight" data-side="right">📌 Fixar Direita</button>
+          </div>
+          <button id="btnStapleBothOpposites" class="btn-primary">
+            ⚡ Grampear 2 Lados Opostos (Assento + Encosto)
+          </button>
+        </section>
+
+        <!-- ETAPA 4: ESTICAR CANTOS -->
+        <section class="card step-panel" data-panel="3" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">4. Esticar e Grampear Cantos</h2>
+            <span class="badge" id="cornersBadge">0/4 cantos</span>
+          </div>
+          <p class="desc">
+            Puxe os cantos para fechar o revestimento e observe como o padrão escolhido altera as pregas nos vértices e diagonais.
+          </p>
+          <div class="control-row">
+            <div class="control-label">
+              <span>Tensão de esticamento</span>
+              <strong id="valTension">72%</strong>
+            </div>
+            <input type="range" id="rangeTension" min="30" max="100" step="1" value="72" aria-label="Tensão de esticamento nos cantos" />
+          </div>
+          <div class="grid-2">
+            <button id="btnCornerFL" data-corner="fl">↗ Canto Frontal Esq.</button>
+            <button id="btnCornerFR" data-corner="fr">↖ Canto Frontal Dir.</button>
+            <button id="btnCornerBL" data-corner="bl">↘ Canto Traseiro Esq.</button>
+            <button id="btnCornerBR" data-corner="br">↙ Canto Traseiro Dir.</button>
+          </div>
+          <button id="btnStretchAllCorners" class="btn-primary">
+            ✦ Esticar Todos os Cantos (Assento + Encosto)
+          </button>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Amplitude de dobras</span>
+              <span class="metric-val" id="metricWrinkle">0,0 mm</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Grampos cravados</span>
+              <span class="metric-val" id="metricStaples">0</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ETAPA 5: PRESSÃO E AMORTECIMENTO -->
+        <section class="card step-panel" data-panel="4" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">5. Pressão no Centro e Recuperação</h2>
+            <span class="badge ok" id="pressStateBadge">Em repouso</span>
+          </div>
+          <p class="desc">
+            Pressione o assento ou o encosto com a palma da mão (Ø 16 cm) — clique direto na poltrona, botão abaixo ou tecla <strong>Espaço</strong> — e compare densidade, tensão do tecido e viscoelasticidade.
+          </p>
+
+          <div class="control-row">
+            <div class="control-label">
+              <span>Densidade da espuma</span>
+              <strong id="valDensity">D28</strong>
+            </div>
+            <div class="grid-2" role="radiogroup" aria-label="Densidade da espuma">
+              <button class="swatch-card" data-density="D23" role="radio">
+                <span class="swatch-name">D23</span>
+                <span class="swatch-meta">Macia · encosto, almofada</span>
+              </button>
+              <button class="swatch-card" data-density="D28" role="radio">
+                <span class="swatch-name">D28</span>
+                <span class="swatch-meta">Média · assento leve</span>
+              </button>
+              <button class="swatch-card" data-density="D33" role="radio">
+                <span class="swatch-name">D33</span>
+                <span class="swatch-meta">Firme · assento diário</span>
+              </button>
+              <button class="swatch-card" data-density="D45" role="radio">
+                <span class="swatch-name">D45</span>
+                <span class="swatch-meta">Muito firme · alto uso</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label">
+              <span>Força de pressão</span>
+              <strong id="valForce">65 N</strong>
+            </div>
+            <input type="range" id="rangeForce" min="20" max="200" step="5" value="65" aria-label="Força de pressão em Newtons" />
+          </div>
+
+          <div class="control-row">
+            <div class="control-label">
+              <span>Viscoelasticidade (memória da espuma)</span>
+              <strong id="valDamping">0,45 (Equilibrado)</strong>
+            </div>
+            <input type="range" id="rangeDamping" min="0.08" max="0.92" step="0.02" value="0.45" aria-label="Fator de amortecimento da espuma e tecido" />
+          </div>
+
+          <div class="grid-2">
+            <button id="btnPressHold" class="btn-primary" style="grid-column:1 / -1;">
+              ⬇ Segurar para Pressionar Centro (Espaço)
+            </button>
+            <button id="btnPulsePress">⚡ Pulso Rápido</button>
+            <button id="btnComparePattern">⇄ Trocar Padrão de Dobras</button>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label">
+              <span>Curva de deslocamento central (mm)</span>
+              <strong id="valDisplacement">0,0 mm</strong>
+            </div>
+            <canvas id="oscilloscope" width="320" height="86" aria-label="Gráfico de deslocamento e recuperação do revestimento"></canvas>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Pressão de contato</span>
+              <span class="metric-val" id="metricPressure">0,0 kPa</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Compressão da espuma</span>
+              <span class="metric-val" id="metricStrain">0%</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Tensão do tecido</span>
+              <span class="metric-val" id="metricMembrane">0 N/m</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Recuperação (t₉₀)</span>
+              <span class="metric-val" id="metricT90">—</span>
+            </div>
+          </div>
+          <p class="desc" style="font-size:11.5px;" id="foamNote">
+            Valores típicos aproximados de espuma PU flexível; fichas de fabricante variam.
+          </p>
+        </section>
+
+        <!-- Resumo de estado sempre visível -->
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">Resumo da Poltrona</h3>
+            <span class="badge" id="patternSummaryBadge">Padrão: Cruzado</span>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Assento</span>
+              <span class="metric-val" id="summarySeat">Pendente</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Encosto</span>
+              <span class="metric-val" id="summaryBack">Pendente</span>
+            </div>
+          </div>
+          <p class="desc" style="font-size:11.5px;">
+            <strong>Modelo físico:</strong> pano PBD/Verlet anisotrópico (fio × viés) com <span id="iterCountLabel">6</span> iterações/quadro; espuma PU com curva tensão–deformação de sólido celular (linear → platô → densificação) e ramo viscoelástico de Maxwell; tecido grampeado atua como membrana tensionada sobre a espuma.
+          </p>
+        </section>
+      </div>
+
+      <footer class="sidebar-footer">
+        <button id="btnPrevStep" disabled>← Anterior</button>
+        <button id="btnNextStep" class="btn-primary">Próxima etapa →</button>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Modal de Opções, Acessibilidade e Exportação -->
+  <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal">
+      <div class="card-header">
+        <h2 id="settingsTitle">Opções da Oficina e Estado</h2>
+        <button id="btnCloseSettings" class="btn-compact" aria-label="Fechar opções">✕</button>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <strong style="font-size:13px;">Modo Leve (Desempenho)</strong>
+          <div class="desc">Reduz resolução interna, sombras e iterações da malha (4/frame).</div>
+        </div>
+        <button id="btnToggleLite" class="btn-compact" aria-pressed="false">Desligado</button>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <strong style="font-size:13px;">Movimento Reduzido</strong>
+          <div class="desc">Transições de câmera diretas e animação simplificada do grampeador.</div>
+        </div>
+        <button id="btnToggleReducedMotion" class="btn-compact" aria-pressed="false">Desligado</button>
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>Volume do áudio sintetizado</span>
+          <strong id="valVolume">50%</strong>
+        </div>
+        <input type="range" id="rangeVolume" min="0" max="100" step="5" value="50" aria-label="Volume do áudio" />
+      </div>
+
+      <div class="grid-2">
+        <button id="btnExportJson">⬇ Exportar JSON</button>
+        <button id="btnImportJson">⬆ Importar JSON</button>
+        <input type="file" id="fileImportInput" accept="application/json" style="display:none;" />
+      </div>
+
+      <button id="btnResetAll" class="btn-danger">↺ Reiniciar Oficina do Zero (Tecla R)</button>
+
+      <div style="border-top:1px solid var(--border);padding-top:10px;">
+        <strong style="font-size:12.5px;display:block;margin-bottom:4px;">Dependências e Atalhos</strong>
+        <ul>
+          <li>Three.js r128 (vendor local, com reserva no cdnjs), com recuperação automática em HTML/2D caso offline.</li>
+          <li>Modo realista: iluminação por ambiente (IBL/PMREM), materiais físicos com brilho de fibra (linho) e verniz (couro), vivo tubular, grampos em U e sombra de contato. O Modo Leve desliga sombras e reduz resolução.</li>
+          <li>Assets 3D, texturas PBR (linho e couro) e sons gerados 100% por código local (licença própria do projeto).</li>
+          <li>Atalhos: <strong>1–4</strong> câmeras · <strong>Espaço</strong> pressionar centro · <strong>Ctrl+Z</strong> desfazer · <strong>R</strong> reiniciar.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js r128 fixo via CDN -->
+  <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+  <script>
+    // Recuperação: se o vendor local não existir, carrega a mesma versão (r128) do cdnjs
+    if (typeof window.THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* =========================================================================
+       1. ESTADO SERIALIZÁVEL (SEPARADO DA SIMULAÇÃO E DA CENA)
+       ========================================================================= */
+    const STATE_VERSION = 2; // v2: densidade da espuma (aceita importar v1)
+
+    function createPartState() {
+      return {
+        sides: { front: false, back: false, left: false, right: false },
+        corners: { fl: false, fr: false, bl: false, br: false }
+      };
+    }
+
+    function createInitialState() {
+      return {
+        version: STATE_VERSION,
+        step: 0,
+        activePart: 'assento',
+        fabricId: 'linho_cru',
+        showSeams: true,
+        alignAngle: 14,
+        alignOffset: 12,
+        showGuide: true,
+        staplePattern: 'cruzado', // 'cruzado' | 'sequencial'
+        tension: 72,
+        pressForce: 65,
+        damping: 0.45,
+        foamDensity: 'D28', // 'D23' | 'D28' | 'D33' | 'D45'
+        lightMode: 'natural', // 'natural' | 'rasante'
+        liteMode: false,
+        reducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        interactionMode: 'orbit', // 'orbit' | 'press'
+        cameraPreset: 'geral',
+        parts: {
+          assento: createPartState(),
+          encosto: createPartState()
+        }
+      };
+    }
+
+    let state = createInitialState();
+    const undoStack = [];
+    const MAX_UNDO = 25;
+
+    function cloneState(s) {
+      return JSON.parse(JSON.stringify(s));
+    }
+
+    function pushUndo() {
+      undoStack.push(cloneState(state));
+      if (undoStack.length > MAX_UNDO) undoStack.shift();
+      dom.btnUndo.disabled = undoStack.length === 0;
+    }
+
+    function undoLast() {
+      if (undoStack.length === 0) return;
+      state = undoStack.pop();
+      dom.btnUndo.disabled = undoStack.length === 0;
+      syncAllFromState();
+      showToast('Última ação desfeita.', 'ok');
+    }
+
+    /* =========================================================================
+       2. REFERÊNCIAS DOM E ÁUDIO SINTETIZADO OPCIONAL (WEB AUDIO API)
+       ========================================================================= */
+    const dom = {
+      canvas: document.getElementById('sceneCanvas'),
+      viewportWrap: document.getElementById('viewportWrap'),
+      fallbackView: document.getElementById('fallbackView'),
+      fallbackReason: document.getElementById('fallbackReason'),
+      fallbackCanvas: document.getElementById('fallbackCanvas'),
+      toastRegion: document.getElementById('toastRegion'),
+      statusDot: document.getElementById('statusDot'),
+      statusText: document.getElementById('statusText'),
+      perfText: document.getElementById('perfText'),
+      lightLabel: document.getElementById('lightLabel'),
+      modeLabel: document.getElementById('modeLabel'),
+      btnUndo: document.getElementById('btnUndo'),
+      btnLightMode: document.getElementById('btnLightMode'),
+      btnAudio: document.getElementById('btnAudio'),
+      btnSettings: document.getElementById('btnSettings'),
+      btnInteractionMode: document.getElementById('btnInteractionMode'),
+      btnPrevStep: document.getElementById('btnPrevStep'),
+      btnNextStep: document.getElementById('btnNextStep'),
+      tabAssento: document.getElementById('tabAssento'),
+      tabEncosto: document.getElementById('tabEncosto'),
+      badgeAssento: document.getElementById('badgeAssento'),
+      badgeEncosto: document.getElementById('badgeEncosto'),
+      fabricBadge: document.getElementById('fabricBadge'),
+      btnToggleSeams: document.getElementById('btnToggleSeams'),
+      alignStatusBadge: document.getElementById('alignStatusBadge'),
+      rangeAngle: document.getElementById('rangeAngle'),
+      valAngle: document.getElementById('valAngle'),
+      rangeOffset: document.getElementById('rangeOffset'),
+      valOffset: document.getElementById('valOffset'),
+      btnAutoAlign: document.getElementById('btnAutoAlign'),
+      btnToggleGuide: document.getElementById('btnToggleGuide'),
+      sidesBadge: document.getElementById('sidesBadge'),
+      btnPatternUniform: document.getElementById('btnPatternUniform'),
+      btnPatternFan: document.getElementById('btnPatternFan'),
+      btnStapleBothOpposites: document.getElementById('btnStapleBothOpposites'),
+      cornersBadge: document.getElementById('cornersBadge'),
+      rangeTension: document.getElementById('rangeTension'),
+      valTension: document.getElementById('valTension'),
+      btnStretchAllCorners: document.getElementById('btnStretchAllCorners'),
+      metricWrinkle: document.getElementById('metricWrinkle'),
+      metricStaples: document.getElementById('metricStaples'),
+      pressStateBadge: document.getElementById('pressStateBadge'),
+      rangeForce: document.getElementById('rangeForce'),
+      valForce: document.getElementById('valForce'),
+      rangeDamping: document.getElementById('rangeDamping'),
+      valDamping: document.getElementById('valDamping'),
+      btnPressHold: document.getElementById('btnPressHold'),
+      btnPulsePress: document.getElementById('btnPulsePress'),
+      btnComparePattern: document.getElementById('btnComparePattern'),
+      valDisplacement: document.getElementById('valDisplacement'),
+      oscilloscope: document.getElementById('oscilloscope'),
+      patternSummaryBadge: document.getElementById('patternSummaryBadge'),
+      summarySeat: document.getElementById('summarySeat'),
+      summaryBack: document.getElementById('summaryBack'),
+      iterCountLabel: document.getElementById('iterCountLabel'),
+      settingsModal: document.getElementById('settingsModal'),
+      btnCloseSettings: document.getElementById('btnCloseSettings'),
+      btnToggleLite: document.getElementById('btnToggleLite'),
+      btnToggleReducedMotion: document.getElementById('btnToggleReducedMotion'),
+      rangeVolume: document.getElementById('rangeVolume'),
+      valVolume: document.getElementById('valVolume'),
+      btnExportJson: document.getElementById('btnExportJson'),
+      btnImportJson: document.getElementById('btnImportJson'),
+      fileImportInput: document.getElementById('fileImportInput'),
+      btnResetAll: document.getElementById('btnResetAll'),
+      metricAxisStiff: document.getElementById('metricAxisStiff'),
+      metricBias: document.getElementById('metricBias'),
+      valDensity: document.getElementById('valDensity'),
+      metricPressure: document.getElementById('metricPressure'),
+      metricStrain: document.getElementById('metricStrain'),
+      metricMembrane: document.getElementById('metricMembrane'),
+      metricT90: document.getElementById('metricT90')
+    };
+
+    const AudioFX = {
+      ctx: null,
+      enabled: false,
+      volume: 0.5,
+      toggle() {
+        this.enabled = !this.enabled;
+        if (this.enabled && !this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+        dom.btnAudio.setAttribute('aria-pressed', String(this.enabled));
+        dom.btnAudio.innerHTML = (this.enabled ? '🔊' : '🔇') + ' <span class="hide-sm">Áudio</span>';
+        dom.btnAudio.classList.toggle('btn-active', this.enabled);
+        if (this.enabled) this.playClick();
+      },
+      playStaple() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        // Estalo metálico pneumático
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.055);
+        gain.gain.setValueAtTime(0.32 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      },
+      playStretch() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.11);
+        gain.gain.setValueAtTime(0.14 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+      },
+      playPress() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(125, now);
+        osc.frequency.exponentialRampToValueAtTime(68, now + 0.14);
+        gain.gain.setValueAtTime(0.22 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.17);
+      },
+      playClick() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(420, now);
+        gain.gain.setValueAtTime(0.1 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
+    };
+
+    let toastTimer = null;
+    function showToast(msg, type) {
+      dom.toastRegion.innerHTML = '';
+      const el = document.createElement('div');
+      el.className = 'toast' + (type ? ' ' + type : '');
+      el.textContent = msg;
+      dom.toastRegion.appendChild(el);
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        dom.toastRegion.innerHTML = '';
+      }, 3200);
+    }
+
+    /* =========================================================================
+       3. CATÁLOGO DE TECIDOS E TEXTURAS PBR PROCEDURAIS
+       ========================================================================= */
+    const FABRICS = {
+      linho_cru: {
+        name: 'Linho Cru',
+        type: 'linen',
+        baseHex: '#d5c7b2',
+        weftHex: '#c3b298',
+        seamHex: '#7d684f',
+        roughness: 0.92,
+        metalness: 0.02,
+        bumpScale: 0.006,
+        stiffness: 0.88,
+        biasCompliance: 0.46, // linho: cede muito no viés
+        membrane: 1.0,        // fator de tensão de membrana
+        sheenHex: '#3a3327'
+      },
+      linho_salvia: {
+        name: 'Linho Sálvia',
+        type: 'linen',
+        baseHex: '#849680',
+        weftHex: '#70826d',
+        seamHex: '#d8decb',
+        roughness: 0.90,
+        metalness: 0.02,
+        bumpScale: 0.006,
+        stiffness: 0.88,
+        biasCompliance: 0.46,
+        membrane: 1.0,
+        sheenHex: '#2a3328'
+      },
+      couro_caramelo: {
+        name: 'Couro Caramelo',
+        type: 'leather',
+        baseHex: '#9d592b',
+        valleyHex: '#633314',
+        seamHex: '#e3c399',
+        roughness: 1.0, // controlado pelo roughnessMap próprio
+        metalness: 0.0,
+        bumpScale: 0.005,
+        stiffness: 0.95,
+        biasCompliance: 0.12, // laminado/couro: quase isotrópico
+        membrane: 1.25,
+        clearcoat: 0.28
+      },
+      couro_cafe: {
+        name: 'Couro Café',
+        type: 'leather',
+        baseHex: '#462e22',
+        valleyHex: '#251710',
+        seamHex: '#c49f78',
+        roughness: 1.0,
+        metalness: 0.0,
+        bumpScale: 0.005,
+        stiffness: 0.95,
+        biasCompliance: 0.12,
+        membrane: 1.25,
+        clearcoat: 0.34
+      }
+    };
+
+    function hexToRgb(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    // Gera mapas sRGB albedo + linear roughness + linear normal a partir de heightfield
+    function createNormalFromHeight(height, size, strength) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const img = ctx.createImageData(size, size);
+      const d = img.data;
+      for (let y = 0; y < size; y++) {
+        const ym = (y - 1 + size) % size;
+        const yp = (y + 1) % size;
+        for (let x = 0; x < size; x++) {
+          const xm = (x - 1 + size) % size;
+          const xp = (x + 1) % size;
+          const dx = (height[y * size + xp] - height[y * size + xm]) * strength;
+          const dy = (height[yp * size + x] - height[ym * size + x]) * strength;
+          let nx = -dx, ny = -dy, nz = 1.0;
+          const len = Math.hypot(nx, ny, nz) || 1;
+          nx /= len; ny /= len; nz /= len;
+          const idx = (y * size + x) * 4;
+          d[idx] = Math.round((nx * 0.5 + 0.5) * 255);
+          d[idx + 1] = Math.round((ny * 0.5 + 0.5) * 255);
+          d[idx + 2] = Math.round((nz * 0.5 + 0.5) * 255);
+          d[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return canvas;
+    }
+
+    function generateLinenTextures(spec) {
+      const size = 256;
+      const cColor = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cColor.width = cRough.width = size;
+      cColor.height = cRough.height = size;
+      const ctxC = cColor.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+      const imgC = ctxC.createImageData(size, size);
+      const imgR = ctxR.createImageData(size, size);
+      const height = new Float32Array(size * size);
+
+      const base = hexToRgb(spec.baseHex);
+      const weft = hexToRgb(spec.weftHex);
+
+      // Semente determinística para fibras (slubs)
+      let seed = 1337;
+      const rand = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      const warpSlub = new Float32Array(size);
+      const weftSlub = new Float32Array(size);
+      for (let i = 0; i < size; i++) {
+        warpSlub[i] = (rand() - 0.5) * 0.16;
+        weftSlub[i] = (rand() - 0.5) * 0.16;
+      }
+
+      const threadPitch = 8; // 8 px por fio → trama nítida orientada
+      for (let y = 0; y < size; y++) {
+        const ty = Math.floor(y / threadPitch);
+        const fy = (y % threadPitch) / threadPitch;
+        const archY = Math.sin(fy * Math.PI);
+        for (let x = 0; x < size; x++) {
+          const tx = Math.floor(x / threadPitch);
+          const fx = (x % threadPitch) / threadPitch;
+          const archX = Math.sin(fx * Math.PI);
+          const isWarpOver = ((tx + ty) & 1) === 0;
+          const h = isWarpOver
+            ? 0.52 + archX * 0.42 + warpSlub[x]
+            : 0.45 + archY * 0.40 + weftSlub[y];
+          const fineNoise = (Math.sin(x * 1.9 + y * 0.7) * 0.03);
+          const hv = Math.max(0, Math.min(1, h + fineNoise));
+          height[y * size + x] = hv;
+
+          const col = isWarpOver ? base : weft;
+          const shade = 0.84 + hv * 0.28;
+          // Listra sutil de orientação da trama (fios de urdidura levemente mais claros)
+          const orientBoost = (tx % 8 === 0 && isWarpOver) ? 1.05 : 1.0;
+          const idx = (y * size + x) * 4;
+          imgC.data[idx] = Math.min(255, Math.round(col[0] * shade * orientBoost));
+          imgC.data[idx + 1] = Math.min(255, Math.round(col[1] * shade * orientBoost));
+          imgC.data[idx + 2] = Math.min(255, Math.round(col[2] * shade * orientBoost));
+          imgC.data[idx + 3] = 255;
+
+          // Rugosidade alta nas frestas entre fios, levemente menor nas cristas
+          const roughVal = Math.round((0.96 - hv * 0.16) * 255);
+          imgR.data[idx] = imgR.data[idx + 1] = imgR.data[idx + 2] = roughVal;
+          imgR.data[idx + 3] = 255;
+        }
+      }
+      ctxC.putImageData(imgC, 0, 0);
+      ctxR.putImageData(imgR, 0, 0);
+      const cNormal = createNormalFromHeight(height, size, 3.2);
+      return { cColor, cRough, cNormal };
+    }
+
+    function generateLeatherTextures(spec) {
+      const size = 512;
+      const cColor = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cColor.width = cRough.width = size;
+      cColor.height = cRough.height = size;
+      const ctxC = cColor.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+      const imgC = ctxC.createImageData(size, size);
+      const imgR = ctxR.createImageData(size, size);
+      const height = new Float32Array(size * size);
+
+      const base = hexToRgb(spec.baseHex);
+      const valley = hexToRgb(spec.valleyHex);
+
+      // Células Worley/Voronoi periódicas para poros e grão de couro sintético
+      const grid = 64; // grão fino: células de ~4 mm na escala da almofada
+      const ptsX = new Float32Array(grid * grid);
+      const ptsY = new Float32Array(grid * grid);
+      let seed = 4242;
+      const rand = () => {
+        seed = (seed * 48271) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      for (let i = 0; i < grid * grid; i++) {
+        ptsX[i] = rand();
+        ptsY[i] = rand();
+      }
+
+      for (let y = 0; y < size; y++) {
+        const gy = (y / size) * grid;
+        const cy = Math.floor(gy);
+        for (let x = 0; x < size; x++) {
+          const gx = (x / size) * grid;
+          const cx = Math.floor(gx);
+          let d1 = 9, d2 = 9;
+          for (let oy = -1; oy <= 1; oy++) {
+            const ny = (cy + oy + grid) % grid;
+            for (let ox = -1; ox <= 1; ox++) {
+              const nx = (cx + ox + grid) % grid;
+              const px = cx + ox + ptsX[ny * grid + nx];
+              const py = cy + oy + ptsY[ny * grid + nx];
+              const dist = Math.hypot(gx - px, gy - py);
+              if (dist < d1) { d2 = d1; d1 = dist; }
+              else if (dist < d2) { d2 = dist; }
+            }
+          }
+          // Crista do grão (edge = d2 - d1)
+          const edge = Math.min(1, (d2 - d1) * 2.4);
+          const pore = Math.pow(edge, 0.55);
+          // Micro-ondulação orgânica
+          const micro = 0.05 * Math.sin(x * 0.12 + Math.cos(y * 0.11) * 2.0);
+          const hv = Math.max(0, Math.min(1, pore * 0.88 + 0.08 + micro));
+          height[y * size + x] = hv;
+
+          const idx = (y * size + x) * 4;
+          // Couro real tem pouco contraste de cor no grão: a leitura vem do relevo e do brilho
+          const tone = 0.62 + 0.38 * hv + 0.05 * Math.sin(x * 0.031 + y * 0.017);
+          imgC.data[idx] = Math.round(valley[0] + (base[0] - valley[0]) * tone);
+          imgC.data[idx + 1] = Math.round(valley[1] + (base[1] - valley[1]) * tone);
+          imgC.data[idx + 2] = Math.round(valley[2] + (base[2] - valley[2]) * tone);
+          imgC.data[idx + 3] = 255;
+
+          // Mapa próprio de rugosidade: sulcos foscos (~0.78), cristas acetinadas (~0.26) + marcas sutis de uso
+          const wear = 0.06 * Math.sin(x * 0.049) * Math.cos(y * 0.049);
+          const rough = Math.max(0.22, Math.min(0.86, 0.78 - hv * 0.50 + wear));
+          const rByte = Math.round(rough * 255);
+          imgR.data[idx] = imgR.data[idx + 1] = imgR.data[idx + 2] = rByte;
+          imgR.data[idx + 3] = 255;
+        }
+      }
+      ctxC.putImageData(imgC, 0, 0);
+      ctxR.putImageData(imgR, 0, 0);
+      const cNormal = createNormalFromHeight(height, size, 2.2);
+      return { cColor, cRough, cNormal };
+    }
+
+    function generateWoodTextures() {
+      const size = 256;
+      const cColor = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cColor.width = cRough.width = size;
+      cColor.height = cRough.height = size;
+      const ctxC = cColor.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+      const imgC = ctxC.createImageData(size, size);
+      const imgR = ctxR.createImageData(size, size);
+      const height = new Float32Array(size * size);
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const u = x / size;
+          const v = y / size;
+          const wave = Math.sin(u * 46 + Math.sin(v * 9) * 1.4) * 0.5 + 0.5;
+          const fine = Math.sin(u * 180 + v * 12) * 0.12;
+          const g = Math.max(0, Math.min(1, wave * 0.78 + 0.18 + fine));
+          height[y * size + x] = g;
+          const idx = (y * size + x) * 4;
+          imgC.data[idx] = Math.round(92 + g * 58);
+          imgC.data[idx + 1] = Math.round(56 + g * 40);
+          imgC.data[idx + 2] = Math.round(32 + g * 24);
+          imgC.data[idx + 3] = 255;
+          const rv = Math.round((0.55 - g * 0.18) * 255);
+          imgR.data[idx] = imgR.data[idx + 1] = imgR.data[idx + 2] = rv;
+          imgR.data[idx + 3] = 255;
+        }
+      }
+      ctxC.putImageData(imgC, 0, 0);
+      ctxR.putImageData(imgR, 0, 0);
+      const cNormal = createNormalFromHeight(height, size, 2.0);
+      return { cColor, cRough, cNormal };
+    }
+
+    function generateFoamTexture() {
+      const size = 128;
+      const cColor = document.createElement('canvas');
+      cColor.width = cColor.height = size;
+      const ctx = cColor.getContext('2d');
+      const img = ctx.createImageData(size, size);
+      let s = 919;
+      for (let i = 0; i < size * size; i++) {
+        s = (s * 16807) % 2147483647;
+        const n = ((s - 1) / 2147483646);
+        const pore = n > 0.88 ? -24 : (n - 0.5) * 14;
+        const idx = i * 4;
+        img.data[idx] = Math.max(0, Math.min(255, 232 + pore));
+        img.data[idx + 1] = Math.max(0, Math.min(255, 219 + pore));
+        img.data[idx + 2] = Math.max(0, Math.min(255, 178 + pore));
+        img.data[idx + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      return cColor;
+    }
+
+    /* =========================================================================
+       3b. ESPUMA PU FLEXÍVEL — SÓLIDO CELULAR + RAMO VISCOELÁSTICO (MAXWELL)
+       -------------------------------------------------------------------------
+       σ(ε): trecho linear (paredes das células fletindo) → platô (flambagem das
+       células) → densificação (células colapsadas se tocando), ajustado para que
+       σ(40%) ≈ CLD40 típico de cada densidade. Valores aproximados de mercado.
+       ========================================================================= */
+    const FOAMS = {
+      D23: { name: 'D23', density: 23, E: 22, cld40: 3.0, hyst: 0.36, use: 'Macia — encostos e almofadas' },
+      D28: { name: 'D28', density: 28, E: 30, cld40: 4.2, hyst: 0.30, use: 'Média — assentos de uso leve' },
+      D33: { name: 'D33', density: 33, E: 38, cld40: 5.3, hyst: 0.26, use: 'Firme — assentos de uso diário' },
+      D45: { name: 'D45', density: 45, E: 52, cld40: 7.2, hyst: 0.20, use: 'Muito firme — alto tráfego' }
+    };
+    const INDENTER_RADIUS = 0.08;                                        // palma da mão Ø 16 cm
+    const INDENTER_AREA = Math.PI * INDENTER_RADIUS * INDENTER_RADIUS;   // ≈ 0,0201 m²
+    const EPS_Y = 0.06;
+    const EPS_MAX = 0.82;
+    const RAIL_TOP_Y = 0.006;     // topo da travessa no referencial da almofada
+    const RAIL_BOTTOM_Y = -0.05;  // base da travessa
+
+    // Tensão de equilíbrio da espuma em kPa para a deformação ε (compressão positiva)
+    function foamStressKPa(foam, eps) {
+      if (eps <= 0) return foam.E * eps;
+      const sy = foam.E * EPS_Y;
+      let s = eps < EPS_Y
+        ? foam.E * eps
+        : sy + ((foam.cld40 - sy) / (0.40 - EPS_Y)) * (eps - EPS_Y);
+      if (eps > 0.5) {
+        const r = (eps - 0.5) / Math.max(0.02, 0.86 - eps);
+        s += foam.cld40 * 2.2 * r * r;
+      }
+      return s;
+    }
+
+    // Tensão de membrana do tecido grampeado (N/m): pano solto quase não sustenta carga
+    function membraneTensionNpm(fabric, tensionPct, sidesFixed, cornersFixed) {
+      if (sidesFixed < 2) return 12 + sidesFixed * 18;
+      const base = 60 + 240 * (tensionPct / 100);
+      const closure = 0.7 + 0.075 * cornersFixed;
+      return base * closure * fabric.membrane;
+    }
+
+    class FoamModel {
+      constructor() { this.reset(); }
+
+      reset() {
+        this.disp = 0;        // m (afundamento no centro do contato)
+        this.vel = 0;         // m/s
+        this.q = 0;           // kPa (tensão no ramo de Maxwell)
+        this.force = 0;       // N efetivamente aplicada
+        this.time = 0;
+        this.wasPressed = false;
+        this.releasedAt = -1;
+        this.dispAtRelease = 0;
+        this.t90 = null;
+        this.strain = 0;
+        this.pressureKPa = 0;
+        this.membraneN = 0;
+      }
+
+      step(dt, thickness, appliedN, damping, foam, membraneT) {
+        const pressed = appliedN > 0;
+        // A mão carrega em ~0,12 s e solta em ~0,05 s
+        const tauF = pressed ? 0.12 : 0.05;
+        this.force += (appliedN - this.force) * (1 - Math.exp(-dt / tauF));
+
+        const tauRelax = 0.05 + damping * 1.35;          // s — memória viscoelástica
+        const Em = foam.E * (0.15 + foam.hyst * 1.2);    // kPa — rigidez do ramo de Maxwell (curto × longo prazo ≈ 1,5)
+        const mass = pressed ? 0.9 : 0.22;               // mão + antebraço vs. só espuma/tecido
+        const k0 = (INDENTER_AREA * 1000 * foam.E) / thickness;
+        const zeta = 0.06 + damping * 0.9;
+        const c = 2 * zeta * Math.sqrt(k0 * mass);
+        const geo = 3.5;                                  // fator geométrico da membrana ao redor do contato
+
+        const n = Math.max(1, Math.ceil(dt / 0.0006));
+        const h = dt / n;
+        const decay = Math.exp(-h / tauRelax);
+        const maxD = EPS_MAX * thickness;
+        for (let i = 0; i < n; i++) {
+          const eps = this.disp / thickness;
+          const sig = foamStressKPa(foam, eps) + this.q;
+          const Ffoam = sig * INDENTER_AREA * 1000;
+          const Fmem = geo * membraneT * this.disp;
+          const acc = (this.force - Ffoam - Fmem - c * this.vel) / mass;
+          this.vel += acc * h;
+          const d = this.vel * h;
+          this.disp += d;
+          this.q = this.q * decay + Em * (d / thickness);
+          if (this.disp > maxD) { this.disp = maxD; if (this.vel > 0) this.vel = 0; }
+          if (this.disp < -0.004) { this.disp = -0.004; if (this.vel < 0) this.vel = 0; }
+        }
+
+        // Medição do tempo de recuperação até 10% do afundamento (t90)
+        this.time += dt;
+        if (pressed && !this.wasPressed) {
+          this.t90 = null;
+          this.releasedAt = -1;
+        } else if (!pressed && this.wasPressed) {
+          this.releasedAt = this.time;
+          this.dispAtRelease = this.disp;
+        }
+        if (!pressed && this.releasedAt >= 0 && this.t90 === null &&
+            this.dispAtRelease > 0.002 && this.disp <= this.dispAtRelease * 0.1) {
+          this.t90 = this.time - this.releasedAt;
+        }
+        this.wasPressed = pressed;
+        this.strain = Math.max(0, this.disp / thickness);
+        this.pressureKPa = this.force / INDENTER_AREA / 1000;
+        this.membraneN = membraneT;
+      }
+    }
+
+    /* =========================================================================
+       4. MOTOR DE FÍSICA DE PANO (VERLET / PBD ANISOTRÓPICO SOBRE A ESPUMA)
+       ========================================================================= */
+    class ClothPatch {
+      constructor(opts) {
+        this.name = opts.name;
+        this.nx = opts.nx;
+        this.nz = opts.nz;
+        this.foamW = opts.foamW;
+        this.foamD = opts.foamD;
+        this.foamH = opts.foamH;
+        this.clothW = opts.clothW;
+        this.clothD = opts.clothD;
+        this.bevel = opts.bevel || 0.032;
+        this.railX = opts.railX || 0.034; // largura da travessa além da espuma (laterais)
+        this.railZ = opts.railZ || 0.018; // idem frente/fundo
+
+        const count = this.nx * this.nz;
+        this.pos = new Float32Array(count * 3);
+        this.prev = new Float32Array(count * 3);
+        this.restPos = new Float32Array(count * 3);
+        this.pinned = new Uint8Array(count);
+        this.pinTarget = new Float32Array(count * 3);
+
+        // Espuma viscoelástica sob o ponto de contato + orientação do fio do tecido
+        this.foam = new FoamModel();
+        this.grainRad = 0;
+        this.biasCompliance = 0.46;
+        this.axisStiffness = 1;
+        this.misalign = 0;
+        this.pressPointX = 0;
+        this.pressPointZ = 0;
+        this.pressActive = false;
+        this.pulseTimer = 0;
+
+        this.constraints = [];
+        this.initParticles();
+        this.buildConstraints();
+      }
+
+      idx(ix, iz) { return iz * this.nx + ix; }
+
+      get centerDisp() { return this.foam ? this.foam.disp : 0; }
+      get centerVel() { return this.foam ? this.foam.vel : 0; }
+
+      // Altura da superfície da espuma chanfrada em coordenadas locais (espuma vai de y=0 até y=foamH)
+      foamSurfaceY(x, z) {
+        const hw = this.foamW * 0.5;
+        const hd = this.foamD * 0.5;
+        const b = this.bevel;
+        const dx = Math.max(0, Math.abs(x) - (hw - b));
+        const dz = Math.max(0, Math.abs(z) - (hd - b));
+        const r = Math.hypot(dx, dz);
+        let yTop = this.foamH;
+        if (r > 0 && r <= b) {
+          yTop = (this.foamH - b) + Math.sqrt(Math.max(0, b * b - r * r));
+        } else if (r > b) {
+          // Lateral da espuma descendo até o topo da travessa
+          const excess = r - b;
+          yTop = Math.max(RAIL_TOP_Y, (this.foamH - b) - excess * 1.45);
+        }
+        // Além da face externa da travessa o tecido dobra e desce pela madeira
+        const ox = Math.abs(x) - (hw + this.railX);
+        const oz = Math.abs(z) - (hd + this.railZ);
+        const out = Math.max(ox, oz);
+        if (out > 0) return Math.max(RAIL_BOTTOM_Y, RAIL_TOP_Y - out * 4);
+        // Deformação local da espuma: fundo quase plano sob a palma, borda que se espalha
+        let indent = 0;
+        const cd = this.centerDisp;
+        if (cd !== 0) {
+          const distP = Math.hypot(x - this.pressPointX, z - this.pressPointZ);
+          const a = INDENTER_RADIUS;
+          let prof;
+          if (distP < a) {
+            const t = distP / a;
+            prof = 1 - 0.12 * t * t;
+          } else {
+            const t = (distP - a) / (0.45 * a + 0.04);
+            prof = 0.88 * Math.exp(-t * t);
+          }
+          indent = cd * prof;
+        }
+        return Math.max(RAIL_TOP_Y - 0.002, yTop - indent);
+      }
+
+      initParticles() {
+        if (this.foam) this.foam.reset();
+        for (let iz = 0; iz < this.nz; iz++) {
+          const v = iz / (this.nz - 1) - 0.5;
+          for (let ix = 0; ix < this.nx; ix++) {
+            const u = ix / (this.nx - 1) - 0.5;
+            const i = this.idx(ix, iz);
+            const x = u * this.clothW;
+            const z = v * this.clothD;
+            const y = this.foamSurfaceY(x, z) + 0.006;
+            this.pos[i * 3] = this.prev[i * 3] = this.restPos[i * 3] = x;
+            this.pos[i * 3 + 1] = this.prev[i * 3 + 1] = this.restPos[i * 3 + 1] = y;
+            this.pos[i * 3 + 2] = this.prev[i * 3 + 2] = this.restPos[i * 3 + 2] = z;
+            this.pinned[i] = 0;
+          }
+        }
+      }
+
+      buildConstraints() {
+        const add = (a, b, stiffness) => {
+          const dx = this.restPos[b * 3] - this.restPos[a * 3];
+          const dy = this.restPos[b * 3 + 1] - this.restPos[a * 3 + 1];
+          const dz = this.restPos[b * 3 + 2] - this.restPos[a * 3 + 2];
+          const rest = Math.hypot(dx, dy, dz);
+          // Direção no plano do tecido: usada para separar fio (0°/90°) de viés (45°)
+          const theta = Math.atan2(dz, dx);
+          this.constraints.push({ a, b, rest, stiffness, theta, eff: stiffness });
+        };
+
+        for (let iz = 0; iz < this.nz; iz++) {
+          for (let ix = 0; ix < this.nx; ix++) {
+            const a = this.idx(ix, iz);
+            if (ix + 1 < this.nx) add(a, this.idx(ix + 1, iz), 0.92);
+            if (iz + 1 < this.nz) add(a, this.idx(ix, iz + 1), 0.92);
+            if (ix + 1 < this.nx && iz + 1 < this.nz) {
+              add(a, this.idx(ix + 1, iz + 1), 0.55);
+              add(this.idx(ix + 1, iz), this.idx(ix, iz + 1), 0.55);
+            }
+            if (ix + 2 < this.nx) add(a, this.idx(ix + 2, iz), 0.25);
+            if (iz + 2 < this.nz) add(a, this.idx(ix, iz + 2), 0.25);
+          }
+        }
+      }
+
+      // Anisotropia do tecido plano: rígido no fio, complacente no viés
+      setGrain(rad, offsetPct, biasCompliance) {
+        this.grainRad = rad;
+        this.biasCompliance = biasCompliance;
+        for (let k = 0; k < this.constraints.length; k++) {
+          const con = this.constraints[k];
+          const bias = Math.abs(Math.sin(2 * (con.theta - rad)));
+          con.eff = con.stiffness * (1 - biasCompliance * bias);
+        }
+        this.axisStiffness = 1 - biasCompliance * Math.abs(Math.sin(2 * rad));
+        this.misalign = Math.min(1, Math.abs(rad * 180 / Math.PI) / 18 + Math.abs(offsetPct) / 40);
+      }
+
+      // Atualiza os pontos grampeados: o tecido dobra sobre a travessa e é cravado
+      // na face externa da madeira; a tensão puxa o pano para baixo ao longo da face
+      applyStaplingState(partState, pattern, tensionPct) {
+        this.pinned.fill(0);
+
+        const tension = 0.014 + (tensionPct / 100) * 0.028;
+        const faceX = this.foamW * 0.5 + this.railX + 0.0025; // face externa lateral
+        const faceZ = this.foamD * 0.5 + this.railZ + 0.0025; // face externa frente/fundo
+        const baseY = RAIL_TOP_Y - 0.016;                     // linha de grampos na face
+        const isSeq = pattern === 'sequencial';
+
+        const setPin = (ix, iz, tx, ty, tz) => {
+          const i = this.idx(ix, iz);
+          this.pinned[i] = 1;
+          this.pinTarget[i * 3] = tx;
+          this.pinTarget[i * 3 + 1] = ty;
+          this.pinTarget[i * 3 + 2] = tz;
+        };
+
+        // Lados: faixa central da borda (3 células de cada canto ficam para a etapa 4)
+        const marginX = 3;
+        const marginZ = 3;
+        const sideRow = (fixedIdx, alongX, sign) => {
+          const n = alongX ? this.nx : this.nz;
+          const margin = alongX ? marginX : marginZ;
+          const span = alongX ? this.foamW : this.foamD;
+          for (let k = margin; k < n - margin; k++) {
+            const t = k / (n - 1) - 0.5;
+            let along, y;
+            if (isSeq) {
+              // Sequencial (ponta a ponta): cada grampo puxa o tecido para o lado já fixado,
+              // a tração cai ao longo da borda e sobram folgas que viram franzidos
+              const prog = t + 0.5;                       // 0 → 1 na ordem de grampeamento
+              const slack = (k % 3 === 1) ? 0.007 : 0;    // a cada 3 grampos, uma folga
+              along = t * span * (1.0 + tension * 0.4) - sign * prog * 0.014;
+              y = baseY - tension * (0.75 - 0.45 * prog) + slack;
+            } else {
+              // Cruzado uniforme: do centro para as pontas, tração igual em toda a borda
+              along = t * span * (1.02 + tension);
+              y = baseY - tension * 0.8;
+            }
+            if (alongX) setPin(k, fixedIdx, along, y, sign * faceZ);
+            else setPin(fixedIdx, k, sign * faceX, y, along);
+          }
+        };
+
+        if (partState.sides.front) sideRow(this.nz - 1, true, 1);
+        if (partState.sides.back) sideRow(0, true, -1);
+        if (partState.sides.left) sideRow(0, false, -1);
+        if (partState.sides.right) sideRow(this.nx - 1, false, 1);
+
+        // Cantos: fechamento das duas bordas que se encontram no vértice
+        const pinCorner = (cKey, sx, sz) => {
+          if (!partState.corners[cKey]) return;
+          const xList = sx < 0 ? [0, 1, 2] : [this.nx - 3, this.nx - 2, this.nx - 1];
+          const zList = sz < 0 ? [0, 1, 2] : [this.nz - 3, this.nz - 2, this.nz - 1];
+          const edgeX = sx < 0 ? 0 : this.nx - 1;
+          const edgeZ = sz < 0 ? 0 : this.nz - 1;
+          for (const ix of xList) {
+            const u = ix / (this.nx - 1) - 0.5;
+            if (isSeq) {
+              // Prega em leque: o excesso não é distribuído, fica franzido no vértice
+              setPin(ix, edgeZ, u * this.foamW * 1.0 + sx * 0.004, baseY + 0.005, sz * faceZ);
+            } else {
+              // Canto envelope: excesso esticado na diagonal e dobrado rente
+              setPin(ix, edgeZ, u * this.foamW * (1.04 + tension), baseY - tension * 1.1, sz * faceZ);
+            }
+          }
+          for (const iz of zList) {
+            const v = iz / (this.nz - 1) - 0.5;
+            if (isSeq) {
+              setPin(edgeX, iz, sx * faceX, baseY + 0.005, v * this.foamD * 1.0 + sz * 0.004);
+            } else {
+              setPin(edgeX, iz, sx * faceX, baseY - tension * 1.1, v * this.foamD * (1.04 + tension));
+            }
+          }
+        };
+
+        pinCorner('fl', -1, 1);
+        pinCorner('fr', 1, 1);
+        pinCorner('bl', -1, -1);
+        pinCorner('br', 1, -1);
+      }
+
+      // Passo de simulação com iterações limitadas por frame
+      // p = { damping, force, pattern, partState, tension, foamSpec }
+      step(dt, maxIters, fabric, p) {
+        const partState = p.partState;
+        const sidesCount = Object.values(partState.sides).filter(Boolean).length;
+        const cornersCount = Object.values(partState.corners).filter(Boolean).length;
+
+        // 1. Espuma viscoelástica + membrana do tecido sob o contato
+        if (this.pulseTimer > 0) this.pulseTimer = Math.max(0, this.pulseTimer - dt);
+        const isPressed = this.pressActive || this.pulseTimer > 0;
+        const T = membraneTensionNpm(fabric, p.tension, sidesCount, cornersCount);
+        this.foam.step(dt, this.foamH, isPressed ? p.force : 0, p.damping, p.foamSpec, T);
+
+        // 2. Integração Verlet dos vértices do pano (gravidade real)
+        const clothDamp = 0.97 - p.damping * 0.06;
+        const gravity = -9.81 * dt * dt;
+
+        for (let iz = 0; iz < this.nz; iz++) {
+          for (let ix = 0; ix < this.nx; ix++) {
+            const i = this.idx(ix, iz);
+            const i3 = i * 3;
+            if (this.pinned[i]) {
+              this.pos[i3] += (this.pinTarget[i3] - this.pos[i3]) * 0.35;
+              this.pos[i3 + 1] += (this.pinTarget[i3 + 1] - this.pos[i3 + 1]) * 0.35;
+              this.pos[i3 + 2] += (this.pinTarget[i3 + 2] - this.pos[i3 + 2]) * 0.35;
+              this.prev[i3] = this.pos[i3];
+              this.prev[i3 + 1] = this.pos[i3 + 1];
+              this.prev[i3 + 2] = this.pos[i3 + 2];
+              continue;
+            }
+            const vx = (this.pos[i3] - this.prev[i3]) * clothDamp;
+            const vy = (this.pos[i3 + 1] - this.prev[i3 + 1]) * clothDamp;
+            const vz = (this.pos[i3 + 2] - this.prev[i3 + 2]) * clothDamp;
+            this.prev[i3] = this.pos[i3];
+            this.prev[i3 + 1] = this.pos[i3 + 1];
+            this.prev[i3 + 2] = this.pos[i3 + 2];
+            this.pos[i3] += vx;
+            this.pos[i3 + 1] += vy + gravity;
+            this.pos[i3 + 2] += vz;
+          }
+        }
+
+        // Amplitudes de dobra derivadas de grampeamento, tensão, fio/viés e contato
+        const tF = p.tension / 100;
+        const isSeq = p.pattern === 'sequencial';
+        const isLinen = fabric.type === 'linen';
+        const wrinkleAmp = isSeq
+          ? (0.0035 + sidesCount * 0.0018 + cornersCount * 0.0016) * (1.15 - 0.5 * tF)
+          : (0.0006 + Math.max(0, 4 - cornersCount) * 0.0011) * (1.25 - 0.75 * tF);
+        const biasAmp = sidesCount >= 2
+          ? this.misalign * (0.0016 + 0.0032 * (1.1 - 0.6 * tF)) * (isLinen ? 1 : 0.45)
+          : 0;
+        const pressAmp = Math.max(0, this.centerDisp) * 0.10 * (1.15 - 0.8 * tF) * (isLinen ? 1 : 0.55);
+        const bca = Math.cos(this.grainRad + Math.PI / 4);
+        const bsa = Math.sin(this.grainRad + Math.PI / 4);
+        const a = INDENTER_RADIUS;
+        const fabricStiffness = fabric.stiffness;
+
+        // 3. Restrições de distância anisotrópicas (limitadas a maxIters por frame)
+        const cLen = this.constraints.length;
+        for (let iter = 0; iter < maxIters; iter++) {
+          // Ordem alternada a cada iteração: evita que o Gauss-Seidel arraste o pano para um lado
+          const fwd = (iter & 1) === 0;
+          for (let n = 0; n < cLen; n++) {
+            const con = this.constraints[fwd ? n : cLen - 1 - n];
+            const a3 = con.a * 3;
+            const b3 = con.b * 3;
+            const dx = this.pos[b3] - this.pos[a3];
+            const dy = this.pos[b3 + 1] - this.pos[a3 + 1];
+            const dz = this.pos[b3 + 2] - this.pos[a3 + 2];
+            const dist = Math.hypot(dx, dy, dz) || 1e-6;
+            const diff = ((dist - con.rest) / dist) * con.eff * fabricStiffness;
+            const pinA = this.pinned[con.a];
+            const pinB = this.pinned[con.b];
+            if (!pinA && !pinB) {
+              const half = diff * 0.5;
+              this.pos[a3] += dx * half;
+              this.pos[a3 + 1] += dy * half;
+              this.pos[a3 + 2] += dz * half;
+              this.pos[b3] -= dx * half;
+              this.pos[b3 + 1] -= dy * half;
+              this.pos[b3 + 2] -= dz * half;
+            } else if (!pinA && pinB) {
+              this.pos[a3] += dx * diff;
+              this.pos[a3 + 1] += dy * diff;
+              this.pos[a3 + 2] += dz * diff;
+            } else if (pinA && !pinB) {
+              this.pos[b3] -= dx * diff;
+              this.pos[b3 + 1] -= dy * diff;
+              this.pos[b3 + 2] -= dz * diff;
+            }
+          }
+
+          // 4. Colisão com a espuma + relevo de dobras
+          for (let iz = 0; iz < this.nz; iz++) {
+            const v = iz / (this.nz - 1) - 0.5;
+            for (let ix = 0; ix < this.nx; ix++) {
+              const i = this.idx(ix, iz);
+              if (this.pinned[i]) continue;
+              const u = ix / (this.nx - 1) - 0.5;
+              const i3 = i * 3;
+              const x = this.pos[i3];
+              const z = this.pos[i3 + 2];
+              let surfY = this.foamSurfaceY(x, z) + 0.0045;
+              const edgeProx = Math.min(1, Math.hypot(u * 2, v * 2));
+
+              if (isSeq) {
+                // Sequencial em leque: pregas diagonais assimétricas
+                const diag1 = Math.sin((u * 3.4 + v * 2.8) * Math.PI * 2);
+                const diag2 = Math.cos((u * 2.1 - v * 3.9) * Math.PI * 2);
+                const fold = (diag1 * 0.65 + diag2 * 0.35) * wrinkleAmp * (0.35 + edgeProx * 0.85);
+                surfY += Math.max(0, fold);
+              } else {
+                // Cruzado: centro liso, micro-prega simétrica só nos cantos
+                const cornerMask = Math.pow(Math.abs(u * v) * 4, 2.2);
+                surfY += Math.abs(Math.sin((u - v) * Math.PI * 6)) * wrinkleAmp * cornerMask;
+              }
+
+              // Trama fora do esquadro: ondas que correm na direção do viés
+              if (biasAmp > 0.0001) {
+                const w = Math.sin((u * bca + v * bsa) * Math.PI * 7);
+                surfY += Math.max(0, w) * biasAmp * (0.4 + edgeProx * 0.8);
+              }
+
+              // Pregas radiais em volta da mão quando o tecido está pouco tensionado
+              if (pressAmp > 0.0002) {
+                const ddx = x - this.pressPointX;
+                const ddz = z - this.pressPointZ;
+                const r = Math.hypot(ddx, ddz);
+                const rt = (r - a * 1.5) / (a * 0.9);
+                const ring = Math.exp(-rt * rt);
+                if (ring > 0.02) surfY += Math.abs(Math.sin(Math.atan2(ddz, ddx) * 5)) * pressAmp * ring;
+              }
+
+              if (this.pos[i3 + 1] < surfY) {
+                this.pos[i3 + 1] = surfY;
+              } else if (Math.abs(u) < 0.42 && Math.abs(v) < 0.42) {
+                this.pos[i3 + 1] += (surfY - this.pos[i3 + 1]) * 0.22;
+              }
+            }
+          }
+        }
+      }
+
+      // Mede amplitude média de dobras (mm) na face superior para leitura objetiva
+      measureWrinkleMm() {
+        let sumSq = 0;
+        let n = 0;
+        const lx = this.foamW * 0.5 - this.bevel;
+        const lz = this.foamD * 0.5 - this.bevel;
+        for (let iz = 2; iz < this.nz - 2; iz++) {
+          for (let ix = 2; ix < this.nx - 2; ix++) {
+            const i3 = this.idx(ix, iz) * 3;
+            // Só a face superior plana: as laterais e a dobra sobre a travessa não contam
+            if (Math.abs(this.pos[i3]) > lx || Math.abs(this.pos[i3 + 2]) > lz) continue;
+            const y = this.pos[i3 + 1];
+            const base = this.foamSurfaceY(this.pos[i3], this.pos[i3 + 2]) + 0.0045;
+            const d = y - base;
+            sumSq += d * d;
+            n++;
+          }
+        }
+        return Math.sqrt(sumSq / Math.max(1, n)) * 1000;
+      }
+    }
+
+    /* =========================================================================
+       5. CENA 3D THREE.JS (ARMAÇÃO, ESPUMA, TECIDO, COSTURAS, GRAMPEADOR, GRAMPOS)
+       ========================================================================= */
+    const Scene3D = {
+      ok: false,
+      renderer: null,
+      scene: null,
+      camera: null,
+      clock: null,
+      rafId: null,
+      paused: false,
+
+      // Câmera orbital limitada (própria, sem dependência de script externo)
+      orbit: {
+        theta: 0.58,
+        phi: 1.08,
+        radius: 1.72,
+        target: null,
+        goalTheta: 0.58,
+        goalPhi: 1.08,
+        goalRadius: 1.72,
+        goalTarget: null,
+        dragging: false,
+        lastX: 0,
+        lastY: 0,
+        pinchDist: 0
+      },
+
+      // Luzes
+      keyLight: null,
+      fillLight: null,
+      rimLight: null,
+      hemiLight: null,
+
+      // Grupos e malhas
+      chairGroup: null,
+      seatGroup: null,
+      backGroup: null,
+      seatClothMesh: null,
+      backClothMesh: null,
+      seatFoamMesh: null,
+      backFoamMesh: null,
+      seatSeamLine: null,
+      backSeamLine: null,
+      seatStitchMesh: null,
+      backStitchMesh: null,
+      seatGuideMesh: null,
+      backGuideMesh: null,
+      pressMarker: null,
+      staplerGroup: null,
+      staplesInstanced: null,
+
+      // Animação do grampeador
+      staplerAnim: {
+        active: false,
+        t: 0,
+        startPos: null,
+        targetPos: null,
+        restPos: null
+      },
+
+      // Cache de materiais PBR de tecidos
+      fabricMaterials: {},
+      seamMaterial: null,
+      stitchMaterial: null,
+
+      // Simulações de pano
+      simSeat: null,
+      simBack: null,
+
+      // Histórico do osciloscópio
+      dispHistory: new Array(120).fill(0),
+      raycaster: null,
+      pointerNdc: null,
+      frameCount: 0,
+      fpsTimer: 0,
+
+      init() {
+        if (typeof window.THREE === 'undefined') {
+          activateFallback('A biblioteca Three.js (CDN) não pôde ser carregada no momento.');
+          return false;
+        }
+
+        // Testa contexto WebGL2/WebGL
+        try {
+          this.renderer = new THREE.WebGLRenderer({
+            canvas: dom.canvas,
+            antialias: true,
+            powerPreference: 'high-performance'
+          });
+        } catch (err) {
+          activateFallback('WebGL não está disponível neste dispositivo ou navegador.');
+          return false;
+        }
+
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.0;
+        this.maxAniso = this.renderer.capabilities.getMaxAnisotropy();
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x1b1714);
+        this.scene.fog = new THREE.Fog(0x1b1714, 3.6, 8.2);
+
+        this.camera = new THREE.PerspectiveCamera(40, 1, 0.05, 20);
+        this.orbit.target = new THREE.Vector3(0, 0.54, 0);
+        this.orbit.goalTarget = new THREE.Vector3(0, 0.54, 0);
+
+        this.raycaster = new THREE.Raycaster();
+        this.pointerNdc = new THREE.Vector2();
+        this.clock = new THREE.Clock();
+
+        this.setupLights();
+        this.buildEnvironmentMap();
+        this.buildWorkshopEnvironment();
+        this.buildFabricMaterials();
+        this.buildArmchair();
+        this.buildStaplerAndStaples();
+
+        this.handleResize();
+        this.bindViewportEvents();
+        this.ok = true;
+        this.applyLightMode();
+        this.applyFabric();
+        this.rebuildStaples();
+        this.startLoop();
+        return true;
+      },
+
+      setupLights() {
+        this.hemiLight = new THREE.HemisphereLight(0xfff4e6, 0x3b2d22, 0.65);
+        this.scene.add(this.hemiLight);
+
+        this.keyLight = new THREE.DirectionalLight(0xfff6eb, 1.35);
+        this.keyLight.position.set(2.2, 3.4, 2.4);
+        this.keyLight.castShadow = true;
+        this.keyLight.shadow.mapSize.set(2048, 2048);
+        this.keyLight.shadow.normalBias = 0.012;
+        this.keyLight.shadow.camera.near = 0.5;
+        this.keyLight.shadow.camera.far = 9;
+        const d = 1.4;
+        this.keyLight.shadow.camera.left = -d;
+        this.keyLight.shadow.camera.right = d;
+        this.keyLight.shadow.camera.top = d;
+        this.keyLight.shadow.camera.bottom = -d;
+        this.keyLight.shadow.bias = -0.0003;
+        this.scene.add(this.keyLight);
+
+        this.fillLight = new THREE.DirectionalLight(0xd2e2ff, 0.45);
+        this.fillLight.position.set(-2.4, 1.8, -1.2);
+        this.scene.add(this.fillLight);
+
+        this.rimLight = new THREE.SpotLight(0xffcf96, 0.85, 6, Math.PI / 4, 0.55);
+        this.rimLight.position.set(-1.3, 1.6, 1.6);
+        this.rimLight.target.position.set(0, 0.55, 0);
+        this.scene.add(this.rimLight);
+        this.scene.add(this.rimLight.target);
+      },
+
+      // Mapa de ambiente pré-filtrado (PMREM) de uma oficina procedural:
+      // dá reflexos reais ao couro, latão, grampos e verniz da madeira
+      buildEnvironmentMap() {
+        const env = new THREE.Scene();
+        const box = new THREE.BoxGeometry();
+        box.deleteAttribute('uv');
+        const roomMat = new THREE.MeshStandardMaterial({ side: THREE.BackSide, color: 0x8c7a68 });
+        const propMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3c });
+        const lamp = new THREE.PointLight(0xfff0dc, 5.0, 28, 2);
+        lamp.position.set(0.4, 16.2, 0.3);
+        env.add(lamp);
+        const room = new THREE.Mesh(box, roomMat);
+        room.position.set(-0.76, 13.2, 0.72);
+        room.scale.set(31.7, 28.3, 28.6);
+        env.add(room);
+        // Bancadas, estantes e rolos de tecido como volumes que bloqueiam luz
+        [[-10.9, 2.0, 1.8, -0.2, 2.3, 7.9, 4.6], [-5.6, -0.75, -0.76, 0.99, 2.0, 1.5, 4.0],
+         [6.2, 0.86, 7.8, 0.56, 3.9, 6.3, 3.7], [-2.0, 0.02, 6.1, 0.33, 2.0, 4.6, 2.1],
+         [2.3, -0.76, -2.6, -0.29, 1.5, 1.6, 1.5], [-2.2, -0.37, -5.5, 0.52, 3.9, 3.5, 3.0]
+        ].forEach(([x, y, z, ry, sx, sy, sz]) => {
+          const m = new THREE.Mesh(box, propMat);
+          m.position.set(x, y, z);
+          m.rotation.y = ry;
+          m.scale.set(sx, sy, sz);
+          env.add(m);
+        });
+        // Painéis emissivos: janelas (luz do dia, levemente fria) e luminárias quentes
+        const panel = (r, g, b, pos, scl) => {
+          const mat = new THREE.MeshBasicMaterial();
+          mat.color.setRGB(r, g, b);
+          const m = new THREE.Mesh(box, mat);
+          m.position.set(pos[0], pos[1], pos[2]);
+          m.scale.set(scl[0], scl[1], scl[2]);
+          env.add(m);
+        };
+        panel(40, 42, 46, [-16.1, 14.4, 8.2], [0.1, 2.4, 2.7]);
+        panel(40, 42, 46, [-16.1, 18.0, -8.2], [0.1, 2.4, 2.75]);
+        panel(18, 15, 11, [14.9, 12.2, -1.8], [0.15, 4.3, 6.3]);
+        panel(44, 38, 30, [-0.46, 8.9, 14.5], [4.4, 5.4, 0.09]);
+        panel(20, 17, 13, [3.2, 11.5, -12.5], [2.5, 2.0, 0.1]);
+        panel(90, 80, 66, [0, 20, 0], [1, 0.1, 1]);
+
+        const pmrem = new THREE.PMREMGenerator(this.renderer);
+        this.envRT = pmrem.fromScene(env, 0.035);
+        this.scene.environment = this.envRT.texture;
+        this.envIntensity = 0.85;
+        pmrem.dispose();
+        box.dispose();
+      },
+
+      applyLightMode() {
+        if (!this.ok) return;
+        if (state.lightMode === 'rasante') {
+          // Luz quente rasante lateral para revelar relevo de trama, poros do couro e dobras
+          this.keyLight.position.set(2.8, 0.95, 0.45);
+          this.keyLight.color.setHex(0xffd29d);
+          this.keyLight.intensity = 2.1;
+          this.hemiLight.intensity = 0.05;
+          this.fillLight.intensity = 0.08;
+          this.rimLight.intensity = 0.9;
+          this.envIntensity = 0.28;
+        } else {
+          this.keyLight.position.set(2.2, 3.4, 2.4);
+          this.keyLight.color.setHex(0xfff6eb);
+          this.keyLight.intensity = 1.55;
+          this.hemiLight.intensity = 0.18;
+          this.fillLight.intensity = 0.22;
+          this.rimLight.intensity = 0.45;
+          this.envIntensity = 0.85;
+        }
+        // A iluminação por ambiente (IBL) acompanha o modo de luz
+        this.scene.traverse((o) => {
+          const m = o.material;
+          if (m && m.isMeshStandardMaterial && !m.userData.fixedEnv) m.envMapIntensity = this.envIntensity * (m.userData.envScale || 1);
+        });
+      },
+
+      buildWorkshopEnvironment() {
+        const woodTex = generateWoodTextures();
+        const benchMap = new THREE.CanvasTexture(woodTex.cColor);
+        benchMap.encoding = THREE.sRGBEncoding;
+        benchMap.wrapS = benchMap.wrapT = THREE.RepeatWrapping;
+        benchMap.repeat.set(7, 7);
+        benchMap.anisotropy = Math.min(8, this.maxAniso || 1);
+
+        const benchRough = new THREE.CanvasTexture(woodTex.cRough);
+        benchRough.wrapS = benchRough.wrapT = THREE.RepeatWrapping;
+        benchRough.repeat.set(7, 7);
+
+        // Piso / bancada da oficina (y = 0)
+        const floorGeo = new THREE.CylinderGeometry(2.6, 2.6, 0.06, 48);
+        const floorMat = new THREE.MeshStandardMaterial({
+          color: 0x6b5643,
+          map: benchMap,
+          roughnessMap: benchRough,
+          roughness: 0.78,
+          metalness: 0.04
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.position.y = -0.03;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+
+        // Tapete de corte / proteção sob a poltrona para leitura de contato e escala
+        const matGeo = new THREE.BoxGeometry(1.18, 0.004, 1.06);
+        const matMat = new THREE.MeshStandardMaterial({
+          color: 0x2b332d,
+          roughness: 0.92,
+          metalness: 0.02
+        });
+        const cuttingMat = new THREE.Mesh(matGeo, matMat);
+        cuttingMat.position.set(0, 0.002, 0.02);
+        cuttingMat.receiveShadow = true;
+        this.scene.add(cuttingMat);
+
+        // Rolo de tecido decorativo ao fundo da bancada
+        const rollGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.62, 24);
+        const rollMat = new THREE.MeshStandardMaterial({ color: 0xcabca4, roughness: 0.9 });
+        const roll = new THREE.Mesh(rollGeo, rollMat);
+        roll.rotation.z = Math.PI / 2;
+        roll.rotation.y = 0.25;
+        roll.position.set(-0.78, 0.065, -0.58);
+        roll.castShadow = true;
+        roll.receiveShadow = true;
+        this.scene.add(roll);
+
+        // Parede de fundo em reboco, dá referência de escala e recebe a sombra da poltrona
+        const wallCanvas = document.createElement('canvas');
+        wallCanvas.width = wallCanvas.height = 128;
+        const wctx = wallCanvas.getContext('2d');
+        const wimg = wctx.createImageData(128, 128);
+        let ws = 77;
+        for (let i = 0; i < 128 * 128; i++) {
+          ws = (ws * 16807) % 2147483647;
+          const n = (ws / 2147483647 - 0.5) * 18;
+          wimg.data[i * 4] = 118 + n;
+          wimg.data[i * 4 + 1] = 104 + n;
+          wimg.data[i * 4 + 2] = 90 + n;
+          wimg.data[i * 4 + 3] = 255;
+        }
+        wctx.putImageData(wimg, 0, 0);
+        const wallTex = new THREE.CanvasTexture(wallCanvas);
+        wallTex.encoding = THREE.sRGBEncoding;
+        wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping;
+        wallTex.repeat.set(6, 3);
+        const wall = new THREE.Mesh(
+          new THREE.PlaneGeometry(6, 3),
+          new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.97, metalness: 0 })
+        );
+        wall.position.set(0, 1.5, -1.45);
+        wall.receiveShadow = true;
+        this.scene.add(wall);
+        const baseboard = new THREE.Mesh(
+          new THREE.BoxGeometry(6, 0.09, 0.02),
+          new THREE.MeshStandardMaterial({ color: 0x2c231d, roughness: 0.6 })
+        );
+        baseboard.position.set(0, 0.045, -1.44);
+        this.scene.add(baseboard);
+
+        // Sombra de contato (oclusão suave sob a poltrona, onde o mapa de sombras não chega)
+        const cs = document.createElement('canvas');
+        cs.width = cs.height = 256;
+        const cctx = cs.getContext('2d');
+        const grad = cctx.createRadialGradient(128, 128, 10, 128, 128, 128);
+        grad.addColorStop(0, 'rgba(0,0,0,0.62)');
+        grad.addColorStop(0.45, 'rgba(0,0,0,0.34)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        cctx.fillStyle = grad;
+        cctx.fillRect(0, 0, 256, 256);
+        const contact = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.05, 0.98),
+          new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cs), transparent: true, depthWrite: false })
+        );
+        contact.rotation.x = -Math.PI / 2;
+        contact.position.set(0, 0.0046, -0.02);
+        contact.renderOrder = 1;
+        this.scene.add(contact);
+      },
+
+      buildFabricMaterials() {
+        const aniso = Math.min(8, this.maxAniso || 1);
+        for (const [id, spec] of Object.entries(FABRICS)) {
+          const isLinen = spec.type === 'linen';
+          const maps = isLinen ? generateLinenTextures(spec) : generateLeatherTextures(spec);
+          const rep = isLinen ? 7 : 2.6;
+          const prep = (canvas, srgb) => {
+            const t = new THREE.CanvasTexture(canvas);
+            if (srgb) t.encoding = THREE.sRGBEncoding;
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            t.repeat.set(rep, rep);
+            t.center.set(0.5, 0.5);
+            t.anisotropy = aniso; // nitidez da trama em ângulos rasantes
+            return t;
+          };
+          const map = prep(maps.cColor, true);
+          const roughMap = prep(maps.cRough, false);
+          const normalMap = prep(maps.cNormal, false);
+
+          const params = {
+            map,
+            roughnessMap: roughMap,
+            normalMap,
+            normalScale: new THREE.Vector2(isLinen ? 0.85 : 0.6, isLinen ? 0.85 : 0.6),
+            roughness: spec.roughness,
+            metalness: spec.metalness,
+            side: THREE.DoubleSide
+          };
+          const mat = new THREE.MeshPhysicalMaterial(params);
+          if (isLinen) {
+            // Brilho de fibra: o linho ganha um halo suave nas bordas e em luz rasante
+            mat.sheen = new THREE.Color(spec.sheenHex);
+            mat.userData.envScale = 0.7;
+          } else {
+            // Couro/laminado: camada de acabamento (verniz) sobre o grão
+            mat.clearcoat = spec.clearcoat;
+            mat.clearcoatRoughness = 0.42;
+            mat.userData.envScale = 1.0;
+          }
+          this.fabricMaterials[id] = mat;
+        }
+
+        this.seamMaterial = new THREE.LineBasicMaterial({ color: 0x7d684f });
+        this.stitchMaterial = new THREE.MeshStandardMaterial({
+          color: 0xe7d6bd,
+          roughness: 0.7,
+          metalness: 0.0
+        });
+      },
+
+      buildArmchair() {
+        this.chairGroup = new THREE.Group();
+        this.scene.add(this.chairGroup);
+
+        // Material de madeira da armação (imbuia/freijó)
+        const woodTex = generateWoodTextures();
+        const woodMap = new THREE.CanvasTexture(woodTex.cColor);
+        woodMap.encoding = THREE.sRGBEncoding;
+        woodMap.wrapS = woodMap.wrapT = THREE.RepeatWrapping;
+        woodMap.repeat.set(1, 1);
+        const woodNorm = new THREE.CanvasTexture(woodTex.cNormal);
+        woodNorm.wrapS = woodNorm.wrapT = THREE.RepeatWrapping;
+        woodNorm.repeat.set(1, 1);
+
+        // UV em metros (1 ladrilho = 30 cm) com o veio sempre ao longo da maior dimensão da peça
+        const woodBoxUV = (geo, w, h, d) => {
+          const P = geo.attributes.position, Nn = geo.attributes.normal, U = geo.attributes.uv;
+          const dims = [w, h, d];
+          const tile = 0.3;
+          for (let i = 0; i < P.count; i++) {
+            const c = [P.getX(i), P.getY(i), P.getZ(i)];
+            const n = [Math.abs(Nn.getX(i)), Math.abs(Nn.getY(i)), Math.abs(Nn.getZ(i))];
+            const axis = n[0] > 0.5 ? 0 : (n[1] > 0.5 ? 1 : 2);
+            const ax = [0, 1, 2].filter((k) => k !== axis);
+            const longA = dims[ax[0]] >= dims[ax[1]] ? ax[0] : ax[1];
+            const shortA = longA === ax[0] ? ax[1] : ax[0];
+            U.setXY(i, c[shortA] / tile + 0.37 * axis, c[longA] / tile);
+          }
+          U.needsUpdate = true;
+        };
+
+        woodMap.anisotropy = woodNorm.anisotropy = Math.min(8, this.maxAniso || 1);
+        // Madeira envernizada: base acetinada + verniz com reflexo do ambiente
+        const woodMat = new THREE.MeshPhysicalMaterial({
+          map: woodMap,
+          normalMap: woodNorm,
+          normalScale: new THREE.Vector2(0.35, 0.35),
+          roughness: 0.55,
+          metalness: 0.0,
+          clearcoat: 0.45,
+          clearcoatRoughness: 0.35
+        });
+
+        const brassMat = new THREE.MeshStandardMaterial({
+          color: 0xc29c57,
+          roughness: 0.32,
+          metalness: 0.82
+        });
+
+        const addBox = (w, h, d, x, y, z, rx = 0, ry = 0, rz = 0, mat = woodMat) => {
+          const g = new THREE.BoxGeometry(w, h, d);
+          if (mat === woodMat) woodBoxUV(g, w, h, d);
+          const m = new THREE.Mesh(g, mat);
+          m.position.set(x, y, z);
+          m.rotation.set(rx, ry, rz);
+          m.castShadow = true;
+          m.receiveShadow = true;
+          this.chairGroup.add(m);
+          return m;
+        };
+
+        // 4 Pés cônicos torneados com sapatas metálicas em latão (contato em y=0)
+        const legCoords = [
+          [-0.29, 0.25, -0.06, 0.05],
+          [0.29, 0.25, 0.06, 0.05],
+          [-0.29, -0.25, -0.06, -0.08],
+          [0.29, -0.25, 0.06, -0.08]
+        ];
+        legCoords.forEach(([lx, lz, rz, rx]) => {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.015, 0.43, 16), woodMat);
+          leg.position.set(lx, 0.215, lz);
+          leg.rotation.set(rx, 0, rz);
+          leg.castShadow = true;
+          leg.receiveShadow = true;
+          this.chairGroup.add(leg);
+
+          const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.017, 0.022, 16), brassMat);
+          foot.position.set(lx + Math.sin(rz) * 0.20, 0.011, lz - Math.sin(rx) * 0.20);
+          this.chairGroup.add(foot);
+        });
+
+        // Quadro estrutural do assento (onde os grampos são cravados!)
+        addBox(0.62, 0.052, 0.036, 0, 0.405, 0.26);   // travessa frontal
+        addBox(0.62, 0.052, 0.036, 0, 0.405, -0.26);  // travessa traseira
+        addBox(0.038, 0.052, 0.56, -0.295, 0.405, 0); // travessa esquerda
+        addBox(0.038, 0.052, 0.56, 0.295, 0.405, 0);  // travessa direita
+
+        // Percintas elásticas visíveis sob o assento
+        const strapMat = new THREE.MeshStandardMaterial({ color: 0x3b4738, roughness: 0.9 });
+        for (let i = -2; i <= 2; i++) {
+          addBox(0.045, 0.008, 0.50, i * 0.11, 0.415, 0, 0, 0, 0, strapMat);
+        }
+
+        // Montantes dos braços e apoios chanfrados
+        [-0.315, 0.315].forEach((sx) => {
+          // Suporte frontal do braço
+          addBox(0.034, 0.21, 0.038, sx, 0.51, 0.22, -0.05, 0, 0);
+          // Braço superior chanfrado
+          addBox(0.046, 0.028, 0.54, sx, 0.615, -0.01, -0.04, 0, 0);
+          // Pino de junção visível em latão
+          const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.048, 10), brassMat);
+          pin.rotation.z = Math.PI / 2;
+          pin.position.set(sx, 0.405, 0.24);
+          this.chairGroup.add(pin);
+        });
+
+        // Montantes inclinados do encosto (16° para trás)
+        const backTilt = -0.27;
+        [-0.295, 0.295].forEach((sx) => {
+          addBox(0.036, 0.56, 0.042, sx, 0.67, -0.32, backTilt, 0, 0);
+        });
+        // Travessa superior e inferior da armação do encosto
+        addBox(0.62, 0.038, 0.034, 0, 0.91, -0.39, backTilt, 0, 0);
+        addBox(0.62, 0.038, 0.034, 0, 0.49, -0.275, backTilt, 0, 0);
+
+        // Espuma PBR (amarelo-creme poroso)
+        const foamTex = new THREE.CanvasTexture(generateFoamTexture());
+        foamTex.encoding = THREE.sRGBEncoding;
+        foamTex.wrapS = foamTex.wrapT = THREE.RepeatWrapping;
+        foamTex.repeat.set(3, 3);
+        const foamMat = new THREE.MeshStandardMaterial({
+          map: foamTex,
+          roughness: 0.96,
+          metalness: 0.0
+        });
+
+        // --- GRUPO DO ASSENTO ---
+        this.seatGroup = new THREE.Group();
+        this.seatGroup.position.set(0, 0.425, 0.0);
+        this.chairGroup.add(this.seatGroup);
+
+        this.simSeat = new ClothPatch({
+          name: 'assento',
+          nx: 29,
+          nz: 29,
+          foamW: 0.56,
+          foamD: 0.52,
+          foamH: 0.095,
+          clothW: 0.66,
+          clothD: 0.62,
+          bevel: 0.032,
+          railX: 0.034,
+          railZ: 0.018
+        });
+
+        this.seatFoamMesh = this.createFoamMesh(this.simSeat, foamMat);
+        this.seatGroup.add(this.seatFoamMesh);
+
+        this.seatClothMesh = this.createClothMesh(this.simSeat);
+        this.seatClothMesh.userData.partName = 'assento';
+        this.seatGroup.add(this.seatClothMesh);
+
+        const seatSeam = this.createSeamObjects(this.simSeat);
+        this.seatSeamLine = seatSeam.line;
+        this.seatStitchMesh = seatSeam.stitches;
+        this.seatGroup.add(this.seatSeamLine);
+        this.seatGroup.add(this.seatStitchMesh);
+
+        this.seatGuideMesh = this.createAlignmentGuide(0.42, 0.38, this.simSeat.foamH + 0.018);
+        this.seatGroup.add(this.seatGuideMesh);
+
+        // --- GRUPO DO ENCOSTO ---
+        this.backGroup = new THREE.Group();
+        this.backGroup.position.set(0, 0.70, -0.305);
+        this.backGroup.rotation.x = Math.PI / 2 + backTilt;
+        this.chairGroup.add(this.backGroup);
+
+        this.simBack = new ClothPatch({
+          name: 'encosto',
+          nx: 25,
+          nz: 25,
+          foamW: 0.53,
+          foamD: 0.42,
+          foamH: 0.082,
+          clothW: 0.61,
+          clothD: 0.50,
+          bevel: 0.028,
+          railX: 0.046,
+          railZ: 0.03
+        });
+
+        this.backFoamMesh = this.createFoamMesh(this.simBack, foamMat);
+        this.backGroup.add(this.backFoamMesh);
+
+        this.backClothMesh = this.createClothMesh(this.simBack);
+        this.backClothMesh.userData.partName = 'encosto';
+        this.backGroup.add(this.backClothMesh);
+
+        const backSeam = this.createSeamObjects(this.simBack);
+        this.backSeamLine = backSeam.line;
+        this.backStitchMesh = backSeam.stitches;
+        this.backGroup.add(this.backSeamLine);
+        this.backGroup.add(this.backStitchMesh);
+
+        this.backGuideMesh = this.createAlignmentGuide(0.38, 0.30, this.simBack.foamH + 0.018);
+        this.backGroup.add(this.backGuideMesh);
+
+        // Indicador visual de pressão (anel translúcido no ponto pressionado)
+        const markerGeo = new THREE.RingGeometry(0.035, 0.052, 28);
+        markerGeo.rotateX(-Math.PI / 2);
+        const markerMat = new THREE.MeshBasicMaterial({
+          color: 0xf4b66d,
+          transparent: true,
+          opacity: 0.85,
+          side: THREE.DoubleSide
+        });
+        this.pressMarker = new THREE.Mesh(markerGeo, markerMat);
+        this.pressMarker.visible = false;
+        this.scene.add(this.pressMarker);
+      },
+
+      createFoamMesh(sim, mat) {
+        const geo = new THREE.BoxGeometry(sim.foamW, sim.foamH, sim.foamD, 28, 2, 28);
+        geo.translate(0, sim.foamH * 0.5, 0);
+        // Chanfra os vértices superiores e guarda quais são (para afundar sob pressão)
+        const pos = geo.attributes.position;
+        const topVerts = [];
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i);
+          const y = pos.getY(i);
+          const z = pos.getZ(i);
+          if (y > sim.foamH * 0.75) {
+            topVerts.push(i);
+            pos.setY(i, sim.foamSurfaceY(x, z) - 0.006);
+          }
+        }
+        geo.computeVertexNormals();
+        const mesh = new THREE.Mesh(geo, mat);
+        // A malha visual da espuma fica ~1 cm para dentro do revestimento: os triângulos do pano
+        // (22 mm entre vértices) cortam a quina chanfrada e deixariam a espuma aparecer
+        mesh.scale.set(0.955, 1, 0.955);
+        mesh.userData.topVerts = topVerts;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        return mesh;
+      },
+
+      createClothMesh(sim) {
+        const geo = new THREE.BufferGeometry();
+        const count = sim.nx * sim.nz;
+        const positions = new Float32Array(count * 3);
+        const uvs = new Float32Array(count * 2);
+        const indices = [];
+
+        for (let iz = 0; iz < sim.nz; iz++) {
+          for (let ix = 0; ix < sim.nx; ix++) {
+            const i = iz * sim.nx + ix;
+            uvs[i * 2] = ix / (sim.nx - 1);
+            uvs[i * 2 + 1] = iz / (sim.nz - 1);
+          }
+        }
+        for (let iz = 0; iz < sim.nz - 1; iz++) {
+          for (let ix = 0; ix < sim.nx - 1; ix++) {
+            const a = iz * sim.nx + ix;
+            const b = a + 1;
+            const c = a + sim.nx;
+            const d = c + 1;
+            indices.push(a, c, b, b, c, d);
+          }
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        geo.setIndex(indices);
+
+        const mesh = new THREE.Mesh(geo, this.fabricMaterials[state.fabricId]);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        return mesh;
+      },
+
+      // Vivo (cordão revestido) que acompanha a borda da almofada + pesponto paralelo
+      createSeamObjects(sim) {
+        const ringIndices = [];
+        const m = 2; // anel próximo à borda superior da almofada
+        for (let ix = m; ix <= sim.nx - 1 - m; ix++) ringIndices.push(sim.idx(ix, m));
+        for (let iz = m + 1; iz <= sim.nz - 1 - m; iz++) ringIndices.push(sim.idx(sim.nx - 1 - m, iz));
+        for (let ix = sim.nx - 2 - m; ix >= m; ix--) ringIndices.push(sim.idx(ix, sim.nz - 1 - m));
+        for (let iz = sim.nz - 2 - m; iz >= m; iz--) ringIndices.push(sim.idx(m, iz));
+
+        const N = ringIndices.length;
+        const R = 8;
+        const geo = new THREE.BufferGeometry();
+        const uvs = new Float32Array(N * R * 2);
+        const idx = [];
+        for (let k = 0; k < N; k++) {
+          for (let j = 0; j < R; j++) {
+            const i = k * R + j;
+            uvs[i * 2] = (k / N) * 40;
+            uvs[i * 2 + 1] = j / R;
+            const k2 = (k + 1) % N;
+            const j2 = (j + 1) % R;
+            const a = k * R + j, b = k2 * R + j, c = k2 * R + j2, d = k * R + j2;
+            idx.push(a, b, d, b, c, d);
+          }
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * R * 3), 3));
+        geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        geo.setIndex(idx);
+        const piping = new THREE.Mesh(geo, this.fabricMaterials[state.fabricId]);
+        piping.castShadow = true;
+        piping.receiveShadow = true;
+        piping.frustumCulled = false;
+        piping.userData.ringIndices = ringIndices;
+        piping.userData.radial = R;
+
+        // Pesponto: dois pontos por segmento, recuados ~9 mm para dentro do vivo
+        const stitchGeo = new THREE.BoxGeometry(0.0062, 0.0011, 0.0013);
+        const stitches = new THREE.InstancedMesh(stitchGeo, this.stitchMaterial, N * 2);
+        stitches.userData.ringIndices = ringIndices;
+        stitches.frustumCulled = false;
+        return { line: piping, stitches };
+      },
+
+      createAlignmentGuide(w, d, y) {
+        const group = new THREE.Group();
+        const mat = new THREE.LineBasicMaterial({ color: 0xf4c078, transparent: true, opacity: 0.85 });
+        const pts = [
+          new THREE.Vector3(-w * 0.5, y, 0), new THREE.Vector3(w * 0.5, y, 0),
+          new THREE.Vector3(0, y, -d * 0.5), new THREE.Vector3(0, y, d * 0.5),
+          new THREE.Vector3(-w * 0.5, y, -d * 0.5), new THREE.Vector3(w * 0.5, y, -d * 0.5),
+          new THREE.Vector3(w * 0.5, y, -d * 0.5), new THREE.Vector3(w * 0.5, y, d * 0.5),
+          new THREE.Vector3(w * 0.5, y, d * 0.5), new THREE.Vector3(-w * 0.5, y, d * 0.5),
+          new THREE.Vector3(-w * 0.5, y, d * 0.5), new THREE.Vector3(-w * 0.5, y, -d * 0.5)
+        ];
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        group.add(new THREE.LineSegments(geo, mat));
+        return group;
+      },
+
+      buildStaplerAndStaples() {
+        // Grampeador pneumático 3D
+        const g = new THREE.Group();
+        const metalMat = new THREE.MeshStandardMaterial({ color: 0xb7bec4, roughness: 0.32, metalness: 0.82 });
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3b4956, roughness: 0.45, metalness: 0.35 });
+        const gripMat = new THREE.MeshStandardMaterial({ color: 0x1e1d1c, roughness: 0.9, metalness: 0.05 });
+        const tipMat = new THREE.MeshStandardMaterial({ color: 0xd96b42, roughness: 0.4, metalness: 0.3 });
+
+        const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.045, 0.14), bodyMat);
+        barrel.position.set(0, 0.075, 0);
+        barrel.castShadow = true;
+        g.add(barrel);
+
+        const nose = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.048, 0.026), tipMat);
+        nose.position.set(0, 0.038, 0.056);
+        g.add(nose);
+
+        const mag = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.13), metalMat);
+        mag.position.set(0, 0.032, -0.01);
+        g.add(mag);
+
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.095, 0.036), gripMat);
+        handle.position.set(0, 0.03, -0.055);
+        handle.rotation.x = 0.28;
+        g.add(handle);
+
+        this.staplerGroup = g;
+        this.staplerAnim.restPos = new THREE.Vector3(0.58, 0.01, 0.34);
+        this.staplerAnim.startPos = this.staplerAnim.restPos.clone();
+        this.staplerAnim.targetPos = this.staplerAnim.restPos.clone();
+        g.position.copy(this.staplerAnim.restPos);
+        g.rotation.set(0, -0.65, 0.12);
+        this.scene.add(g);
+
+        // Grampos em U de arame galvanizado (coroa 11 mm, pernas cravadas na madeira)
+        const w = 0.0055, legH = 0.0028;
+        const uPath = new THREE.CurvePath();
+        uPath.add(new THREE.LineCurve3(new THREE.Vector3(-w, -legH, 0), new THREE.Vector3(-w, 0, 0)));
+        uPath.add(new THREE.LineCurve3(new THREE.Vector3(-w, 0, 0), new THREE.Vector3(w, 0, 0)));
+        uPath.add(new THREE.LineCurve3(new THREE.Vector3(w, 0, 0), new THREE.Vector3(w, -legH, 0)));
+        const stapleGeo = new THREE.TubeGeometry(uPath, 24, 0.00055, 5, false);
+        const stapleMat = new THREE.MeshStandardMaterial({
+          color: 0xc9ced3,
+          roughness: 0.32,
+          metalness: 1.0
+        });
+        this.staplesInstanced = new THREE.InstancedMesh(stapleGeo, stapleMat, 180);
+        this.staplesInstanced.count = 0;
+        this.scene.add(this.staplesInstanced);
+      },
+
+      triggerStaplerAnimation(worldTarget) {
+        if (!this.ok || state.reducedMotion) return;
+        this.staplerAnim.active = true;
+        this.staplerAnim.t = 0;
+        this.staplerAnim.startPos.copy(this.staplerGroup.position);
+        this.staplerAnim.targetPos.copy(worldTarget);
+      },
+
+      // Grampos cravados na face externa das travessas, onde o tecido foi dobrado
+      rebuildStaples() {
+        if (!this.ok) return;
+        const m4 = new THREE.Matrix4();
+        const qLocal = new THREE.Quaternion();
+        const qWorld = new THREE.Quaternion();
+        const pos = new THREE.Vector3();
+        const one = new THREE.Vector3(1, 1, 1);
+        const vC = new THREE.Vector3(), vO = new THREE.Vector3(), vZ = new THREE.Vector3();
+        let count = 0;
+        const isSeq = state.staplePattern === 'sequencial';
+
+        const addPartStaples = (group, sim, pState) => {
+          group.updateMatrixWorld(true);
+          const fx = sim.foamW * 0.5 + sim.railX + 0.003;
+          const fz = sim.foamD * 0.5 + sim.railZ + 0.003;
+          const y = RAIL_TOP_Y - 0.018;
+
+          // (cx,cz) = direção da coroa; (ox,oz) = normal externa da face (pernas entram em -normal)
+          const place = (lx, ly, lz, cx, cz, ox, oz) => {
+            if (count >= 180) return;
+            vC.set(cx, 0, cz).normalize();
+            vO.set(ox, 0, oz).normalize();
+            vZ.crossVectors(vC, vO);
+            m4.makeBasis(vC, vO, vZ);
+            qLocal.setFromRotationMatrix(m4);
+            qWorld.copy(group.quaternion).multiply(qLocal);
+            pos.set(lx, ly, lz).applyMatrix4(group.matrixWorld);
+            m4.compose(pos, qWorld, one);
+            this.staplesInstanced.setMatrixAt(count++, m4);
+          };
+
+          const steps = isSeq ? [-0.20, -0.15, -0.02, 0.11, 0.16, 0.20] : [-0.18, -0.10, -0.02, 0.06, 0.14, 0.18];
+          const jit = (k) => (isSeq ? (k % 2 ? 0.004 : -0.003) : 0);
+
+          if (pState.sides.front) steps.forEach((u, k) => place(u * (sim.foamW / 0.56), y + jit(k), fz, 1, isSeq ? 0.08 * (k - 2) : 0, 0, 1));
+          if (pState.sides.back) steps.forEach((u, k) => place(u * (sim.foamW / 0.56), y + jit(k), -fz, 1, 0, 0, -1));
+          if (pState.sides.left) steps.forEach((u, k) => place(-fx, y + jit(k), u * (sim.foamD / 0.52), 0, 1, -1, 0));
+          if (pState.sides.right) steps.forEach((u, k) => place(fx, y + jit(k), u * (sim.foamD / 0.52), 0, 1, 1, 0));
+
+          const addCorner = (sx, sz) => {
+            if (isSeq) {
+              // Leque: grampos tortos e concentrados prendendo o franzido
+              place(sx * (fx - 0.030), y + 0.004, sz * fz, 1, 0.35 * sx * sz, 0, sz);
+              place(sx * (fx - 0.014), y - 0.003, sz * fz, 1, -0.4 * sx * sz, 0, sz);
+              place(sx * fx, y + 0.002, sz * (fz - 0.022), 0.3, 1, sx, 0);
+            } else {
+              // Envelope: um grampo em cada face, rente à dobra do canto
+              place(sx * (fx - 0.022), y, sz * fz, 1, 0, 0, sz);
+              place(sx * fx, y, sz * (fz - 0.022), 0, 1, sx, 0);
+            }
+          };
+
+          if (pState.corners.fl) addCorner(-1, 1);
+          if (pState.corners.fr) addCorner(1, 1);
+          if (pState.corners.bl) addCorner(-1, -1);
+          if (pState.corners.br) addCorner(1, -1);
+        };
+
+        addPartStaples(this.seatGroup, this.simSeat, state.parts.assento);
+        addPartStaples(this.backGroup, this.simBack, state.parts.encosto);
+
+        this.staplesInstanced.count = count;
+        this.staplesInstanced.instanceMatrix.needsUpdate = true;
+        dom.metricStaples.textContent = String(count);
+      },
+
+      applyFabric() {
+        if (!this.ok) return;
+        const spec = FABRICS[state.fabricId];
+        const mat = this.fabricMaterials[state.fabricId];
+        this.seatClothMesh.material = mat;
+        this.backClothMesh.material = mat;
+        this.seatSeamLine.material = mat; // o vivo é revestido com o mesmo tecido
+        this.backSeamLine.material = mat;
+        mat.envMapIntensity = (this.envIntensity || 0.85) * (mat.userData.envScale || 1);
+        this.seamMaterial.color.set(spec.seamHex);
+        this.stitchMaterial.color.set(spec.seamHex);
+        this.applyGrainAlignment();
+      },
+
+      applyGrainAlignment() {
+        if (!this.ok) return;
+        const rad = (state.alignAngle * Math.PI) / 180;
+        const off = state.alignOffset / 100;
+        Object.values(this.fabricMaterials).forEach((mat) => {
+          [mat.map, mat.roughnessMap, mat.normalMap].forEach((tex) => {
+            if (!tex) return;
+            tex.rotation = rad; // matriz de UV atualizada pelo renderer, sem reenviar a textura
+            tex.offset.set(off, off * 0.4);
+          });
+        });
+
+        // Física: a mesma rotação passa a valer para a rigidez fio/viés do pano
+        const bc = FABRICS[state.fabricId].biasCompliance;
+        this.simSeat.setGrain(rad, state.alignOffset, bc);
+        this.simBack.setGrain(rad, state.alignOffset, bc);
+
+        const showG = state.step === 1 && state.showGuide;
+        this.seatGuideMesh.visible = showG;
+        this.backGuideMesh.visible = showG;
+        this.seatGuideMesh.rotation.y = -rad;
+        this.backGuideMesh.rotation.y = -rad;
+
+        this.seatSeamLine.visible = state.showSeams;
+        this.backSeamLine.visible = state.showSeams;
+        this.seatStitchMesh.visible = state.showSeams;
+        this.backStitchMesh.visible = state.showSeams;
+      },
+
+      applyLiteMode() {
+        if (!this.ok) return;
+        const dpr = state.liteMode ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+        this.renderer.setPixelRatio(dpr);
+        this.renderer.shadowMap.enabled = !state.liteMode;
+        this.keyLight.castShadow = !state.liteMode;
+        dom.iterCountLabel.textContent = state.liteMode ? '4' : '6';
+      },
+
+      setCameraPreset(name) {
+        state.cameraPreset = name;
+        const presets = {
+          geral:   { theta: 0.58, phi: 1.08, radius: 1.72, target: [0, 0.54, 0] },
+          assento: { theta: 0.32, phi: 0.72, radius: 0.92, target: [0, 0.48, 0.04] },
+          encosto: { theta: 0.25, phi: 1.24, radius: 0.94, target: [0, 0.72, -0.24] },
+          costura: { theta: 1.12, phi: 1.05, radius: 0.74, target: [0.16, 0.48, 0.16] }
+        };
+        const p = presets[name] || presets.geral;
+        this.orbit.goalTheta = p.theta;
+        this.orbit.goalPhi = p.phi;
+        this.orbit.goalRadius = p.radius;
+        if (this.orbit.goalTarget) {
+          this.orbit.goalTarget.set(p.target[0], p.target[1], p.target[2]);
+        }
+        if (state.reducedMotion && this.orbit.target) {
+          this.orbit.theta = p.theta;
+          this.orbit.phi = p.phi;
+          this.orbit.radius = p.radius;
+          this.orbit.target.copy(this.orbit.goalTarget);
+        }
+        document.querySelectorAll('[data-cam]').forEach((b) => {
+          b.classList.toggle('btn-active', b.dataset.cam === name);
+        });
+      },
+
+      syncClothVisual(sim, clothMesh, piping, stitchMesh, foamMesh) {
+        // Atualiza vértices do pano
+        const posAttr = clothMesh.geometry.attributes.position;
+        posAttr.array.set(sim.pos);
+        posAttr.needsUpdate = true;
+        clothMesh.geometry.computeVertexNormals();
+
+        // Vivo tubular e pesponto acompanham a malha deformada
+        if (piping.visible) {
+          const ring = piping.userData.ringIndices;
+          const R = piping.userData.radial;
+          const N = ring.length;
+          const arr = piping.geometry.attributes.position.array;
+          const radius = 0.0042;
+          const dummy = this._dummy || (this._dummy = new THREE.Object3D());
+          for (let k = 0; k < N; k++) {
+            const i3 = ring[k] * 3;
+            const p3 = ring[(k + N - 1) % N] * 3;
+            const n3 = ring[(k + 1) % N] * 3;
+            const px = sim.pos[i3], py = sim.pos[i3 + 1] + radius * 0.55, pz = sim.pos[i3 + 2];
+            // Tangente no plano horizontal e normal lateral voltada para fora
+            let tx = sim.pos[n3] - sim.pos[p3];
+            let tz = sim.pos[n3 + 2] - sim.pos[p3 + 2];
+            const tl = Math.hypot(tx, tz) || 1;
+            tx /= tl; tz /= tl;
+            let nx = tz, nz = -tx;
+            if (nx * px + nz * pz < 0) { nx = -nx; nz = -nz; }
+            for (let j = 0; j < R; j++) {
+              const ang = (j / R) * Math.PI * 2;
+              const cx = Math.cos(ang) * radius, cy = Math.sin(ang) * radius;
+              const o = (k * R + j) * 3;
+              arr[o] = px + nx * cx;
+              arr[o + 1] = py + cy;
+              arr[o + 2] = pz + nz * cx;
+            }
+            // Pesponto: 2 pontos por segmento, recuados para dentro
+            const qx = sim.pos[n3], qz = sim.pos[n3 + 2];
+            for (let h = 0; h < 2; h++) {
+              const f = h * 0.5 + 0.25;
+              const sx = px + (qx - px) * f - nx * 0.009;
+              const sz = pz + (qz - pz) * f - nz * 0.009;
+              const sy = sim.pos[i3 + 1] + (sim.pos[n3 + 1] - sim.pos[i3 + 1]) * f + 0.0016;
+              dummy.position.set(sx, sy, sz);
+              dummy.rotation.set(0, -Math.atan2(qz - pz, qx - px), 0);
+              dummy.updateMatrix();
+              stitchMesh.setMatrixAt(k * 2 + h, dummy.matrix);
+            }
+          }
+          piping.geometry.attributes.position.needsUpdate = true;
+          piping.geometry.computeVertexNormals();
+          stitchMesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // Sincroniza a depressão da espuma sob a malha
+        if (Math.abs(sim.centerDisp) > 0.0003 || Math.abs(sim.centerVel) > 0.0005 || sim._foamDirty) {
+          const fPos = foamMesh.geometry.attributes.position;
+          const top = foamMesh.userData.topVerts;
+          for (let t = 0; t < top.length; t++) {
+            const i = top[t];
+            fPos.setY(i, sim.foamSurfaceY(fPos.getX(i) * 0.955, fPos.getZ(i) * 0.955) - 0.006);
+          }
+          fPos.needsUpdate = true;
+          foamMesh.geometry.computeVertexNormals();
+          sim._foamDirty = Math.abs(sim.centerDisp) > 0.0003;
+        }
+      },
+
+      handleResize() {
+        if (!this.renderer || !this.camera) return;
+        const w = dom.viewportWrap.clientWidth || 640;
+        const h = dom.viewportWrap.clientHeight || 480;
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h, false);
+        this.applyLiteMode();
+      },
+
+      tryPressAtPointer(clientX, clientY) {
+        const rect = dom.canvas.getBoundingClientRect();
+        this.pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        this.pointerNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.pointerNdc, this.camera);
+        const hits = this.raycaster.intersectObjects([this.seatClothMesh, this.backClothMesh]);
+        if (hits.length === 0) return false;
+        const hit = hits[0];
+        const partName = hit.object.userData.partName;
+        const sim = partName === 'assento' ? this.simSeat : this.simBack;
+        const group = partName === 'assento' ? this.seatGroup : this.backGroup;
+        const localPt = group.worldToLocal(hit.point.clone());
+        sim.pressPointX = Math.max(-sim.foamW * 0.35, Math.min(sim.foamW * 0.35, localPt.x));
+        sim.pressPointZ = Math.max(-sim.foamD * 0.35, Math.min(sim.foamD * 0.35, localPt.z));
+        sim.pressActive = true;
+        this.pressMarker.position.copy(hit.point).add(new THREE.Vector3(0, 0.008, 0));
+        this.pressMarker.visible = true;
+        dom.pressStateBadge.textContent = 'Pressionando (' + partName + ')';
+        AudioFX.playPress();
+        return true;
+      },
+
+      releasePress() {
+        if (this.simSeat) this.simSeat.pressActive = false;
+        if (this.simBack) this.simBack.pressActive = false;
+        if (this.pressMarker) this.pressMarker.visible = false;
+        dom.pressStateBadge.textContent = 'Recuperando...';
+      },
+
+      bindViewportEvents() {
+        const el = dom.canvas;
+        const activePointers = new Map();
+
+        el.addEventListener('pointerdown', (e) => {
+          el.setPointerCapture(e.pointerId);
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          // Se estiver no modo Pressão ou na etapa 5 com clique esquerdo direto na poltrona
+          if (activePointers.size === 1 && e.button === 0 && (state.interactionMode === 'press' || state.step === 4)) {
+            if (this.tryPressAtPointer(e.clientX, e.clientY)) {
+              return;
+            }
+          }
+
+          this.orbit.dragging = true;
+          this.orbit.lastX = e.clientX;
+          this.orbit.lastY = e.clientY;
+        });
+
+        el.addEventListener('pointermove', (e) => {
+          if (!activePointers.has(e.pointerId)) return;
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          if (this.simSeat.pressActive || this.simBack.pressActive) {
+            this.tryPressAtPointer(e.clientX, e.clientY);
+            return;
+          }
+
+          if (activePointers.size === 2) {
+            const pts = Array.from(activePointers.values());
+            const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            if (this.orbit.pinchDist > 0) {
+              const delta = (this.orbit.pinchDist - d) * 0.004;
+              this.orbit.goalRadius = Math.max(0.62, Math.min(2.8, this.orbit.goalRadius + delta));
+            }
+            this.orbit.pinchDist = d;
+            return;
+          }
+
+          if (this.orbit.dragging) {
+            const dx = e.clientX - this.orbit.lastX;
+            const dy = e.clientY - this.orbit.lastY;
+            this.orbit.lastX = e.clientX;
+            this.orbit.lastY = e.clientY;
+            this.orbit.goalTheta -= dx * 0.0075;
+            this.orbit.goalPhi = Math.max(0.28, Math.min(1.48, this.orbit.goalPhi - dy * 0.0065));
+          }
+        });
+
+        const endPtr = (e) => {
+          activePointers.delete(e.pointerId);
+          if (activePointers.size < 2) this.orbit.pinchDist = 0;
+          if (activePointers.size === 0) {
+            this.orbit.dragging = false;
+            if (this.simSeat.pressActive || this.simBack.pressActive) {
+              this.releasePress();
+            }
+          }
+        };
+        el.addEventListener('pointerup', endPtr);
+        el.addEventListener('pointercancel', endPtr);
+
+        el.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          this.orbit.goalRadius = Math.max(0.62, Math.min(2.8, this.orbit.goalRadius + e.deltaY * 0.0012));
+        }, { passive: false });
+
+        window.addEventListener('resize', () => this.handleResize());
+      },
+
+      startLoop() {
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+        this.clock.start();
+
+        const loop = () => {
+          this.rafId = requestAnimationFrame(loop);
+          if (this.paused) return;
+
+          const rawDt = this.clock.getDelta();
+          // Limita delta após pausa para estabilidade física
+          const dt = Math.min(rawDt, 1 / 30);
+
+          // Atualiza câmera orbital suave
+          const lerp = state.reducedMotion ? 1 : Math.min(1, dt * 8.5);
+          this.orbit.theta += (this.orbit.goalTheta - this.orbit.theta) * lerp;
+          this.orbit.phi += (this.orbit.goalPhi - this.orbit.phi) * lerp;
+          this.orbit.radius += (this.orbit.goalRadius - this.orbit.radius) * lerp;
+          this.orbit.target.lerp(this.orbit.goalTarget, lerp);
+
+          const sp = Math.sin(this.orbit.phi);
+          this.camera.position.set(
+            this.orbit.target.x + this.orbit.radius * sp * Math.sin(this.orbit.theta),
+            this.orbit.target.y + this.orbit.radius * Math.cos(this.orbit.phi),
+            this.orbit.target.z + this.orbit.radius * sp * Math.cos(this.orbit.theta)
+          );
+          this.camera.lookAt(this.orbit.target);
+
+          // Animação do grampeador
+          if (this.staplerAnim.active) {
+            this.staplerAnim.t += dt * 2.4;
+            const t = this.staplerAnim.t;
+            if (t < 0.45) {
+              const p = t / 0.45;
+              this.staplerGroup.position.lerpVectors(this.staplerAnim.startPos, this.staplerAnim.targetPos, p);
+              this.staplerGroup.position.y += Math.sin(p * Math.PI) * 0.14;
+              this.staplerGroup.rotation.set(0.35, 0, 0);
+            } else if (t < 0.62) {
+              // Recuo do disparo
+              this.staplerGroup.position.copy(this.staplerAnim.targetPos);
+              this.staplerGroup.position.y += Math.sin((t - 0.45) / 0.17 * Math.PI) * 0.032;
+            } else if (t < 1.0) {
+              const p = (t - 0.62) / 0.38;
+              this.staplerGroup.position.lerpVectors(this.staplerAnim.targetPos, this.staplerAnim.restPos, p);
+              this.staplerGroup.rotation.set(0, -0.65 * p, 0.12 * p);
+            } else {
+              this.staplerGroup.position.copy(this.staplerAnim.restPos);
+              this.staplerAnim.active = false;
+            }
+          }
+
+          // Passo da física de pano (iterações limitadas por frame!)
+          const maxIters = state.liteMode ? 4 : 6;
+          const fabric = FABRICS[state.fabricId];
+          const foamSpec = FOAMS[state.foamDensity] || FOAMS.D28;
+          const common = { damping: state.damping, force: state.pressForce, pattern: state.staplePattern, tension: state.tension, foamSpec };
+          this.simSeat.step(dt, maxIters, fabric, Object.assign({ partState: state.parts.assento }, common));
+          this.simBack.step(dt, maxIters, fabric, Object.assign({ partState: state.parts.encosto }, common));
+
+          this.syncClothVisual(this.simSeat, this.seatClothMesh, this.seatSeamLine, this.seatStitchMesh, this.seatFoamMesh);
+          this.syncClothVisual(this.simBack, this.backClothMesh, this.backSeamLine, this.backStitchMesh, this.backFoamMesh);
+
+          // Osciloscópio da peça ativa
+          const activeSim = state.activePart === 'assento' ? this.simSeat : this.simBack;
+          const dispMm = activeSim.centerDisp * 1000;
+          this.dispHistory.push(dispMm);
+          if (this.dispHistory.length > 120) this.dispHistory.shift();
+          drawOscilloscope(this.dispHistory, dispMm);
+
+          if (!activeSim.pressActive && activeSim.pulseTimer <= 0 && Math.abs(dispMm) < 0.25) {
+            dom.pressStateBadge.textContent = 'Em repouso';
+          }
+          if ((this.frameCount & 3) === 0) updateFoamMetrics(activeSim.foam);
+
+          this.renderer.render(this.scene, this.camera);
+
+          // Telemetria leve (FPS e chamadas de desenho)
+          this.frameCount++;
+          this.fpsTimer += rawDt;
+          if (this.fpsTimer >= 0.6) {
+            const fps = Math.round(this.frameCount / this.fpsTimer);
+            const calls = this.renderer.info.render.calls;
+            dom.perfText.textContent = fps + ' fps · ' + calls + ' calls';
+            dom.metricWrinkle.textContent = activeSim.measureWrinkleMm().toFixed(1).replace('.', ',') + ' mm';
+            this.frameCount = 0;
+            this.fpsTimer = 0;
+          }
+        };
+        loop();
+      },
+
+      dispose() {
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+        if (this.renderer) this.renderer.dispose();
+      }
+    };
+
+    /* =========================================================================
+       6. OSCILOSCÓPIO DE PRESSÃO E MODO DE RECUPERAÇÃO 2D (FALLBACK HTML)
+       ========================================================================= */
+    function drawOscilloscope(history, currentMm) {
+      dom.valDisplacement.textContent = currentMm.toFixed(1).replace('.', ',') + ' mm';
+      const ctx = dom.oscilloscope.getContext('2d');
+      const w = dom.oscilloscope.width;
+      const h = dom.oscilloscope.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Grade de referência
+      ctx.strokeStyle = 'rgba(236, 221, 200, 0.12)';
+      ctx.lineWidth = 1;
+      const baseY = 18;
+      ctx.beginPath();
+      ctx.moveTo(0, baseY); ctx.lineTo(w, baseY);
+      ctx.moveTo(0, h - 14); ctx.lineTo(w, h - 14);
+      ctx.stroke();
+
+      // Curva de deslocamento
+      ctx.strokeStyle = '#d98a4a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < history.length; i++) {
+        const x = (i / (history.length - 1)) * w;
+        const y = baseY + (history[i] / 80) * (h - 32);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function fmtNum(v, d) { return v.toFixed(d).replace('.', ','); }
+
+    function updateFoamMetrics(fm) {
+      dom.metricPressure.textContent = fmtNum(fm.pressureKPa, 1) + ' kPa';
+      dom.metricStrain.textContent = Math.round(fm.strain * 100) + '%';
+      dom.metricMembrane.textContent = Math.round(fm.membraneN) + ' N/m';
+      dom.metricT90.textContent = fm.t90 === null ? '—' : fmtNum(fm.t90, 2) + ' s';
+    }
+
+    let fallbackActive = false;
+    let fallbackDisp = 0;
+    let fallbackVel = 0;
+    let fallbackPressed = false;
+
+    function activateFallback(reason) {
+      fallbackActive = true;
+      dom.fallbackReason.textContent = reason + ' O simulador 2D de recuperação está ativo para testar tecido, padrão de grampeamento, pressão e amortecimento.';
+      dom.fallbackView.classList.add('active');
+      dom.perfText.textContent = 'Modo 2D';
+      const ctx = dom.fallbackCanvas.getContext('2d');
+      const fbFoam = new FoamModel();
+      let last = performance.now();
+      const tick = () => {
+        requestAnimationFrame(tick);
+        const now = performance.now();
+        const dt = Math.min(1 / 30, (now - last) / 1000);
+        last = now;
+        // Mesmo modelo físico do 3D: espuma por densidade + membrana + viscoelasticidade
+        const pState = state.parts[state.activePart];
+        const sides = Object.values(pState.sides).filter(Boolean).length;
+        const corners = Object.values(pState.corners).filter(Boolean).length;
+        const T = membraneTensionNpm(FABRICS[state.fabricId], state.tension, sides, corners);
+        fbFoam.step(dt, 0.095, fallbackPressed ? state.pressForce : 0, state.damping, FOAMS[state.foamDensity] || FOAMS.D28, T);
+        fallbackDisp = fbFoam.disp * 1000; // mm
+        updateFoamMetrics(fbFoam);
+
+        const w = dom.fallbackCanvas.width;
+        const h = dom.fallbackCanvas.height;
+        ctx.fillStyle = '#211b17';
+        ctx.fillRect(0, 0, w, h);
+
+        // Desenha poltrona esquemática em corte com malha deformável
+        const spec = FABRICS[state.fabricId];
+        ctx.fillStyle = '#7c5132';
+        ctx.fillRect(90, 210, 340, 22);
+        ctx.fillStyle = '#e5d8b2';
+        ctx.fillRect(105, 130, 310, 80);
+
+        ctx.strokeStyle = spec.baseHex;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        for (let i = 0; i <= 40; i++) {
+          const t = i / 40;
+          const x = 95 + t * 330;
+          const g = Math.exp(-Math.pow((t - 0.5) * 4, 2));
+          const wrinkle = state.staplePattern === 'sequencial' ? Math.sin(t * Math.PI * 10) * 4.5 : 0;
+          const y = 128 + fallbackDisp * (80 / 95) * g + wrinkle;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        Scene3D.dispHistory.push(fallbackDisp);
+        if (Scene3D.dispHistory.length > 120) Scene3D.dispHistory.shift();
+        drawOscilloscope(Scene3D.dispHistory, fallbackDisp);
+      };
+      tick();
+    }
+
+    /* =========================================================================
+       7. CONTROLES DA INTERFACE E FLUXO JOGÁVEL
+       ========================================================================= */
+    function countPartProgress(p) {
+      const s = Object.values(p.sides).filter(Boolean).length;
+      const c = Object.values(p.corners).filter(Boolean).length;
+      return { sides: s, corners: c, total: s + c };
+    }
+
+    function syncAllFromState() {
+      // Etapas
+      document.querySelectorAll('.step-btn').forEach((b) => {
+        const idx = Number(b.dataset.step);
+        b.classList.toggle('active', idx === state.step);
+        b.classList.toggle('done', idx < state.step);
+      });
+      document.querySelectorAll('.step-panel').forEach((p) => {
+        p.style.display = Number(p.dataset.panel) === state.step ? 'flex' : 'none';
+      });
+      dom.btnPrevStep.disabled = state.step === 0;
+      dom.btnNextStep.textContent = state.step === 4 ? 'Revisar início ↺' : 'Próxima etapa →';
+
+      const stepNames = [
+        'Etapa 1/5 · Escolha o tecido',
+        'Etapa 2/5 · Alinhe a trama',
+        'Etapa 3/5 · Fixe dois lados',
+        'Etapa 4/5 · Estique os cantos',
+        'Etapa 5/5 · Teste pressão e amortecimento'
+      ];
+      dom.statusText.textContent = stepNames[state.step];
+
+      // Peça ativa
+      dom.tabAssento.classList.toggle('btn-active', state.activePart === 'assento');
+      dom.tabEncosto.classList.toggle('btn-active', state.activePart === 'encosto');
+      dom.tabAssento.setAttribute('aria-selected', String(state.activePart === 'assento'));
+      dom.tabEncosto.setAttribute('aria-selected', String(state.activePart === 'encosto'));
+
+      const pSeat = countPartProgress(state.parts.assento);
+      const pBack = countPartProgress(state.parts.encosto);
+      dom.badgeAssento.textContent = Math.min(6, pSeat.sides + pSeat.corners) + '/6';
+      dom.badgeEncosto.textContent = Math.min(6, pBack.sides + pBack.corners) + '/6';
+
+      dom.summarySeat.textContent = pSeat.corners === 4 ? 'Estofado' : (pSeat.sides >= 2 ? 'Lados fixos' : 'Em aberto');
+      dom.summaryBack.textContent = pBack.corners === 4 ? 'Estofado' : (pBack.sides >= 2 ? 'Lados fixos' : 'Em aberto');
+
+      // Tecido
+      const fSpec = FABRICS[state.fabricId];
+      dom.fabricBadge.textContent = fSpec.name;
+      document.querySelectorAll('[data-fabric]').forEach((b) => {
+        b.classList.toggle('btn-active', b.dataset.fabric === state.fabricId);
+      });
+      dom.btnToggleSeams.classList.toggle('btn-active', state.showSeams);
+      dom.btnToggleSeams.textContent = state.showSeams ? 'Visíveis' : 'Ocultas';
+      dom.btnToggleSeams.setAttribute('aria-pressed', String(state.showSeams));
+
+      // Trama
+      dom.rangeAngle.value = state.alignAngle;
+      dom.valAngle.textContent = state.alignAngle + '°';
+      dom.rangeOffset.value = state.alignOffset;
+      dom.valOffset.textContent = state.alignOffset + '%';
+      const aligned = Math.abs(state.alignAngle) <= 2 && Math.abs(state.alignOffset) <= 4;
+      dom.alignStatusBadge.textContent = aligned ? 'Alinhada' : 'Desalinhada';
+      dom.alignStatusBadge.classList.toggle('ok', aligned);
+      const gRad = (state.alignAngle * Math.PI) / 180;
+      const bc = FABRICS[state.fabricId].biasCompliance;
+      const biasShare = Math.abs(Math.sin(2 * gRad));
+      dom.metricAxisStiff.textContent = Math.round((1 - bc * biasShare) * 100) + '%';
+      dom.metricBias.textContent = Math.round(biasShare * 100) + '%';
+      dom.btnToggleGuide.classList.toggle('btn-active', state.showGuide);
+      dom.btnToggleGuide.textContent = 'Guia Visual: ' + (state.showGuide ? 'On' : 'Off');
+
+      // Padrão e lados da peça ativa
+      const curPart = state.parts[state.activePart];
+      const curProg = countPartProgress(curPart);
+      dom.btnPatternUniform.classList.toggle('btn-active', state.staplePattern === 'cruzado');
+      dom.btnPatternFan.classList.toggle('btn-active', state.staplePattern === 'sequencial');
+      dom.patternSummaryBadge.textContent = 'Padrão: ' + (state.staplePattern === 'cruzado' ? 'Cruzado' : 'Sequencial');
+      dom.sidesBadge.textContent = curProg.sides + '/2 lados';
+      dom.sidesBadge.classList.toggle('ok', curProg.sides >= 2);
+      document.querySelectorAll('[data-side]').forEach((b) => {
+        b.classList.toggle('btn-active', Boolean(curPart.sides[b.dataset.side]));
+      });
+
+      // Cantos e tensão
+      dom.rangeTension.value = state.tension;
+      dom.valTension.textContent = state.tension + '%';
+      dom.cornersBadge.textContent = curProg.corners + '/4 cantos';
+      dom.cornersBadge.classList.toggle('ok', curProg.corners === 4);
+      document.querySelectorAll('[data-corner]').forEach((b) => {
+        b.classList.toggle('btn-active', Boolean(curPart.corners[b.dataset.corner]));
+      });
+
+      // Pressão e amortecimento
+      dom.rangeForce.value = state.pressForce;
+      dom.valForce.textContent = state.pressForce + ' N';
+      dom.rangeDamping.value = state.damping;
+      const dampDesc = state.damping < 0.28 ? 'Resiliente / Rebote' : (state.damping > 0.68 ? 'Memória / Lento' : 'Equilibrado');
+      const foam = FOAMS[state.foamDensity] || FOAMS.D28;
+      dom.valDensity.textContent = foam.density + ' kg/m³ · CLD40 ≈ ' + fmtNum(foam.cld40, 1) + ' kPa';
+      document.querySelectorAll('[data-density]').forEach((b) => {
+        const on = b.dataset.density === state.foamDensity;
+        b.classList.toggle('btn-active', on);
+        b.setAttribute('aria-checked', String(on));
+      });
+      dom.valDamping.textContent = state.damping.toFixed(2).replace('.', ',') + ' (' + dampDesc + ')';
+
+      // Luz, modo interação, opções
+      dom.lightLabel.textContent = state.lightMode === 'natural' ? 'Luz Natural' : 'Luz Rasante';
+      dom.btnLightMode.classList.toggle('btn-active', state.lightMode === 'rasante');
+      dom.modeLabel.textContent = state.interactionMode === 'orbit' ? 'Modo: Orbitar' : 'Modo: Pressionar';
+      dom.btnInteractionMode.classList.toggle('btn-active', state.interactionMode === 'press');
+
+      dom.btnToggleLite.classList.toggle('btn-active', state.liteMode);
+      dom.btnToggleLite.textContent = state.liteMode ? 'Ligado' : 'Desligado';
+      dom.btnToggleLite.setAttribute('aria-pressed', String(state.liteMode));
+
+      dom.btnToggleReducedMotion.classList.toggle('btn-active', state.reducedMotion);
+      dom.btnToggleReducedMotion.textContent = state.reducedMotion ? 'Ligado' : 'Desligado';
+      dom.btnToggleReducedMotion.setAttribute('aria-pressed', String(state.reducedMotion));
+
+      // Sincroniza cena 3D e simulações
+      if (Scene3D.ok) {
+        Scene3D.applyLightMode();
+        Scene3D.applyFabric();
+        Scene3D.applyLiteMode();
+        Scene3D.simSeat.applyStaplingState(state.parts.assento, state.staplePattern, state.tension);
+        Scene3D.simBack.applyStaplingState(state.parts.encosto, state.staplePattern, state.tension);
+        Scene3D.rebuildStaples();
+      }
+    }
+
+    function bindUIEvents() {
+      // Navegação de etapas
+      document.querySelectorAll('.step-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          state.step = Number(b.dataset.step);
+          if (state.step === 1) Scene3D.setCameraPreset('assento');
+          if (state.step === 4) {
+            state.interactionMode = 'press';
+            Scene3D.setCameraPreset('geral');
+          }
+          syncAllFromState();
+          AudioFX.playClick();
+        });
+      });
+
+      dom.btnPrevStep.addEventListener('click', () => {
+        if (state.step > 0) {
+          state.step--;
+          syncAllFromState();
+          AudioFX.playClick();
+        }
+      });
+
+      dom.btnNextStep.addEventListener('click', () => {
+        state.step = (state.step + 1) % 5;
+        if (state.step === 1) Scene3D.setCameraPreset('assento');
+        else if (state.step === 4) {
+          state.interactionMode = 'press';
+          Scene3D.setCameraPreset('geral');
+        }
+        syncAllFromState();
+        AudioFX.playClick();
+      });
+
+      // Abas Assento / Encosto
+      [dom.tabAssento, dom.tabEncosto].forEach((tab) => {
+        tab.addEventListener('click', () => {
+          state.activePart = tab.dataset.part;
+          if (state.step >= 1 && state.step <= 3) {
+            Scene3D.setCameraPreset(state.activePart);
+          }
+          syncAllFromState();
+          AudioFX.playClick();
+        });
+      });
+
+      // Etapa 1: Tecido e costuras
+      document.querySelectorAll('[data-fabric]').forEach((b) => {
+        b.addEventListener('click', () => {
+          pushUndo();
+          state.fabricId = b.dataset.fabric;
+          syncAllFromState();
+          AudioFX.playClick();
+          showToast('Tecido alterado para ' + FABRICS[state.fabricId].name + '.', 'ok');
+        });
+      });
+
+      dom.btnToggleSeams.addEventListener('click', () => {
+        pushUndo();
+        state.showSeams = !state.showSeams;
+        syncAllFromState();
+        AudioFX.playClick();
+      });
+
+      // Etapa 2: Alinhamento da trama
+      dom.rangeAngle.addEventListener('input', () => {
+        state.alignAngle = Number(dom.rangeAngle.value);
+        syncAllFromState();
+      });
+      dom.rangeOffset.addEventListener('input', () => {
+        state.alignOffset = Number(dom.rangeOffset.value);
+        syncAllFromState();
+      });
+      dom.btnAutoAlign.addEventListener('click', () => {
+        pushUndo();
+        state.alignAngle = 0;
+        state.alignOffset = 0;
+        syncAllFromState();
+        AudioFX.playStretch();
+        showToast('Trama alinhada no esquadro (0°, centralizada).', 'ok');
+      });
+      dom.btnToggleGuide.addEventListener('click', () => {
+        state.showGuide = !state.showGuide;
+        syncAllFromState();
+      });
+
+      // Etapa 3: Padrão e lados
+      [dom.btnPatternUniform, dom.btnPatternFan].forEach((b) => {
+        b.addEventListener('click', () => {
+          pushUndo();
+          state.staplePattern = b.dataset.pattern;
+          syncAllFromState();
+          AudioFX.playStaple();
+          showToast(
+            state.staplePattern === 'cruzado'
+              ? 'Padrão Cruzado Uniforme: tensão equilibrada e superfície lisa.'
+              : 'Padrão Sequencial em Leque: agrupamento assimétrico com dobras diagonais.',
+            'ok'
+          );
+        });
+      });
+
+      document.querySelectorAll('[data-side]').forEach((b) => {
+        b.addEventListener('click', () => {
+          pushUndo();
+          const side = b.dataset.side;
+          const cur = state.parts[state.activePart].sides;
+          cur[side] = !cur[side];
+          syncAllFromState();
+          if (cur[side]) {
+            AudioFX.playStaple();
+            if (Scene3D.ok) {
+              const g = state.activePart === 'assento' ? Scene3D.seatGroup : Scene3D.backGroup;
+              const offset = side === 'front' ? new THREE.Vector3(0, 0.04, 0.28)
+                : side === 'back' ? new THREE.Vector3(0, 0.04, -0.28)
+                : side === 'left' ? new THREE.Vector3(-0.30, 0.04, 0)
+                : new THREE.Vector3(0.30, 0.04, 0);
+              Scene3D.triggerStaplerAnimation(offset.applyMatrix4(g.matrixWorld));
+            }
+            showToast('Lado fixado com grampos no ' + state.activePart + '.', 'ok');
+          }
+        });
+      });
+
+      dom.btnStapleBothOpposites.addEventListener('click', () => {
+        pushUndo();
+        ['assento', 'encosto'].forEach((p) => {
+          state.parts[p].sides.front = true;
+          state.parts[p].sides.back = true;
+        });
+        syncAllFromState();
+        AudioFX.playStaple();
+        if (Scene3D.ok) {
+          Scene3D.triggerStaplerAnimation(new THREE.Vector3(0, 0.48, 0.28));
+        }
+        showToast('Dois lados opostos fixados no assento e no encosto.', 'ok');
+      });
+
+      // Etapa 4: Esticar cantos
+      dom.rangeTension.addEventListener('input', () => {
+        state.tension = Number(dom.rangeTension.value);
+        syncAllFromState();
+      });
+
+      document.querySelectorAll('[data-corner]').forEach((b) => {
+        b.addEventListener('click', () => {
+          const cur = state.parts[state.activePart];
+          const fixedSides = Object.values(cur.sides).filter(Boolean).length;
+          if (fixedSides < 2 && !cur.corners[b.dataset.corner]) {
+            showToast('Fixe pelo menos 2 lados antes de esticar os cantos.', 'warn');
+            return;
+          }
+          pushUndo();
+          cur.corners[b.dataset.corner] = !cur.corners[b.dataset.corner];
+          syncAllFromState();
+          AudioFX.playStretch();
+          if (cur.corners[b.dataset.corner]) {
+            AudioFX.playStaple();
+            if (Scene3D.ok) {
+              const g = state.activePart === 'assento' ? Scene3D.seatGroup : Scene3D.backGroup;
+              const sx = b.dataset.corner.endsWith('l') ? -0.28 : 0.28;
+              const sz = b.dataset.corner.startsWith('f') ? 0.26 : -0.26;
+              Scene3D.triggerStaplerAnimation(new THREE.Vector3(sx, 0.04, sz).applyMatrix4(g.matrixWorld));
+            }
+          }
+        });
+      });
+
+      dom.btnStretchAllCorners.addEventListener('click', () => {
+        pushUndo();
+        ['assento', 'encosto'].forEach((p) => {
+          state.parts[p].sides.front = true;
+          state.parts[p].sides.back = true;
+          state.parts[p].corners = { fl: true, fr: true, bl: true, br: true };
+        });
+        syncAllFromState();
+        AudioFX.playStretch();
+        AudioFX.playStaple();
+        if (Scene3D.ok) {
+          Scene3D.triggerStaplerAnimation(new THREE.Vector3(0.28, 0.48, 0.26));
+        }
+        showToast('Todos os cantos esticados e grampeados!', 'ok');
+      });
+
+      // Etapa 5: Densidade, pressão e viscoelasticidade
+      document.querySelectorAll('[data-density]').forEach((b) => {
+        b.addEventListener('click', () => {
+          if (state.foamDensity === b.dataset.density) return;
+          pushUndo();
+          state.foamDensity = b.dataset.density;
+          syncAllFromState();
+          AudioFX.playPress();
+          showToast('Espuma ' + FOAMS[state.foamDensity].name + ': ' + FOAMS[state.foamDensity].use + '.', 'ok');
+        });
+      });
+
+      dom.rangeForce.addEventListener('input', () => {
+        state.pressForce = Number(dom.rangeForce.value);
+        syncAllFromState();
+      });
+      dom.rangeDamping.addEventListener('input', () => {
+        state.damping = Number(dom.rangeDamping.value);
+        syncAllFromState();
+      });
+
+      const startCenterPress = () => {
+        if (fallbackActive) {
+          fallbackPressed = true;
+          return;
+        }
+        const sim = state.activePart === 'assento' ? Scene3D.simSeat : Scene3D.simBack;
+        sim.pressPointX = 0;
+        sim.pressPointZ = 0;
+        sim.pressActive = true;
+        dom.pressStateBadge.textContent = 'Pressionando centro';
+        AudioFX.playPress();
+      };
+      const stopCenterPress = () => {
+        if (fallbackActive) {
+          fallbackPressed = false;
+          return;
+        }
+        Scene3D.releasePress();
+      };
+
+      dom.btnPressHold.addEventListener('pointerdown', startCenterPress);
+      dom.btnPressHold.addEventListener('pointerup', stopCenterPress);
+      dom.btnPressHold.addEventListener('pointerleave', stopCenterPress);
+      dom.btnPressHold.addEventListener('pointercancel', stopCenterPress);
+
+      dom.btnPulsePress.addEventListener('click', () => {
+        if (fallbackActive) {
+          fallbackPressed = true;
+          setTimeout(() => { fallbackPressed = false; }, 220);
+          return;
+        }
+        const sim = state.activePart === 'assento' ? Scene3D.simSeat : Scene3D.simBack;
+        sim.pressPointX = 0;
+        sim.pressPointZ = 0;
+        sim.pulseTimer = 0.22;
+        dom.pressStateBadge.textContent = 'Pulso aplicado';
+        AudioFX.playPress();
+      });
+
+      dom.btnComparePattern.addEventListener('click', () => {
+        pushUndo();
+        state.staplePattern = state.staplePattern === 'cruzado' ? 'sequencial' : 'cruzado';
+        syncAllFromState();
+        AudioFX.playStaple();
+        showToast('Alternado para padrão ' + (state.staplePattern === 'cruzado' ? 'Cruzado Uniforme' : 'Sequencial em Leque') + '.', 'ok');
+      });
+
+      // Câmeras e barra superior
+      document.querySelectorAll('[data-cam]').forEach((b) => {
+        b.addEventListener('click', () => {
+          Scene3D.setCameraPreset(b.dataset.cam);
+          AudioFX.playClick();
+        });
+      });
+
+      dom.btnUndo.addEventListener('click', undoLast);
+
+      dom.btnLightMode.addEventListener('click', () => {
+        state.lightMode = state.lightMode === 'natural' ? 'rasante' : 'natural';
+        syncAllFromState();
+        AudioFX.playClick();
+        showToast(state.lightMode === 'rasante' ? 'Luz rasante ativada para inspecionar trama e dobras.' : 'Luz natural de oficina ativada.');
+      });
+
+      dom.btnAudio.addEventListener('click', () => AudioFX.toggle());
+
+      dom.btnInteractionMode.addEventListener('click', () => {
+        state.interactionMode = state.interactionMode === 'orbit' ? 'press' : 'orbit';
+        syncAllFromState();
+        AudioFX.playClick();
+      });
+
+      // Modal de Opções
+      dom.btnSettings.addEventListener('click', () => dom.settingsModal.classList.add('open'));
+      dom.btnCloseSettings.addEventListener('click', () => dom.settingsModal.classList.remove('open'));
+      dom.settingsModal.addEventListener('click', (e) => {
+        if (e.target === dom.settingsModal) dom.settingsModal.classList.remove('open');
+      });
+
+      dom.btnToggleLite.addEventListener('click', () => {
+        state.liteMode = !state.liteMode;
+        syncAllFromState();
+      });
+
+      dom.btnToggleReducedMotion.addEventListener('click', () => {
+        state.reducedMotion = !state.reducedMotion;
+        syncAllFromState();
+      });
+
+      dom.rangeVolume.addEventListener('input', () => {
+        const v = Number(dom.rangeVolume.value);
+        AudioFX.volume = v / 100;
+        dom.valVolume.textContent = v + '%';
+      });
+
+      // Exportar / Importar JSON versionado
+      dom.btnExportJson.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'oficina-de-estofados-estado.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Estado exportado em JSON (v' + STATE_VERSION + ').', 'ok');
+      });
+
+      dom.btnImportJson.addEventListener('click', () => dom.fileImportInput.click());
+      dom.fileImportInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(String(reader.result));
+            if (!parsed || (parsed.version !== STATE_VERSION && parsed.version !== 1) || !parsed.parts || !FABRICS[parsed.fabricId]) {
+              showToast('Arquivo JSON inválido ou versão incompatível.', 'warn');
+              return;
+            }
+            pushUndo();
+            state = Object.assign(createInitialState(), parsed, { version: STATE_VERSION });
+            if (!FOAMS[state.foamDensity]) state.foamDensity = 'D28';
+            syncAllFromState();
+            dom.settingsModal.classList.remove('open');
+            showToast('Estado importado com sucesso.', 'ok');
+          } catch (_) {
+            showToast('Não foi possível ler o arquivo JSON.', 'warn');
+          }
+        };
+        reader.readAsText(file);
+        dom.fileImportInput.value = '';
+      });
+
+      dom.btnResetAll.addEventListener('click', () => {
+        pushUndo();
+        state = createInitialState();
+        if (Scene3D.ok) {
+          Scene3D.simSeat.initParticles();
+          Scene3D.simBack.initParticles();
+          Scene3D.setCameraPreset('geral');
+        }
+        syncAllFromState();
+        dom.settingsModal.classList.remove('open');
+        showToast('Oficina reiniciada.', 'ok');
+      });
+
+      // Atalhos de teclado
+      window.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          undoLast();
+          return;
+        }
+        if (e.key === '1') Scene3D.setCameraPreset('geral');
+        else if (e.key === '2') Scene3D.setCameraPreset('assento');
+        else if (e.key === '3') Scene3D.setCameraPreset('encosto');
+        else if (e.key === '4') Scene3D.setCameraPreset('costura');
+        else if (e.key.toLowerCase() === 'r') dom.btnResetAll.click();
+        else if (e.code === 'Space' && !e.repeat) {
+          e.preventDefault();
+          startCenterPress();
+        } else if (e.key === 'Escape') {
+          dom.settingsModal.classList.remove('open');
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') stopCenterPress();
+      });
+
+      // Pausa simulação quando a aba perde foco e libera recursos ao sair
+      document.addEventListener('visibilitychange', () => {
+        Scene3D.paused = document.hidden;
+        if (!document.hidden && Scene3D.clock) Scene3D.clock.getDelta();
+      });
+
+      window.addEventListener('beforeunload', () => Scene3D.dispose());
+    }
+
+    /* =========================================================================
+       8. INICIALIZAÇÃO
+       ========================================================================= */
+    window.addEventListener('load', () => {
+      bindUIEvents();
+      Scene3D.init();
+      syncAllFromState();
+    });
+  })();
+  </script>
+</body>
+</html>

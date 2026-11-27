@@ -1,0 +1,3338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restauro de Azulejos — Quebra-cabeça e Oficina 3D</title>
+<meta name="description" content="Restaure quatro painéis cerâmicos em um quebra-cabeça de encaixe e visite a oficina 3D.">
+<style>
+  :root {
+    --bg: #14171c;
+    --panel: rgba(20, 24, 31, 0.88);
+    --panel-solid: #171b23;
+    --border: rgba(235, 224, 206, 0.15);
+    --border-strong: rgba(235, 224, 206, 0.30);
+    --text: #f3ede2;
+    --muted: #b2aba0;
+    --cobalt: #3c74c9;
+    --cobalt-bright: #5e97ec;
+    --cobalt-soft: rgba(60, 116, 201, 0.22);
+    --ochre: #d8a24a;
+    --ochre-soft: rgba(216, 162, 74, 0.20);
+    --terracotta: #c46b46;
+    --ok: #46b27d;
+    --ok-soft: rgba(70, 178, 125, 0.18);
+    --warn: #e09f3e;
+    --err: #d95d5d;
+    --radius: 12px;
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: var(--bg); color: var(--text);
+    font-family: var(--font-sans); -webkit-font-smoothing: antialiased;
+    touch-action: none;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit; color: inherit;
+  }
+
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--ochre);
+    outline-offset: 2px;
+  }
+
+  #stage-container {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 35%, #232833 0%, #111419 100%);
+  }
+  #webgl-canvas {
+    display: block; width: 100%; height: 100%; cursor: grab;
+  }
+  #webgl-canvas.mode-clean { cursor: crosshair; }
+  #webgl-canvas.mode-place { cursor: pointer; }
+  #webgl-canvas.dragging { cursor: grabbing; }
+
+  /* Top Bar */
+  .topbar {
+    position: fixed; top: 12px; left: 12px; right: 12px; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+
+  .brand-card {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel); border: 1px solid var(--border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 8px 14px; border-radius: var(--radius); box-shadow: var(--shadow);
+    min-height: 48px;
+  }
+  .brand-emblem {
+    width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
+    background: linear-gradient(135deg, #1b4485, #4d85d6);
+    border: 1px solid rgba(255,255,255,0.28);
+    display: grid; place-items: center; font-size: 16px;
+  }
+  .brand-title {
+    font-family: var(--font-serif); font-size: 15px; font-weight: 700;
+    letter-spacing: 0.01em; line-height: 1.15; margin: 0;
+  }
+  .brand-sub {
+    font-size: 11px; color: var(--muted); line-height: 1.2;
+  }
+
+  /* Stepper */
+  .stepper {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--panel); border: 1px solid var(--border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 4px; border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .step-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 44px; padding: 6px 11px; border-radius: 9px;
+    border: 1px solid transparent; background: transparent;
+    color: var(--muted); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; transition: background 0.18s, color 0.18s, border-color 0.18s;
+    white-space: nowrap;
+  }
+  .step-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .step-btn.active {
+    background: var(--cobalt-soft); color: #fff; border-color: rgba(94, 151, 236, 0.55);
+  }
+  .step-btn.done .step-num {
+    background: var(--ok); color: #0c1f15; border-color: var(--ok);
+  }
+  .step-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    display: grid; place-items: center; font-size: 11px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-btn.active .step-num {
+    background: var(--cobalt-bright); color: #0c1420; border-color: var(--cobalt-bright);
+  }
+
+  /* Utility buttons */
+  .util-bar {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--panel); border: 1px solid var(--border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 4px; border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .icon-btn {
+    min-width: 44px; min-height: 44px; padding: 0 10px;
+    border-radius: 9px; border: 1px solid transparent; background: transparent;
+    color: var(--text); font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  }
+  .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+  .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .icon-btn.on { background: var(--ochre-soft); border-color: rgba(216, 162, 74, 0.5); color: #f8d99a; }
+
+  /* Side Inspector / Tool Panel */
+  .tool-panel {
+    position: fixed; top: 72px; left: 12px; bottom: 16px; width: 316px;
+    max-height: calc(100vh - 88px); z-index: 15;
+    display: flex; flex-direction: column;
+    background: var(--panel); border: 1px solid var(--border);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden; transition: transform 0.22s ease;
+  }
+  .tool-panel.collapsed { transform: translateX(calc(-100% - 20px)); }
+
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px 10px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .panel-header h2 {
+    margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-body {
+    padding: 12px 14px 14px; overflow-y: auto; flex: 1;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .section-box {
+    background: rgba(255,255,255,0.035); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 12px;
+    display: flex; flex-direction: column; gap: 9px;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .helper-text {
+    margin: 0; font-size: 12.5px; line-height: 1.45; color: #d7d0c4;
+  }
+
+  /* Controls */
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn {
+    min-height: 44px; padding: 8px 12px; border-radius: 9px;
+    border: 1px solid var(--border-strong); background: rgba(255,255,255,0.05);
+    color: var(--text); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    flex: 1; min-width: 84px;
+  }
+  .btn:hover:not(:disabled) { background: rgba(255,255,255,0.11); }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary {
+    background: var(--cobalt); border-color: var(--cobalt-bright); color: #fff;
+  }
+  .btn.primary:hover:not(:disabled) { background: #4780d6; }
+  .btn.ochre {
+    background: var(--ochre-soft); border-color: rgba(216,162,74,0.6); color: #f9dca2;
+  }
+  .btn.ok {
+    background: var(--ok-soft); border-color: rgba(70,178,125,0.6); color: #9df0c6;
+  }
+  .btn.active {
+    background: var(--cobalt-soft); border-color: var(--cobalt-bright); color: #fff;
+  }
+
+  .slider-group { display: flex; flex-direction: column; gap: 5px; }
+  .slider-head {
+    display: flex; justify-content: space-between; font-size: 12px; color: #ddd6ca;
+  }
+  .slider-val { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ochre); }
+  input[type="range"] {
+    width: 100%; height: 28px; accent-color: var(--cobalt-bright); cursor: pointer;
+    margin: 0;
+  }
+
+  /* Progress meter */
+  .meter-track {
+    width: 100%; height: 9px; border-radius: 99px;
+    background: rgba(255,255,255,0.1); overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%; width: 0%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--cobalt), var(--ochre));
+    transition: width 0.2s ease;
+  }
+  .meter-fill.complete { background: linear-gradient(90deg, #3ba172, #6cd8a1); }
+
+  /* Motif choice cards */
+  .motif-option {
+    text-align: left; padding: 10px 11px; border-radius: 9px;
+    border: 1px solid var(--border-strong); background: rgba(255,255,255,0.03);
+    cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+    min-height: 44px; transition: border-color 0.15s, background 0.15s;
+  }
+  .motif-option:hover { background: rgba(255,255,255,0.08); }
+  .motif-option.correct { border-color: var(--ok); background: var(--ok-soft); }
+  .motif-option.wrong { border-color: var(--err); background: rgba(217, 93, 93, 0.15); }
+  .motif-option strong { font-size: 12.5px; color: var(--text); }
+  .motif-option span { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+
+  /* Piece tray */
+  .piece-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  }
+  .piece-card {
+    padding: 8px; border-radius: 10px;
+    border: 1px solid var(--border-strong); background: rgba(255,255,255,0.04);
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    min-height: 44px; transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  }
+  .piece-card:hover:not(.placed) { background: rgba(255,255,255,0.09); }
+  .piece-card.selected {
+    border-color: var(--ochre); background: var(--ochre-soft);
+    box-shadow: 0 0 0 1px rgba(216,162,74,0.4);
+  }
+  .piece-card.placed {
+    border-color: rgba(70, 178, 125, 0.5); background: var(--ok-soft); opacity: 0.78;
+  }
+  .piece-thumb {
+    width: 68px; height: 68px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2); background: #ece5d8;
+    transition: transform 0.2s ease;
+  }
+  .piece-meta {
+    text-align: center; font-size: 11.5px; line-height: 1.25;
+  }
+  .piece-id { font-weight: 700; color: var(--text); display: block; }
+  .piece-status { color: var(--muted); font-size: 10.5px; }
+
+  /* Compare curtain badge */
+  .compare-hud {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 16; display: none; align-items: center; gap: 12px;
+    background: var(--panel); border: 1px solid var(--border-strong);
+    backdrop-filter: blur(12px); padding: 10px 16px; border-radius: 999px;
+    box-shadow: var(--shadow); min-width: 300px; max-width: calc(100vw - 24px);
+  }
+  .compare-hud.visible { display: flex; }
+  .compare-tag {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .compare-tag.before { color: var(--terracotta); }
+  .compare-tag.after { color: var(--ok); }
+
+  /* Right Telemetry & Status Chip */
+  .telemetry-chip {
+    position: fixed; right: 12px; bottom: 14px; z-index: 14;
+    background: var(--panel); border: 1px solid var(--border);
+    backdrop-filter: blur(10px); padding: 6px 11px; border-radius: 9px;
+    font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .telemetry-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 72px; left: 50%; transform: translate(-50%, -12px);
+    z-index: 40; padding: 10px 16px; border-radius: 10px;
+    background: rgba(18, 22, 29, 0.95); border: 1px solid var(--border-strong);
+    color: var(--text); font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow); opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s; max-width: min(460px, calc(100vw - 28px));
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.ok { border-color: var(--ok); }
+  .toast.warn { border-color: var(--warn); }
+  .toast.err { border-color: var(--err); }
+
+  /* Mobile panel toggle */
+  .panel-toggle-fab {
+    display: none; position: fixed; left: 12px; bottom: 16px; z-index: 22;
+    min-height: 44px; padding: 0 14px; border-radius: 999px;
+    background: var(--cobalt); color: #fff; border: 1px solid var(--cobalt-bright);
+    font-size: 13px; font-weight: 700; box-shadow: var(--shadow); cursor: pointer;
+    align-items: center; gap: 6px;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    background: rgba(8, 10, 14, 0.72); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-card {
+    width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
+    background: var(--panel-solid); border: 1px solid var(--border-strong);
+    border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+    padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .modal-head h3 { margin: 0; font-family: var(--font-serif); font-size: 18px; }
+  .compare-shots {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .shot-box {
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    background: #101318; text-align: center;
+  }
+  .shot-box img { width: 100%; display: block; aspect-ratio: 1 / 1; object-fit: cover; }
+  .shot-cap { padding: 6px; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+
+  .notes-area {
+    width: 100%; min-height: 76px; padding: 9px 11px; border-radius: 9px;
+    border: 1px solid var(--border-strong); background: rgba(0,0,0,0.28);
+    color: var(--text); font-size: 13px; resize: vertical;
+  }
+
+  .kbd-grid {
+    display: grid; grid-template-columns: auto 1fr; gap: 7px 14px;
+    font-size: 12.5px; align-items: center;
+  }
+  kbd {
+    background: rgba(255,255,255,0.1); border: 1px solid var(--border-strong);
+    border-radius: 5px; padding: 2px 7px; font-size: 11.5px; font-weight: 700;
+    font-family: monospace; text-align: center;
+  }
+
+  /* Fallback 2D mode */
+  #fallback-root {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    background: #15181e; color: var(--text); overflow-y: auto; padding: 20px;
+  }
+  #fallback-root.active { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .fallback-banner {
+    max-width: 720px; width: 100%; padding: 14px 16px; border-radius: 12px;
+    background: rgba(224, 159, 62, 0.14); border: 1px solid var(--warn);
+    font-size: 13px; line-height: 1.45;
+  }
+  #fallback-canvas {
+    width: min(440px, 92vw); height: min(440px, 92vw);
+    border-radius: 10px; border: 2px solid var(--border-strong);
+    background: #dcd4c5; touch-action: none; cursor: crosshair;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+
+  /* Responsive Mobile (<= 820px) */
+  @media (max-width: 820px) {
+    .topbar {
+      top: 8px; left: 8px; right: 8px; flex-wrap: wrap; gap: 6px;
+    }
+    .brand-card { padding: 6px 10px; min-height: 44px; flex: 1; }
+    .brand-sub { display: none; }
+    .stepper {
+      order: 3; width: 100%; overflow-x: auto; justify-content: space-between;
+      scrollbar-width: none;
+    }
+    .stepper::-webkit-scrollbar { display: none; }
+    .step-btn { padding: 6px 8px; font-size: 11.5px; flex: 1; justify-content: center; }
+    .step-text { display: none; }
+    .step-btn.active .step-text { display: inline; }
+    .util-bar .btn-lbl { display: none; }
+
+    .tool-panel {
+      top: auto; left: 8px; right: 8px; bottom: 8px; width: auto;
+      max-height: 44vh;
+    }
+    .tool-panel.collapsed { transform: translateY(calc(100% + 20px)); }
+    .panel-toggle-fab { display: inline-flex; }
+    .telemetry-chip { display: none; }
+    .compare-hud { bottom: 68px; min-width: 260px; padding: 8px 12px; }
+  }
+</style>
+<link rel="stylesheet" href="puzzle.css">
+<script>
+  if (new URLSearchParams(location.search).get('modo') === '3d') {
+    document.documentElement.classList.add('azulejos-3d');
+  }
+</script>
+<script defer src="puzzle.js"></script>
+</head>
+<body>
+<div class="puzzle-app" id="puzzle-app">
+  <header class="puzzle-header">
+    <div class="puzzle-brand"><span class="puzzle-mark" aria-hidden="true">✥</span><span>Restauro de Azulejos</span></div>
+    <a class="puzzle-button" href="?modo=3d">Oficina 3D <span aria-hidden="true">↗</span></a>
+  </header>
+  <main class="puzzle-layout">
+    <aside class="puzzle-collection" aria-labelledby="collection-title">
+      <h2 id="collection-title">Coleção de painéis</h2>
+      <div id="puzzle-collection"></div>
+    </aside>
+    <section class="puzzle-workbench" aria-labelledby="puzzle-title">
+      <div class="puzzle-intro">
+        <div>
+          <p class="puzzle-kicker" id="puzzle-level"></p>
+          <h1 id="puzzle-title"></h1>
+          <p id="puzzle-description"></p>
+        </div>
+        <div class="puzzle-meter">
+          <span id="puzzle-progress"></span>
+          <progress id="puzzle-meter" aria-label="Progresso do painel"></progress>
+        </div>
+      </div>
+      <div class="puzzle-table">
+        <div id="puzzle-board" class="puzzle-board" role="group" aria-label="Painel de azulejos"></div>
+      </div>
+      <div class="puzzle-toolbar">
+        <button class="puzzle-button" type="button" id="puzzle-reference"><span aria-hidden="true">▧</span> Ver referência</button>
+        <button class="puzzle-button" type="button" id="puzzle-hint"><span aria-hidden="true">✧</span> Pedir dica</button>
+        <button class="puzzle-button puzzle-reset" type="button" id="puzzle-reset"><span aria-hidden="true">↻</span> Reiniciar</button>
+      </div>
+      <p id="puzzle-status" class="puzzle-status" role="status" aria-live="polite"></p>
+    </section>
+    <aside class="puzzle-pieces" aria-labelledby="tray-title">
+      <div class="puzzle-tray-heading"><h2 id="tray-title">Bandeja de peças</h2><span id="puzzle-remaining"></span></div>
+      <p id="puzzle-instructions">Escolha uma peça, gire se precisar e toque no vão. No computador, você também pode arrastar.</p>
+      <div id="puzzle-tray" aria-label="Peças disponíveis" role="group"></div>
+      <div class="puzzle-turn">
+        <button class="puzzle-button" id="puzzle-ccw" type="button" aria-label="Girar 90 graus à esquerda" title="Girar à esquerda (Q)">↶</button>
+        <span id="puzzle-selection">Selecione uma peça</span>
+        <button class="puzzle-button" id="puzzle-cw" type="button" aria-label="Girar 90 graus à direita" title="Girar à direita (E)">↷</button>
+      </div>
+      <button class="puzzle-button puzzle-next" id="puzzle-next" type="button" hidden></button>
+    </aside>
+  </main>
+  <dialog id="puzzle-guide" class="puzzle-dialog" aria-labelledby="puzzle-reference-title">
+    <div class="puzzle-dialog-head">
+      <div><p class="puzzle-kicker">Painel completo</p><h2 id="puzzle-reference-title"></h2></div>
+      <form method="dialog"><button class="puzzle-button" aria-label="Fechar referência" autofocus>✕</button></form>
+    </div>
+    <img id="puzzle-reference-image" alt="">
+  </dialog>
+  <dialog id="puzzle-reset-dialog" class="puzzle-dialog" aria-labelledby="puzzle-reset-title">
+    <div class="puzzle-dialog-head"><h2 id="puzzle-reset-title">Reiniciar painel?</h2></div>
+    <p>As peças deste painel voltarão à bandeja e serão embaralhadas.</p>
+    <form method="dialog" class="puzzle-toolbar">
+      <button class="puzzle-button" value="cancel" autofocus>Cancelar</button>
+      <button class="puzzle-button" value="reset">Reiniciar painel</button>
+    </form>
+  </dialog>
+</div>
+<div id="azulejos-oficina">
+<a href="index.html" id="puzzle-return">← Quebra-cabeça</a>
+<div id="stage-container" role="main" aria-label="Bancada 3D de restauro de azulejos">
+  <canvas id="webgl-canvas" tabindex="0" aria-label="Cena interativa 3D do painel cerâmico"></canvas>
+</div>
+
+<!-- Top Navigation Bar -->
+<header class="topbar">
+  <div class="brand-card">
+    <div class="brand-emblem" aria-hidden="true">❖</div>
+    <div>
+      <h1 class="brand-title">Restauro de Azulejos</h1>
+      <div class="brand-sub">Painel Luso-Brasileiro • Grade 4×4</div>
+    </div>
+  </div>
+
+  <nav class="stepper" aria-label="Etapas do restauro">
+    <button type="button" class="step-btn active" data-step="inspect" id="step-inspect">
+      <span class="step-num">1</span><span class="step-text">Inspecionar</span>
+    </button>
+    <button type="button" class="step-btn" data-step="clean" id="step-clean">
+      <span class="step-num">2</span><span class="step-text">Limpar</span>
+    </button>
+    <button type="button" class="step-btn" data-step="identify" id="step-identify">
+      <span class="step-num">3</span><span class="step-text">Motivo</span>
+    </button>
+    <button type="button" class="step-btn" data-step="place" id="step-place">
+      <span class="step-num">4</span><span class="step-text">Encaixar</span>
+    </button>
+    <button type="button" class="step-btn" data-step="compare" id="step-compare">
+      <span class="step-num">5</span><span class="step-text">Comparar</span>
+    </button>
+  </nav>
+
+  <div class="util-bar" role="toolbar" aria-label="Ações rápidas">
+    <button type="button" class="icon-btn" id="btn-undo" title="Desfazer (Ctrl+Z)" aria-label="Desfazer" disabled>↶</button>
+    <button type="button" class="icon-btn" id="btn-redo" title="Refazer (Ctrl+Y)" aria-label="Refazer" disabled>↷</button>
+    <button type="button" class="icon-btn" id="btn-audio" title="Ativar ou silenciar áudio" aria-label="Alternar áudio">🔇</button>
+    <button type="button" class="icon-btn" id="btn-quality" title="Alternar perfil de desempenho (Normal/Leve)" aria-label="Perfil de qualidade">
+      ⚡<span class="btn-lbl" id="quality-label">Normal</span>
+    </button>
+    <button type="button" class="icon-btn" id="btn-help" title="Atalhos e ajuda" aria-label="Ajuda e atalhos">?</button>
+  </div>
+</header>
+
+<!-- Contextual Tool Panel -->
+<aside class="tool-panel" id="tool-panel" aria-label="Ferramentas de restauro">
+  <div class="panel-header">
+    <h2 id="panel-title">1. Inspeção com Luz Rasante</h2>
+    <button type="button" class="icon-btn" id="btn-collapse-panel" style="min-width:36px;min-height:36px;" title="Recolher painel" aria-label="Recolher painel">✕</button>
+  </div>
+
+  <div class="panel-body">
+    <!-- STEP 1: INSPECT -->
+    <div id="view-inspect" class="step-view">
+      <div class="section-box">
+        <div class="section-label"><span>Luz Rasante Móvel</span><span id="raking-status" style="color:var(--ochre)">Ativa</span></div>
+        <p class="helper-text">Mova a luminária em ângulo raso para evidenciar craquelê no esmalte, lascas antigas, cavidades de rejunte e sujeira incrustada.</p>
+        <div class="btn-row">
+          <button type="button" class="btn active" id="btn-toggle-raking">Luz Rasante: ON</button>
+          <button type="button" class="btn" id="btn-toggle-studio">Luz Ateliê</button>
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Azimute da luz</span><span class="slider-val" id="val-azimuth">38°</span></div>
+          <input type="range" id="slider-azimuth" min="0" max="360" value="38" aria-label="Azimute da luz rasante">
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Ângulo rasante (elevação)</span><span class="slider-val" id="val-elevation">16°</span></div>
+          <input type="range" id="slider-elevation" min="8" max="55" value="16" aria-label="Elevação da luz rasante">
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-label"><span>Enquadramento da Câmera</span></div>
+        <div class="btn-row">
+          <button type="button" class="btn active" id="cam-overview">Geral</button>
+          <button type="button" class="btn" id="cam-closeup">Close</button>
+          <button type="button" class="btn" id="cam-raking">Rasante</button>
+        </div>
+        <p class="helper-text">Arraste na cena para orbitar, role (ou faça pinça) para aproximar. Quando concluir o exame, avance para a limpeza.</p>
+        <button type="button" class="btn primary" id="btn-go-clean">Ir para Limpeza →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: CLEAN -->
+    <div id="view-clean" class="step-view" style="display:none;">
+      <div class="section-box">
+        <div class="section-label"><span>Pincel de Conservação</span><span id="clean-pct-label" class="slider-val">0%</span></div>
+        <div class="meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="clean-meter-wrap">
+          <div class="meter-fill" id="clean-meter"></div>
+        </div>
+        <p class="helper-text">Passe o pincel diretamente sobre os azulejos sujos. A limpeza atua apenas na região atingida, recuperando o brilho vítreo do esmalte.</p>
+        <div class="btn-row">
+          <button type="button" class="btn active" id="btn-clean-mode-brush">🖌️ Pincelar</button>
+          <button type="button" class="btn" id="btn-clean-mode-orbit">🔄 Navegar</button>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-label"><span>Parâmetros do Pincel</span></div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Raio do pincel</span><span class="slider-val" id="val-brush-radius">28 mm</span></div>
+          <input type="range" id="slider-brush-radius" min="12" max="50" value="28" aria-label="Raio do pincel">
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Pressão (remoção)</span><span class="slider-val" id="val-brush-pressure">68%</span></div>
+          <input type="range" id="slider-brush-pressure" min="20" max="100" value="68" aria-label="Pressão do pincel">
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btn-clean-raking-quick">Luz Rasante</button>
+          <button type="button" class="btn primary" id="btn-go-identify">Identificar Motivo →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: IDENTIFY -->
+    <div id="view-identify" class="step-view" style="display:none;">
+      <div class="section-box">
+        <div class="section-label"><span>Análise Iconográfica</span><span id="motif-badge" style="color:var(--muted)">Pendente</span></div>
+        <p class="helper-text">Observe os trechos já limpos ao redor dos 4 vãos vazios. Qual composição modular orienta a continuidade das bordas deste painel?</p>
+        <button type="button" class="motif-option" data-motif="barroco-estrela" id="motif-opt-1">
+          <strong>Tapete de Estrela Octogonal &amp; Rosetas de Acanto</strong>
+          <span>Medalhão central de 8 pontas em azul cobalto e ocre, laçaria perimetral contínua e cartuchos divididos nas emendas.</span>
+        </button>
+        <button type="button" class="motif-option" data-motif="xadrez-diagonal" id="motif-opt-2">
+          <strong>Enxaquetado Mudéjar em Losangos Alternados</strong>
+          <span>Malha geométrica bipartida em azul e branco sem medalhão central ou elementos florais nas bordas.</span>
+        </button>
+        <button type="button" class="motif-option" data-motif="marinha-narrativa" id="motif-opt-3">
+          <strong>Painel Figurativo de Cena Marinha Barroca</strong>
+          <span>Composição narrativa única assimétrica com embarcações, sem repetição modular ou simetria radial.</span>
+        </button>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btn-toggle-guides">Guias de Borda: OFF</button>
+          <button type="button" class="btn primary" id="btn-go-place">Ir para Encaixe →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: PLACE -->
+    <div id="view-place" class="step-view" style="display:none;">
+      <div class="section-box">
+        <div class="section-label"><span>Peças Faltantes Catalogadas</span><span id="placed-count-label" class="slider-val">0 / 4</span></div>
+        <p class="helper-text">Selecione uma peça abaixo, clique no vão correspondente no painel 3D (ou selecione o vão), gire até alinhar o padrão nas bordas (tolerância ±12°) e encaixe.</p>
+        <div class="piece-grid" id="piece-tray" role="list" aria-label="Bandeja de azulejos faltantes"></div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-label"><span>Orientação &amp; Encaixe</span><span id="active-angle-label" class="slider-val">—</span></div>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btn-rot-ccw" title="Girar 90° anti-horário (Q)">↺ -90°</button>
+          <button type="button" class="btn" id="btn-rot-cw" title="Girar 90° horário (E)">↻ +90°</button>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btn-rot-fine-ccw" title="Ajuste fino -5°">-5°</button>
+          <button type="button" class="btn" id="btn-rot-fine-cw" title="Ajuste fino +5°">+5°</button>
+          <button type="button" class="btn primary" id="btn-snap-piece" title="Encaixar peça no vão selecionado (Enter)">Encaixar</button>
+        </div>
+        <button type="button" class="btn ochre" id="btn-go-compare">Ir para Comparação →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: COMPARE -->
+    <div id="view-compare" class="step-view" style="display:none;">
+      <div class="section-box">
+        <div class="section-label"><span>Comparação Visual 3D</span><span id="compare-pct-label" class="slider-val">50%</span></div>
+        <p class="helper-text">Deslize a cortina para comparar lado a lado o painel original (sujo e lacunar, à esquerda) com o painel restaurado (à direita).</p>
+        <div class="slider-group">
+          <div class="slider-head"><span>Antes (Original)</span><span>Depois (Restaurado)</span></div>
+          <input type="range" id="slider-compare-panel" min="0" max="100" value="50" aria-label="Cortina de comparação antes e depois">
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btn-compare-before">100% Antes</button>
+          <button type="button" class="btn" id="btn-compare-split">50 / 50</button>
+          <button type="button" class="btn" id="btn-compare-after">100% Depois</button>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-label"><span>Registro &amp; Persistência</span></div>
+        <button type="button" class="btn primary" id="btn-open-report">📋 Registrar Antes e Depois</button>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btn-export-json">Exportar JSON</button>
+          <button type="button" class="btn" id="btn-import-json">Importar JSON</button>
+        </div>
+        <input type="file" id="input-import-file" accept="application/json,.json" style="display:none;">
+        <button type="button" class="btn" id="btn-reset-all" style="border-color:rgba(217,93,93,0.45);color:#f3a3a3;">Reiniciar Restauro</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<button type="button" class="panel-toggle-fab" id="btn-open-panel" aria-label="Abrir ferramentas">🛠️ Ferramentas</button>
+
+<!-- Floating Compare Slider (visible in Compare step) -->
+<div class="compare-hud" id="compare-hud" role="region" aria-label="Controle rápido antes e depois">
+  <span class="compare-tag before">Antes</span>
+  <input type="range" id="slider-compare-hud" min="0" max="100" value="50" aria-label="Divisor visual antes e depois">
+  <span class="compare-tag after">Depois</span>
+</div>
+
+<!-- Performance Telemetry -->
+<div class="telemetry-chip" id="telemetry-chip" aria-hidden="true">
+  <span class="telemetry-dot"></span>
+  <span id="tel-ms">16.6 ms</span>
+  <span id="tel-calls">0 calls</span>
+  <span id="tel-mode">Normal</span>
+</div>
+
+<!-- Toast Feedback -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Report Modal (Antes e Depois) -->
+<div class="modal-backdrop" id="modal-report" role="dialog" aria-modal="true" aria-labelledby="report-title">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="report-title">Ficha de Registro — Antes e Depois</h3>
+      <button type="button" class="icon-btn" id="btn-close-report" aria-label="Fechar ficha">✕</button>
+    </div>
+    <div class="compare-shots">
+      <div class="shot-box">
+        <img id="shot-before" alt="Estado original antes do restauro">
+        <div class="shot-cap">ANTES — Estado de chegada</div>
+      </div>
+      <div class="shot-box">
+        <img id="shot-after" alt="Estado atual após restauro">
+        <div class="shot-cap">DEPOIS — Estado recuperado</div>
+      </div>
+    </div>
+    <div class="section-box" id="report-metrics"></div>
+    <label for="report-notes" class="section-label"><span>Anotações de conservação (em memória)</span></label>
+    <textarea id="report-notes" class="notes-area" placeholder="Registre observações sobre o craquelê, marcas de rejunte ou áreas que exigem atenção..."></textarea>
+    <div class="btn-row">
+      <button type="button" class="btn primary" id="btn-download-report">Baixar Registro (.json)</button>
+      <button type="button" class="btn" id="btn-close-report-2">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help & Shortcuts Modal -->
+<div class="modal-backdrop" id="modal-help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="help-title">Controles, Atalhos e Notas Técnicas</h3>
+      <button type="button" class="icon-btn" id="btn-close-help" aria-label="Fechar ajuda">✕</button>
+    </div>
+    <div class="kbd-grid">
+      <kbd>1</kbd>–<kbd>5</kbd><span>Alternar entre as 5 etapas do restauro</span>
+      <kbd>L</kbd><span>Ligar ou desligar a luz rasante móvel</span>
+      <kbd>←</kbd> / <kbd>→</kbd><span>Girar a luz rasante ao redor do painel</span>
+      <kbd>Q</kbd> / <kbd>E</kbd><span>Girar a peça selecionada (-90° / +90°)</span>
+      <kbd>Enter</kbd><span>Encaixar peça selecionada no vão ativo</span>
+      <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd><span>Desfazer ou refazer limpeza e encaixe</span>
+      <kbd>C</kbd><span>Alternar enquadramento da câmera</span>
+    </div>
+    <div class="section-box">
+      <div class="section-label"><span>Aproximações e Dependências</span></div>
+      <p class="helper-text">
+        A limpeza usa máscara de sujeira editável em grade UV (256×256 por azulejo) acoplada à rugosidade do esmalte.
+        O encaixe opera em grade 4×4 com tolerância angular de ±12°. Motor Three.js r128 local, com recuperação automática em Canvas 2D caso o WebGL esteja indisponível.
+        Áudio sintetizado via Web Audio API somente após ativação explícita.
+      </p>
+    </div>
+    <div class="section-box" id="audio-settings-box">
+      <div class="section-label"><span>Volume do Áudio</span><span class="slider-val" id="val-volume">60%</span></div>
+      <input type="range" id="slider-volume" min="0" max="100" value="60" aria-label="Volume do áudio">
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Reset Modal -->
+<div class="modal-backdrop" id="modal-reset" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+  <div class="modal-card" style="max-width:420px;">
+    <div class="modal-head">
+      <h3 id="reset-title">Reiniciar restauro?</h3>
+      <button type="button" class="icon-btn" id="btn-cancel-reset" aria-label="Cancelar">✕</button>
+    </div>
+    <p class="helper-text">Isso restaura a sujeira original dos 12 azulejos fixos, retorna as 4 peças faltantes para a bandeja e limpa o histórico de desfazer.</p>
+    <div class="btn-row">
+      <button type="button" class="btn" id="btn-cancel-reset-2">Cancelar</button>
+      <button type="button" class="btn primary" id="btn-confirm-reset" style="background:var(--err);border-color:#ef7a7a;">Confirmar Reinício</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fallback 2D Recovery Root (when WebGL2 or CDN Three.js fails) -->
+<section id="fallback-root" aria-label="Modo de recuperação HTML 2D">
+  <div class="fallback-banner" id="fallback-reason">
+    <strong>Modo de Recuperação 2D Ativado:</strong> WebGL ou a biblioteca Three.js local não puderam ser carregados.
+    Você ainda pode limpar o painel com o pincel, girar e encaixar as 4 peças faltantes e comparar antes e depois diretamente em HTML5 Canvas.
+  </div>
+  <canvas id="fallback-canvas" width="512" height="512"></canvas>
+  <div class="btn-row" style="max-width:460px;width:100%;">
+    <button type="button" class="btn active" id="fb-mode-clean">🖌️ Limpar</button>
+    <button type="button" class="btn" id="fb-mode-place">🧩 Encaixar Peças</button>
+    <button type="button" class="btn" id="fb-rot-cw">↻ Girar +90°</button>
+    <button type="button" class="btn primary" id="fb-snap">Encaixar</button>
+  </div>
+  <div style="max-width:460px;width:100%;">
+    <div class="slider-head"><span>Comparar Antes × Depois</span><span class="slider-val" id="fb-cmp-val">100%</span></div>
+    <input type="range" id="fb-compare" min="0" max="100" value="100" aria-label="Comparação antes e depois 2D">
+  </div>
+  <p class="helper-text" id="fb-status" style="max-width:460px;text-align:center;"></p>
+</section>
+
+</div>
+<script>
+(function () {
+  'use strict';
+  if (!document.documentElement.classList.contains('azulejos-3d')) return;
+
+  /* ============================================================================
+   * 1. CONSTANTS & SERIALIZABLE STATE
+   * ========================================================================== */
+  const SCHEMA_VERSION = 1;
+  const GRID_N = 4;
+  const TILE_SIZE = 0.148;       // meters (14.8 cm)
+  const GROUT_GAP = 0.006;       // meters (6 mm mortar seam)
+  const TILE_PITCH = TILE_SIZE + GROUT_GAP; // 0.154 m
+  const TILE_THICK = 0.013;      // meters (13 mm ceramic thickness)
+  const MASTER_RES = 1024;       // 256 px per tile
+  const TILE_TEX_RES = 256;
+  const ANGLE_TOLERANCE_DEG = 12;
+
+  const MISSING_SLOTS = [
+    { id: 'AZ-01', col: 2, row: 2, label: 'Estrela SE', hint: 'Quadrante inferior-direito do medalhão central', initialAngle: 97 },
+    { id: 'AZ-02', col: 1, row: 0, label: 'Guirlanda N', hint: 'Borda superior, metade esquerda do cartucho norte', initialAngle: 175 },
+    { id: 'AZ-03', col: 0, row: 3, label: 'Roseta SO', hint: 'Canto inferior-esquerdo com folha de acanto', initialAngle: 276 },
+    { id: 'AZ-04', col: 3, row: 1, label: 'Laçaria L', hint: 'Borda direita, metade superior do cartucho leste', initialAngle: 82 }
+  ];
+
+  // Deterministic PRNG for procedural textures & antique irregularities
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function tileKey(col, row) { return `T_${col}_${row}`; }
+  function isMissingSlot(col, row) {
+    return MISSING_SLOTS.some(s => s.col === col && s.row === row);
+  }
+  function getSlotSpec(col, row) {
+    return MISSING_SLOTS.find(s => s.col === col && s.row === row) || null;
+  }
+
+  function normalizeAngleDeg(deg) {
+    let a = ((deg % 360) + 360) % 360;
+    return Math.round(a);
+  }
+  function angleErrorDeg(deg) {
+    const a = normalizeAngleDeg(deg);
+    return Math.min(a, 360 - a);
+  }
+
+  const State = {
+    schemaVersion: SCHEMA_VERSION,
+    step: 'inspect', // 'inspect' | 'clean' | 'identify' | 'place' | 'compare'
+    quality: 'normal', // 'normal' | 'lite'
+    rakingOn: true,
+    studioOn: true,
+    rakingAzimuth: 38,
+    rakingElevation: 16,
+    cameraPreset: 'overview',
+    cleanSubMode: 'brush', // 'brush' | 'orbit'
+    brushRadiusMm: 28,
+    brushPressure: 0.68,
+    motifIdentified: false,
+    motifChoice: null,
+    showGuides: false,
+    selectedPieceId: 'AZ-01',
+    selectedSlotKey: tileKey(2, 2),
+    pieces: {}, // id -> { angle, placed, placedSlotKey }
+    compareSplit: 0.5, // 0..1 (left = before, right = after)
+    notes: '',
+    cleanPercent: 0,
+    audioEnabled: false,
+    audioVolume: 0.6,
+    undoStack: [],
+    redoStack: []
+  };
+
+  function initPiecesState() {
+    State.pieces = {};
+    for (const s of MISSING_SLOTS) {
+      State.pieces[s.id] = {
+        id: s.id,
+        angle: s.initialAngle,
+        placed: false,
+        placedSlotKey: null
+      };
+    }
+    State.selectedPieceId = MISSING_SLOTS[0].id;
+    State.selectedSlotKey = tileKey(MISSING_SLOTS[0].col, MISSING_SLOTS[0].row);
+  }
+  initPiecesState();
+
+  /* ============================================================================
+   * 2. PROCEDURAL AUDIO (Web Audio API, activated only after user action)
+   * ========================================================================== */
+  const AudioEngine = {
+    ctx: null,
+    noiseBuf: null,
+    lastBrushTime: 0,
+    ensure() {
+      if (!State.audioEnabled) return null;
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        this.ctx = new AC();
+        const len = this.ctx.sampleRate * 0.4;
+        this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const data = this.noiseBuf.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+      }
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      return this.ctx;
+    },
+    playBrush() {
+      const ctx = this.ensure();
+      if (!ctx || !this.noiseBuf) return;
+      const now = ctx.currentTime;
+      if (now - this.lastBrushTime < 0.09) return;
+      this.lastBrushTime = now;
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1800 + Math.random() * 600;
+      filter.Q.value = 1.6;
+      const gain = ctx.createGain();
+      const vol = 0.08 * State.audioVolume;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      src.start(now); src.stop(now + 0.1);
+    },
+    playRotate() {
+      const ctx = this.ensure();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(760, now + 0.055);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.12 * State.audioVolume), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.08);
+    },
+    playSnap(success) {
+      const ctx = this.ensure();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const freqs = success ? [440, 660, 880] : [220, 175];
+      freqs.forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = success ? 'sine' : 'sawtooth';
+        const t = now + idx * 0.055;
+        osc.frequency.setValueAtTime(f, t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, (success ? 0.14 : 0.07) * State.audioVolume), t + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(t); osc.stop(t + 0.2);
+      });
+    }
+  };
+
+  /* ============================================================================
+   * 3. CONTINUOUS MODULAR AZULEJO ARTWORK GENERATOR (1024 x 1024)
+   * ========================================================================== */
+  function createMasterArtwork() {
+    const c = document.createElement('canvas');
+    c.width = MASTER_RES;
+    c.height = MASTER_RES;
+    const ctx = c.getContext('2d');
+    const rand = mulberry32(174802);
+
+    // 1) Warm tin-glaze ivory base
+    ctx.fillStyle = '#f3ede0';
+    ctx.fillRect(0, 0, MASTER_RES, MASTER_RES);
+
+    // Subtle hand-glazed warm mottling across entire panel
+    for (let i = 0; i < 420; i++) {
+      const x = rand() * MASTER_RES;
+      const y = rand() * MASTER_RES;
+      const r = 18 + rand() * 56;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const tone = rand() > 0.5 ? 'rgba(225, 214, 194, 0.14)' : 'rgba(255, 252, 245, 0.18)';
+      g.addColorStop(0, tone);
+      g.addColorStop(1, 'rgba(243, 237, 224, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const COBALT_DARK = '#123166';
+    const COBALT_MID = '#245299';
+    const COBALT_LIGHT = '#5d89c8';
+    const OCHRE = '#c78c34';
+    const OCHRE_LIGHT = '#e3b561';
+    const CELADON = '#5b8a82';
+
+    // 2) Outer continuous cobalt double border (crosses every perimeter seam)
+    ctx.strokeStyle = COBALT_DARK;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(24, 24, MASTER_RES - 48, MASTER_RES - 48);
+    ctx.strokeStyle = OCHRE;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(38, 38, MASTER_RES - 76, MASTER_RES - 76);
+    ctx.strokeStyle = COBALT_MID;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(48, 48, MASTER_RES - 96, MASTER_RES - 96);
+
+    // 3) Inner continuous interlacing ribbon frame at 154..870 (crosses all tile seams!)
+    function drawRibbonSquare(inset, stroke, width) {
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.strokeRect(inset, inset, MASTER_RES - inset * 2, MASTER_RES - inset * 2);
+      ctx.restore();
+    }
+    drawRibbonSquare(154, COBALT_LIGHT, 16);
+    drawRibbonSquare(154, COBALT_DARK, 3);
+    drawRibbonSquare(166, OCHRE, 3.5);
+
+    // Continuous sine-wave scroll garland along all 4 sides crossing tile seams
+    function drawScrollBand(x1, y1, x2, y2, waves) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      const ang = Math.atan2(dy, dx);
+      ctx.save();
+      ctx.translate(x1, y1);
+      ctx.rotate(ang);
+      ctx.strokeStyle = COBALT_MID;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      for (let t = 0; t <= len; t += 4) {
+        const y = Math.sin((t / len) * Math.PI * 2 * waves) * 20;
+        if (t === 0) ctx.moveTo(t, y); else ctx.lineTo(t, y);
+      }
+      ctx.stroke();
+
+      // Leaves & ochre berries along the garland
+      for (let i = 1; i < waves * 2; i++) {
+        const tx = (i / (waves * 2)) * len;
+        const side = i % 2 === 0 ? 1 : -1;
+        ctx.save();
+        ctx.translate(tx, side * 14);
+        ctx.rotate(side * 0.45);
+        ctx.fillStyle = COBALT_LIGHT;
+        ctx.strokeStyle = COBALT_DARK;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = OCHRE;
+        ctx.beginPath();
+        ctx.arc(tx, -side * 12, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    drawScrollBand(128, 102, 896, 102, 6);
+    drawScrollBand(128, 922, 896, 922, 6);
+    drawScrollBand(102, 128, 102, 896, 6);
+    drawScrollBand(922, 128, 922, 896, 6);
+
+    // 4) Diagonal structural stems connecting the 4 corners right through the seams to center
+    ctx.save();
+    ctx.strokeStyle = COBALT_MID;
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(128, 128); ctx.lineTo(896, 896);
+    ctx.moveTo(896, 128); ctx.lineTo(128, 896);
+    ctx.stroke();
+    ctx.strokeStyle = OCHRE_LIGHT;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(128, 128); ctx.lineTo(896, 896);
+    ctx.moveTo(896, 128); ctx.lineTo(128, 896);
+    ctx.stroke();
+    ctx.restore();
+
+    // Cardinal axes crossing seams (512, 102 -> 512, 922 and 102, 512 -> 922, 512)
+    ctx.save();
+    ctx.strokeStyle = COBALT_LIGHT;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(512, 86); ctx.lineTo(512, 938);
+    ctx.moveTo(86, 512); ctx.lineTo(938, 512);
+    ctx.stroke();
+    ctx.strokeStyle = COBALT_DARK;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // 5) Four Mid-Edge Floral Cartouches split 50/50 across tile seams!
+    function drawCartouche(cx, cy, rot) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      ctx.fillStyle = '#f5f0e5';
+      ctx.strokeStyle = COBALT_DARK;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 74, 42, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = OCHRE;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 62, 31, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Inner palmette petals
+      for (let k = -2; k <= 2; k++) {
+        ctx.save();
+        ctx.rotate(k * 0.28);
+        ctx.fillStyle = k === 0 ? OCHRE : COBALT_MID;
+        ctx.beginPath();
+        ctx.ellipse(0, -12, 7, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(0, 12, 7, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = COBALT_DARK;
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = OCHRE_LIGHT;
+      ctx.beginPath();
+      ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    drawCartouche(512, 128, 0);
+    drawCartouche(512, 896, 0);
+    drawCartouche(128, 512, Math.PI / 2);
+    drawCartouche(896, 512, Math.PI / 2);
+
+    // 6) Four Corner Acanthus Rosettes (centered at 128,128 etc., extending across seams)
+    function drawCornerRosette(cx, cy, qx, qy) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      // Backing ring
+      ctx.fillStyle = '#f3ede0';
+      ctx.strokeStyle = COBALT_DARK;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 66, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // 8 acanthus petals
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        ctx.save();
+        ctx.rotate(a);
+        ctx.fillStyle = i % 2 === 0 ? COBALT_MID : COBALT_LIGHT;
+        ctx.strokeStyle = COBALT_DARK;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(18, -22, 0, -56);
+        ctx.quadraticCurveTo(-18, -22, 0, 0);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      // Ochre center
+      ctx.fillStyle = OCHRE;
+      ctx.strokeStyle = COBALT_DARK;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Asymmetric directional flourish pointing toward panel center so rotation is unmistakable
+      ctx.strokeStyle = CELADON;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(qx * 48, qy * 48);
+      ctx.quadraticCurveTo(qx * 115, qy * 65, qx * 135, qy * 135);
+      ctx.stroke();
+      ctx.restore();
+    }
+    drawCornerRosette(128, 128, 1, 1);
+    drawCornerRosette(896, 128, -1, 1);
+    drawCornerRosette(128, 896, 1, -1);
+    drawCornerRosette(896, 896, -1, -1);
+
+    // 7) Grand Central Baroque 8-Pointed Star Medallion (spans all 4 center tiles!)
+    ctx.save();
+    ctx.translate(512, 512);
+
+    // Outer scalloped halo
+    ctx.fillStyle = '#f5f0e6';
+    ctx.strokeStyle = COBALT_DARK;
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    for (let i = 0; i <= 160; i++) {
+      const a = (i / 160) * Math.PI * 2;
+      const r = 246 + Math.sin(a * 16) * 14;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Cobalt radial ring
+    ctx.strokeStyle = COBALT_LIGHT;
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.arc(0, 0, 212, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = OCHRE;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 195, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 8-pointed star (2 overlapping rotated squares)
+    function drawStarSquare(rot, fill, stroke) {
+      ctx.save();
+      ctx.rotate(rot);
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 5;
+      ctx.fillRect(-132, -132, 264, 264);
+      ctx.strokeRect(-132, -132, 264, 264);
+      ctx.restore();
+    }
+    drawStarSquare(0, COBALT_MID, COBALT_DARK);
+    drawStarSquare(Math.PI / 4, COBALT_LIGHT, COBALT_DARK);
+
+    // Inner floral petals
+    for (let i = 0; i < 8; i++) {
+      ctx.save();
+      ctx.rotate((i / 8) * Math.PI * 2);
+      ctx.fillStyle = i % 2 === 0 ? '#f4efe3' : OCHRE_LIGHT;
+      ctx.strokeStyle = COBALT_DARK;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(28, -56, 0, -118);
+      ctx.quadraticCurveTo(-28, -56, 0, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Center sun-medallion
+    ctx.fillStyle = COBALT_DARK;
+    ctx.beginPath();
+    ctx.arc(0, 0, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = OCHRE;
+    ctx.beginPath();
+    ctx.arc(0, 0, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f5f0e6';
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Subtle directional artisan mark on SE quadrant (for visual nuance)
+    ctx.restore();
+
+    // 8) Subtle hand-painted mineral speckles over whole artwork
+    for (let i = 0; i < 900; i++) {
+      ctx.fillStyle = rand() > 0.5 ? 'rgba(18, 49, 102, 0.08)' : 'rgba(120, 96, 68, 0.07)';
+      ctx.fillRect(rand() * MASTER_RES, rand() * MASTER_RES, 1.5, 1.5);
+    }
+
+    return c;
+  }
+
+  /* ============================================================================
+   * 4. PER-TILE PBR TEXTURE & EDITABLE DIRT MASK ENGINE
+   * ========================================================================== */
+  const TileAssets = {}; // key -> { col, row, cleanCanvas, dirtyCanvas, dirtMaskCanvas, initialDirtData, compCanvas, roughCanvas, bumpCanvas, colorTex, roughTex, bumpTex, dirtyPixelsTotal }
+
+  function buildTileAssets(masterCanvas, useThree) {
+    for (let row = 0; row < GRID_N; row++) {
+      for (let col = 0; col < GRID_N; col++) {
+        const key = tileKey(col, row);
+        const missing = isMissingSlot(col, row);
+        const rand = mulberry32(9001 + row * 131 + col * 37);
+
+        // 1) Clean color canvas (slice from master + antique craquelure + tiny edge chips)
+        const cleanCanvas = document.createElement('canvas');
+        cleanCanvas.width = TILE_TEX_RES;
+        cleanCanvas.height = TILE_TEX_RES;
+        const cctx = cleanCanvas.getContext('2d');
+        cctx.drawImage(
+          masterCanvas,
+          col * TILE_TEX_RES, row * TILE_TEX_RES, TILE_TEX_RES, TILE_TEX_RES,
+          0, 0, TILE_TEX_RES, TILE_TEX_RES
+        );
+
+        // Soft kiln edge darkening (glaze pooling at bevel)
+        const edgeGrad = cctx.createRadialGradient(128, 128, 86, 128, 128, 178);
+        edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        edgeGrad.addColorStop(1, 'rgba(54, 42, 28, 0.14)');
+        cctx.fillStyle = edgeGrad;
+        cctx.fillRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+
+        // 2) Bump canvas (neutral gray 128, craquelure grooves, glaze ripples, edge chips)
+        const bumpCanvas = document.createElement('canvas');
+        bumpCanvas.width = TILE_TEX_RES;
+        bumpCanvas.height = TILE_TEX_RES;
+        const bctx = bumpCanvas.getContext('2d');
+        bctx.fillStyle = '#808080';
+        bctx.fillRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+
+        // Subtle handmade glaze undulation
+        for (let i = 0; i < 40; i++) {
+          const x = rand() * TILE_TEX_RES;
+          const y = rand() * TILE_TEX_RES;
+          const r = 18 + rand() * 38;
+          const g = bctx.createRadialGradient(x, y, 0, x, y, r);
+          const v = rand() > 0.5 ? 'rgba(205,205,205,0.22)' : 'rgba(65,65,65,0.22)';
+          g.addColorStop(0, v);
+          g.addColorStop(1, 'rgba(128,128,128,0)');
+          bctx.fillStyle = g;
+          bctx.beginPath();
+          bctx.arc(x, y, r, 0, Math.PI * 2);
+          bctx.fill();
+        }
+
+        // Craquelure hairline network (preserved on antique tiles!)
+        const cracks = 7 + Math.floor(rand() * 6);
+        for (let i = 0; i < cracks; i++) {
+          let x = rand() * TILE_TEX_RES;
+          let y = rand() * TILE_TEX_RES;
+          let ang = rand() * Math.PI * 2;
+          cctx.strokeStyle = 'rgba(72, 58, 42, 0.24)';
+          cctx.lineWidth = 0.85;
+          bctx.strokeStyle = 'rgba(28, 28, 28, 0.72)';
+          bctx.lineWidth = 1.2;
+          cctx.beginPath(); bctx.beginPath();
+          cctx.moveTo(x, y); bctx.moveTo(x, y);
+          const segs = 5 + Math.floor(rand() * 5);
+          for (let s = 0; s < segs; s++) {
+            ang += (rand() - 0.5) * 1.1;
+            x += Math.cos(ang) * (12 + rand() * 24);
+            y += Math.sin(ang) * (12 + rand() * 24);
+            cctx.lineTo(x, y);
+            bctx.lineTo(x, y);
+          }
+          cctx.stroke(); bctx.stroke();
+        }
+
+        // Small terracotta edge chips (lascas) revealing clay biscuit underneath
+        const chipMask = document.createElement('canvas');
+        chipMask.width = TILE_TEX_RES; chipMask.height = TILE_TEX_RES;
+        const mctx = chipMask.getContext('2d');
+        const chipCount = 1 + Math.floor(rand() * 2);
+        for (let i = 0; i < chipCount; i++) {
+          const edge = Math.floor(rand() * 4);
+          let cx = 0, cy = 0;
+          if (edge === 0) { cx = 24 + rand() * 208; cy = 4 + rand() * 5; }
+          else if (edge === 1) { cx = 24 + rand() * 208; cy = 248 + rand() * 5; }
+          else if (edge === 2) { cx = 4 + rand() * 5; cy = 24 + rand() * 208; }
+          else { cx = 248 + rand() * 5; cy = 24 + rand() * 208; }
+          const rx = 5 + rand() * 7;
+          const ry = 4 + rand() * 6;
+          cctx.save();
+          cctx.fillStyle = '#a85f41';
+          cctx.strokeStyle = '#6c3823';
+          cctx.lineWidth = 1.2;
+          cctx.beginPath();
+          cctx.ellipse(cx, cy, rx, ry, rand() * Math.PI, 0, Math.PI * 2);
+          cctx.fill(); cctx.stroke();
+          cctx.restore();
+
+          bctx.fillStyle = '#181818';
+          bctx.beginPath();
+          bctx.ellipse(cx, cy, rx + 1, ry + 1, 0, 0, Math.PI * 2);
+          bctx.fill();
+
+          mctx.fillStyle = '#ffffff';
+          mctx.beginPath();
+          mctx.ellipse(cx, cy, rx + 1, ry + 1, 0, 0, Math.PI * 2);
+          mctx.fill();
+        }
+
+        // 3) Dirt layer canvas (encrusted lime dust, soot & aged ochre patina)
+        const dirtyCanvas = document.createElement('canvas');
+        dirtyCanvas.width = TILE_TEX_RES; dirtyCanvas.height = TILE_TEX_RES;
+        const dctx = dirtyCanvas.getContext('2d');
+        dctx.fillStyle = '#5f5648';
+        dctx.fillRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+        for (let i = 0; i < 240; i++) {
+          const x = rand() * TILE_TEX_RES;
+          const y = rand() * TILE_TEX_RES;
+          const r = 6 + rand() * 26;
+          const palette = ['#4c4438', '#6e6452', '#7d725d', '#3e382f', '#897e68'];
+          dctx.fillStyle = palette[Math.floor(rand() * palette.length)];
+          dctx.globalAlpha = 0.25 + rand() * 0.35;
+          dctx.beginPath();
+          dctx.arc(x, y, r, 0, Math.PI * 2);
+          dctx.fill();
+        }
+        dctx.globalAlpha = 1;
+
+        // 4) Editable dirt mask canvas (alpha 0..255: 255 = dirty, 0 = clean)
+        // Fixed antique tiles start heavily soiled; missing recovered pieces start clean
+        const dirtMaskCanvas = document.createElement('canvas');
+        dirtMaskCanvas.width = TILE_TEX_RES; dirtMaskCanvas.height = TILE_TEX_RES;
+        const dmctx = dirtMaskCanvas.getContext('2d');
+        if (!missing) {
+          // Organic uneven grime coverage (heavier near edges & crevices)
+          dmctx.fillStyle = 'rgba(255,255,255,0.88)';
+          dmctx.fillRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+          for (let i = 0; i < 45; i++) {
+            const x = rand() * TILE_TEX_RES;
+            const y = rand() * TILE_TEX_RES;
+            const r = 18 + rand() * 44;
+            const g = dmctx.createRadialGradient(x, y, 0, x, y, r);
+            g.addColorStop(0, 'rgba(255,255,255,0.22)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            dmctx.fillStyle = g;
+            dmctx.beginPath();
+            dmctx.arc(x, y, r, 0, Math.PI * 2);
+            dmctx.fill();
+          }
+          // Tiny semi-translucent hints of cobalt peeking through thin dust
+          dmctx.globalCompositeOperation = 'destination-out';
+          for (let i = 0; i < 16; i++) {
+            const x = 24 + rand() * 208;
+            const y = 24 + rand() * 208;
+            const r = 14 + rand() * 26;
+            const g = dmctx.createRadialGradient(x, y, 0, x, y, r);
+            g.addColorStop(0, 'rgba(0,0,0,0.26)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            dmctx.fillStyle = g;
+            dmctx.beginPath();
+            dmctx.arc(x, y, r, 0, Math.PI * 2);
+            dmctx.fill();
+          }
+          dmctx.globalCompositeOperation = 'source-over';
+        }
+
+        const initialDirtData = dmctx.getImageData(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+
+        // 5) Live composite color & roughness canvases
+        const compCanvas = document.createElement('canvas');
+        compCanvas.width = TILE_TEX_RES; compCanvas.height = TILE_TEX_RES;
+        const roughCanvas = document.createElement('canvas');
+        roughCanvas.width = TILE_TEX_RES; roughCanvas.height = TILE_TEX_RES;
+
+        const asset = {
+          key, col, row, missing,
+          cleanCanvas, dirtyCanvas, dirtMaskCanvas, initialDirtData,
+          chipMask, compCanvas, roughCanvas, bumpCanvas,
+          colorTex: null, roughTex: null, bumpTex: null,
+          initialAlphaSum: 0,
+          currentAlphaSum: 0,
+          tiltX: (rand() - 0.5) * 0.014,
+          tiltZ: (rand() - 0.5) * 0.014,
+          heightOffset: (rand() - 0.5) * 0.0022
+        };
+
+        // Compute initial dirt sum
+        asset.initialAlphaSum = measureDirtAlpha(dirtMaskCanvas);
+        asset.currentAlphaSum = asset.initialAlphaSum;
+
+        if (useThree && window.THREE) {
+          asset.colorTex = new THREE.CanvasTexture(compCanvas);
+          asset.colorTex.encoding = THREE.sRGBEncoding;
+          asset.colorTex.anisotropy = 4;
+
+          asset.roughTex = new THREE.CanvasTexture(roughCanvas);
+          asset.roughTex.encoding = THREE.LinearEncoding;
+
+          asset.bumpTex = new THREE.CanvasTexture(bumpCanvas);
+          asset.bumpTex.encoding = THREE.LinearEncoding;
+        }
+
+        TileAssets[key] = asset;
+        recompositeTile(asset, false);
+      }
+    }
+    updateGlobalCleanPercent();
+  }
+
+  function measureDirtAlpha(canvas) {
+    const ctx = canvas.getContext('2d');
+    const data = ctx.getImageData(0, 0, TILE_TEX_RES, TILE_TEX_RES).data;
+    let sum = 0;
+    // Sample stride 4 for speed & exact proportionality
+    for (let i = 3; i < data.length; i += 16) sum += data[i];
+    return sum;
+  }
+
+  // Temp scratch canvas reused for compositing
+  const _scratchCanvas = document.createElement('canvas');
+  _scratchCanvas.width = TILE_TEX_RES; _scratchCanvas.height = TILE_TEX_RES;
+  const _scratchCtx = _scratchCanvas.getContext('2d');
+
+  function recompositeTile(asset, useCompareSplit) {
+    const cctx = asset.compCanvas.getContext('2d');
+    const rctx = asset.roughCanvas.getContext('2d');
+
+    // Draw clean glazed tile first
+    cctx.globalCompositeOperation = 'source-over';
+    cctx.drawImage(asset.cleanCanvas, 0, 0);
+
+    // Base glossy glaze roughness (~0.16 => gray 42) + matte chips (~0.90 => gray 230)
+    rctx.globalCompositeOperation = 'source-over';
+    rctx.fillStyle = '#2c2c2c';
+    rctx.fillRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+    rctx.drawImage(asset.chipMask, 0, 0);
+
+    if (!asset.missing) {
+      // Prepare masked dirt layer
+      _scratchCtx.globalCompositeOperation = 'source-over';
+      _scratchCtx.clearRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+      _scratchCtx.drawImage(asset.dirtyCanvas, 0, 0);
+      _scratchCtx.globalCompositeOperation = 'destination-in';
+      _scratchCtx.drawImage(asset.dirtMaskCanvas, 0, 0);
+      _scratchCtx.globalCompositeOperation = 'source-over';
+
+      if (useCompareSplit) {
+        // Compute split X inside this tile's local 0..256 space
+        const globalSplitPx = State.compareSplit * MASTER_RES;
+        const localSplitX = Math.max(0, Math.min(TILE_TEX_RES, globalSplitPx - asset.col * TILE_TEX_RES));
+
+        // Left side (0..localSplitX): INITIAL dirty state
+        if (localSplitX > 0) {
+          cctx.save();
+          cctx.beginPath();
+          cctx.rect(0, 0, localSplitX, TILE_TEX_RES);
+          cctx.clip();
+
+          // Render initial dirt onto scratch2
+          const tmp = document.createElement('canvas');
+          tmp.width = TILE_TEX_RES; tmp.height = TILE_TEX_RES;
+          const tctx = tmp.getContext('2d');
+          tctx.putImageData(asset.initialDirtData, 0, 0);
+
+          const dtmp = document.createElement('canvas');
+          dtmp.width = TILE_TEX_RES; dtmp.height = TILE_TEX_RES;
+          const dtctx = dtmp.getContext('2d');
+          dtctx.drawImage(asset.dirtyCanvas, 0, 0);
+          dtctx.globalCompositeOperation = 'destination-in';
+          dtctx.drawImage(tmp, 0, 0);
+          cctx.drawImage(dtmp, 0, 0);
+          cctx.restore();
+
+          rctx.save();
+          rctx.beginPath();
+          rctx.rect(0, 0, localSplitX, TILE_TEX_RES);
+          rctx.clip();
+          rctx.drawImage(tmp, 0, 0);
+          rctx.restore();
+        }
+
+        // Right side (localSplitX..256): CURRENT restored state
+        if (localSplitX < TILE_TEX_RES) {
+          cctx.save();
+          cctx.beginPath();
+          cctx.rect(localSplitX, 0, TILE_TEX_RES - localSplitX, TILE_TEX_RES);
+          cctx.clip();
+          cctx.drawImage(_scratchCanvas, 0, 0);
+          cctx.restore();
+
+          rctx.save();
+          rctx.beginPath();
+          rctx.rect(localSplitX, 0, TILE_TEX_RES - localSplitX, TILE_TEX_RES);
+          rctx.clip();
+          rctx.drawImage(asset.dirtMaskCanvas, 0, 0);
+          rctx.restore();
+        }
+
+        // Crisp golden divider line if split passes through this tile
+        if (localSplitX > 0 && localSplitX < TILE_TEX_RES) {
+          cctx.fillStyle = '#e5b357';
+          cctx.fillRect(localSplitX - 1.5, 0, 3, TILE_TEX_RES);
+        }
+      } else {
+        cctx.drawImage(_scratchCanvas, 0, 0);
+        // Dirty areas become matte (white = roughness 1.0)
+        rctx.drawImage(asset.dirtMaskCanvas, 0, 0);
+      }
+    }
+
+    if (asset.colorTex) asset.colorTex.needsUpdate = true;
+    if (asset.roughTex) asset.roughTex.needsUpdate = true;
+  }
+
+  function updateGlobalCleanPercent() {
+    let initSum = 0, currSum = 0;
+    for (const k in TileAssets) {
+      const a = TileAssets[k];
+      if (!a.missing) {
+        initSum += a.initialAlphaSum;
+        currSum += a.currentAlphaSum;
+      }
+    }
+    const pct = initSum > 0 ? Math.max(0, Math.min(100, Math.round((1 - currSum / initSum) * 100))) : 100;
+    State.cleanPercent = pct;
+    const lbl = document.getElementById('clean-pct-label');
+    const meter = document.getElementById('clean-meter');
+    const wrap = document.getElementById('clean-meter-wrap');
+    if (lbl) lbl.textContent = pct + '%';
+    if (meter) {
+      meter.style.width = pct + '%';
+      meter.classList.toggle('complete', pct >= 80);
+    }
+    if (wrap) wrap.setAttribute('aria-valuenow', String(pct));
+    updateStepperBadges();
+  }
+
+  /* ============================================================================
+   * 5. WOOD & MORTAR PROCEDURAL PBR TEXTURES
+   * ========================================================================== */
+  function createWoodTextures() {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+    const ctx = c.getContext('2d');
+    const r = document.createElement('canvas'); r.width = 512; r.height = 512;
+    const rctx = r.getContext('2d');
+    const rand = mulberry32(4411);
+
+    ctx.fillStyle = '#4a3625'; ctx.fillRect(0, 0, 512, 512);
+    rctx.fillStyle = '#a8a8a8'; rctx.fillRect(0, 0, 512, 512);
+
+    for (let y = 0; y < 512; y += 2) {
+      const n = Math.sin(y * 0.055) * 12 + (rand() - 0.5) * 14;
+      const lum = Math.max(24, Math.min(98, 66 + n));
+      ctx.fillStyle = `rgb(${lum + 14}, ${lum - 4}, ${lum - 20})`;
+      ctx.fillRect(0, y, 512, 2);
+      const rg = Math.max(115, Math.min(210, 165 - n * 1.4));
+      rctx.fillStyle = `rgb(${rg},${rg},${rg})`;
+      rctx.fillRect(0, y, 512, 2);
+    }
+    // Plank seams
+    ctx.fillStyle = 'rgba(20, 12, 6, 0.45)';
+    ctx.fillRect(0, 170, 512, 2);
+    ctx.fillRect(0, 342, 512, 2);
+
+    const map = new THREE.CanvasTexture(c);
+    map.encoding = THREE.sRGBEncoding;
+    map.wrapS = map.wrapT = THREE.RepeatWrapping;
+    map.repeat.set(2, 2);
+    const rough = new THREE.CanvasTexture(r);
+    rough.encoding = THREE.LinearEncoding;
+    rough.wrapS = rough.wrapT = THREE.RepeatWrapping;
+    rough.repeat.set(2, 2);
+    return { map, rough };
+  }
+
+  function createMortarTexture() {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    const rand = mulberry32(7731);
+    ctx.fillStyle = '#bfb6a5'; ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 1400; i++) {
+      const v = 155 + Math.floor(rand() * 55);
+      ctx.fillStyle = `rgb(${v},${v - 6},${v - 16})`;
+      ctx.fillRect(rand() * 256, rand() * 256, 2, 2);
+    }
+    // Trowel notch marks
+    ctx.strokeStyle = 'rgba(110, 100, 86, 0.25)';
+    ctx.lineWidth = 3;
+    for (let k = -256; k < 512; k += 14) {
+      ctx.beginPath();
+      ctx.moveTo(k, 0); ctx.lineTo(k + 256, 256);
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 2);
+    return tex;
+  }
+
+  /* ============================================================================
+   * 6. THREE.JS 3D SCENE, ORBIT CONTROLLER & INTERACTION
+   * ========================================================================== */
+  const Scene3D = {
+    active: false,
+    renderer: null,
+    scene: null,
+    camera: null,
+    panelGroup: null,
+    tileMeshes: {},       // key -> THREE.Mesh (fixed tiles)
+    placedMeshes: {},     // slotKey -> THREE.Mesh (placed missing tiles)
+    cavityMeshes: {},     // slotKey -> THREE.Mesh (interactive empty slots)
+    guideLinesGroup: null,
+    previewMesh: null,
+    brushRing: null,
+    compareBar: null,
+    rakingLight: null,
+    rakingLampGroup: null,
+    studioLight: null,
+    hemiLight: null,
+    dustSystem: null,
+    dustPositions: null,
+    dustVels: [],
+    raycaster: null,
+    pointer: null,
+    // Orbital camera state (limited, smooth)
+    orbit: {
+      theta: 0.0,
+      phi: 0.58,
+      radius: 0.96,
+      targetTheta: 0.0,
+      targetPhi: 0.58,
+      targetRadius: 0.96,
+      target: null,
+      goalTarget: null
+    },
+    animatingPieces: [], // { mesh, startY, endY, startRot, endRot, t }
+    lastTime: 0,
+    paused: false,
+    rafId: 0,
+    frameMsAvg: 16.6,
+
+    init() {
+      if (!window.THREE) return false;
+      const canvas = document.getElementById('webgl-canvas');
+      let gl = null;
+      try {
+        gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true }) ||
+             canvas.getContext('webgl', { antialias: true, preserveDrawingBuffer: true });
+      } catch (e) { gl = null; }
+      if (!gl) return false;
+
+      try {
+        this.renderer = new THREE.WebGLRenderer({ canvas, context: gl, antialias: true, preserveDrawingBuffer: true });
+      } catch (e) {
+        return false;
+      }
+      this.renderer.outputEncoding = THREE.sRGBEncoding;
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = 1.08;
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0x161920);
+      this.scene.fog = new THREE.Fog(0x161920, 2.2, 4.5);
+
+      this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.05, 10);
+      this.orbit.target = new THREE.Vector3(0, 0.02, 0.01);
+      this.orbit.goalTarget = new THREE.Vector3(0, 0.02, 0.01);
+      this.raycaster = new THREE.Raycaster();
+      this.pointer = new THREE.Vector2();
+
+      this.buildLights();
+      this.buildStudioEnvironment();
+      this.buildTilePanel();
+      this.buildInteractiveHelpers();
+      this.buildDustParticles();
+      this.applyQualityProfile();
+      this.setCameraPreset('overview', true);
+      this.resize();
+      this.bindPointerEvents();
+
+      this.active = true;
+      this.lastTime = performance.now();
+      this.loop(this.lastTime);
+      return true;
+    },
+
+    buildLights() {
+      this.hemiLight = new THREE.HemisphereLight(0xfff5e4, 0x2a2f3d, 0.45);
+      this.scene.add(this.hemiLight);
+
+      // Overhead studio soft light
+      this.studioLight = new THREE.DirectionalLight(0xfff6ea, 0.72);
+      this.studioLight.position.set(-0.55, 1.35, 0.65);
+      this.studioLight.castShadow = true;
+      this.studioLight.shadow.mapSize.set(1024, 1024);
+      this.studioLight.shadow.camera.near = 0.2;
+      this.studioLight.shadow.camera.far = 3.2;
+      const d = 0.65;
+      this.studioLight.shadow.camera.left = -d;
+      this.studioLight.shadow.camera.right = d;
+      this.studioLight.shadow.camera.top = d;
+      this.studioLight.shadow.camera.bottom = -d;
+      this.studioLight.shadow.bias = -0.0008;
+      this.scene.add(this.studioLight);
+
+      // Movable Raking Light (Luz Rasante)
+      this.rakingLight = new THREE.SpotLight(0xffe4b5, 2.2, 3.0, Math.PI / 4.2, 0.45, 1.2);
+      this.rakingLight.castShadow = true;
+      this.rakingLight.shadow.mapSize.set(1024, 1024);
+      this.rakingLight.shadow.bias = -0.0005;
+      this.rakingLight.target.position.set(0, 0.02, 0);
+      this.scene.add(this.rakingLight);
+      this.scene.add(this.rakingLight.target);
+
+      // Physical 3D Raking Lamp prop orbiting the panel
+      this.rakingLampGroup = new THREE.Group();
+      const headGeo = new THREE.CylinderGeometry(0.026, 0.038, 0.068, 20);
+      headGeo.rotateX(Math.PI / 2);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x262930, roughness: 0.45, metalness: 0.65 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      const brassRim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.036, 0.004, 10, 24),
+        new THREE.MeshStandardMaterial({ color: 0xc99c4c, roughness: 0.3, metalness: 0.85 })
+      );
+      brassRim.position.z = 0.034;
+      const bulb = new THREE.Mesh(
+        new THREE.CircleGeometry(0.032, 18),
+        new THREE.MeshBasicMaterial({ color: 0xfff0cc })
+      );
+      bulb.position.z = 0.033;
+      this.rakingLampGroup.add(head, brassRim, bulb);
+      this.scene.add(this.rakingLampGroup);
+
+      this.updateRakingLight();
+    },
+
+    updateRakingLight() {
+      const az = (State.rakingAzimuth * Math.PI) / 180;
+      const el = (State.rakingElevation * Math.PI) / 180;
+      const dist = 0.72;
+      const x = Math.cos(az) * Math.cos(el) * dist;
+      const y = 0.03 + Math.sin(el) * dist;
+      const z = Math.sin(az) * Math.cos(el) * dist;
+
+      this.rakingLight.position.set(x, y, z);
+      this.rakingLight.visible = State.rakingOn;
+      this.rakingLight.intensity = State.rakingOn ? (State.studioOn ? 1.9 : 2.8) : 0;
+
+      this.studioLight.intensity = State.studioOn ? (State.rakingOn ? 0.55 : 1.05) : 0.14;
+      this.hemiLight.intensity = State.studioOn ? 0.42 : 0.18;
+
+      this.rakingLampGroup.position.set(x, y, z);
+      this.rakingLampGroup.lookAt(0, 0.02, 0);
+      this.rakingLampGroup.visible = State.rakingOn;
+    },
+
+    buildStudioEnvironment() {
+      const wood = createWoodTextures();
+      const bench = new THREE.Mesh(
+        new THREE.BoxGeometry(1.75, 0.06, 1.25),
+        new THREE.MeshStandardMaterial({ map: wood.map, roughnessMap: wood.rough, roughness: 0.85, metalness: 0.04 })
+      );
+      bench.position.set(0, -0.03, 0);
+      bench.receiveShadow = true;
+      this.scene.add(bench);
+
+      // Protective conservation felt mat under panel
+      const mat = new THREE.Mesh(
+        new THREE.BoxGeometry(0.76, 0.004, 0.76),
+        new THREE.MeshStandardMaterial({ color: 0x2c3038, roughness: 0.96, metalness: 0.0 })
+      );
+      mat.position.set(0, 0.002, 0);
+      mat.receiveShadow = true;
+      this.scene.add(mat);
+
+      // Bench props: small ceramic rinse bowl & resting restoration brush on the right
+      const bowlMat = new THREE.MeshStandardMaterial({ color: 0xd9cfc0, roughness: 0.25, metalness: 0.05 });
+      const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.04, 0.042, 24), bowlMat);
+      bowl.position.set(0.50, 0.021, -0.18);
+      bowl.castShadow = true; bowl.receiveShadow = true;
+      const water = new THREE.Mesh(
+        new THREE.CircleGeometry(0.049, 20),
+        new THREE.MeshStandardMaterial({ color: 0x3b6078, roughness: 0.08, metalness: 0.15 })
+      );
+      water.rotation.x = -Math.PI / 2;
+      water.position.set(0.50, 0.039, -0.18);
+      this.scene.add(bowl, water);
+
+      // Resting conservation brush
+      const brushGroup = new THREE.Group();
+      const handle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.0045, 0.003, 0.19, 10),
+        new THREE.MeshStandardMaterial({ color: 0x6f4326, roughness: 0.55 })
+      );
+      handle.rotation.x = Math.PI / 2;
+      const ferrule = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.0052, 0.0046, 0.022, 10),
+        new THREE.MeshStandardMaterial({ color: 0xbba471, roughness: 0.3, metalness: 0.8 })
+      );
+      ferrule.rotation.x = Math.PI / 2;
+      ferrule.position.z = 0.105;
+      const bristles = new THREE.Mesh(
+        new THREE.ConeGeometry(0.006, 0.028, 10),
+        new THREE.MeshStandardMaterial({ color: 0xd8c39e, roughness: 0.9 })
+      );
+      bristles.rotation.x = Math.PI / 2;
+      bristles.position.z = 0.128;
+      brushGroup.add(handle, ferrule, bristles);
+      brushGroup.position.set(0.49, 0.006, 0.12);
+      brushGroup.rotation.y = -0.22;
+      this.scene.add(brushGroup);
+    },
+
+    slotPosition(col, row) {
+      const x = (col - (GRID_N - 1) / 2) * TILE_PITCH;
+      const z = (row - (GRID_N - 1) / 2) * TILE_PITCH;
+      return { x, z };
+    },
+
+    createTileGeometry() {
+      // Chamfered ceramic tile with real thickness (ExtrudeGeometry or Box with top face UVs)
+      // Use BoxGeometry with exact per-face materials so top face has 0..1 UVs & sides are terracotta biscuit!
+      const geo = new THREE.BoxGeometry(TILE_SIZE, TILE_THICK, TILE_SIZE, 2, 1, 2);
+      // Subtle top bevel inset on top vertices for realistic chamfer catchlight
+      const pos = geo.attributes.position;
+      const bevel = 0.0022;
+      for (let i = 0; i < pos.count; i++) {
+        if (pos.getY(i) > 0) {
+          const x = pos.getX(i), z = pos.getZ(i);
+          if (Math.abs(x) > TILE_SIZE * 0.4) pos.setX(i, x - Math.sign(x) * bevel);
+          if (Math.abs(z) > TILE_SIZE * 0.4) pos.setZ(i, z - Math.sign(z) * bevel);
+        }
+      }
+      geo.computeVertexNormals();
+      return geo;
+    },
+
+    buildTilePanel() {
+      this.panelGroup = new THREE.Group();
+      this.scene.add(this.panelGroup);
+
+      const mortarTex = createMortarTexture();
+      const mortarMat = new THREE.MeshStandardMaterial({
+        map: mortarTex, roughness: 0.94, metalness: 0.0, color: 0xd0c7b7
+      });
+
+      // Lime mortar base bed (recessed below tile tops to form real grout cavities!)
+      const bedSize = GRID_N * TILE_PITCH + 0.044;
+      const bed = new THREE.Mesh(new THREE.BoxGeometry(bedSize, 0.016, bedSize), mortarMat);
+      bed.position.set(0, 0.012, 0);
+      bed.receiveShadow = true;
+      bed.castShadow = true;
+      this.panelGroup.add(bed);
+
+      // Aged timber conservation tray frame around mortar bed
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x3b2c1f, roughness: 0.78 });
+      const frameThick = 0.018;
+      const frameH = 0.030;
+      const half = bedSize / 2 + frameThick / 2;
+      const barLong = new THREE.BoxGeometry(bedSize + frameThick * 2, frameH, frameThick);
+      const barShort = new THREE.BoxGeometry(frameThick, frameH, bedSize);
+      const fN = new THREE.Mesh(barLong, frameMat); fN.position.set(0, frameH / 2 + 0.004, -half);
+      const fS = new THREE.Mesh(barLong, frameMat); fS.position.set(0, frameH / 2 + 0.004, half);
+      const fW = new THREE.Mesh(barShort, frameMat); fW.position.set(-half, frameH / 2 + 0.004, 0);
+      const fE = new THREE.Mesh(barShort, frameMat); fE.position.set(half, frameH / 2 + 0.004, 0);
+      [fN, fS, fW, fE].forEach(m => { m.castShadow = true; m.receiveShadow = true; this.panelGroup.add(m); });
+
+      // Shared geometries & terracotta biscuit side material
+      this.sharedTileGeo = this.createTileGeometry();
+      this.terracottaMat = new THREE.MeshStandardMaterial({
+        color: 0xa45b3d, roughness: 0.88, metalness: 0.02
+      });
+      const cavityGeo = new THREE.PlaneGeometry(TILE_SIZE - 0.004, TILE_SIZE - 0.004);
+      cavityGeo.rotateX(-Math.PI / 2);
+
+      for (let row = 0; row < GRID_N; row++) {
+        for (let col = 0; col < GRID_N; col++) {
+          const key = tileKey(col, row);
+          const asset = TileAssets[key];
+          const { x, z } = this.slotPosition(col, row);
+
+          if (!asset.missing) {
+            const topMat = new THREE.MeshStandardMaterial({
+              map: asset.colorTex,
+              roughnessMap: asset.roughTex,
+              bumpMap: asset.bumpTex,
+              bumpScale: 0.0018,
+              roughness: 1.0, // modulated by roughnessMap (0.17 clean glaze .. 1.0 dirt)
+              metalness: 0.04
+            });
+            const mats = [
+              this.terracottaMat, this.terracottaMat,
+              topMat,
+              this.terracottaMat, this.terracottaMat, this.terracottaMat
+            ];
+            const mesh = new THREE.Mesh(this.sharedTileGeo, mats);
+            mesh.position.set(x, 0.020 + TILE_THICK / 2 + asset.heightOffset, z);
+            mesh.rotation.set(asset.tiltX, 0, asset.tiltZ);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData = { type: 'fixed-tile', key, col, row };
+            this.panelGroup.add(mesh);
+            this.tileMeshes[key] = mesh;
+          } else {
+            // Empty recessed mortar cavity with interactive hit target
+            const cavMat = new THREE.MeshStandardMaterial({
+              map: mortarTex, color: 0xb6ac9a, roughness: 0.96
+            });
+            const cav = new THREE.Mesh(cavityGeo, cavMat);
+            cav.position.set(x, 0.0205, z);
+            cav.receiveShadow = true;
+            cav.userData = { type: 'empty-slot', key, col, row };
+            this.panelGroup.add(cav);
+            this.cavityMeshes[key] = cav;
+
+            // Subtle dashed outline inside empty cavity
+            const ringGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(TILE_SIZE - 0.006, 0.002, TILE_SIZE - 0.006));
+            const ringMat = new THREE.LineBasicMaterial({ color: 0xd8a24a, transparent: true, opacity: 0.45 });
+            const outline = new THREE.LineSegments(ringGeo, ringMat);
+            outline.position.set(x, 0.0218, z);
+            outline.userData = { slotOutlineFor: key };
+            this.panelGroup.add(outline);
+          }
+        }
+      }
+    },
+
+    buildInteractiveHelpers() {
+      // 3D Brush cursor projected onto tile plane
+      const ringGeo = new THREE.RingGeometry(0.022, 0.025, 32);
+      ringGeo.rotateX(-Math.PI / 2);
+      this.brushRing = new THREE.Mesh(
+        ringGeo,
+        new THREE.MeshBasicMaterial({ color: 0x5e97ec, side: THREE.DoubleSide, transparent: true, opacity: 0.85, depthTest: false })
+      );
+      this.brushRing.visible = false;
+      this.brushRing.renderOrder = 10;
+      this.scene.add(this.brushRing);
+
+      // 3D Continuity Guide Lines (shown in Identify / Place when toggled)
+      this.guideLinesGroup = new THREE.Group();
+      this.guideLinesGroup.visible = false;
+      const gMat = new THREE.LineBasicMaterial({ color: 0x5e97ec, transparent: true, opacity: 0.78 });
+      const panelSpan = GRID_N * TILE_PITCH;
+      const y = 0.036;
+      const pts = [
+        // Central circle & axes
+        new THREE.Vector3(-panelSpan / 2 + 0.04, y, 0), new THREE.Vector3(panelSpan / 2 - 0.04, y, 0),
+        new THREE.Vector3(0, y, -panelSpan / 2 + 0.04), new THREE.Vector3(0, y, panelSpan / 2 - 0.04),
+        new THREE.Vector3(-0.24, y, -0.24), new THREE.Vector3(0.24, y, 0.24),
+        new THREE.Vector3(0.24, y, -0.24), new THREE.Vector3(-0.24, y, 0.24)
+      ];
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      this.guideLinesGroup.add(new THREE.LineSegments(lineGeo, gMat));
+      this.panelGroup.add(this.guideLinesGroup);
+
+      // 3D Compare curtain bar
+      const barGeo = new THREE.BoxGeometry(0.004, 0.006, GRID_N * TILE_PITCH + 0.04);
+      this.compareBar = new THREE.Mesh(
+        barGeo,
+        new THREE.MeshBasicMaterial({ color: 0xe5b357 })
+      );
+      this.compareBar.position.set(0, 0.037, 0);
+      this.compareBar.visible = false;
+      this.panelGroup.add(this.compareBar);
+
+      // Translucent preview tile for Place step
+      this.previewMesh = new THREE.Mesh(
+        this.sharedTileGeo,
+        [
+          this.terracottaMat, this.terracottaMat,
+          new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.78, roughness: 0.35 }),
+          this.terracottaMat, this.terracottaMat, this.terracottaMat
+        ]
+      );
+      this.previewMesh.visible = false;
+      this.panelGroup.add(this.previewMesh);
+    },
+
+    buildDustParticles() {
+      const count = 90;
+      this.dustPositions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        this.dustPositions[i * 3 + 1] = -10;
+        this.dustVels.push({ vx: 0, vy: 0, vz: 0, life: 0 });
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(this.dustPositions, 3));
+      const mat = new THREE.PointsMaterial({ color: 0xcabca4, size: 0.006, transparent: true, opacity: 0.65 });
+      this.dustSystem = new THREE.Points(geo, mat);
+      this.scene.add(this.dustSystem);
+    },
+
+    spawnDust(worldPoint) {
+      if (State.quality === 'lite' || !this.dustSystem) return;
+      let spawned = 0;
+      for (let i = 0; i < this.dustVels.length && spawned < 3; i++) {
+        if (this.dustVels[i].life <= 0) {
+          this.dustPositions[i * 3] = worldPoint.x + (Math.random() - 0.5) * 0.025;
+          this.dustPositions[i * 3 + 1] = worldPoint.y + 0.005;
+          this.dustPositions[i * 3 + 2] = worldPoint.z + (Math.random() - 0.5) * 0.025;
+          this.dustVels[i] = {
+            vx: (Math.random() - 0.5) * 0.06,
+            vy: 0.04 + Math.random() * 0.05,
+            vz: (Math.random() - 0.5) * 0.06,
+            life: 0.45 + Math.random() * 0.35
+          };
+          spawned++;
+        }
+      }
+      this.dustSystem.geometry.attributes.position.needsUpdate = true;
+    },
+
+    applyQualityProfile() {
+      if (!this.renderer) return;
+      const lite = State.quality === 'lite';
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lite ? 1.0 : 2.0));
+      this.renderer.shadowMap.enabled = !lite;
+      if (this.studioLight) this.studioLight.castShadow = !lite;
+      if (this.rakingLight) this.rakingLight.castShadow = !lite;
+      if (this.dustSystem) this.dustSystem.visible = !lite;
+      this.resize();
+    },
+
+    setCameraPreset(preset, instant) {
+      State.cameraPreset = preset;
+      if (preset === 'overview') {
+        this.orbit.targetTheta = 0.0;
+        this.orbit.targetPhi = 0.52;
+        this.orbit.targetRadius = 0.96;
+        this.orbit.goalTarget.set(0, 0.02, 0.02);
+      } else if (preset === 'closeup') {
+        this.orbit.targetTheta = 0.22;
+        this.orbit.targetPhi = 0.36;
+        this.orbit.targetRadius = 0.50;
+        this.orbit.goalTarget.set(0.05, 0.02, 0.04);
+      } else if (preset === 'raking') {
+        this.orbit.targetTheta = -0.65;
+        this.orbit.targetPhi = 1.18;
+        this.orbit.targetRadius = 0.78;
+        this.orbit.goalTarget.set(0, 0.02, 0);
+      }
+      if (instant) {
+        this.orbit.theta = this.orbit.targetTheta;
+        this.orbit.phi = this.orbit.targetPhi;
+        this.orbit.radius = this.orbit.targetRadius;
+        this.orbit.target.copy(this.orbit.goalTarget);
+      }
+      document.querySelectorAll('#cam-overview, #cam-closeup, #cam-raking').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('cam-' + preset);
+      if (btn) btn.classList.add('active');
+    },
+
+    updatePreviewTile() {
+      if (!this.previewMesh) return;
+      const show = State.step === 'place' && State.selectedPieceId && State.selectedSlotKey;
+      const piece = State.pieces[State.selectedPieceId];
+      if (!show || !piece || piece.placed) {
+        this.previewMesh.visible = false;
+        return;
+      }
+      // Do not show preview over an already occupied slot
+      if (this.placedMeshes[State.selectedSlotKey]) {
+        this.previewMesh.visible = false;
+        return;
+      }
+      const spec = MISSING_SLOTS.find(s => s.id === State.selectedPieceId);
+      const slotParts = State.selectedSlotKey.split('_');
+      const scol = parseInt(slotParts[1], 10), srow = parseInt(slotParts[2], 10);
+      const { x, z } = this.slotPosition(scol, srow);
+      const pieceAsset = TileAssets[tileKey(spec.col, spec.row)];
+      const topMat = this.previewMesh.material[2];
+      topMat.map = pieceAsset.colorTex;
+      topMat.needsUpdate = true;
+
+      this.previewMesh.position.set(x, 0.036, z);
+      this.previewMesh.rotation.set(0, -(piece.angle * Math.PI) / 180, 0);
+      this.previewMesh.visible = true;
+    },
+
+    addPlacedMesh(pieceId, slotKey, animate) {
+      const spec = MISSING_SLOTS.find(s => s.id === pieceId);
+      const asset = TileAssets[tileKey(spec.col, spec.row)];
+      const parts = slotKey.split('_');
+      const col = parseInt(parts[1], 10), row = parseInt(parts[2], 10);
+      const { x, z } = this.slotPosition(col, row);
+
+      if (this.placedMeshes[slotKey]) {
+        this.panelGroup.remove(this.placedMeshes[slotKey]);
+      }
+
+      const topMat = new THREE.MeshStandardMaterial({
+        map: asset.colorTex,
+        roughnessMap: asset.roughTex,
+        bumpMap: asset.bumpTex,
+        bumpScale: 0.0016,
+        roughness: 1.0,
+        metalness: 0.04
+      });
+      const mesh = new THREE.Mesh(this.sharedTileGeo, [
+        this.terracottaMat, this.terracottaMat, topMat,
+        this.terracottaMat, this.terracottaMat, this.terracottaMat
+      ]);
+      const finalY = 0.020 + TILE_THICK / 2;
+      mesh.position.set(x, animate ? finalY + 0.032 : finalY, z);
+      mesh.rotation.set(0, 0, 0);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { type: 'placed-tile', pieceId, slotKey, col, row };
+      this.panelGroup.add(mesh);
+      this.placedMeshes[slotKey] = mesh;
+
+      if (animate) {
+        const piece = State.pieces[pieceId];
+        const startRad = -(piece.angle * Math.PI) / 180;
+        // Shortest angular path to 0
+        let diff = ((startRad + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+        mesh.rotation.y = diff;
+        this.animatingPieces.push({ mesh, startY: finalY + 0.032, endY: finalY, startRot: diff, endRot: 0, t: 0 });
+      }
+      this.updateCompareVisuals();
+    },
+
+    removePlacedMesh(slotKey) {
+      if (this.placedMeshes[slotKey]) {
+        this.panelGroup.remove(this.placedMeshes[slotKey]);
+        delete this.placedMeshes[slotKey];
+      }
+      this.updateCompareVisuals();
+    },
+
+    updateCompareVisuals() {
+      const comparing = State.step === 'compare';
+      if (this.compareBar) {
+        this.compareBar.visible = comparing;
+        const span = GRID_N * TILE_PITCH;
+        this.compareBar.position.x = (State.compareSplit - 0.5) * span;
+      }
+      for (const k in TileAssets) {
+        recompositeTile(TileAssets[k], comparing);
+      }
+      // In Compare mode, hide placed tiles whose center lies to the LEFT of the Before/After curtain
+      const splitWorldX = (State.compareSplit - 0.5) * (GRID_N * TILE_PITCH);
+      for (const slotKey in this.placedMeshes) {
+        const mesh = this.placedMeshes[slotKey];
+        mesh.visible = comparing ? (mesh.position.x >= splitWorldX - 0.01) : true;
+      }
+    },
+
+    applyBrushAtWorldPoint(worldPoint, strokeBackup) {
+      const radiusM = State.brushRadiusMm / 1000;
+      const pressure = State.brushPressure;
+      let touched = false;
+
+      for (const key in TileAssets) {
+        const asset = TileAssets[key];
+        if (asset.missing) continue;
+        const pos = this.slotPosition(asset.col, asset.row);
+        const dx = worldPoint.x - pos.x;
+        const dz = worldPoint.z - pos.z;
+        const half = TILE_SIZE / 2;
+        // Quick AABB overlap test
+        if (Math.abs(dx) > half + radiusM || Math.abs(dz) > half + radiusM) continue;
+
+        // Snapshot before first touch of this tile in the current stroke (for Undo)
+        if (strokeBackup && !strokeBackup[key]) {
+          const dctx = asset.dirtMaskCanvas.getContext('2d');
+          strokeBackup[key] = dctx.getImageData(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+        }
+
+        const u = (dx + half) / TILE_SIZE;
+        const v = (dz + half) / TILE_SIZE;
+        const px = u * TILE_TEX_RES;
+        const py = v * TILE_TEX_RES;
+        const pr = (radiusM / TILE_SIZE) * TILE_TEX_RES;
+
+        const dctx = asset.dirtMaskCanvas.getContext('2d');
+        dctx.save();
+        dctx.globalCompositeOperation = 'destination-out';
+        const grad = dctx.createRadialGradient(px, py, pr * 0.15, px, py, pr);
+        grad.addColorStop(0, `rgba(0,0,0,${Math.min(0.92, pressure * 0.65)})`);
+        grad.addColorStop(0.65, `rgba(0,0,0,${pressure * 0.32})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        dctx.fillStyle = grad;
+        dctx.beginPath();
+        dctx.arc(px, py, pr, 0, Math.PI * 2);
+        dctx.fill();
+        dctx.restore();
+
+        asset.currentAlphaSum = measureDirtAlpha(asset.dirtMaskCanvas);
+        recompositeTile(asset, false);
+        touched = true;
+      }
+
+      if (touched) {
+        this.spawnDust(worldPoint);
+        AudioEngine.playBrush();
+        updateGlobalCleanPercent();
+      }
+    },
+
+    bindPointerEvents() {
+      const canvas = document.getElementById('webgl-canvas');
+      let mode = null; // 'orbit' | 'brush'
+      let lastX = 0, lastY = 0;
+      let strokeBackup = null;
+      let activePointers = new Map();
+      let lastPinchDist = 0;
+
+      const getHit = (clientX, clientY) => {
+        const rect = canvas.getBoundingClientRect();
+        this.pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.pointer, this.camera);
+        const targets = [
+          ...Object.values(this.tileMeshes),
+          ...Object.values(this.cavityMeshes)
+        ];
+        const hits = this.raycaster.intersectObjects(targets, false);
+        return hits.length > 0 ? hits[0] : null;
+      };
+
+      canvas.addEventListener('pointerdown', (e) => {
+        canvas.setPointerCapture(e.pointerId);
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        // Two-finger pinch/orbit on touch
+        if (activePointers.size === 2) {
+          mode = 'pinch';
+          const pts = Array.from(activePointers.values());
+          lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          return;
+        }
+
+        lastX = e.clientX; lastY = e.clientY;
+
+        // Right click always orbits
+        if (e.button === 2) {
+          mode = 'orbit';
+          canvas.classList.add('dragging');
+          return;
+        }
+
+        // Clean mode with brush active: drag paints on tiles, otherwise orbits
+        if (State.step === 'clean' && State.cleanSubMode === 'brush') {
+          const hit = getHit(e.clientX, e.clientY);
+          if (hit && hit.object.userData.type === 'fixed-tile') {
+            mode = 'brush';
+            strokeBackup = {};
+            this.applyBrushAtWorldPoint(hit.point, strokeBackup);
+            return;
+          }
+        }
+
+        // Place mode: click on empty slot selects it
+        if (State.step === 'place') {
+          const hit = getHit(e.clientX, e.clientY);
+          if (hit && hit.object.userData.type === 'empty-slot') {
+            State.selectedSlotKey = hit.object.userData.key;
+            this.updatePreviewTile();
+            showToast(`Vão selecionado (${hit.object.userData.col + 1}, ${hit.object.userData.row + 1}). Gire a peça e clique em Encaixar.`, 'ok');
+            return;
+          }
+        }
+
+        mode = 'orbit';
+        canvas.classList.add('dragging');
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (activePointers.has(e.pointerId)) {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
+        // Update 3D brush cursor preview
+        if (State.step === 'clean' && State.cleanSubMode === 'brush') {
+          const hit = getHit(e.clientX, e.clientY);
+          if (hit && hit.object.userData.type === 'fixed-tile') {
+            this.brushRing.visible = true;
+            const scale = (State.brushRadiusMm / 1000) / 0.024;
+            this.brushRing.scale.set(scale, 1, scale);
+            this.brushRing.position.set(hit.point.x, hit.point.y + 0.002, hit.point.z);
+          } else {
+            this.brushRing.visible = false;
+          }
+        } else {
+          this.brushRing.visible = false;
+        }
+
+        if (mode === 'pinch' && activePointers.size === 2) {
+          const pts = Array.from(activePointers.values());
+          const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          const delta = (lastPinchDist - dist) * 0.0028;
+          this.orbit.targetRadius = Math.max(0.42, Math.min(1.55, this.orbit.targetRadius + delta));
+          lastPinchDist = dist;
+          return;
+        }
+
+        if (mode === 'brush') {
+          const hit = getHit(e.clientX, e.clientY);
+          if (hit && hit.object.userData.type === 'fixed-tile') {
+            this.applyBrushAtWorldPoint(hit.point, strokeBackup);
+          }
+          return;
+        }
+
+        if (mode === 'orbit') {
+          const dx = e.clientX - lastX;
+          const dy = e.clientY - lastY;
+          lastX = e.clientX; lastY = e.clientY;
+          this.orbit.targetTheta -= dx * 0.007;
+          this.orbit.targetPhi = Math.max(0.14, Math.min(1.32, this.orbit.targetPhi - dy * 0.007));
+        }
+      });
+
+      const finishPointer = (e) => {
+        activePointers.delete(e.pointerId);
+        if (mode === 'brush' && strokeBackup && Object.keys(strokeBackup).length > 0) {
+          const afterSnap = {};
+          for (const k in strokeBackup) {
+            afterSnap[k] = TileAssets[k].dirtMaskCanvas.getContext('2d').getImageData(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+          }
+          pushUndoAction({ type: 'brush', before: strokeBackup, after: afterSnap });
+          strokeBackup = null;
+        }
+        if (activePointers.size === 0) {
+          mode = null;
+          canvas.classList.remove('dragging');
+        }
+      };
+
+      canvas.addEventListener('pointerup', finishPointer);
+      canvas.addEventListener('pointercancel', finishPointer);
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        this.orbit.targetRadius = Math.max(0.42, Math.min(1.55, this.orbit.targetRadius + e.deltaY * 0.0008));
+      }, { passive: false });
+    },
+
+    resize() {
+      if (!this.renderer || !this.camera) return;
+      const w = window.innerWidth, h = window.innerHeight;
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(w, h, false);
+    },
+
+    captureTopDownSnapshot(isBefore) {
+      if (!this.renderer || !this.scene || !this.camera) return '';
+      const prevStep = State.step;
+      const prevSplit = State.compareSplit;
+      const prevPos = this.camera.position.clone();
+      const prevQuat = this.camera.quaternion.clone();
+      const prevBarVis = this.compareBar.visible;
+      const prevPrevVis = this.previewMesh.visible;
+
+      State.step = 'compare';
+      State.compareSplit = isBefore ? 1.0 : 0.0;
+      this.updateCompareVisuals();
+      this.compareBar.visible = false;
+      this.previewMesh.visible = false;
+
+      this.camera.position.set(0, 0.96, 0.001);
+      this.camera.lookAt(0, 0.02, 0);
+      this.renderer.render(this.scene, this.camera);
+      const url = this.renderer.domElement.toDataURL('image/png');
+
+      // Restore
+      State.step = prevStep;
+      State.compareSplit = prevSplit;
+      this.updateCompareVisuals();
+      this.compareBar.visible = prevBarVis;
+      this.previewMesh.visible = prevPrevVis;
+      this.camera.position.copy(prevPos);
+      this.camera.quaternion.copy(prevQuat);
+      this.renderer.render(this.scene, this.camera);
+      return url;
+    },
+
+    loop(now) {
+      this.rafId = requestAnimationFrame((t) => this.loop(t));
+      if (this.paused) {
+        this.lastTime = now;
+        return;
+      }
+      // Clamp dt after tab pause
+      const dt = Math.min(0.05, Math.max(0.001, (now - this.lastTime) / 1000));
+      const frameMs = now - this.lastTime;
+      this.lastTime = now;
+      this.frameMsAvg = this.frameMsAvg * 0.92 + Math.min(60, frameMs) * 0.08;
+
+      // Smooth orbital camera damping
+      const damp = 1 - Math.exp(-10 * dt);
+      this.orbit.theta += (this.orbit.targetTheta - this.orbit.theta) * damp;
+      this.orbit.phi += (this.orbit.targetPhi - this.orbit.phi) * damp;
+      this.orbit.radius += (this.orbit.targetRadius - this.orbit.radius) * damp;
+      this.orbit.target.lerp(this.orbit.goalTarget, damp);
+
+      const sinPhi = Math.sin(this.orbit.phi);
+      this.camera.position.set(
+        this.orbit.target.x + this.orbit.radius * sinPhi * Math.sin(this.orbit.theta),
+        this.orbit.target.y + this.orbit.radius * Math.cos(this.orbit.phi),
+        this.orbit.target.z + this.orbit.radius * sinPhi * Math.cos(this.orbit.theta)
+      );
+      this.camera.lookAt(this.orbit.target);
+
+      // Animate snapping tiles
+      for (let i = this.animatingPieces.length - 1; i >= 0; i--) {
+        const a = this.animatingPieces[i];
+        a.t = Math.min(1, a.t + dt * 3.8);
+        const ease = 1 - Math.pow(1 - a.t, 3);
+        a.mesh.position.y = a.startY + (a.endY - a.startY) * ease;
+        a.mesh.rotation.y = a.startRot + (a.endRot - a.startRot) * ease;
+        if (a.t >= 1) this.animatingPieces.splice(i, 1);
+      }
+
+      // Animate dust particles
+      if (this.dustSystem && this.dustSystem.visible) {
+        let dirty = false;
+        for (let i = 0; i < this.dustVels.length; i++) {
+          const p = this.dustVels[i];
+          if (p.life > 0) {
+            p.life -= dt;
+            this.dustPositions[i * 3] += p.vx * dt;
+            this.dustPositions[i * 3 + 1] += p.vy * dt;
+            this.dustPositions[i * 3 + 2] += p.vz * dt;
+            p.vy -= 0.06 * dt;
+            if (p.life <= 0) this.dustPositions[i * 3 + 1] = -10;
+            dirty = true;
+          }
+        }
+        if (dirty) this.dustSystem.geometry.attributes.position.needsUpdate = true;
+      }
+
+      this.renderer.render(this.scene, this.camera);
+
+      // Update lightweight telemetry every ~20 frames
+      if (Math.floor(now / 350) !== Math.floor((now - frameMs) / 350)) {
+        const msEl = document.getElementById('tel-ms');
+        const callsEl = document.getElementById('tel-calls');
+        if (msEl) msEl.textContent = this.frameMsAvg.toFixed(1) + ' ms';
+        if (callsEl) callsEl.textContent = this.renderer.info.render.calls + ' calls';
+      }
+    }
+  };
+
+  /* ============================================================================
+   * 7. UNDO / REDO & PIECE PLACEMENT LOGIC
+   * ========================================================================== */
+  function pushUndoAction(action) {
+    State.undoStack.push(action);
+    if (State.undoStack.length > 30) State.undoStack.shift();
+    State.redoStack.length = 0;
+    updateUndoButtons();
+  }
+
+  function applyUndo() {
+    const act = State.undoStack.pop();
+    if (!act) return;
+    if (act.type === 'brush') {
+      for (const k in act.before) {
+        const asset = TileAssets[k];
+        asset.dirtMaskCanvas.getContext('2d').putImageData(act.before[k], 0, 0);
+        asset.currentAlphaSum = measureDirtAlpha(asset.dirtMaskCanvas);
+        recompositeTile(asset, State.step === 'compare');
+      }
+      updateGlobalCleanPercent();
+      showToast('Pincelada desfeita.', 'ok');
+    } else if (act.type === 'place') {
+      const p = State.pieces[act.pieceId];
+      p.placed = false;
+      p.placedSlotKey = null;
+      p.angle = act.prevAngle;
+      Scene3D.removePlacedMesh(act.slotKey);
+      State.selectedPieceId = act.pieceId;
+      State.selectedSlotKey = act.slotKey;
+      renderPieceTray();
+      Scene3D.updatePreviewTile();
+      updateStepperBadges();
+      showToast(`Encaixe de ${act.pieceId} desfeito.`, 'ok');
+    }
+    State.redoStack.push(act);
+    updateUndoButtons();
+  }
+
+  function applyRedo() {
+    const act = State.redoStack.pop();
+    if (!act) return;
+    if (act.type === 'brush') {
+      for (const k in act.after) {
+        const asset = TileAssets[k];
+        asset.dirtMaskCanvas.getContext('2d').putImageData(act.after[k], 0, 0);
+        asset.currentAlphaSum = measureDirtAlpha(asset.dirtMaskCanvas);
+        recompositeTile(asset, State.step === 'compare');
+      }
+      updateGlobalCleanPercent();
+      showToast('Pincelada refeita.', 'ok');
+    } else if (act.type === 'place') {
+      const p = State.pieces[act.pieceId];
+      p.placed = true;
+      p.placedSlotKey = act.slotKey;
+      p.angle = 0;
+      Scene3D.addPlacedMesh(act.pieceId, act.slotKey, true);
+      renderPieceTray();
+      Scene3D.updatePreviewTile();
+      updateStepperBadges();
+      showToast(`Encaixe de ${act.pieceId} refeito.`, 'ok');
+    }
+    State.undoStack.push(act);
+    updateUndoButtons();
+  }
+
+  function updateUndoButtons() {
+    document.getElementById('btn-undo').disabled = State.undoStack.length === 0;
+    document.getElementById('btn-redo').disabled = State.redoStack.length === 0;
+  }
+
+  function rotateSelectedPiece(deltaDeg) {
+    const p = State.pieces[State.selectedPieceId];
+    if (!p || p.placed) {
+      showToast('Selecione uma peça ainda não encaixada para girar.', 'warn');
+      return;
+    }
+    p.angle = normalizeAngleDeg(p.angle + deltaDeg);
+    AudioEngine.playRotate();
+    renderPieceTray();
+    Scene3D.updatePreviewTile();
+  }
+
+  function attemptSnapSelectedPiece() {
+    const p = State.pieces[State.selectedPieceId];
+    if (!p || p.placed) {
+      showToast('Selecione uma peça pendente na bandeja.', 'warn');
+      return;
+    }
+    const spec = MISSING_SLOTS.find(s => s.id === p.id);
+    const correctSlotKey = tileKey(spec.col, spec.row);
+    const targetSlotKey = State.selectedSlotKey || correctSlotKey;
+
+    if (targetSlotKey !== correctSlotKey) {
+      AudioEngine.playSnap(false);
+      showToast(`Impedimento: ${p.id} (${spec.label}) não corresponde a este vão. Dica: ${spec.hint}.`, 'err');
+      return;
+    }
+
+    const err = angleErrorDeg(p.angle);
+    if (err > ANGLE_TOLERANCE_DEG) {
+      AudioEngine.playSnap(false);
+      showToast(`Fora da tolerância angular (±${ANGLE_TOLERANCE_DEG}°). Desvio atual: ${err}°. Gire a peça para continuar o padrão nas bordas.`, 'warn');
+      return;
+    }
+
+    const prevAngle = p.angle;
+    p.placed = true;
+    p.placedSlotKey = correctSlotKey;
+    p.angle = 0;
+    Scene3D.addPlacedMesh(p.id, correctSlotKey, true);
+    AudioEngine.playSnap(true);
+    pushUndoAction({ type: 'place', pieceId: p.id, slotKey: correctSlotKey, prevAngle });
+
+    // Auto-select next unplaced piece
+    const next = MISSING_SLOTS.find(s => !State.pieces[s.id].placed);
+    if (next) {
+      State.selectedPieceId = next.id;
+      State.selectedSlotKey = tileKey(next.col, next.row);
+      showToast(`Peça ${p.id} encaixada com continuidade nas bordas! Próxima: ${next.id}.`, 'ok');
+    } else {
+      showToast('Todas as 4 peças foram recompostas! Avance para Comparar Antes e Depois.', 'ok');
+    }
+
+    renderPieceTray();
+    Scene3D.updatePreviewTile();
+    updateStepperBadges();
+  }
+
+  /* ============================================================================
+   * 8. UI CONTROLLERS, TRAY RENDERING & SERIALIZATION
+   * ========================================================================== */
+  const STEP_TITLES = {
+    inspect: '1. Inspeção com Luz Rasante',
+    clean: '2. Limpeza com Pincel',
+    identify: '3. Identificação do Motivo',
+    place: '4. Girar e Encaixar Peças',
+    compare: '5. Comparar Antes e Depois'
+  };
+
+  let toastTimer = null;
+  function showToast(msg, kind) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (kind ? ' ' + kind : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3600);
+  }
+
+  function setStep(step) {
+    State.step = step;
+    document.getElementById('panel-title').textContent = STEP_TITLES[step] || '';
+    document.querySelectorAll('.step-btn').forEach(b => b.classList.toggle('active', b.dataset.step === step));
+    document.querySelectorAll('.step-view').forEach(v => v.style.display = 'none');
+    const view = document.getElementById('view-' + step);
+    if (view) view.style.display = 'block';
+
+    const canvas = document.getElementById('webgl-canvas');
+    canvas.classList.toggle('mode-clean', step === 'clean' && State.cleanSubMode === 'brush');
+    canvas.classList.toggle('mode-place', step === 'place');
+
+    document.getElementById('compare-hud').classList.toggle('visible', step === 'compare');
+
+    if (Scene3D.active) {
+      if (step === 'place') {
+        renderPieceTray();
+        Scene3D.updatePreviewTile();
+        Scene3D.setCameraPreset('overview', false);
+      } else {
+        if (Scene3D.previewMesh) Scene3D.previewMesh.visible = false;
+      }
+      if (step === 'compare') {
+        Scene3D.setCameraPreset('overview', false);
+      }
+      Scene3D.updateCompareVisuals();
+    }
+  }
+
+  function updateStepperBadges() {
+    const placedCount = MISSING_SLOTS.filter(s => State.pieces[s.id].placed).length;
+    document.getElementById('step-clean').classList.toggle('done', State.cleanPercent >= 75);
+    document.getElementById('step-identify').classList.toggle('done', State.motifIdentified);
+    document.getElementById('step-place').classList.toggle('done', placedCount === MISSING_SLOTS.length);
+    const lbl = document.getElementById('placed-count-label');
+    if (lbl) lbl.textContent = `${placedCount} / ${MISSING_SLOTS.length}`;
+  }
+
+  function renderPieceTray() {
+    const tray = document.getElementById('piece-tray');
+    if (!tray) return;
+    tray.innerHTML = '';
+    for (const spec of MISSING_SLOTS) {
+      const p = State.pieces[spec.id];
+      const asset = TileAssets[tileKey(spec.col, spec.row)];
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'piece-card' +
+        (State.selectedPieceId === spec.id && !p.placed ? ' selected' : '') +
+        (p.placed ? ' placed' : '');
+      card.setAttribute('role', 'listitem');
+      card.dataset.pieceId = spec.id;
+
+      const thumb = document.createElement('img');
+      thumb.className = 'piece-thumb';
+      thumb.alt = `Miniatura da peça ${spec.id} ${spec.label}`;
+      thumb.src = asset ? asset.cleanCanvas.toDataURL('image/png') : '';
+      thumb.style.transform = `rotate(${p.placed ? 0 : p.angle}deg)`;
+
+      const meta = document.createElement('div');
+      meta.className = 'piece-meta';
+      const idSpan = document.createElement('span');
+      idSpan.className = 'piece-id';
+      idSpan.textContent = `${spec.id} • ${spec.label}`;
+      const stSpan = document.createElement('span');
+      stSpan.className = 'piece-status';
+      stSpan.textContent = p.placed ? '✓ Encaixada' : `Ângulo: ${p.angle}°`;
+      meta.append(idSpan, stSpan);
+
+      card.append(thumb, meta);
+      card.addEventListener('click', () => {
+        if (p.placed) {
+          showToast(`${spec.id} já está encaixada. Use Desfazer se quiser remover.`, 'ok');
+          return;
+        }
+        State.selectedPieceId = spec.id;
+        State.selectedSlotKey = tileKey(spec.col, spec.row);
+        renderPieceTray();
+        Scene3D.updatePreviewTile();
+      });
+      tray.appendChild(card);
+    }
+
+    const active = State.pieces[State.selectedPieceId];
+    const angLbl = document.getElementById('active-angle-label');
+    if (angLbl) {
+      if (active && !active.placed) {
+        const err = angleErrorDeg(active.angle);
+        angLbl.textContent = `${active.angle}° (desvio ${err}°)`;
+        angLbl.style.color = err <= ANGLE_TOLERANCE_DEG ? 'var(--ok)' : 'var(--ochre)';
+      } else {
+        angLbl.textContent = 'Concluído';
+        angLbl.style.color = 'var(--ok)';
+      }
+    }
+  }
+
+  function exportVersionedState() {
+    // Downsample dirt masks to 32x32 base64 PNG per fixed tile for compact, exact JSON state
+    const dirtMasks = {};
+    const small = document.createElement('canvas'); small.width = 64; small.height = 64;
+    const sctx = small.getContext('2d');
+    for (const k in TileAssets) {
+      if (!TileAssets[k].missing) {
+        sctx.clearRect(0, 0, 64, 64);
+        sctx.drawImage(TileAssets[k].dirtMaskCanvas, 0, 0, 64, 64);
+        dirtMasks[k] = small.toDataURL('image/png');
+      }
+    }
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      app: 'restauro-de-azulejos',
+      savedAt: new Date().toISOString(),
+      step: State.step,
+      cleanPercent: State.cleanPercent,
+      motifIdentified: State.motifIdentified,
+      motifChoice: State.motifChoice,
+      pieces: State.pieces,
+      compareSplit: State.compareSplit,
+      notes: State.notes,
+      dirtMasks
+    };
+  }
+
+  function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function importVersionedState(obj) {
+    if (!obj || typeof obj !== 'object' || obj.schemaVersion !== SCHEMA_VERSION || obj.app !== 'restauro-de-azulejos') {
+      showToast('Arquivo JSON inválido ou versão incompatível.', 'err');
+      return;
+    }
+    State.motifIdentified = Boolean(obj.motifIdentified);
+    State.motifChoice = obj.motifChoice || null;
+    State.notes = typeof obj.notes === 'string' ? obj.notes : '';
+    document.getElementById('report-notes').value = State.notes;
+
+    // Restore pieces
+    for (const slotKey in Scene3D.placedMeshes) Scene3D.removePlacedMesh(slotKey);
+    if (obj.pieces && typeof obj.pieces === 'object') {
+      for (const spec of MISSING_SLOTS) {
+        const saved = obj.pieces[spec.id];
+        if (saved) {
+          State.pieces[spec.id] = {
+            id: spec.id,
+            angle: normalizeAngleDeg(Number(saved.angle) || 0),
+            placed: Boolean(saved.placed),
+            placedSlotKey: saved.placed ? tileKey(spec.col, spec.row) : null
+          };
+          if (State.pieces[spec.id].placed) {
+            Scene3D.addPlacedMesh(spec.id, tileKey(spec.col, spec.row), false);
+          }
+        }
+      }
+    }
+
+    // Restore dirt masks asynchronously
+    if (obj.dirtMasks && typeof obj.dirtMasks === 'object') {
+      const keys = Object.keys(obj.dirtMasks);
+      let loaded = 0;
+      keys.forEach((k) => {
+        const asset = TileAssets[k];
+        if (!asset || asset.missing) return;
+        const img = new Image();
+        img.onload = () => {
+          const ctx = asset.dirtMaskCanvas.getContext('2d');
+          ctx.clearRect(0, 0, TILE_TEX_RES, TILE_TEX_RES);
+          ctx.drawImage(img, 0, 0, TILE_TEX_RES, TILE_TEX_RES);
+          asset.currentAlphaSum = measureDirtAlpha(asset.dirtMaskCanvas);
+          recompositeTile(asset, State.step === 'compare');
+          loaded++;
+          if (loaded === keys.length) updateGlobalCleanPercent();
+        };
+        img.src = obj.dirtMasks[k];
+      });
+    }
+
+    State.undoStack.length = 0;
+    State.redoStack.length = 0;
+    updateUndoButtons();
+    renderPieceTray();
+    updateStepperBadges();
+    showToast('Estado do restauro importado com sucesso.', 'ok');
+  }
+
+  function resetAll() {
+    for (const k in TileAssets) {
+      const asset = TileAssets[k];
+      if (!asset.missing) {
+        asset.dirtMaskCanvas.getContext('2d').putImageData(asset.initialDirtData, 0, 0);
+        asset.currentAlphaSum = asset.initialAlphaSum;
+        recompositeTile(asset, false);
+      }
+    }
+    for (const slotKey in Scene3D.placedMeshes) {
+      Scene3D.removePlacedMesh(slotKey);
+    }
+    initPiecesState();
+    State.motifIdentified = false;
+    State.motifChoice = null;
+    State.notes = '';
+    State.undoStack.length = 0;
+    State.redoStack.length = 0;
+    document.getElementById('report-notes').value = '';
+    document.querySelectorAll('.motif-option').forEach(el => el.classList.remove('correct', 'wrong'));
+    document.getElementById('motif-badge').textContent = 'Pendente';
+    document.getElementById('motif-badge').style.color = 'var(--muted)';
+    updateGlobalCleanPercent();
+    updateUndoButtons();
+    renderPieceTray();
+    setStep('inspect');
+    showToast('Restauro reiniciado ao estado original.', 'ok');
+  }
+
+  /* ============================================================================
+   * 9. HTML5 2D FALLBACK RECOVERY (IF WEBGL2 OR CDN FAILS)
+   * ========================================================================== */
+  function startFallback2D(reason) {
+    document.getElementById('stage-container').style.display = 'none';
+    document.querySelector('.topbar').style.display = 'none';
+    document.getElementById('tool-panel').style.display = 'none';
+    document.getElementById('btn-open-panel').style.display = 'none';
+    document.getElementById('telemetry-chip').style.display = 'none';
+
+    const root = document.getElementById('fallback-root');
+    root.classList.add('active');
+    if (reason) {
+      document.getElementById('fallback-reason').innerHTML =
+        `<strong>Modo de Recuperação 2D Ativado:</strong> ${reason} Operações essenciais de limpeza, rotação/encaixe e comparação estão disponíveis abaixo em HTML5 Canvas.`;
+    }
+
+    const fbCanvas = document.getElementById('fallback-canvas');
+    const ctx = fbCanvas.getContext('2d');
+    let fbMode = 'clean';
+    let fbCompare = 1.0;
+    let painting = false;
+    let activeIdx = 0;
+
+    function draw2D() {
+      ctx.fillStyle = '#c5bca9';
+      ctx.fillRect(0, 0, 512, 512);
+      const cell = 128;
+      const splitPx = fbCompare * 512;
+
+      for (let row = 0; row < GRID_N; row++) {
+        for (let col = 0; col < GRID_N; col++) {
+          const key = tileKey(col, row);
+          const asset = TileAssets[key];
+          const x = col * cell + 3, y = row * cell + 3, s = cell - 6;
+
+          if (!asset.missing) {
+            // Before vs After split
+            recompositeTile(asset, false);
+            ctx.drawImage(asset.compCanvas, x, y, s, s);
+            if (x < splitPx) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.rect(0, 0, Math.min(512, 512 - splitPx), 512);
+              ctx.restore();
+            }
+          } else {
+            const spec = getSlotSpec(col, row);
+            const p = State.pieces[spec.id];
+            if (p.placed && x + s / 2 <= splitPx) {
+              ctx.drawImage(asset.cleanCanvas, x, y, s, s);
+            } else {
+              ctx.fillStyle = '#a99f8c';
+              ctx.fillRect(x, y, s, s);
+              ctx.strokeStyle = '#d8a24a';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(x + 2, y + 2, s - 4, s - 4);
+              if (fbMode === 'place' && MISSING_SLOTS[activeIdx].id === spec.id && !p.placed) {
+                ctx.save();
+                ctx.globalAlpha = 0.72;
+                ctx.translate(x + s / 2, y + s / 2);
+                ctx.rotate((p.angle * Math.PI) / 180);
+                ctx.drawImage(asset.cleanCanvas, -s / 2, -s / 2, s, s);
+                ctx.restore();
+              }
+            }
+          }
+        }
+      }
+      const placed = MISSING_SLOTS.filter(s => State.pieces[s.id].placed).length;
+      const cur = MISSING_SLOTS[activeIdx];
+      document.getElementById('fb-status').textContent =
+        `Limpeza: ${State.cleanPercent}% | Peças encaixadas: ${placed}/4 | Peça ativa: ${cur.id} (${State.pieces[cur.id].angle}°)`;
+    }
+
+    function paint2D(clientX, clientY) {
+      const rect = fbCanvas.getBoundingClientRect();
+      const gx = ((clientX - rect.left) / rect.width) * 512;
+      const gy = ((clientY - rect.top) / rect.height) * 512;
+      const col = Math.floor(gx / 128), row = Math.floor(gy / 128);
+      if (col < 0 || col >= GRID_N || row < 0 || row >= GRID_N) return;
+      const asset = TileAssets[tileKey(col, row)];
+      if (!asset || asset.missing) return;
+      const lx = ((gx - col * 128) / 128) * TILE_TEX_RES;
+      const ly = ((gy - row * 128) / 128) * TILE_TEX_RES;
+      const dctx = asset.dirtMaskCanvas.getContext('2d');
+      dctx.save();
+      dctx.globalCompositeOperation = 'destination-out';
+      dctx.beginPath();
+      dctx.arc(lx, ly, 36, 0, Math.PI * 2);
+      dctx.fill();
+      dctx.restore();
+      asset.currentAlphaSum = measureDirtAlpha(asset.dirtMaskCanvas);
+      updateGlobalCleanPercent();
+      draw2D();
+    }
+
+    fbCanvas.addEventListener('pointerdown', (e) => {
+      if (fbMode === 'clean') { painting = true; paint2D(e.clientX, e.clientY); }
+    });
+    fbCanvas.addEventListener('pointermove', (e) => {
+      if (painting && fbMode === 'clean') paint2D(e.clientX, e.clientY);
+    });
+    window.addEventListener('pointerup', () => { painting = false; });
+
+    document.getElementById('fb-mode-clean').addEventListener('click', () => {
+      fbMode = 'clean';
+      document.getElementById('fb-mode-clean').classList.add('active');
+      document.getElementById('fb-mode-place').classList.remove('active');
+      draw2D();
+    });
+    document.getElementById('fb-mode-place').addEventListener('click', () => {
+      fbMode = 'place';
+      document.getElementById('fb-mode-place').classList.add('active');
+      document.getElementById('fb-mode-clean').classList.remove('active');
+      draw2D();
+    });
+    document.getElementById('fb-rot-cw').addEventListener('click', () => {
+      const spec = MISSING_SLOTS[activeIdx];
+      const p = State.pieces[spec.id];
+      if (!p.placed) p.angle = normalizeAngleDeg(p.angle + 90);
+      draw2D();
+    });
+    document.getElementById('fb-snap').addEventListener('click', () => {
+      const spec = MISSING_SLOTS[activeIdx];
+      const p = State.pieces[spec.id];
+      if (!p.placed && angleErrorDeg(p.angle) <= ANGLE_TOLERANCE_DEG) {
+        p.placed = true; p.angle = 0;
+        const nextIdx = MISSING_SLOTS.findIndex(s => !State.pieces[s.id].placed);
+        if (nextIdx >= 0) activeIdx = nextIdx;
+      }
+      draw2D();
+    });
+    document.getElementById('fb-compare').addEventListener('input', (e) => {
+      fbCompare = Number(e.target.value) / 100;
+      document.getElementById('fb-cmp-val').textContent = e.target.value + '%';
+      draw2D();
+    });
+
+    draw2D();
+  }
+
+  /* ============================================================================
+   * 10. EVENT WIRING & BOOTSTRAP
+   * ========================================================================== */
+  function wireUI() {
+    // Stepper
+    document.querySelectorAll('.step-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setStep(btn.dataset.step));
+    });
+    document.getElementById('btn-go-clean').addEventListener('click', () => setStep('clean'));
+    document.getElementById('btn-go-identify').addEventListener('click', () => setStep('identify'));
+    document.getElementById('btn-go-place').addEventListener('click', () => setStep('place'));
+    document.getElementById('btn-go-compare').addEventListener('click', () => setStep('compare'));
+
+    // Panel collapse / open
+    const panel = document.getElementById('tool-panel');
+    document.getElementById('btn-collapse-panel').addEventListener('click', () => panel.classList.add('collapsed'));
+    document.getElementById('btn-open-panel').addEventListener('click', () => panel.classList.toggle('collapsed'));
+
+    // Undo / Redo
+    document.getElementById('btn-undo').addEventListener('click', applyUndo);
+    document.getElementById('btn-redo').addEventListener('click', applyRedo);
+
+    // Audio toggle & volume
+    const audioBtn = document.getElementById('btn-audio');
+    audioBtn.addEventListener('click', () => {
+      State.audioEnabled = !State.audioEnabled;
+      audioBtn.textContent = State.audioEnabled ? '🔊' : '🔇';
+      audioBtn.classList.toggle('on', State.audioEnabled);
+      if (State.audioEnabled) {
+        AudioEngine.ensure();
+        AudioEngine.playRotate();
+        showToast('Áudio ativado.', 'ok');
+      } else {
+        showToast('Áudio silenciado.', 'ok');
+      }
+    });
+    document.getElementById('slider-volume').addEventListener('input', (e) => {
+      State.audioVolume = Number(e.target.value) / 100;
+      document.getElementById('val-volume').textContent = e.target.value + '%';
+    });
+
+    // Quality toggle
+    document.getElementById('btn-quality').addEventListener('click', () => {
+      State.quality = State.quality === 'normal' ? 'lite' : 'normal';
+      const lbl = State.quality === 'normal' ? 'Normal' : 'Leve';
+      document.getElementById('quality-label').textContent = lbl;
+      document.getElementById('tel-mode').textContent = lbl;
+      document.getElementById('btn-quality').classList.toggle('on', State.quality === 'lite');
+      Scene3D.applyQualityProfile();
+      showToast(`Perfil de desempenho: ${lbl}.`, 'ok');
+    });
+
+    // Inspect controls
+    const syncRakingUI = () => {
+      document.getElementById('btn-toggle-raking').textContent = `Luz Rasante: ${State.rakingOn ? 'ON' : 'OFF'}`;
+      document.getElementById('btn-toggle-raking').classList.toggle('active', State.rakingOn);
+      document.getElementById('raking-status').textContent = State.rakingOn ? 'Ativa' : 'Desligada';
+      document.getElementById('raking-status').style.color = State.rakingOn ? 'var(--ochre)' : 'var(--muted)';
+      document.getElementById('btn-toggle-studio').classList.toggle('active', State.studioOn);
+      Scene3D.updateRakingLight();
+    };
+    document.getElementById('btn-toggle-raking').addEventListener('click', () => {
+      State.rakingOn = !State.rakingOn; syncRakingUI();
+    });
+    document.getElementById('btn-clean-raking-quick').addEventListener('click', () => {
+      State.rakingOn = !State.rakingOn; syncRakingUI();
+      showToast(`Luz rasante ${State.rakingOn ? 'ligada' : 'desligada'}.`, 'ok');
+    });
+    document.getElementById('btn-toggle-studio').addEventListener('click', () => {
+      State.studioOn = !State.studioOn; syncRakingUI();
+    });
+    document.getElementById('slider-azimuth').addEventListener('input', (e) => {
+      State.rakingAzimuth = Number(e.target.value);
+      document.getElementById('val-azimuth').textContent = State.rakingAzimuth + '°';
+      Scene3D.updateRakingLight();
+    });
+    document.getElementById('slider-elevation').addEventListener('input', (e) => {
+      State.rakingElevation = Number(e.target.value);
+      document.getElementById('val-elevation').textContent = State.rakingElevation + '°';
+      Scene3D.updateRakingLight();
+    });
+    document.getElementById('cam-overview').addEventListener('click', () => Scene3D.setCameraPreset('overview', false));
+    document.getElementById('cam-closeup').addEventListener('click', () => Scene3D.setCameraPreset('closeup', false));
+    document.getElementById('cam-raking').addEventListener('click', () => Scene3D.setCameraPreset('raking', false));
+
+    // Clean controls
+    const syncCleanMode = (m) => {
+      State.cleanSubMode = m;
+      document.getElementById('btn-clean-mode-brush').classList.toggle('active', m === 'brush');
+      document.getElementById('btn-clean-mode-orbit').classList.toggle('active', m === 'orbit');
+      document.getElementById('webgl-canvas').classList.toggle('mode-clean', State.step === 'clean' && m === 'brush');
+    };
+    document.getElementById('btn-clean-mode-brush').addEventListener('click', () => syncCleanMode('brush'));
+    document.getElementById('btn-clean-mode-orbit').addEventListener('click', () => syncCleanMode('orbit'));
+    document.getElementById('slider-brush-radius').addEventListener('input', (e) => {
+      State.brushRadiusMm = Number(e.target.value);
+      document.getElementById('val-brush-radius').textContent = State.brushRadiusMm + ' mm';
+    });
+    document.getElementById('slider-brush-pressure').addEventListener('input', (e) => {
+      State.brushPressure = Number(e.target.value) / 100;
+      document.getElementById('val-brush-pressure').textContent = e.target.value + '%';
+    });
+
+    // Identify motif
+    document.querySelectorAll('.motif-option').forEach((opt) => {
+      opt.addEventListener('click', () => {
+        const val = opt.dataset.motif;
+        State.motifChoice = val;
+        document.querySelectorAll('.motif-option').forEach(o => o.classList.remove('correct', 'wrong'));
+        if (val === 'barroco-estrela') {
+          opt.classList.add('correct');
+          State.motifIdentified = true;
+          document.getElementById('motif-badge').textContent = 'Identificado ✓';
+          document.getElementById('motif-badge').style.color = 'var(--ok)';
+          State.showGuides = true;
+          if (Scene3D.guideLinesGroup) Scene3D.guideLinesGroup.visible = true;
+          document.getElementById('btn-toggle-guides').textContent = 'Guias de Borda: ON';
+          AudioEngine.playSnap(true);
+          showToast('Motivo identificado! Guias de continuidade ativadas para auxiliar o encaixe.', 'ok');
+        } else {
+          opt.classList.add('wrong');
+          AudioEngine.playSnap(false);
+          showToast('Observe o medalhão central de 8 pontas e os cartuchos divididos nas emendas dos azulejos limpos.', 'warn');
+        }
+        updateStepperBadges();
+      });
+    });
+    document.getElementById('btn-toggle-guides').addEventListener('click', () => {
+      State.showGuides = !State.showGuides;
+      if (Scene3D.guideLinesGroup) Scene3D.guideLinesGroup.visible = State.showGuides;
+      document.getElementById('btn-toggle-guides').textContent = `Guias de Borda: ${State.showGuides ? 'ON' : 'OFF'}`;
+    });
+
+    // Place controls
+    document.getElementById('btn-rot-ccw').addEventListener('click', () => rotateSelectedPiece(-90));
+    document.getElementById('btn-rot-cw').addEventListener('click', () => rotateSelectedPiece(90));
+    document.getElementById('btn-rot-fine-ccw').addEventListener('click', () => rotateSelectedPiece(-5));
+    document.getElementById('btn-rot-fine-cw').addEventListener('click', () => rotateSelectedPiece(5));
+    document.getElementById('btn-snap-piece').addEventListener('click', attemptSnapSelectedPiece);
+
+    // Compare sliders (synced)
+    const setCompare = (pct) => {
+      const clamped = Math.max(0, Math.min(100, pct));
+      State.compareSplit = clamped / 100;
+      document.getElementById('slider-compare-panel').value = String(clamped);
+      document.getElementById('slider-compare-hud').value = String(clamped);
+      document.getElementById('compare-pct-label').textContent = clamped + '%';
+      Scene3D.updateCompareVisuals();
+    };
+    document.getElementById('slider-compare-panel').addEventListener('input', (e) => setCompare(Number(e.target.value)));
+    document.getElementById('slider-compare-hud').addEventListener('input', (e) => setCompare(Number(e.target.value)));
+    document.getElementById('btn-compare-before').addEventListener('click', () => setCompare(100));
+    document.getElementById('btn-compare-split').addEventListener('click', () => setCompare(50));
+    document.getElementById('btn-compare-after').addEventListener('click', () => setCompare(0));
+
+    // Report modal
+    const reportModal = document.getElementById('modal-report');
+    document.getElementById('btn-open-report').addEventListener('click', () => {
+      document.getElementById('shot-before').src = Scene3D.captureTopDownSnapshot(true);
+      document.getElementById('shot-after').src = Scene3D.captureTopDownSnapshot(false);
+      const placed = MISSING_SLOTS.filter(s => State.pieces[s.id].placed).length;
+      document.getElementById('report-metrics').innerHTML =
+        `<div class="section-label"><span>Resumo do Restauro</span><span>Schema v${SCHEMA_VERSION}</span></div>` +
+        `<p class="helper-text">Área limpa: <strong>${State.cleanPercent}%</strong> • Motivo identificado: <strong>${State.motifIdentified ? 'Sim (Estrela Octogonal & Rosetas)' : 'Não'}</strong> • Peças recompostas: <strong>${placed} / 4</strong>.</p>`;
+      reportModal.classList.add('open');
+    });
+    const closeReport = () => reportModal.classList.remove('open');
+    document.getElementById('btn-close-report').addEventListener('click', closeReport);
+    document.getElementById('btn-close-report-2').addEventListener('click', closeReport);
+    document.getElementById('report-notes').addEventListener('input', (e) => { State.notes = e.target.value; });
+    document.getElementById('btn-download-report').addEventListener('click', () => {
+      downloadJSON(exportVersionedState(), 'restauro-azulejos-registro.json');
+      showToast('Registro exportado em JSON.', 'ok');
+    });
+
+    // Export / Import JSON
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      downloadJSON(exportVersionedState(), 'restauro-azulejos-estado.json');
+      showToast('Estado serializado exportado.', 'ok');
+    });
+    const fileInput = document.getElementById('input-import-file');
+    document.getElementById('btn-import-json').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try { importVersionedState(JSON.parse(String(reader.result))); }
+        catch (err) { showToast('Não foi possível ler o JSON selecionado.', 'err'); }
+      };
+      reader.readAsText(file);
+      fileInput.value = '';
+    });
+
+    // Reset modal
+    const resetModal = document.getElementById('modal-reset');
+    document.getElementById('btn-reset-all').addEventListener('click', () => resetModal.classList.add('open'));
+    document.getElementById('btn-cancel-reset').addEventListener('click', () => resetModal.classList.remove('open'));
+    document.getElementById('btn-cancel-reset-2').addEventListener('click', () => resetModal.classList.remove('open'));
+    document.getElementById('btn-confirm-reset').addEventListener('click', () => {
+      resetModal.classList.remove('open');
+      resetAll();
+    });
+
+    // Help modal
+    const helpModal = document.getElementById('modal-help');
+    document.getElementById('btn-help').addEventListener('click', () => helpModal.classList.add('open'));
+    document.getElementById('btn-close-help').addEventListener('click', () => helpModal.classList.remove('open'));
+
+    // Close modals on backdrop click or Escape
+    [reportModal, resetModal, helpModal].forEach((m) => {
+      m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+      if (e.key === 'Escape') {
+        [reportModal, resetModal, helpModal].forEach(m => m.classList.remove('open'));
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) applyRedo(); else applyUndo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault(); applyRedo(); return;
+      }
+      if (e.key === '1') setStep('inspect');
+      else if (e.key === '2') setStep('clean');
+      else if (e.key === '3') setStep('identify');
+      else if (e.key === '4') setStep('place');
+      else if (e.key === '5') setStep('compare');
+      else if (e.key.toLowerCase() === 'l') { State.rakingOn = !State.rakingOn; syncRakingUI(); }
+      else if (e.key === 'ArrowLeft') {
+        State.rakingAzimuth = (State.rakingAzimuth - 12 + 360) % 360;
+        document.getElementById('slider-azimuth').value = String(State.rakingAzimuth);
+        document.getElementById('val-azimuth').textContent = State.rakingAzimuth + '°';
+        Scene3D.updateRakingLight();
+      } else if (e.key === 'ArrowRight') {
+        State.rakingAzimuth = (State.rakingAzimuth + 12) % 360;
+        document.getElementById('slider-azimuth').value = String(State.rakingAzimuth);
+        document.getElementById('val-azimuth').textContent = State.rakingAzimuth + '°';
+        Scene3D.updateRakingLight();
+      } else if (e.key.toLowerCase() === 'q' && State.step === 'place') rotateSelectedPiece(-90);
+      else if (e.key.toLowerCase() === 'e' && State.step === 'place') rotateSelectedPiece(90);
+      else if (e.key === 'Enter' && State.step === 'place') attemptSnapSelectedPiece();
+      else if (e.key.toLowerCase() === 'c') {
+        const order = ['overview', 'closeup', 'raking'];
+        const next = order[(order.indexOf(State.cameraPreset) + 1) % order.length];
+        Scene3D.setCameraPreset(next, false);
+      }
+    });
+
+    window.addEventListener('resize', () => Scene3D.resize());
+    document.addEventListener('visibilitychange', () => {
+      Scene3D.paused = document.hidden;
+    });
+  }
+
+  function startWorkshop() {
+    const master = createMasterArtwork();
+    const hasThree = typeof window.THREE !== 'undefined';
+    buildTileAssets(master, hasThree);
+
+    if (!hasThree) {
+      startFallback2D('A biblioteca Three.js local não pôde ser carregada.');
+      return;
+    }
+
+    const ok = Scene3D.init();
+    if (!ok) {
+      startFallback2D('O navegador não disponibilizou contexto WebGL/WebGL2.');
+      return;
+    }
+
+    wireUI();
+    renderPieceTray();
+    updateStepperBadges();
+  }
+
+  const threeScript = document.createElement('script');
+  threeScript.src = '../../../Sistema/shared/vendor/three-r128.min.js';
+  threeScript.addEventListener('load', startWorkshop);
+  threeScript.addEventListener('error', startWorkshop);
+  document.head.append(threeScript);
+})();
+</script>
+</body>
+</html>

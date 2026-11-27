@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Território dos Vínculos — Casa da Árvore, Caixa de Areia e Santuário 3D</title>
+    <meta
+      name="description"
+      content="Explore o Território dos Vínculos: casa na árvore, caixa de areia sensorial e santuário meditativo."
+    />
+    <meta property="og:title" content="Território dos Vínculos — Casa da Árvore, Caixa de Areia e Santuário 3D" />
+    <meta
+      property="og:description"
+      content="Explore uma casa na árvore em uma clareira 3D e veja como cada emoção muda o clima."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../../Sistema/shared/sangi-bridge.js" defer></script>
+    <script>
+      (function () {
+        var origRaf = window.requestAnimationFrame.bind(window);
+        var origCaf = window.cancelAnimationFrame.bind(window);
+        var origAudio = window.AudioContext || window.webkitAudioContext;
+        var activeCtxs = [];
+        var activeRafIds = new Set();
+        var disposed = false;
+        var paused = false;
+        if (origAudio) {
+          var PatchedAudio = function () {
+            var ctx = new origAudio();
+            activeCtxs.push(ctx);
+            return ctx;
+          };
+          PatchedAudio.prototype = origAudio.prototype;
+          if (window.AudioContext) window.AudioContext = PatchedAudio;
+          if (window.webkitAudioContext) window.webkitAudioContext = PatchedAudio;
+        }
+        window.requestAnimationFrame = function (cb) {
+          if (disposed) return 0;
+          var wrappedId = 0;
+          wrappedId = origRaf(function (ts) {
+            activeRafIds.delete(wrappedId);
+            if (disposed || paused) return;
+            cb(ts);
+          });
+          activeRafIds.add(wrappedId);
+          return wrappedId;
+        };
+        window.cancelAnimationFrame = function (id) {
+          activeRafIds.delete(id);
+          return origCaf(id);
+        };
+        function disposeRuntime() {
+          if (disposed) return;
+          disposed = true;
+          paused = true;
+          activeRafIds.forEach(function (id) { try { origCaf(id); } catch (e) {} });
+          activeRafIds.clear();
+          activeCtxs.forEach(function (c) { try { if (c.state !== 'closed') c.close(); } catch (e) {} });
+          activeCtxs.length = 0;
+        }
+        window.addEventListener('sangi:pause', function () { paused = true; });
+        window.addEventListener('sangi:resume', function () { if (!disposed) paused = false; });
+        window.addEventListener('sangi:dispose', disposeRuntime);
+        window.addEventListener('beforeunload', disposeRuntime);
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-pumisJkU.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DVBPVe9c.css">
+    <link rel="stylesheet" href="./assets/treehouse.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bancada da Manicure — Studio Lúmen Nails | Sangi3D</title>
+  <style>
+    :root {
+      --bg: #1A1416;
+      --card-bg: rgba(30, 22, 26, 0.92);
+      --card-border: rgba(220, 160, 180, 0.28);
+      --text: #F8F0F2;
+      --text-muted: #B89EA6;
+      --accent-nude: #D9A0A8;
+      --accent-rose: #C25975;
+      --accent-gold: #D8B06E;
+      --accent-uv: #8A4FFF;
+      --serif: "Italiana", Georgia, serif;
+      --sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .nav-bar {
+      position: absolute; top: 0; left: 0; width: 100%; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 10;
+      background: linear-gradient(180deg, rgba(26,20,22,0.85) 0%, rgba(26,20,22,0) 100%);
+      pointer-events: none;
+    }
+    .brand-logo {
+      font-family: var(--serif); font-size: 20px; color: var(--accent-nude);
+      letter-spacing: 1px; pointer-events: auto;
+    }
+    .cta-btn {
+      padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      background: var(--accent-nude); color: #2A171D; border: none; cursor: pointer;
+      pointer-events: auto; transition: transform 0.2s, background 0.2s;
+    }
+    .cta-btn:hover { background: #E5B2BA; transform: translateY(-1px); }
+
+    .hud-panel {
+      position: absolute; top: 72px; right: 20px; width: 340px; max-height: calc(100dvh - 90px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--serif); font-size: 24px; font-weight: 400; color: #FFF; margin-bottom: 2px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+
+    .color-swatches {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+    }
+    .swatch {
+      aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent;
+      cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+    }
+    .swatch.active {
+      transform: scale(1.15); border-color: #FFF; box-shadow: 0 0 10px rgba(255,255,255,0.4);
+    }
+
+    .option-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    }
+    .btn-opt {
+      padding: 8px 4px; font-size: 10px; font-weight: 600; text-align: center;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--text); cursor: pointer; transition: all 0.2s;
+    }
+    .btn-opt.active {
+      background: var(--accent-rose); border-color: var(--accent-nude); color: #FFF;
+    }
+
+    .dock-controls {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .btn-dock {
+      padding: 10px 12px; font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; color: var(--text); cursor: pointer; text-align: center;
+      transition: all 0.2s;
+    }
+    .btn-dock.active {
+      background: var(--accent-rose); border-color: var(--accent-nude); color: #FFF;
+    }
+    .btn-dock.uv-active {
+      background: var(--accent-uv); border-color: #BA85FF; color: #FFF; box-shadow: 0 0 12px rgba(138,79,255,0.5);
+    }
+
+    @media (max-width: 768px) {
+      .hud-panel {
+        top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 50dvh;
+        border-radius: 20px 20px 0 0; padding: 16px 18px 24px;
+      }
+    }
+  :root{--bg:#ba928d;--card-bg:#fbefeb;--card-border:#dfbdbb;--text:#482a35;--text-muted:#765564;--accent-rose:#87435a;--accent-nude:#e4bbc5}
+#canvas-container{width:calc(100% - 350px)}
+.nav-bar{width:calc(100% - 350px);height:75px;padding:14px 34px;background:none}
+.brand-logo{color:#703e51;font:34px/1 Georgia,serif;letter-spacing:-.04em}
+.cta-btn{background:#834357;color:#fff7ee;min-height:42px;font-family:inherit}
+.cta-btn:hover{background:#693148}
+.hud-panel{inset:0 0 0 auto;width:350px;max-height:none;border-radius:0;box-shadow:none;background:linear-gradient(150deg,#fff8ef,#f7e6e7);padding:clamp(18px,4vh,42px) 20px 22px;gap:9px}
+.hud-header h1{color:#482a35;font:400 43px/.98 Georgia,serif;letter-spacing:-.06em;margin-bottom:8px}
+#design-status{margin-top:9px;min-height:31px;border-left:2px solid #be8092;padding-left:7px}
+.btn-opt,.btn-dock{min-height:42px;background:#fff9f4;border-color:#d7b9be;font-size:12px;font-family:inherit}
+.btn-opt:focus-visible,.btn-dock:focus-visible,.swatch:focus-visible{outline:2px solid #733751;outline-offset:3px}
+.swatch{border-radius:8px;min-height:44px;height:44px;aspect-ratio:auto}.swatch.active{transform:none;border-color:#fff9f0;outline:2px solid #87435a}
+.field-title,.length{font:650 11px/1.3 system-ui,sans-serif;color:var(--text-muted);text-transform:uppercase}
+.length{display:flex;align-items:center;gap:12px}.length input{width:100%;accent-color:#87435a}
+.finger-row{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.finger-row button{font-size:10px}
+body.embed .nav-bar{background:none}.embed .brand-logo{display:none}
+@media(max-width:760px){#canvas-container,.nav-bar{width:100%}#canvas-container{height:52dvh}.nav-bar{height:56px;padding:6px 13px}.brand-logo{font-size:25px}.hud-panel{top:52dvh;bottom:0;width:100%;padding:11px 15px 18px}.hud-header h1{font-size:30px}.btn-opt,.btn-dock{min-height:44px}.finger-row button{font-size:11px}}
+</style>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div class="nav-bar">
+    <div class="brand-logo">Studio Lúmen Nails</div>
+    <button class="cta-btn" onclick="scheduleBooking()">Agendar horário</button>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Crie suas unhas.</h1>
+      <p>Passe o pincel sobre a unha de porcelana.</p><p id="design-status" role="status"></p>
+    </div>
+
+    <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Formato das Unhas:</div>
+    <div class="option-row">
+      <button class="btn-opt active" id="shape-0" onclick="setShape(0)">Amendoado</button>
+      <button class="btn-opt" id="shape-1" onclick="setShape(1)">Quadrado</button>
+      <button class="btn-opt" id="shape-2" onclick="setShape(2)">Stiletto</button>
+      <button class="btn-opt" id="shape-3" onclick="setShape(3)">Bailarina</button>
+    </div>
+
+    <label class="length">Comprimento <input id="length" type="range" min="0" max="100" value="65"></label><div class="field-title">Esmaltes do carrossel</div>
+    <div class="color-swatches">
+      <div class="swatch active" style="background:#7A1E32;" onclick="setColor('#7A1E32', this)"></div>
+      <div class="swatch" style="background:#D96B7D;" onclick="setColor('#D96B7D', this)"></div>
+      <div class="swatch" style="background:#D9A899;" onclick="setColor('#D9A899', this)"></div>
+      <div class="swatch" style="background:#4A1521;" onclick="setColor('#4A1521', this)"></div>
+      <div class="swatch" style="background:#E2BA68;" onclick="setColor('#E2BA68', this)"></div>
+      <div class="swatch" style="background:#2C3E50;" onclick="setColor('#2C3E50', this)"></div>
+      <div class="swatch" style="background:#FFFFFF;" onclick="setColor('#FFFFFF', this)"></div>
+      <div class="swatch" style="background:#111111;" onclick="setColor('#111111', this)"></div>
+      <div class="swatch" style="background:#708238;" onclick="setColor('#708238', this)"></div>
+      <div class="swatch" style="background:#8E44AD;" onclick="setColor('#8E44AD', this)"></div>
+    </div>
+
+    <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Nail Art & Decoração:</div>
+    <div class="option-row">
+      <button class="btn-opt" id="art-none" onclick="setNailArt('none')">Lisa</button>
+      <button class="btn-opt" id="art-french" onclick="setNailArt('french')">Francesinha</button>
+      <button class="btn-opt" id="art-glitter" onclick="setNailArt('glitter')">Glitter</button>
+      <button class="btn-opt" id="art-gems" onclick="setNailArt('gems')">Pedrinhas</button>
+    </div>
+
+    <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Acabamento Final:</div>
+    <div class="option-row">
+      <button class="btn-opt active" id="fin-gloss" onclick="setFinish('gloss')">Brilho</button>
+      <button class="btn-opt" id="fin-matte" onclick="setFinish('matte')">Fosco</button>
+      <button class="btn-opt" id="fin-chrome" onclick="setFinish('chrome')">Cromado</button>
+      <button class="btn-opt" id="fin-glaze" onclick="setFinish('glaze')">Glazed</button>
+    </div>
+
+    <div class="field-title">Pintar uma unha</div><div class="finger-row" id="finger-row"></div><div class="dock-controls">
+      <button class="btn-dock active" id="btn-paint" onclick="paintAll()">Pincelar todas</button>
+      <button class="btn-dock" id="btn-uv" onclick="toggleUVCabin()">Cabine UV</button>
+      <button class="btn-dock" id="btn-clean" onclick="clearNails()">Remover</button>
+      <button class="btn-dock" id="btn-save" onclick="saveDesign()">Salvar imagem</button>
+    </div>
+  </div>
+
+
+<script type="module">
+import * as THREE from '/Sistema/shared/vendor/three.module.js';
+import {createStudioEnvironment} from '/Sistema/shared/engine/studio-environment.js';
+
+const $=id=>document.getElementById(id);
+const names=['Polegar','Indicador','Médio','Anelar','Mínimo'];
+const shades=Array.from(document.querySelectorAll('.swatch'),e=>e.getAttribute('style').match(/#[A-Fa-f0-9]{6}/)[0]);
+const shadeNames=['Vinho','Rosa queimado','Nude','Cereja escura','Champanhe','Azul ardósia','Leite','Ônix','Oliva','Ametista'];
+const shapes=['Amendoado','Quadrado','Stiletto','Bailarina'];
+const finishes={gloss:[.17,.05,1],matte:[.73,0,0],chrome:[.17,.86,.68],glaze:[.24,.22,.87]};
+const state={shape:0,length:.65,color:0,finish:'gloss',art:'none',curing:false};
+const porcelain='#f1d2c7';
+const setStatus=s=>$('design-status').textContent=s;
+let view=null,paused=false,disposed=false,timer,muted=false,audio;
+document.body.classList.toggle('embed',new URLSearchParams(location.search).get('embed')==='1');
+setStatus('Escolha um esmalte. Toque ou arraste sobre a unha para pintar.');
+const nails=names.map((name,i)=>{
+  const c=document.createElement('canvas');c.width=192;c.height=384;
+  const ctx=c.getContext('2d');ctx.fillStyle=i===1||i===2?shades[0]:porcelain;ctx.fillRect(0,0,c.width,c.height);
+  const map=new THREE.CanvasTexture(c);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
+  const button=document.createElement('button');button.className='btn-opt';button.textContent=name;
+  button.onclick=()=>{if(!state.curing){coat(i);beep(380);setStatus(name+' · '+shadeNames[state.color])}};
+  $('finger-row').append(button);
+  return {c,ctx,map,button};
+});
+document.querySelectorAll('.swatch').forEach((element,i)=>{
+  const button=document.createElement('button');button.className=element.className;button.style.cssText=element.style.cssText;
+  button.type='button';button.title=shadeNames[i];button.setAttribute('aria-label',shadeNames[i]);button.setAttribute('aria-pressed',i===0);
+  button.onclick=()=>selectColor(i);element.replaceWith(button);
+});
+function beep(hz){
+  const Audio=window.AudioContext||window.webkitAudioContext;
+  if(muted||paused||!Audio)return;
+  audio ||= new Audio();
+  if(audio.state==='suspended')audio.resume().catch(()=>{});
+  const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;
+  o.frequency.value=hz;g.gain.setValueAtTime(.037,t);g.gain.exponentialRampToValueAtTime(.0001,t+.13);
+  o.connect(g).connect(audio.destination);o.start();o.stop(t+.14);
+}
+function active(selector,id){
+  document.querySelectorAll(selector).forEach(b=>{const on=b.id===id;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on)});
+}
+function selectColor(i){
+  state.color=i;document.querySelectorAll('.swatch').forEach((b,j)=>{b.classList.toggle('active',i===j);b.setAttribute('aria-pressed',i===j)});
+  view?.selectBottle(i);beep(450);setStatus(shadeNames[i]+' selecionado.');
+}
+function coat(i,hex=shades[state.color]){
+  const m=nails[i];m.ctx.fillStyle=hex;m.ctx.fillRect(0,0,m.c.width,m.c.height);m.map.needsUpdate=true;
+  view?.invalidate();
+}
+function stroke(i,uv,previous){
+  const m=nails[i],ctx=m.ctx,w=m.c.width,h=m.c.height,x=uv.x*w,y=(1-uv.y)*h;
+  ctx.strokeStyle=shades[state.color];ctx.lineCap='round';ctx.lineWidth=53;
+  ctx.beginPath();ctx.moveTo(previous?previous.x*w:x-.3,previous?(1-previous.y)*h:y);ctx.lineTo(x,y);ctx.stroke();
+  m.map.needsUpdate=true;view?.invalidate();
+}
+window.setColor=hex=>{const i=shades.indexOf(hex.toUpperCase());if(i>=0)selectColor(i)};
+window.setShape=i=>{state.shape=i;active('[id^="shape-"]','shape-'+i);view?.rebuild();setStatus('Formato '+shapes[i].toLowerCase()+' aplicado.')};
+window.setFinish=key=>{state.finish=key;active('[id^="fin-"]','fin-'+key);view?.decorate();setStatus($('fin-'+key).textContent+' aplicado.')};
+window.setNailArt=key=>{state.art=key;active('[id^="art-"]','art-'+key);view?.decorate();setStatus($('art-'+key).textContent+' aplicado.')};
+window.paintAll=()=>{if(!state.curing){nails.forEach((_,i)=>coat(i));beep(320);setStatus('Unhas pintadas com '+shadeNames[state.color]+'.')}};
+window.clearNails=()=>{nails.forEach((_,i)=>coat(i,porcelain));window.setNailArt('none');setStatus('Esmalte removido.')};
+$('length').oninput=e=>{state.length=e.target.valueAsNumber/100;view?.rebuild()};
+function stopCure(msg){
+  clearTimeout(timer);state.curing=false;$('btn-uv').classList.remove('uv-active');$('btn-uv').setAttribute('aria-pressed',false);
+  $('btn-uv').textContent='Cabine UV';view?.invalidate();if(msg)setStatus(msg);
+}
+window.toggleUVCabin=()=>{
+  if(state.curing){stopCure('Cabine UV desligada.');return}
+  if(!view){setStatus('Cabine UV indisponível neste aparelho.');return}
+  state.curing=true;$('btn-uv').classList.add('uv-active');$('btn-uv').setAttribute('aria-pressed',true);
+  $('btn-uv').textContent='Em cura · 3 s';view.invalidate();beep(1030);setStatus('Curando o acabamento na cabine UV.');
+  timer=setTimeout(()=>{stopCure('Cura concluída. Sua imagem está pronta para salvar.');beep(1260)},3000);
+};
+window.saveDesign=()=>{if(view){view.save();setStatus('Imagem do seu design salva em PNG.')}};
+window.scheduleBooking=()=>{
+  parent.postMessage({type:'cta',tipo:'cta',target:'agendamento',cor:shades[state.color],formato:shapes[state.shape],acabamento:state.finish},'*');
+  setStatus('Studio Lúmen Nails é uma demonstração. Nenhum agendamento foi enviado.');
+};
+window.addEventListener('keydown',e=>{if(!e.repeat&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!state.curing&&!(e.target instanceof HTMLInputElement)&&/^[1-5]$/.test(e.key))coat(+e.key-1)});
+active('[id^="shape-"]','shape-0');active('[id^="art-"]','art-none');active('[id^="fin-"]','fin-gloss');
+
+function makeScene(){
+  const root=$('canvas-container'),scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(36,1,.07,34);
+  scene.background=new THREE.Color(0xb68e87);scene.fog=new THREE.FogExp2(0xbc938d,.045);
+  const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.07;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
+  renderer.shadowMap.type=THREE.PCFShadowMap;root.append(renderer.domElement);
+  const env=createStudioEnvironment(renderer);scene.environment=env.texture;scene.environmentIntensity=.86;
+  const std=(color,roughness=.43,metalness=0,extra={})=>new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});
+  const phys=(color,roughness=.27,extra={})=>new THREE.MeshPhysicalMaterial({color,roughness,...extra});
+  function mesh(parent,geo,mat,x=0,y=0,z=0,shadow=true){
+    const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=shadow;m.receiveShadow=true;parent.add(m);return m;
+  }
+  const box=(parent,x,y,z,w,h,d,mat)=>mesh(parent,new THREE.BoxGeometry(w,h,d),mat,x,y,z,false);
+  const lathe=(parent,points,mat,x=0,y=0,z=0,steps=48)=>mesh(parent,new THREE.LatheGeometry(points.map(([r,h])=>new THREE.Vector2(r,h)),steps),mat,x,y,z);
+  const torus=(parent,r,t,mat,x,y,z)=>mesh(parent,new THREE.TorusGeometry(r,t,9,56),mat,x,y,z);
+  function rounded(parent,w,h,d,r,mat,x,y,z,b=.022){
+    const s=new THREE.Shape(),l=-w/2,p=-d/2;
+    s.moveTo(l+r,p);s.lineTo(-l-r,p);s.quadraticCurveTo(-l,p,-l,p+r);
+    s.lineTo(-l,-p-r);s.quadraticCurveTo(-l,-p,-l-r,-p);
+    s.lineTo(l+r,-p);s.quadraticCurveTo(l,-p,l,-p-r);
+    s.lineTo(l,p+r);s.quadraticCurveTo(l,p,l+r,p);
+    const geo=new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:3,curveSegments:10,steps:1});
+    geo.translate(0,0,-h/2);geo.rotateX(-Math.PI/2);
+    const positions=geo.attributes.position,normals=geo.attributes.normal,uvs=geo.attributes.uv;
+    for(let i=0;i<positions.count;i++){
+      const px=positions.getX(i),py=positions.getY(i),pz=positions.getZ(i);
+      if(Math.abs(normals.getY(i))>.42)uvs.setXY(i,px/(w+2*b)+.5,pz/(d+2*b)+.5);
+      else if(Math.abs(normals.getX(i))>Math.abs(normals.getZ(i)))uvs.setXY(i,pz/(d+2*b)+.5,py/(h+2*b)+.5);
+      else uvs.setXY(i,px/(w+2*b)+.5,py/(h+2*b)+.5);
+    }
+    return mesh(parent,geo,mat,x,y,z);
+  }
+  let seed=8631;
+  const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
+  function texture(w,h,draw){
+    const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);
+    const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);return t;
+  }
+  const marble=texture(1536,1536,(c,w,h)=>{
+    c.fillStyle='#e8d9cd';c.fillRect(0,0,w,h);
+    for(let i=0;i<320;i++){
+      const x=random()*w,y=random()*h,r=45+random()*290,g=c.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,i%3?'#fff5e996':'#9b6f6643');g.addColorStop(1,'#c1a29500');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);
+    }
+    for(let i=0;i<101;i++){
+      const y=(i%9-3)*223+(random()-.5)*76,phase=(i%9)*1.74+(random()-.5)*.24;c.beginPath();
+      for(let x=-14;x<=w+14;x+=6){
+        const f=y+x*.48+Math.sin(x*.004+phase)*83+Math.sin(x*.016+phase)*17+Math.sin(x*.048+phase)*5;
+        if(x===-14)c.moveTo(x,f);else c.lineTo(x,f);
+      }
+      c.lineWidth=.35+random()*2.5;c.strokeStyle=i%5?'#97716222':'#76594c33';c.stroke();
+    }
+    for(let i=0;i<60000;i++){c.fillStyle=i%2?'#412d2814':'#ffffff31';c.fillRect(random()*w,random()*h,1,1)}
+  });
+  const weave=texture(512,512,(c,w,h)=>{
+    c.fillStyle='#be7b8c';c.fillRect(0,0,w,h);
+    for(let i=0;i<43000;i++){c.fillStyle=i%2?'#f9bac943':'#5b293143';c.fillRect(random()*w,random()*h,1+random(),2+random()*3)}
+    for(let i=0;i<h;i+=4){c.fillStyle=i%8?'#fff6ef23':'#48272f24';c.fillRect(0,i,w,1)}
+  });
+  const wallMap=texture(768,512,(c,w,h)=>{
+    c.fillStyle='#d4a8a0';c.fillRect(0,0,w,h);
+    for(let i=0;i<130;i++){
+      const x=random()*w,y=random()*h,r=12+random()*130,g=c.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,i%2?'#f5ccc164':'#703f4724');g.addColorStop(1,'#d9a7a100');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);
+    }
+    for(let i=0;i<31000;i++){c.fillStyle=i%2?'#5c322012':'#ffd9d52f';c.fillRect(random()*w,random()*h,1,1)}
+  });
+  const gold=std(0xbc8b53,.28,.73),darkGold=std(0x90603f,.38,.58),blush=std(0xad777e,.45),trim=std(0xe0aea3,.45);
+  const plaster=std(0xffffff,.86,0,{map:wallMap});
+  box(scene,0,-.071,.12,7,.142,4.9,phys(0xffffff,.27,{map:marble,clearcoat:.47,clearcoatRoughness:.22}));
+  box(scene,0,-.16,.12,7,.039,4.91,gold);
+  box(scene,0,-.411,.1,6.94,.49,4.82,blush);
+  for(let i=-26;i<=26;i++)box(scene,i*.13,-.40,2.529,.026,.44,.03,trim);
+  box(scene,0,-.68,0,34,.03,34,std(0xb2897e,.69));
+  box(scene,0,2.1,-3.15,18,6,.18,plaster);
+  for(let i=-4;i<=4;i++){
+    box(scene,i*1.16,2.42,-3.03,1.075,5.5,.035,plaster);
+    box(scene,i*1.16+.565,2.42,-2.99,.026,5.5,.03,trim);
+  }
+  box(scene,0,.16,-2.97,18,.027,.12,gold);
+  function tube(parent,points,r,mat,steps=28){
+    return mesh(parent,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),steps,r,7,false),mat);
+  }
+  const cushion=new THREE.Group();cushion.position.set(-.32,.15,.38);cushion.rotation.y=-.17;scene.add(cushion);
+  const velvet=phys(0xbc8d9c,.89,{map:weave,sheen:1,sheenColor:new THREE.Color(0xffb9c9),sheenRoughness:.8});
+  rounded(cushion,1.56,.14,1.82,.32,velvet,0,0,0,.083);
+  const piping=[];
+  for(let i=0;i<=76;i++){
+    const a=i/76*2*Math.PI,c=Math.cos(a),s=Math.sin(a);
+    piping.push([.814*Math.sign(c)*Math.pow(Math.abs(c),.48),.069,.954*Math.sign(s)*Math.pow(Math.abs(s),.48)]);
+  }
+  tube(cushion,piping,.014,std(0xa86779,.73),84);
+  const hand=new THREE.Group();hand.name='Mão de porcelana';hand.position.set(-.32,.36,.39);hand.rotation.y=-.17;scene.add(hand);
+  const ceramic=phys(0xffded4,.21,{clearcoat:.83,clearcoatRoughness:.12});
+  function swept(sections,steps=27,sides=28){
+    const path=new THREE.CatmullRomCurve3(sections.map(([x,y,z])=>new THREE.Vector3(x,y,z)));
+    const geo=new THREE.BufferGeometry(),verts=[],indices=[];
+    for(let i=0;i<=steps;i++){
+      const t=i/steps,p=path.getPoint(t),direction=path.getTangent(t),horizontal=new THREE.Vector3(direction.z,0,-direction.x).normalize();
+      const up=direction.clone().cross(horizontal).normalize();
+      const k=t*(sections.length-1),a=Math.min(sections.length-2,Math.floor(k)),f=k-a;
+      const width=THREE.MathUtils.lerp(sections[a][3],sections[a+1][3],f),thick=THREE.MathUtils.lerp(sections[a][4],sections[a+1][4],f);
+      for(let j=0;j<=sides;j++){
+        const angle=j/sides*Math.PI*2,point=p.clone().addScaledVector(horizontal,width*Math.cos(angle)).addScaledVector(up,thick*Math.sin(angle));
+        verts.push(point.x,point.y,point.z);
+        if(i<steps&&j<sides){const base=i*(sides+1)+j,next=base+sides+1;indices.push(base,base+1,next,base+1,next+1,next)}
+      }
+    }
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setIndex(indices);geo.computeVertexNormals();return mesh(hand,geo,ceramic);
+  }
+  swept([[0,-.012,-.98,.001,.001],[0,-.012,-.965,.115,.072],[.008,.004,-.86,.167,.084],[.006,.022,-.63,.201,.092],[-.02,.049,-.40,.263,.103],[-.028,.043,-.15,.318,.105],[-.006,.02,.10,.312,.099],[.014,.01,.23,.29,.068],[.025,-.002,.315,.246,.028],[.03,-.005,.338,.001,.001]],42,42);
+  const digits=[
+    {path:[[-.207,.014,-.35],[-.354,.002,-.16],[-.476,-.016,.025],[-.574,-.018,.194],[-.652,-.008,.316],[-.670,-.008,.35]],width:.105,tip:[-.61,.064,.244],angle:-.58},
+    {path:[[-.238,.028,.135],[-.238,.032,.35],[-.258,.038,.56],[-.278,.027,.76],[-.298,.018,.945],[-.302,.02,.981]],width:.084,tip:[-.288,.081,.851],angle:-.105},
+    {path:[[-.062,.033,.163],[-.055,.044,.351],[-.055,.046,.577],[-.052,.037,.825],[-.062,.026,1.04],[-.064,.025,1.076]],width:.089,tip:[-.059,.091,.939],angle:-.023},
+    {path:[[.115,.028,.15],[.125,.035,.34],[.140,.038,.556],[.154,.031,.775],[.165,.023,.982],[.166,.022,1.016]],width:.081,tip:[.160,.081,.890],angle:.055},
+    {path:[[.262,.012,.075],[.282,.019,.27],[.307,.026,.43],[.334,.024,.609],[.363,.015,.785],[.366,.013,.813]],width:.069,tip:[.347,.067,.715],angle:.14}
+  ];
+  digits.forEach((d,i)=>{
+    swept(d.path.map((p,j)=>[...p,d.width*[1.09,1,.91,.83,.68,.005][j],d.width*[.91,.91,.83,.76,.66,.004][j]]));
+    const m=nails[i],pivot=new THREE.Group();m.pivot=pivot;pivot.position.set(...d.tip);pivot.rotation.y=d.angle;hand.add(pivot);
+    m.object=mesh(pivot,new THREE.BufferGeometry(),phys(0xffffff,.16,{map:m.map,clearcoat:1,clearcoatRoughness:.065,side:THREE.DoubleSide}));
+    m.object.userData.i=i;
+  });
+  function surface(i,u,t,lift=0){
+    const oval=Math.sqrt(Math.max(.0006,1-Math.pow(2*t-1,2)));
+    const sections=[oval*(.86+.20*(1-t)),Math.pow(Math.max(.00001,1-Math.pow(Math.abs(2*t-1),4)),.25),Math.min(.99,Math.sqrt(t*5))*(1-t*.99),Math.min(Math.sqrt(t*6),1,(1-t)*13+.03)*(1-t*.37)];
+    const z=-.078+t*(.171+state.length*.13);
+    return [digits[i].width*.84*sections[state.shape]*u,.024*(1-u*u)*Math.sin(Math.PI*THREE.MathUtils.clamp(t,.055,.945))-.10*z+lift,z];
+  }
+  function nailGeometry(i){
+    const geo=new THREE.BufferGeometry(),p=[],uv=[],ids=[],along=34,across=17;
+    for(let k=0;k<=along;k++)for(let j=0;j<=across;j++){
+      const t=k/along,u=j/across*2-1;p.push(...surface(i,u,t));uv.push(j/across,t);
+      if(k<along&&j<across){const a=k*(across+1)+j,b=a+across+1;ids.push(a,b,a+1,b,b+1,a+1)}
+    }
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(ids);geo.computeVertexNormals();return geo;
+  }
+  const decals={};
+  for(const key of ['french','glitter']){
+    const map=texture(192,384,(c,w,h)=>{
+      if(key==='french'){
+        c.fillStyle='#fcf0db';c.beginPath();c.moveTo(0,0);c.lineTo(w,0);c.lineTo(w,101);c.quadraticCurveTo(w*.5,147,0,101);c.fill();
+      }else for(let i=0;i<180;i++){
+        c.fillStyle=['#ffe7b6','#b4773f','#ffe7b69e','#b87e688e','#f4b89b'][i%5];c.beginPath();c.arc(random()*w,random()*h,.7+random()*3,0,Math.PI*2);c.fill();
+      }
+    });
+    decals[key]=phys(0xffffff,.26,{map,transparent:true,alphaTest:.16,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,clearcoat:.7,metalness:key==='glitter'?.42:.04});
+  }
+  const jewel=phys(0xffedec,.11,{metalness:.57,clearcoat:1,iridescence:.47}),jewelGeo=new THREE.IcosahedronGeometry(1,0);
+  nails.forEach(m=>{
+    m.decal=mesh(m.pivot,new THREE.BufferGeometry(),decals.french,0,.001,0,false);m.decal.renderOrder=3;
+    m.gems=[.017,.012,.008].map(r=>{const gem=mesh(m.pivot,jewelGeo,jewel,0,0,0,false);gem.scale.set(r,r*.63,r);return gem});
+  });
+  function decorate(){
+    nails.forEach(m=>{
+      const mat=m.object.material,[roughness,metalness,clearcoat]=finishes[state.finish];
+      Object.assign(mat,{roughness,metalness,clearcoat,iridescence:state.finish==='glaze'?.23:0});
+      m.decal.visible=state.art in decals;if(m.decal.visible)m.decal.material=decals[state.art];
+      m.gems.forEach(g=>{g.visible=state.art==='gems'});
+    });invalidate();
+  }
+  function rebuild(){
+    nails.forEach((m,i)=>{
+      const g=nailGeometry(i);m.object.geometry.dispose();if(m.decal.geometry!==m.object.geometry)m.decal.geometry.dispose();
+      m.decal.geometry=g;m.object.geometry=g;
+      m.gems.forEach((gem,j)=>gem.position.set(...surface(i,(j-1)*.35,.36+j*.15,.012)));
+    });renderer.shadowMap.needsUpdate=true;decorate();
+  }
+  const carousel=new THREE.Group();carousel.name='Carrossel de esmaltes';carousel.position.set(-1.70,0,-.77);scene.add(carousel);
+  const turntable=new THREE.Group();carousel.add(turntable);
+  lathe(carousel,[[0,0],[.65,0],[.708,.025],[.727,.063],[.711,.11],[.678,.138],[0,.14]],gold);
+  const enamel=phys(0xd6a6a4,.25,{clearcoat:.79});
+  lathe(turntable,[[0,.137],[.66,.137],[.687,.147],[.681,.169],[0,.17]],enamel);
+  const bottles=[],cap=std(0x38262c,.32,.58);
+  const glass=phys(0xf9e7df,.12,{clearcoat:1,metalness:.12,transparent:true,opacity:.27,depthWrite:false});
+  shades.forEach((hex,i)=>{
+    const a=i/shades.length*Math.PI*2,g=new THREE.Group();g.position.set(Math.sin(a)*.51,.17,Math.cos(a)*.51);g.rotation.y=a;turntable.add(g);
+    rounded(g,.193,.248,.157,.033,phys(hex,.20,{clearcoat:1}),0,.138,0,.022);
+    const cover=rounded(g,.20,.254,.165,.033,glass,0,.138,0,.024);cover.castShadow=false;cover.renderOrder=4;
+    lathe(g,[[.062,.24],[.071,.26],[.069,.30],[.057,.319]],gold,0,0,0,32);
+    lathe(g,[[0,.294],[.053,.294],[.065,.317],[.067,.479],[.057,.5],[0,.504]],cap,0,0,0,32);
+    torus(g,.063,.005,darkGold,0,.326,0).rotation.x=Math.PI/2;
+    const label=texture(160,80,(c,w,h)=>{
+      c.fillStyle='#ffeddf';c.fillRect(0,0,w,h);c.strokeStyle='#b48663';c.lineWidth=2;c.strokeRect(4,4,w-8,h-8);
+      c.fillStyle='#6c3d4c';c.textAlign='center';c.font='25px Georgia';c.fillText('LÚMEN',80,35);c.font='15px Georgia';c.fillText(shadeNames[i],80,61);
+    });
+    mesh(g,new THREE.PlaneGeometry(.161,.076),new THREE.MeshBasicMaterial({map:label}),0,.15,.117,false);
+    const target=mesh(g,new THREE.CylinderGeometry(.112,.112,.50,16),new THREE.MeshBasicMaterial({visible:false}),0,.25,0,false);
+    target.userData.color=i;bottles.push(target);
+  });
+  lathe(carousel,[[0,.166],[.135,.166],[.145,.181],[.12,.213],[.035,.23],[0,.246]],darkGold);
+  const cabin=new THREE.Group();cabin.name='Cabine UV';cabin.position.set(1.55,0,-.63);cabin.rotation.y=-.12;scene.add(cabin);
+  const cream=phys(0xfce7df,.20,{clearcoat:.91}),inside=std(0x40303d,.43,.10);
+  rounded(cabin,1.43,.068,1.035,.14,enamel,0,.062,0,.024);
+  rounded(cabin,1.25,.031,.88,.14,inside,0,.111,.033,.015);
+  const arch=new THREE.Shape();
+  arch.moveTo(-.70,.105);arch.bezierCurveTo(-.73,.52,-.52,.713,0,.713);arch.bezierCurveTo(.52,.713,.73,.52,.70,.105);
+  arch.lineTo(.54,.105);arch.bezierCurveTo(.563,.414,.36,.55,0,.55);
+  arch.bezierCurveTo(-.36,.55,-.563,.414,-.54,.105);arch.closePath();
+  mesh(cabin,new THREE.ExtrudeGeometry(arch,{depth:.82,bevelThickness:.04,bevelSize:.04,bevelSegments:5,curveSegments:25}),cream,0,0,-.43);
+  const back=new THREE.Shape();back.moveTo(-.54,.127);back.bezierCurveTo(-.58,.45,-.32,.55,0,.55);back.bezierCurveTo(.32,.55,.58,.45,.54,.127);back.closePath();
+  mesh(cabin,new THREE.ShapeGeometry(back,20),new THREE.MeshBasicMaterial({color:0x372632,side:THREE.DoubleSide}),0,0,-.42,false);
+  rounded(cabin,.30,.013,.125,.03,inside,0,.733,.106,.007);
+  const screenTex=texture(128,56,(c,w,h)=>{
+    c.fillStyle='#392735';c.fillRect(0,0,w,h);c.fillStyle='#f7cbbb';c.font='33px monospace';c.textAlign='center';c.fillText('UV',64,39);
+  });
+  const screen=mesh(cabin,new THREE.PlaneGeometry(.22,.082),new THREE.MeshBasicMaterial({map:screenTex}),0,.76,.104,false);screen.rotation.x=-Math.PI/2;
+  const ledMat=new THREE.MeshBasicMaterial({color:0xb472d9});
+  for(let i=-2;i<=2;i++)mesh(cabin,new THREE.SphereGeometry(.026,14,8),ledMat,i*.16,.47,.22,false).scale.y=.43;
+  const uvGlow=new THREE.PointLight(0xa268ff,0,2.6,1.65);uvGlow.position.set(0,.37,.29);cabin.add(uvGlow);
+  const cabinTarget=mesh(cabin,new THREE.BoxGeometry(1.40,.67,.98),new THREE.MeshBasicMaterial({visible:false}),0,.36,0,false);
+  cabinTarget.userData.cabin=true;
+
+  const ring=new THREE.Group();ring.position.set(-.18,0,-2.02);scene.add(ring);
+  lathe(ring,[[0,0],[.248,0],[.287,.017],[.277,.045],[.04,.057],[0,.057]],gold);
+  mesh(ring,new THREE.CylinderGeometry(.019,.027,1.14,22),gold,0,.604,0);
+  const head=new THREE.Group();head.position.y=1.29;head.rotation.set(-.085,-.15,.035);ring.add(head);
+  torus(head,.435,.038,gold,0,0,0);
+  torus(head,.434,.029,new THREE.MeshBasicMaterial({color:0xffecdb,toneMapped:false}),0,0,.03);
+  const tray=rounded(scene,.89,.019,.59,.11,gold,1.65,.033,.78,.019);tray.rotation.y=-.16;
+  const liner=rounded(scene,.81,.013,.51,.10,enamel,1.65,.058,.78,.011);liner.rotation.y=-.16;
+  const file=rounded(scene,.61,.024,.088,.037,std(0xc9a89d,.67,0,{map:weave}),1.65,.091,.85,.008);file.rotation.y=.31;
+  const steel=std(0xd1c9c1,.24,.85),wood=std(0xba8c63,.58);
+  tube(scene,[[1.38,.092,.73],[1.57,.094,.72],[1.79,.095,.66],[1.91,.092,.63]],.018,steel);
+  tube(scene,[[1.45,.091,.90],[1.62,.089,.94],[1.89,.089,.921]],.013,wood);
+
+  const vase=new THREE.Group();vase.position.set(2.58,0,-1.60);scene.add(vase);
+  lathe(vase,[[0,0],[.177,0],[.225,.061],[.229,.236],[.193,.341],[.103,.44],[.094,.516],[.075,.516],[.08,.444],[.164,.34],[.212,.21],[0,.075]],phys(0xa9777d,.34,{clearcoat:.49}));
+  const stem=std(0x977759,.58),floral=[std(0xcda079,.78),std(0x9e6870,.73),std(0xe5b69c,.76)];
+  for(let i=0;i<10;i++){
+    const a=i*2.399,s=.13+random()*.30,x=Math.cos(a)*s,z=Math.sin(a)*s,y=.78+random()*.64;
+    tube(vase,[[0,.35,0],[x*.31,.66,z*.34],[x*.72,y*.85,z*.76],[x,y,z]],.007,stem,15);
+    for(let j=0;j<4;j++){
+      const petal=mesh(vase,new THREE.SphereGeometry(.021+random()*.022,10,7),floral[(i+j)%3],x+(random()-.5)*.095,y+(random()-.5)*.115,z+(random()-.5)*.091);
+      petal.scale.set(.78,1.38,.61);petal.rotation.z=a+j;
+    }
+  }
+  const brush=new THREE.Group();scene.add(brush);
+  const bristles=std(0x4a222d,.53),handle=phys(0x542d40,.23,{clearcoat:1});
+  lathe(brush,[[0,0],[.027,.021],[.041,.114],[.04,.164],[0,.166]],bristles,0,0,0,24);
+  lathe(brush,[[0,.15],[.038,.15],[.044,.166],[.044,.233],[.029,.264],[0,.265]],gold,0,0,0,24);
+  lathe(brush,[[0,.248],[.031,.248],[.044,.310],[.044,.624],[.037,.765],[.026,.817],[0,.833]],handle,0,0,0,28);
+  const dockPosition=new THREE.Vector3(1.05,.080,1.24),dockRotation=new THREE.Euler(1.54,0,-.83);
+  brush.position.copy(dockPosition);brush.rotation.copy(dockRotation);
+  const sun=new THREE.DirectionalLight(0xffe7d3,2.45);
+  sun.position.set(-4,6,3.7);sun.castShadow=true;sun.shadow.mapSize.set(1536,1536);
+  sun.shadow.normalBias=.015;sun.shadow.bias=-.00014;
+  Object.assign(sun.shadow.camera,{left:-4.5,right:4.5,top:4,bottom:-4,near:.1,far:15});
+  scene.add(sun,new THREE.HemisphereLight(0xfff0e4,0x956b7d,1.48));
+  const rim=new THREE.DirectionalLight(0xf1d5ff,.77);rim.position.set(3,2.3,-3);scene.add(rim);
+  const fill=new THREE.DirectionalLight(0xffeee6,.63);fill.position.set(4,4,2.8);scene.add(fill);
+
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+  let pointer=null,lastUV=null,angle=0,pressTime=-1000,uvWasOn=false,raf=0,lastFrame=0;
+  function pick(e){
+    const r=renderer.domElement.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+    ray.setFromCamera(ndc,camera);return ray.intersectObjects([cabinTarget,...bottles,...nails.map(m=>m.object)],false)[0];
+  }
+  function brushAt(hit){
+    brush.position.copy(hit.point).add(new THREE.Vector3(0,.011,0));brush.rotation.set(.68,0,-.73);
+    bristles.color.set(shades[state.color]);pressTime=performance.now();renderer.shadowMap.needsUpdate=true;invalidate();
+  }
+  renderer.domElement.addEventListener('pointerdown',e=>{
+    if(!e.isPrimary)return;
+    const hit=pick(e);if(!hit)return;
+    const data=hit.object.userData;
+    if(data.cabin){window.toggleUVCabin();return}
+    if(data.color!==undefined){selectColor(data.color);return}
+    if(data.i===undefined||state.curing)return;
+    pointer=e.pointerId;lastUV={i:data.i,uv:hit.uv};renderer.domElement.setPointerCapture(e.pointerId);
+    stroke(data.i,hit.uv);brushAt(hit);beep(290);setStatus('Pincelando '+names[data.i].toLowerCase()+' com '+shadeNames[state.color]+'.');
+  });
+  renderer.domElement.addEventListener('pointermove',e=>{
+    if(pointer!==e.pointerId||state.curing)return;
+    const hit=pick(e),i=hit?.object.userData.i;
+    if(i===undefined){lastUV=null;return}
+    stroke(i,hit.uv,lastUV?.i===i?lastUV.uv:null);lastUV={i,uv:hit.uv};brushAt(hit);
+  });
+  function clearPointer(){pointer=null;lastUV=null;invalidate()}
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>renderer.domElement.addEventListener(t,clearPointer));
+  function resize(){
+    const w=root.clientWidth,h=root.clientHeight,a=w/Math.max(1,h);
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2,Math.sqrt(2880000/Math.max(1,w*h))));renderer.setSize(w,h,false);
+    camera.aspect=a;
+    const d=Math.max(4.78,4.75/a);camera.position.set(.24,d*.91,d);camera.lookAt(.04,.22,-.28);
+    camera.updateProjectionMatrix();invalidate();
+  }
+  function invalidate(){if(!raf&&!paused&&!disposed)raf=requestAnimationFrame(draw)}
+  function selectBottle(i){
+    const next=-i/shades.length*Math.PI*2,delta=THREE.MathUtils.euclideanModulo(next-turntable.rotation.y+Math.PI,Math.PI*2)-Math.PI;
+    angle=turntable.rotation.y+delta;invalidate();
+  }
+  function draw(time){
+    raf=0;const dt=Math.min(.055,lastFrame?(time-lastFrame)/1000:.018);lastFrame=time;
+    const rotating=Math.abs(turntable.rotation.y-angle)>.001;
+    turntable.rotation.y=rotating&&!reduced?THREE.MathUtils.lerp(turntable.rotation.y,angle,Math.min(1,7.9*dt)):angle;
+    const uvGoal=state.curing?2.1:0;
+    const fading=Math.abs(uvGlow.intensity-uvGoal)>.008;
+    uvGlow.intensity=fading&&!reduced?THREE.MathUtils.lerp(uvGlow.intensity,uvGoal,Math.min(1,9*dt)):uvGoal;
+    if(uvWasOn!==state.curing){uvWasOn=state.curing;ledMat.color.set(uvWasOn?0xe4c0ff:0xb472d9)}
+    const brushing=pointer!==null||time-pressTime<420;
+    if(!brushing&&brush.position.distanceToSquared(dockPosition)>.0001){
+      brush.position.copy(dockPosition);brush.rotation.copy(dockRotation);renderer.shadowMap.needsUpdate=true;
+    }
+    if(rotating)renderer.shadowMap.needsUpdate=true;
+    renderer.render(scene,camera);
+    if(rotating||fading||brushing)invalidate();
+  }
+  const observe=new ResizeObserver(resize);observe.observe(root);resize();rebuild();
+  return {rebuild,decorate,invalidate,selectBottle,save(){
+    renderer.render(scene,camera);
+    const c=document.createElement('canvas');c.width=renderer.domElement.width;c.height=renderer.domElement.height;
+    const ctx=c.getContext('2d');ctx.drawImage(renderer.domElement,0,0);ctx.font=Math.max(13,.023*c.width)+'px Georgia';
+    ctx.fillStyle='#70384d';ctx.textBaseline='bottom';ctx.fillText('Studio Lúmen Nails',c.width*.045,c.height*.953);
+    c.toBlob(blob=>{
+      if(!blob)return;
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nail-design-studio-lumen.png';a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+    },'image/png');
+  },dispose(){
+    observe.disconnect();cancelAnimationFrame(raf);env.dispose();
+    scene.traverse(o=>{o.geometry?.dispose();o.material?.map?.dispose?.();o.material?.dispose?.()});renderer.dispose();
+  }};
+}
+
+try{view=makeScene()}catch(e){setStatus('Cena 3D indisponível. Use os controles para experimentar as combinações.');console.info('Cena 3D indisponível',e.message)}
+window.addEventListener('sangi:pause',()=>{paused=true;stopCure();audio?.suspend().catch(()=>{})});
+window.addEventListener('sangi:resume',()=>{paused=false;view?.invalidate()});
+window.addEventListener('sangi:mute',e=>{muted=e.detail?.muted??true});
+window.addEventListener('sangi:dispose',()=>{disposed=true;stopCure();view?.dispose();audio?.close().catch(()=>{})});
+</script>
+</body>
+</html>
