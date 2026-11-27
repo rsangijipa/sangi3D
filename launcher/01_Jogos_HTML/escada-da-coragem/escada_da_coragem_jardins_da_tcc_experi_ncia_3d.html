@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="./courage-ui.css" />
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <script>
     // O launcher serve a cópia local. A abertura direta usa módulos HTTPS.
     const localThree = location.protocol !== 'file:';
@@ -1462,6 +1463,28 @@
         osc.stop(now + 1.0);
         overtone.stop(now + 1.0);
       }
+
+      setMuted(muted) {
+        if (muted && this.enabled) {
+          this.toggle();
+        } else if (!muted && !this.enabled) {
+          this.toggle();
+        }
+      }
+
+      dispose() {
+        this.enabled = false;
+        if (this.birdTimer) {
+          clearTimeout(this.birdTimer);
+          this.birdTimer = null;
+        }
+        if (this.ctx) {
+          const ctx = this.ctx;
+          this.ctx = null;
+          this.masterGain = null;
+          ctx.close().catch(() => {});
+        }
+      }
     }
 
     const soundscape = new AmbientSoundscape();
@@ -1484,6 +1507,8 @@
         this.hoveredStep = -1;
         this.cameraAnim = null;
         this.isDisposed = false;
+        this.isPaused = false;
+        this.rafId = null;
 
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2(-99, -99);
@@ -1930,39 +1955,61 @@
           pergolaGroup.add(rafter);
         }
 
-        // Flores trepadeiras lilases, roxas e rosadas envolvendo o pergolado
+        // Flores trepadeiras lilases, roxas e rosadas envolvendo o pergolado (InstancedMesh)
         const vineColors = [0x9d6be0, 0xb97be8, 0xd87eb0, 0x7b52c7];
         const vineLeafMat = new THREE.MeshStandardMaterial({ color: 0x3b6931, roughness: 0.85 });
+        const vineBlossomMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.72 });
         const blossomGeo = new THREE.DodecahedronGeometry(0.11, 0);
+        const vineLeafTransforms = [];
+        const vineBlossomTransforms = [];
+        const tmpColor = new THREE.Color();
 
         for (let i = 0; i < 95; i++) {
           const side = i < 45 ? -1 : 1;
           let x, y, z;
           if (i % 3 === 0) {
-            // Subindo pelos postes
             x = side * 1.75 + (this.rand() - 0.5) * 0.45;
             y = 1.0 + this.rand() * 2.3;
             z = (this.rand() > 0.5 ? 1.15 : -1.15) + (this.rand() - 0.5) * 0.4;
           } else {
-            // Pendendo do teto do pergolado
             x = (this.rand() - 0.5) * 4.1;
             y = 2.75 + this.rand() * 0.72;
             z = (this.rand() - 0.5) * 2.6;
           }
           const isFlower = this.rand() > 0.35;
-          const mat = isFlower
-            ? new THREE.MeshStandardMaterial({
-                color: vineColors[Math.floor(this.rand() * vineColors.length)],
-                roughness: 0.72
-              })
-            : vineLeafMat;
-
-          const tuft = new THREE.Mesh(blossomGeo, mat);
-          tuft.position.set(x, y, z);
+          const colorHex = isFlower ? vineColors[Math.floor(this.rand() * vineColors.length)] : 0;
           const s = 0.7 + this.rand() * 1.15;
-          tuft.scale.set(s, s * 0.85, s);
-          tuft.castShadow = false;
-          pergolaGroup.add(tuft);
+          const item = { x, y, z, s, colorHex };
+          if (isFlower) vineBlossomTransforms.push(item);
+          else vineLeafTransforms.push(item);
+        }
+
+        const vineDummy = new THREE.Object3D();
+        if (vineLeafTransforms.length > 0) {
+          const vineLeavesInst = new THREE.InstancedMesh(blossomGeo, vineLeafMat, vineLeafTransforms.length);
+          vineLeafTransforms.forEach((it, idx) => {
+            vineDummy.position.set(it.x, it.y, it.z);
+            vineDummy.rotation.set(0, 0, 0);
+            vineDummy.scale.set(it.s, it.s * 0.85, it.s);
+            vineDummy.updateMatrix();
+            vineLeavesInst.setMatrixAt(idx, vineDummy.matrix);
+          });
+          vineLeavesInst.instanceMatrix.needsUpdate = true;
+          pergolaGroup.add(vineLeavesInst);
+        }
+        if (vineBlossomTransforms.length > 0) {
+          const vineBlossomsInst = new THREE.InstancedMesh(blossomGeo, vineBlossomMat, vineBlossomTransforms.length);
+          vineBlossomTransforms.forEach((it, idx) => {
+            vineDummy.position.set(it.x, it.y, it.z);
+            vineDummy.rotation.set(0, 0, 0);
+            vineDummy.scale.set(it.s, it.s * 0.85, it.s);
+            vineDummy.updateMatrix();
+            vineBlossomsInst.setMatrixAt(idx, vineDummy.matrix);
+            vineBlossomsInst.setColorAt(idx, tmpColor.setHex(it.colorHex));
+          });
+          vineBlossomsInst.instanceMatrix.needsUpdate = true;
+          if (vineBlossomsInst.instanceColor) vineBlossomsInst.instanceColor.needsUpdate = true;
+          pergolaGroup.add(vineBlossomsInst);
         }
 
         // Banco de descanso de madeira sob o pergolado
@@ -2104,17 +2151,21 @@
           pot.receiveShadow = true;
           group.add(pot);
 
-          // Folhas largas da hortênsia
+          // Folhas largas da hortênsia (InstancedMesh)
+          const potDummy = new THREE.Object3D();
+          const potLeavesInst = new THREE.InstancedMesh(leafGeo, leafMat, 10);
           for (let l = 0; l < 10; l++) {
             const ang = (l / 10) * Math.PI * 2 + this.rand() * 0.4;
-            const leaf = new THREE.Mesh(leafGeo, leafMat);
-            leaf.scale.set(1.3, 0.28, 0.85);
-            leaf.position.set(Math.cos(ang) * 0.28, 0.54 + this.rand() * 0.14, Math.sin(ang) * 0.28);
-            leaf.rotation.set(0.35, ang, 0.2);
-            group.add(leaf);
+            potDummy.position.set(Math.cos(ang) * 0.28, 0.54 + this.rand() * 0.14, Math.sin(ang) * 0.28);
+            potDummy.rotation.set(0.35, ang, 0.2);
+            potDummy.scale.set(1.3, 0.28, 0.85);
+            potDummy.updateMatrix();
+            potLeavesInst.setMatrixAt(l, potDummy.matrix);
           }
+          potLeavesInst.instanceMatrix.needsUpdate = true;
+          group.add(potLeavesInst);
 
-          // Cachos esféricos de pétalas de hortênsia
+          // Cachos esféricos de pétalas de hortênsia (InstancedMesh)
           const clusterOffsets = [
             [0, 0.82, 0],
             [-0.22, 0.74, 0.14],
@@ -2123,21 +2174,32 @@
             [0.16, 0.78, -0.15]
           ];
           const floraGroup = new THREE.Group();
+          const floretMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.65 });
+          const floretsInst = new THREE.InstancedMesh(floretGeo, floretMat, clusterOffsets.length * 16);
+          const floretColor = new THREE.Color();
+          let fIdx = 0;
           clusterOffsets.forEach(([cx, cy, cz]) => {
             for (let f = 0; f < 16; f++) {
               const theta = this.rand() * Math.PI * 2;
               const phi = Math.acos(2 * this.rand() - 1);
               const r = 0.09 + this.rand() * 0.08;
               const col = cfg.colors[Math.floor(this.rand() * cfg.colors.length)];
-              const floret = new THREE.Mesh(floretGeo, new THREE.MeshStandardMaterial({ color: col, roughness: 0.65 }));
-              floret.position.set(
+              potDummy.position.set(
                 cx + r * Math.sin(phi) * Math.cos(theta),
                 cy + r * Math.cos(phi),
                 cz + r * Math.sin(phi) * Math.sin(theta)
               );
-              floraGroup.add(floret);
+              potDummy.rotation.set(0, 0, 0);
+              potDummy.scale.set(1, 1, 1);
+              potDummy.updateMatrix();
+              floretsInst.setMatrixAt(fIdx, potDummy.matrix);
+              floretsInst.setColorAt(fIdx, floretColor.setHex(col));
+              fIdx++;
             }
           });
+          floretsInst.instanceMatrix.needsUpdate = true;
+          if (floretsInst.instanceColor) floretsInst.instanceColor.needsUpdate = true;
+          floraGroup.add(floretsInst);
           group.add(floraGroup);
           this.swayingFlora.push({ mesh: floraGroup, baseRotZ: 0, phase: this.rand() * 6, amp: 0.025 });
           this.scene.add(group);
@@ -2278,48 +2340,73 @@
           [2.55, 1.52, -1.65, 0.9]
         ];
 
+        const fernBladeGeo = new THREE.PlaneGeometry(0.24, 0.18);
+        const floraDummy = new THREE.Object3D();
+        const bladeLocalDummy = new THREE.Object3D();
+        const frondGroupDummy = new THREE.Object3D();
+
         fernClusters.forEach(([fx, fy, fz, scale]) => {
           const fernGroup = new THREE.Group();
           fernGroup.position.set(fx, fy, fz);
+          const fernInst = new THREE.InstancedMesh(fernBladeGeo, fernMat, 9 * 6);
+          let bIdx = 0;
           for (let f = 0; f < 9; f++) {
             const ang = (f / 9) * Math.PI * 2 + this.rand() * 0.4;
-            const frond = new THREE.Group();
-            frond.rotation.y = ang;
+            frondGroupDummy.rotation.set(0, ang, 0);
+            frondGroupDummy.updateMatrix();
             const len = (0.75 + this.rand() * 0.45) * scale;
             const segs = 6;
             for (let s = 0; s < segs; s++) {
               const t = s / segs;
-              const blade = new THREE.Mesh(new THREE.PlaneGeometry(0.24 * (1 - t * 0.65), 0.18), fernMat);
-              blade.position.set(0, Math.sin(t * Math.PI * 0.65) * 0.42 * scale, t * len);
-              blade.rotation.x = -0.7 + t * 1.1;
-              frond.add(blade);
+              bladeLocalDummy.position.set(0, Math.sin(t * Math.PI * 0.65) * 0.42 * scale, t * len);
+              bladeLocalDummy.rotation.set(-0.7 + t * 1.1, 0, 0);
+              bladeLocalDummy.scale.set(1 - t * 0.65, 1, 1);
+              bladeLocalDummy.updateMatrix();
+              floraDummy.matrix.multiplyMatrices(frondGroupDummy.matrix, bladeLocalDummy.matrix);
+              fernInst.setMatrixAt(bIdx++, floraDummy.matrix);
             }
-            fernGroup.add(frond);
           }
+          fernInst.instanceMatrix.needsUpdate = true;
+          fernGroup.add(fernInst);
           this.swayingFlora.push({ mesh: fernGroup, baseRotZ: 0, phase: this.rand() * 6, amp: 0.032 });
           this.scene.add(fernGroup);
         });
 
-        // Flores rosadas e margaridas brancas distribuídas organicamente
+        // Flores rosadas e margaridas brancas distribuídas organicamente (InstancedMesh)
         const daisyGeo = new THREE.CircleGeometry(0.085, 8);
+        const daisyCenterGeo = new THREE.SphereGeometry(0.028, 6, 6);
         const daisyMat = new THREE.MeshStandardMaterial({ color: 0xfefcf5, roughness: 0.6, side: THREE.DoubleSide });
         const yellowCenterMat = new THREE.MeshStandardMaterial({ color: 0xf5be41, roughness: 0.6 });
         const pinkFlowerMat = new THREE.MeshStandardMaterial({ color: 0xd96ea3, roughness: 0.65 });
+        const pinkFlowerGeo = new THREE.DodecahedronGeometry(0.075, 0);
 
-        // Margaridas à direita em primeiro plano (como no mockup)
+        // Margaridas à direita em primeiro plano (InstancedMesh)
+        const daisyPatch = new THREE.Group();
+        daisyPatch.position.set(2.85, 0.75, 1.15);
+        const daisyPetalsInst = new THREE.InstancedMesh(daisyGeo, daisyMat, 18);
+        const daisyCentersInst = new THREE.InstancedMesh(daisyCenterGeo, yellowCenterMat, 18);
         for (let d = 0; d < 18; d++) {
-          const dg = new THREE.Group();
-          dg.position.set(2.3 + this.rand() * 1.1, 0.45 + this.rand() * 0.65, 0.35 + this.rand() * 1.65);
-          const petals = new THREE.Mesh(daisyGeo, daisyMat);
-          petals.rotation.x = -Math.PI * 0.35 + (this.rand() - 0.5) * 0.5;
-          const center = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), yellowCenterMat);
-          center.position.y = 0.01;
-          dg.add(petals, center);
-          this.swayingFlora.push({ mesh: dg, baseRotZ: 0, phase: this.rand() * 6, amp: 0.04 });
-          this.scene.add(dg);
-        }
+          const dx = (2.3 + this.rand() * 1.1) - 2.85;
+          const dy = (0.45 + this.rand() * 0.65) - 0.75;
+          const dz = (0.35 + this.rand() * 1.65) - 1.15;
+          floraDummy.position.set(dx, dy, dz);
+          floraDummy.rotation.set(-Math.PI * 0.35 + (this.rand() - 0.5) * 0.5, 0, 0);
+          floraDummy.scale.set(1, 1, 1);
+          floraDummy.updateMatrix();
+          daisyPetalsInst.setMatrixAt(d, floraDummy.matrix);
 
-        // Arbustos de flores rosadas na meia-altura direita e topo esquerdo
+          floraDummy.position.set(dx, dy + 0.01, dz);
+          floraDummy.rotation.set(0, 0, 0);
+          floraDummy.updateMatrix();
+          daisyCentersInst.setMatrixAt(d, floraDummy.matrix);
+        }
+        daisyPetalsInst.instanceMatrix.needsUpdate = true;
+        daisyCentersInst.instanceMatrix.needsUpdate = true;
+        daisyPatch.add(daisyPetalsInst, daisyCentersInst);
+        this.swayingFlora.push({ mesh: daisyPatch, baseRotZ: 0, phase: this.rand() * 6, amp: 0.025 });
+        this.scene.add(daisyPatch);
+
+        // Arbustos de flores rosadas na meia-altura direita e topo esquerdo (InstancedMesh)
         const pinkSpots = [
           [2.75, 1.95, -2.55],
           [3.15, 2.25, -3.2],
@@ -2328,11 +2415,16 @@
         pinkSpots.forEach(([px, py, pz]) => {
           const bush = new THREE.Group();
           bush.position.set(px, py, pz);
+          const bushInst = new THREE.InstancedMesh(pinkFlowerGeo, pinkFlowerMat, 22);
           for (let k = 0; k < 22; k++) {
-            const f = new THREE.Mesh(new THREE.DodecahedronGeometry(0.075, 0), pinkFlowerMat);
-            f.position.set((this.rand() - 0.5) * 0.95, this.rand() * 0.55, (this.rand() - 0.5) * 0.85);
-            bush.add(f);
+            floraDummy.position.set((this.rand() - 0.5) * 0.95, this.rand() * 0.55, (this.rand() - 0.5) * 0.85);
+            floraDummy.rotation.set(0, 0, 0);
+            floraDummy.scale.set(1, 1, 1);
+            floraDummy.updateMatrix();
+            bushInst.setMatrixAt(k, floraDummy.matrix);
           }
+          bushInst.instanceMatrix.needsUpdate = true;
+          bush.add(bushInst);
           this.swayingFlora.push({ mesh: bush, baseRotZ: 0, phase: this.rand() * 6, amp: 0.025 });
           this.scene.add(bush);
         });
@@ -2618,18 +2710,50 @@
           }
         });
 
-        window.addEventListener('resize', () => {
+        this._onResize = () => {
+          if (this.isDisposed) return;
           const w = this.container.clientWidth || window.innerWidth;
           const h = this.container.clientHeight || window.innerHeight;
           this.camera.aspect = w / h;
           this.camera.updateProjectionMatrix();
           this.renderer.setSize(w, h);
-        });
+        };
+        window.addEventListener('resize', this._onResize);
+      }
+
+      pause() {
+        this.isPaused = true;
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+      }
+
+      resume() {
+        if (this.isDisposed || !this.isPaused) return;
+        this.isPaused = false;
+        this.clock.getDelta();
+        this.animate();
+      }
+
+      dispose() {
+        if (this.isDisposed) return;
+        this.isDisposed = true;
+        this.isPaused = true;
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+        if (this._onResize) window.removeEventListener('resize', this._onResize);
+        this.walk?.dispose?.();
+        this.controls?.dispose();
+        this.renderer?.dispose();
+        soundscape.dispose();
       }
 
       animate() {
-        if (this.isDisposed) return;
-        requestAnimationFrame(() => this.animate());
+        if (this.isDisposed || this.isPaused) return;
+        this.rafId = requestAnimationFrame(() => this.animate());
 
         const dt = Math.min(this.clock.getDelta(), 0.05);
         const t = this.clock.elapsedTime;
@@ -3161,6 +3285,44 @@
         });
         gardenScene.animate();
         loadingBar.style.width = '100%';
+
+        window.__SANGI_QA__ = {
+          get info() {
+            const info = gardenScene?.renderer?.info;
+            return {
+              calls: info?.render?.calls ?? 0,
+              triangles: info?.render?.triangles ?? 0,
+              paused: !!gardenScene?.isPaused,
+              disposed: !!gardenScene?.isDisposed
+            };
+          }
+        };
+
+        window.addEventListener('sangi:pause', () => gardenScene?.pause());
+        window.addEventListener('sangi:resume', () => gardenScene?.resume());
+        window.addEventListener('sangi:mute', (e) => {
+          const muted = !!e?.detail?.muted;
+          soundscape.setMuted(muted);
+          const btnSound = document.getElementById('btn-sound');
+          if (btnSound) {
+            btnSound.classList.toggle('active', !muted);
+            btnSound.setAttribute('aria-pressed', String(!muted));
+            document.getElementById('icon-sound-off')?.classList.toggle('hidden', !muted);
+            document.getElementById('icon-sound-on')?.classList.toggle('hidden', muted);
+          }
+        });
+        window.addEventListener('sangi:quality', (e) => {
+          const q = String(e?.detail?.quality || '').toUpperCase();
+          const map = { LOW: 'eco', BALANCED: 'balanced', HIGH: 'high', ULTRA: 'high' };
+          if (map[q]) gardenScene?.applyQuality(map[q]);
+        });
+        window.addEventListener('sangi:reset', () => {
+          gardenScene?.walk?.stop?.();
+          gardenScene?.updateCameraFraming(false);
+        });
+        window.addEventListener('sangi:dispose', () => {
+          gardenScene?.dispose();
+        });
       } catch (err) {
         console.warn('WebGL indisponível, ativando modo simplificado:', err);
         document.getElementById('webgl-fallback').classList.remove('hidden');

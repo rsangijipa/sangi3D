@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Mochila da Travessia — Experiência 3D Interativa</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      var src = location.protocol !== 'file:'
+        ? '../../shared/vendor/three-r128.min.js'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.write('<script src="' + src + '"><\/script>');
+    })();
+  </script>
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     :root {
       --canvas-green: #556B57;
@@ -1356,7 +1364,15 @@
         rotate() { playNoise(0.08, 1200, 0.12); playTone(380, 0.08, 'sine', 0.12, 460); },
         buckle() { playTone(620, 0.06, 'square', 0.08, 840); setTimeout(() => playTone(480, 0.09, 'triangle', 0.14, 340), 55); },
         click() { playTone(440, 0.05, 'sine', 0.10, 520); },
-        invalid() { playTone(190, 0.14, 'sine', 0.14, 150); }
+        invalid() { playTone(190, 0.14, 'sine', 0.14, 150); },
+        dispose() {
+          if (ctx) {
+            const c = ctx;
+            ctx = null;
+            masterGain = null;
+            c.close().catch(() => {});
+          }
+        }
       };
     })();
 
@@ -2994,11 +3010,14 @@
 
     // Main Animation Loop (dt clamped, smooth physical interpolation)
     let lastTime = performance.now();
+    let rafId = null;
+    let isDisposed = false;
     function animate(now) {
-      requestAnimationFrame(animate);
+      if (isDisposed || state.paused) { rafId = null; return; }
+      rafId = requestAnimationFrame(animate);
       const dt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
-      if (state.paused || document.hidden) return;
+      if (document.hidden) return;
 
       const t = now * 0.001;
 
@@ -3072,7 +3091,47 @@
     syncSceneTargets();
     renderUI();
     emitIntegrationEvent('ready', { version: VERSION });
-    requestAnimationFrame(animate);
+    rafId = requestAnimationFrame(animate);
+
+    function disposeAll() {
+      if (isDisposed) return;
+      isDisposed = true;
+      state.paused = true;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      renderer.dispose();
+      AudioEngine.dispose();
+    }
+
+    window.__SANGI_QA__ = {
+      get info() {
+        return {
+          calls: renderer?.info?.render?.calls ?? 0,
+          triangles: renderer?.info?.render?.triangles ?? 0,
+          paused: !!state.paused,
+          disposed: isDisposed
+        };
+      }
+    };
+
+    window.addEventListener('sangi:pause', () => {
+      state.paused = true;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    });
+    window.addEventListener('sangi:resume', () => {
+      if (isDisposed || !state.paused) return;
+      state.paused = false;
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(animate);
+    });
+    window.addEventListener('sangi:mute', (e) => {
+      state.settings.audioEnabled = !e?.detail?.muted;
+    });
+    window.addEventListener('sangi:quality', (e) => {
+      const q = String(e?.detail?.quality || '').toUpperCase();
+      applyQuality(q === 'LOW' ? 'leve' : q === 'BALANCED' ? 'equilibrada' : 'alta');
+    });
+    window.addEventListener('sangi:dispose', disposeAll);
+    window.addEventListener('beforeunload', disposeAll);
   })();
   </script>
 </body>

@@ -916,8 +916,10 @@
         // Checa se deve abrir jogo indicado na URL hash
         if (location.hash.startsWith('#play=') && !state.activeAppId) {
           const targetId = decodeURIComponent(location.hash.slice(6));
-          if (cleanApps.some(a => a.id === targetId)) {
-            openApp(targetId);
+          const normalizedId = targetId.replace(/-mockup-html$/, '');
+          const matched = cleanApps.find(a => a.id === targetId) || cleanApps.find(a => a.id === normalizedId);
+          if (matched) {
+            openApp(matched.id);
           }
         }
       } catch {
@@ -1028,7 +1030,9 @@
         closeApp();
       } else if (location.hash.startsWith('#play=')) {
         const targetId = decodeURIComponent(location.hash.slice(6));
-        if (state.apps.some(a => a.id === targetId)) openApp(targetId);
+        const normalizedId = targetId.replace(/-mockup-html$/, '');
+        const matched = state.apps.find(a => a.id === targetId) || state.apps.find(a => a.id === normalizedId);
+        if (matched) openApp(matched.id);
       }
     });
 

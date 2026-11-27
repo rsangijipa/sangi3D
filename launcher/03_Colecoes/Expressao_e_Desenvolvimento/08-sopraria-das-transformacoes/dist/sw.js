@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-08-sopraria-das-transformacoes:' + self.registration.scope + ':'
-const cacheName = prefix + '32c00f77ca3779'
+const cacheName = prefix + '43d747563343a8'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-Bb_gSLGT.js","assets/experience-CVUxI6ly.js","assets/fallback-BrdiRONU.js","assets/index-DBVB0dXH.css","assets/index-k4U8-VWB.js","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-Bb_gSLGT.js","assets/experience-CVUxI6ly.js","assets/fallback-BrdiRONU.js","assets/index-C_51kF6n.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

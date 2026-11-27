@@ -234,31 +234,38 @@ export function buildDomeFrame(): THREE.Group {
     new THREE.Vector3(0, 0, 0),
   ]);
   const points = curve.getPoints(70);
+  const strutGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.35, 8);
+  const strutCount = 37 * points.length;
+  const strutsInst = new THREE.InstancedMesh(strutGeo, beamMat, strutCount);
+  strutsInst.name = 'dome_struts';
+  strutsInst.castShadow = true;
+  const dummy = new THREE.Object3D();
+  let sIdx = 0;
 
   for (let j = 0; j <= 36; j++) {
     const b = (j / 36) * Math.PI * 2;
-    const line = new THREE.Group();
-    points.forEach((p) => {
-      const x = p.x * Math.cos(b) - p.z * Math.sin(b);
-      const z = p.x * Math.sin(b) + p.z * Math.cos(b);
-      const cyl = cylinder(`beam_${j}`, beamMat, 0.05, 0.05, 0.35, 8);
-      cyl.position.set(x, p.y, z);
-      line.add(cyl);
-    });
-    g.add(line);
+    const cosB = Math.cos(b);
+    const sinB = Math.sin(b);
+    for (let k = 0; k < points.length; k++) {
+      const p = points[k];
+      dummy.position.set(p.x * cosB - p.z * sinB, p.y, p.x * sinB + p.z * cosB);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      strutsInst.setMatrixAt(sIdx++, dummy.matrix);
+    }
   }
+  strutsInst.instanceMatrix.needsUpdate = true;
+  g.add(strutsInst);
 
   for (let i = 0; i < segments; i++) {
     const a = (i / segments) * Math.PI * 2;
     const beam = cylinder(`radial_${i}`, woodMat, 0.07, 0.04, height + 0.6, 12);
     beam.position.set(radius * Math.cos(a), height / 2 + 0.3, radius * Math.sin(a));
     beam.rotation.z = deg(-90);
+    beam.castShadow = true;
     g.add(beam);
   }
-
-  g.traverse((c) => {
-    if (c instanceof THREE.Mesh) c.castShadow = true;
-  });
   return g;
 }
 
@@ -480,41 +487,54 @@ export function buildPlants(count = 14): THREE.Group {
   const dummy = new THREE.Object3D();
   const mats: number[] = [];
   const bases: number[] = [];
+  const radii: number[] = [];
+  const heights: number[] = [];
+  const scales: number[] = [];
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2;
     const r = 1.5 + Math.random() * 1.2;
     const h = 0.4 + Math.random() * 0.6;
+    const sc = 0.7 + Math.random() * 0.6;
     dummy.position.set(Math.cos(angle) * r, h, Math.sin(angle) * r);
     dummy.rotation.y = angle + Math.PI;
-    dummy.scale.setScalar(0.7 + Math.random() * 0.6);
+    dummy.scale.setScalar(sc);
     dummy.updateMatrix();
     inst.setMatrixAt(i, dummy.matrix);
     mats.push(0.4 + Math.random() * 0.6);
     bases.push(angle);
+    radii.push(r);
+    heights.push(h);
+    scales.push(sc);
   }
   inst.instanceMatrix.needsUpdate = true;
-  (inst as any).userData = { mats, bases, count };
+  (inst as any).userData = { mats, bases, radii, heights, scales, count };
   g.add(inst);
   return g;
 }
 
+const _plantDummy = new THREE.Object3D();
+
 export function updatePlantsWind(plants: THREE.Group, wind: number, t: number): void {
   const inst = plants.children[0] as THREE.InstancedMesh | undefined;
   if (!inst) return;
-  const mats: number[] = (inst as any).userData.mats;
-  const bases: number[] = (inst as any).userData.bases;
+  const { mats, bases, radii, heights, scales } = (inst as any).userData as {
+    mats: number[];
+    bases: number[];
+    radii: number[];
+    heights: number[];
+    scales: number[];
+  };
   const strength = wind / 4;
   for (let i = 0; i < inst.count; i++) {
-    const dummy = new THREE.Object3D();
     const angle = bases[i];
-    const r = 1.5 + Math.random() * 1.2;
-    const h = 0.4 + Math.random() * 0.6;
+    const r = radii[i];
+    const h = heights[i];
     const sway = Math.sin(t * 1.2 + i) * strength * 0.15 * mats[i];
-    dummy.position.set(Math.cos(angle + sway) * r, h, Math.sin(angle + sway) * r);
-    dummy.rotation.y = angle + sway * 0.5 + Math.PI;
-    dummy.scale.setScalar(0.7 + Math.random() * 0.6);
-    dummy.updateMatrix();
-    inst.setMatrixAt(i, dummy.matrix);
+    _plantDummy.position.set(Math.cos(angle + sway) * r, h, Math.sin(angle + sway) * r);
+    _plantDummy.rotation.y = angle + sway * 0.5 + Math.PI;
+    _plantDummy.scale.setScalar(scales[i]);
+    _plantDummy.updateMatrix();
+    inst.setMatrixAt(i, _plantDummy.matrix);
   }
   inst.instanceMatrix.needsUpdate = true;
 }

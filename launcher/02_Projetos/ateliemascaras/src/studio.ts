@@ -182,6 +182,9 @@ export class Studio {
   private zoom = 1;
   private deviceScale = 1;
   private ready = false;
+  private disposed = false;
+  private paused = false;
+  private resizeObserver?: ResizeObserver;
   private fps = 60;
   private automatic = true;
   private adaptiveAt = 0;
@@ -218,12 +221,39 @@ export class Studio {
   }
   get element() { return this.renderer.domElement; }
   async init() {
+    if (this.disposed) return;
     await this.renderer.init();
     this.host.append(this.element);
     this.ready = true;
-    new ResizeObserver(()=>this.resize()).observe(this.host);
+    this.resizeObserver = new ResizeObserver(()=>this.resize());
+    this.resizeObserver.observe(this.host);
     this.resize();
     void this.renderer.setAnimationLoop(this.frame);
+  }
+  pause() {
+    this.paused = true;
+    if (this.ready) void this.renderer.setAnimationLoop(null);
+  }
+  resume() {
+    if (this.disposed || !this.paused || !this.ready) return;
+    this.paused = false;
+    this.previousTime = performance.now();
+    this.dirty = true;
+    void this.renderer.setAnimationLoop(this.frame);
+  }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.paused = true;
+    this.resizeObserver?.disconnect();
+    if (this.ready) {
+      void this.renderer.setAnimationLoop(null);
+      this.renderer.dispose();
+    }
+  }
+  get qaInfo() {
+    const r = this.renderer.info?.render as { calls?: number; triangles?: number } | undefined;
+    return { calls: r?.calls ?? 0, triangles: r?.triangles ?? 0, paused: this.paused, disposed: this.disposed };
   }
   resize() {
     if (!this.ready) return;

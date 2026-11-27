@@ -273,5 +273,13 @@ class PortoDasDecisoesApp {
 
 // Inicializar aplicação ao carregar DOM
 window.addEventListener('DOMContentLoaded', () => {
-  new PortoDasDecisoesApp();
+  const app = new PortoDasDecisoesApp();
+  const handleDispose = () => app.destroy();
+  window.addEventListener('sangi:dispose', handleDispose);
+  window.addEventListener('beforeunload', handleDispose);
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+      handleDispose();
+    }
+  });
 });

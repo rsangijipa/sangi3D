@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-14-relojoaria-das-prioridades:' + self.registration.scope + ':'
-const cacheName = prefix + '2b346d1522a70c'
+const cacheName = prefix + '5e3e0443b0bfb2'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-ByH3KKgh.js","assets/experience-BTWiSgne.js","assets/fallback-CzpFaFde.js","assets/index-DBVB0dXH.css","assets/index-RSbFU6Jq.js","assets/rules-CNSB4WxX.js","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-ByH3KKgh.js","assets/experience-BTWiSgne.js","assets/fallback-CzpFaFde.js","assets/index-DBVB0dXH.css","assets/index-kZ-qwmhn.js","assets/rules-CNSB4WxX.js","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

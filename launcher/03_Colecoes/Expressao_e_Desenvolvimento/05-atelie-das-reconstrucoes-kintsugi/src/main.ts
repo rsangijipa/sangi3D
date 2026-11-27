@@ -376,7 +376,17 @@ import('./scene').then(({init})=>{
   })
   sync();readyEvent()
 }).catch(()=>{setFallback(true);fallbackDiagram();readyEvent()})
-addEventListener('pagehide',event=>{if(!event.persisted)scene?.dispose()})
+const disposeKintsugi = () => {
+  scene?.dispose()
+}
+addEventListener('pagehide',event=>{if(!event.persisted)disposeKintsugi()})
+addEventListener('sangi:dispose', disposeKintsugi)
+addEventListener('beforeunload', disposeKintsugi)
+addEventListener('message', (e) => {
+  if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+    disposeKintsugi()
+  }
+})
 if(import.meta.env.PROD&&'serviceWorker' in navigator) {
   const scope=new URL('.',location.href)
   void navigator.serviceWorker.register(new URL('sw.js',scope),{scope:scope.pathname}).catch(()=>{})

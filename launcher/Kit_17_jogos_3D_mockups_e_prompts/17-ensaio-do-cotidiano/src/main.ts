@@ -344,11 +344,24 @@ class GameApp {
     this.scene?.updateCartContents(this.state.inventory)
     this.scene?.updateCartCarrier(this.state.carrier)
   }
+
+  public dispose() {
+    this.scene?.dispose()
+    this.audio.dispose()
+  }
 }
 
 // Bootstrap application on DOMContentLoaded
 window.addEventListener('DOMContentLoaded', () => {
-  new GameApp()
+  const app = new GameApp()
+  const handleDispose = () => app.dispose()
+  window.addEventListener('sangi:dispose', handleDispose)
+  window.addEventListener('beforeunload', handleDispose)
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+      handleDispose()
+    }
+  })
 
   if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     navigator.serviceWorker.register('./sw.js').catch(() => {})

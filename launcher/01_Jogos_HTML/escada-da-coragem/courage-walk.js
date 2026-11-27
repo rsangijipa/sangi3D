@@ -213,6 +213,9 @@
     const blossom = new THREE.SphereGeometry(0.15, 7, 5);
     const foliage = new THREE.InstancedMesh(blossom, petals, 108);
     const dummy = new THREE.Object3D();
+    const trunkMatrices = [];
+    const crownBuckets = [[], [], []];
+    const rockMatrices = [];
     let flowers = 0;
     for (let i = 0; i < 22; i++) {
       const z = -10.7 - i * 0.85;
@@ -222,16 +225,38 @@
         const y = garden.groundHeight(x, z);
         if (i % 2 === 0) {
           const height = 2.7 + Math.sin(i * 1.4 + side) * 0.7;
-          mesh(trunk, bark, x, y + height / 2, z).scale.y = height;
+          dummy.position.set(x, y + height / 2, z);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.set(1, height, 1);
+          dummy.updateMatrix();
+          trunkMatrices.push(dummy.matrix.clone());
           for (let k = 0; k < 3; k++) {
-            mesh(crown, canopyMats[(i + k) % 3], x + (k - 1) * 0.55, y + height + k * 0.38, z + Math.sin(k) * 0.6)
-              .scale.set(1.03, 0.88, 1.0);
+            dummy.position.set(x + (k - 1) * 0.55, y + height + k * 0.38, z + Math.sin(k) * 0.6);
+            dummy.scale.set(1.03, 0.88, 1.0);
+            dummy.updateMatrix();
+            crownBuckets[(i + k) % 3].push(dummy.matrix.clone());
           }
         } else {
-          mesh(rock, stoneMat, x, y + 0.13, z).scale.set(0.75, 0.53, 0.65);
+          dummy.position.set(x, y + 0.13, z);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.set(0.75, 0.53, 0.65);
+          dummy.updateMatrix();
+          rockMatrices.push(dummy.matrix.clone());
         }
       }
     }
+    const addInst = (geo, mat, mats) => {
+      if (!mats.length) return;
+      const inst = new THREE.InstancedMesh(geo, mat, mats.length);
+      inst.castShadow = true;
+      inst.receiveShadow = true;
+      mats.forEach((m, idx) => inst.setMatrixAt(idx, m));
+      inst.instanceMatrix.needsUpdate = true;
+      scene.add(inst);
+    };
+    addInst(trunk, bark, trunkMatrices);
+    canopyMats.forEach((m, idx) => addInst(crown, m, crownBuckets[idx]));
+    addInst(rock, stoneMat, rockMatrices);
 
     for (let i = 0; i < 18; i++) {
       const z = -12.1 - i * 0.48;

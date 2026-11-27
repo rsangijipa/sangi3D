@@ -91,11 +91,14 @@ export class Engine {
     if (this.quality !== 'auto') return this.quality;
     const gl = this.renderer.getContext();
     const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const gpuStr = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '') : '';
+    const isSoftware = /(SwiftShader|llvmpipe|Software Rasterizer)/i.test(gpuStr);
     const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
     const cores = navigator.hardwareConcurrency ?? 4;
     const coarse = matchMedia('(pointer: coarse)').matches;
     const small = Math.min(innerWidth, innerHeight) < 500;
-    if (maxTex < 8192 || mem <= 2 || cores <= 2) return 'leve';
+    if (isSoftware || maxTex < 8192 || mem <= 2 || cores <= 2) return 'leve';
     if (coarse || small || mem <= 4) return 'equilibrada';
     return cores >= 8 ? 'cinema' : 'equilibrada';
   }

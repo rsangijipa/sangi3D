@@ -1,0 +1,55 @@
+:root{color-scheme:dark;font-family:system-ui,"Segoe UI",sans-serif;background:#101416;color:#f2f0e9;--accent:#e4be86;--line:#ffffff25;--panel:#172024}
+*{box-sizing:border-box}
+body{margin:0}
+a{color:inherit;text-underline-offset:.2em}
+button,input,select{font:inherit}
+button,select,.link{border:1px solid var(--line);background:#263137;color:inherit;border-radius:7px;padding:.55rem .8rem;min-height:44px;cursor:pointer}
+button:hover,select:hover,.link:hover{background:#354249}
+button[aria-pressed=true],.primary{color:#11171a;background:var(--accent);font-weight:700}
+button:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.shell{max-width:1600px;margin:auto;padding:clamp(10px,2vw,28px);padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.bar,.global,.status-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.bar a{min-height:44px;display:inline-flex;align-items:center}
+h1{font-size:clamp(1.55rem,3.3vw,3.5rem);line-height:1.04;letter-spacing:-.045em;margin:5px 0 14px}
+h2{margin:0 0 .6rem;font-size:1.15rem}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,310px);gap:12px}
+.viewport{min-width:0;position:relative;height:clamp(390px,66dvh,830px);background:#172126;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.viewport canvas{width:100%;height:100%;display:block;touch-action:none}
+.scene-message,.crosshair{pointer-events:none;position:absolute}
+.scene-message{inset:auto 12px 12px;background:#10171bee;border:1px solid var(--line);border-radius:6px;padding:7px 10px;max-width:max-content;font-size:.86rem}
+[hidden]{display:none!important}
+.crosshair{width:11px;height:11px;left:50%;top:50%;transform:translate(-50%,-50%);border:1px solid #ffffffb7;border-radius:50%;box-shadow:0 0 3px #000}
+.global{justify-content:flex-start;margin-top:10px}
+.global button{font-size:.86rem}
+.panel{min-width:0;align-self:start;border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:14px}
+.instructions,.hint,.status{line-height:1.45;margin:0 0 .75rem;font-size:.88rem}
+.hint,.status{color:#d1d8d6}
+.status{min-height:2.6em;padding-top:.7rem;border-top:1px solid var(--line);overflow-wrap:anywhere;margin:.75rem 0 0}
+.rack{display:grid;gap:8px}
+.group{display:flex;gap:6px;flex-wrap:wrap}
+.group>*{flex:1 1 100px;min-width:0;overflow-wrap:anywhere}
+.field{display:grid;gap:4px;font-size:.84rem;min-width:0}
+.field-label{display:flex;justify-content:space-between;gap:4px}
+.field input[type=range]{width:100%;min-height:30px;accent-color:var(--accent)}
+.field input[type=text],.field input[type=number],.field textarea{min-height:42px;width:100%;background:#10181b;color:inherit;border:1px solid var(--line);border-radius:5px;padding:.5rem}
+.field input[type=file]{width:100%;min-height:38px;font-size:.8rem}
+.field input[type=file]::file-selector-button{min-height:36px}
+.field select{width:100%}
+.meter{display:grid;grid-template-columns:minmax(75px,1fr) 1fr;gap:5px;align-items:center;font-size:.8rem}
+meter{width:100%;accent-color:var(--accent)}
+.readout{color:var(--accent);font-size:.86rem;line-height:1.35}
+.walk{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.walk button{min-height:44px;touch-action:none}
+.walk button:first-child{grid-column:2}
+.walk button:nth-child(2){grid-column:1}
+details{font-size:.83rem;color:#d1d8d6;margin-top:.65rem}
+summary{cursor:pointer;padding:5px 0}
+.library{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.card img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.card section{padding:12px}
+.card h2{min-height:2.5em;margin-bottom:.3rem}
+.card .group a{flex:0 1 auto;display:inline-flex;align-items:center}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.viewport{height:clamp(275px,48dvh,560px)}.panel{width:100%}.instructions{margin-bottom:.5rem}}
+@media(max-width:760px) and (orientation:landscape){.viewport{height:65dvh}}

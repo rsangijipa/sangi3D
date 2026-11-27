@@ -182,9 +182,13 @@ validateSceneManifest();
 
 // 8. Loop Principal de Renderização
 const clock = new THREE.Clock();
+let rafId = 0;
+let isPaused = false;
+let isDisposed = false;
 
 function animate() {
-  requestAnimationFrame(animate);
+  if (isPaused || isDisposed) { rafId = 0; return; }
+  rafId = requestAnimationFrame(animate);
 
   frameCount++;
   const now = performance.now();
@@ -236,5 +240,33 @@ aplicarMarca('original');
 if (window.parent && window.parent !== window) {
   window.parent.postMessage({ type: 'ready', app: 'trilha-do-mestre-mandou' }, '*');
 }
+
+function disposeAll() {
+  if (isDisposed) return;
+  isDisposed = true;
+  isPaused = true;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+  renderer.dispose();
+  (audio as unknown as { dispose?: () => void })?.dispose?.();
+}
+
+window.addEventListener('sangi:pause', () => {
+  isPaused = true;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+});
+window.addEventListener('sangi:resume', () => {
+  if (isDisposed || !isPaused) return;
+  isPaused = false;
+  clock.getDelta();
+  animate();
+});
+window.addEventListener('sangi:mute', () => { audio.toggleMute(); });
+window.addEventListener('sangi:dispose', disposeAll);
+window.addEventListener('beforeunload', disposeAll);
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+    disposeAll();
+  }
+});
 
 animate();

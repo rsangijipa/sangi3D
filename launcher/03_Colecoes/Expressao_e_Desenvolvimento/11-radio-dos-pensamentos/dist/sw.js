@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-11-radio-dos-pensamentos:' + self.registration.scope + ':'
-const cacheName = prefix + '277c8850eba49f'
+const cacheName = prefix + 'a32ac56a7c7fbe'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-DLLUDfV9.js","assets/experience-O1bqTnBa.js","assets/fallback-xpxhvjGy.js","assets/index-CHVrVUOV.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-DLLUDfV9.js","assets/experience-O1bqTnBa.js","assets/fallback-xpxhvjGy.js","assets/index-DBVB0dXH.css","assets/index-DmB-xipf.js","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

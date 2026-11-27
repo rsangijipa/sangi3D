@@ -363,9 +363,19 @@ dialog.addEventListener('close',()=>{
   oldFocus=null;
 });
 document.addEventListener('visibilitychange',()=>audio.sync(state));
+const handleDispose = () => {
+  audio.dispose();visual?.dispose();cancelAnimationFrame(breathFrame);
+};
 window.addEventListener('pagehide',event=>{
   if(event.persisted)return;
-  audio.dispose();visual?.dispose();cancelAnimationFrame(breathFrame);
+  handleDispose();
+});
+window.addEventListener('sangi:dispose', handleDispose);
+window.addEventListener('beforeunload', handleDispose);
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+    handleDispose();
+  }
 });
 paintBrand();
 if(state.fallback)setFallback();

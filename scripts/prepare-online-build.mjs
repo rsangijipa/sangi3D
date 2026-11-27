@@ -20,6 +20,7 @@ const MIRROR_DIRS = [
   '04-tear-dos-vinculos',
   'Kit_17_jogos_3D_mockups_e_prompts',
   'ambientes-interativos-adultos-e-marcas',
+  'Sangi3D_15_Experiencias',
   'shared',
 ];
 

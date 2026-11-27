@@ -41,7 +41,7 @@ const importMap = {
 const assignments = {
   '/*FONTS*/': '',
   '/*STYLE*/': style,
-  '/*BRAND*/': inline(brand) + '\nwindow.ROCHAS_STILL = ' + JSON.stringify(still ? encode(still, 'image/webp') : '') + ';',
+  '/*BRAND*/': inline(brand).replace(/^export\s+/gm, '') + '\nwindow.ROCHAS_STILL = ' + JSON.stringify(still ? encode(still, 'image/webp') : '') + ';',
   '/*IMPORTS*/': JSON.stringify(importMap, null, 2),
   '/*APP*/': inline(appBundle.outputFiles[0].text),
 };

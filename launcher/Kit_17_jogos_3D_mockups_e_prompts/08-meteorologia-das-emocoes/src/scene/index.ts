@@ -210,29 +210,40 @@ export class Scene3D {
     this.controls.update();
   }
 
+  private plantDummy = new THREE.Object3D();
+
   private updatePlantsWind(wind: number, t: number): void {
     const inst = this.plantsObj.children[0] as THREE.InstancedMesh | undefined;
     if (!inst) return;
-    const mats: number[] = (inst as any).userData.mats;
-    const bases: number[] = (inst as any).userData.bases;
+    const { mats, bases, radii, heights, scales } = (inst as any).userData as {
+      mats: number[];
+      bases: number[];
+      radii: number[];
+      heights: number[];
+      scales: number[];
+    };
     const strength = wind / 4;
     for (let i = 0; i < inst.count; i++) {
-      const dummy = new THREE.Object3D();
       const angle = bases[i];
-      const r = 1.5 + Math.random() * 1.2;
-      const h = 0.4 + Math.random() * 0.6;
+      const r = radii ? radii[i] : 2.0;
+      const h = heights ? heights[i] : 0.6;
+      const sc = scales ? scales[i] : 1.0;
       const sway = Math.sin(t * 1.2 + i) * strength * 0.15 * mats[i];
-      dummy.position.set(Math.cos(angle + sway) * r, h, Math.sin(angle + sway) * r);
-      dummy.rotation.y = angle + sway * 0.5 + Math.PI;
-      dummy.scale.setScalar(0.7 + Math.random() * 0.6);
-      dummy.updateMatrix();
-      inst.setMatrixAt(i, dummy.matrix);
+      this.plantDummy.position.set(Math.cos(angle + sway) * r, h, Math.sin(angle + sway) * r);
+      this.plantDummy.rotation.y = angle + sway * 0.5 + Math.PI;
+      this.plantDummy.scale.setScalar(sc);
+      this.plantDummy.updateMatrix();
+      inst.setMatrixAt(i, this.plantDummy.matrix);
     }
     inst.instanceMatrix.needsUpdate = true;
   }
 
+  private isDisposed = false;
+
   onResize(mobile: boolean): void {
+    if (this.isDisposed) return;
     const canvas = this.renderer.domElement;
+    if (!canvas.clientWidth || !canvas.clientHeight) return;
     this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
@@ -241,6 +252,7 @@ export class Scene3D {
   }
 
   render(): void {
+    if (this.isDisposed) return;
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -249,6 +261,8 @@ export class Scene3D {
   }
 
   dispose(): void {
+    if (this.isDisposed) return;
+    this.isDisposed = true;
     this.controls.dispose();
     this.tweenManager.clear();
     this.sky.dispose();

@@ -669,9 +669,11 @@ function shrink(dataUrl: string, w: number): Promise<string> {
 // ---------- ciclo ----------
 
 let perfAcc = 0;
+let rafId = 0;
+let disposed = false;
 function frame(now: number): void {
-  if (!running) return;
-  requestAnimationFrame(frame);
+  if (!running || disposed) { rafId = 0; return; }
+  rafId = requestAnimationFrame(frame);
   if (hiddenPause || offscreen) { lastFrame = now; return; }
   const raw = now - lastFrame;
   lastFrame = now;
@@ -692,6 +694,41 @@ function frame(now: number): void {
   }
 }
 
+function disposeAll(): void {
+  if (disposed) return;
+  disposed = true;
+  running = false;
+  if (rafId) {
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+  }
+  world?.dispose();
+  world = null;
+  audio.dispose();
+}
+
+window.addEventListener('sangi:pause', () => { hiddenPause = true; audio.suspend(); });
+window.addEventListener('sangi:resume', () => { if (!disposed) { hiddenPause = false; lastFrame = performance.now(); if (!store.app.paused) audio.resume(); } });
+window.addEventListener('sangi:mute', (e) => {
+  const muted = Boolean((e as CustomEvent<{ muted?: boolean }>)?.detail?.muted);
+  if (muted) audio.disable(); else void audio.enable();
+});
+window.addEventListener('sangi:quality', (e) => {
+  const q = String((e as CustomEvent<{ quality?: string }>)?.detail?.quality || '').toUpperCase();
+  const map: Record<string, 'leve' | 'equilibrada' | 'cinema'> = { LOW: 'leve', BALANCED: 'equilibrada', HIGH: 'cinema', ULTRA: 'cinema' };
+  if (map[q]) world?.engine.setQuality(map[q]);
+});
+window.addEventListener('sangi:reset', () => { world?.setView('geral'); });
+window.addEventListener('sangi:dispose', disposeAll);
+window.addEventListener('beforeunload', disposeAll);
+
+(window as unknown as { __SANGI_QA__?: unknown }).__SANGI_QA__ = {
+  get info() {
+    const st = world?.engine.stats();
+    return { calls: st?.calls ?? 0, triangles: st?.triangles ?? 0, paused: hiddenPause, disposed };
+  }
+};
+
 document.addEventListener('visibilitychange', () => {
   hiddenPause = document.hidden;
   if (document.hidden) audio.suspend(); else if (!store.app.paused) audio.resume();
@@ -700,7 +737,7 @@ window.addEventListener('resize', () => { world?.resize(); });
 listen((cmd) => {
   if (cmd === 'pause') setPaused(true);
   else if (cmd === 'resume') setPaused(false);
-  else void actions.exit();
+  else disposeAll();
 });
 
 async function boot(): Promise<void> {
@@ -731,7 +768,7 @@ async function boot(): Promise<void> {
   } finally {
     loading?.remove();
   }
-  requestAnimationFrame(frame);
+  rafId = requestAnimationFrame(frame);
   void actions.refreshGallery();
 }
 

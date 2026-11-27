@@ -4,17 +4,21 @@
   const categories = [
     { id: 'mundos', label: 'Mundos e exploração', hue: 190, entries: [
       'cidade-submersa', 'arquipelago-celestial', 'biblioteca-infinita', 'trem-sem-destino',
+      'cidade-da-madrugada',
     ] },
     { id: 'natureza', label: 'Natureza e cultivo', hue: 145, entries: [
       'bancada-do-florista', 'colmeia-transparente', 'estufa-das-borboletas', 'jardim-dos-fungos',
       'lago-3d-interativo', 'oficina-de-bonsais', 'terrario-de-vidro',
+      'floresta-bioluminescente', 'escultor-de-planetas',
     ] },
     { id: 'oficinas', label: 'Arte e artesanato', hue: 36, entries: [
       'atelie-das-reconstrucoes-kintsugi', 'oficina-das-velas-artesanais', 'oficina-de-estofados',
       'oficina-do-vitralista', 'pavilhao-dos-tecidos-flutuantes', 'restauro-de-azulejos',
       'sopraria-das-transformacoes', 'tear-dos-vinculos',
+      'atelie-de-ceramica', 'oceano-de-tinta',
     ] },
     { id: 'ciencia', label: 'Ciência e mecanismos', hue: 215, entries: [
+      'arquitetura-do-impossivel', 'camara-antigravitacional', 'laboratorio-de-ferrofluido',
       'galeria-dos-equilibrios-impossiveis', 'gerador-de-mundos-climaticos', 'maquete-que-se-monta',
       'maquina-de-garra-de-brindes', 'maquina-de-reacao-em-cadeia', 'moinho-hidraulico',
       'pinball-de-madeira', 'relogio-aberto', 'trem-de-engrenagens', 'vulcao-em-miniatura',
@@ -23,18 +27,19 @@
       'atlas-das-texturas', 'caixa-de-musica-perfurada', 'cartografia-dos-sons', 'copos-musicais',
       'laboratorio-de-camadas-sonoras', 'observatorio-da-luz', 'oficina-do-ritmo', 'orgao-do-perfumista',
       'paisagem-sonora-3d', 'pousada-vento-leve', 'sala-de-espera-sonora', 'toca-discos-de-vinil', 'universo-audioreativo',
+      'corpo-de-particulas', 'maestro-invisivel',
     ] },
     { id: 'emocoes', label: 'Emoções e bem-estar', hue: 330, entries: [
       'agencia-de-investigacao-dos-pensamentos', 'areias-do-impermanente', 'atelie-do-gesto-lento',
       'atelie-dos-remendos-e-transformacoes', 'ateliemascaras', 'bussola-do-corpo', 'casa-da-arvore-das-emocoes',
       'escada-da-coragem', 'ilha-das-pausas', 'jardim-dos-ciclos', 'mesa-dos-objetos-que-acalmam',
-      'meteorologia-das-emocoes', 'pensar-sentir-e-agir', 'radio-dos-pensamentos', 'rochas-em-equilibrio',
+      'meteorologia-das-emocoes', 'pensar-sentir-e-agir', 'radio-dos-pensamentos', 'refugio-da-chuva', 'rochas-em-equilibrio',
       'semaforo-das-emocoes', 'termometro-da-ansiedade', 'torre-do-impulso', 'tribunal-dos-pensamentos',
       'vale-dos-baloes-passageiros',
     ] },
     { id: 'historias', label: 'Histórias e convivência', hue: 15, entries: [
       'biblioteca-das-historias-inacabadas', 'casa-das-memorias', 'cidade-das-conexoes', 'cidade-das-conversas',
-      'correio-das-palavras-nao-ditas', 'estacao-das-trocas', 'estudio-dos-limites', 'museu-dos-pontos-de-vista',
+      'correio-das-palavras-nao-ditas', 'estacao-das-trocas', 'estudio-dos-limites', 'museu-das-memorias', 'museu-dos-pontos-de-vista',
       'oficina-dos-gestos-compartilhados-projeto', 'sala-das-cadeiras-possiveis', 'teatro-das-historias-possiveis',
       'territorio-dos-vinculos', 'trilha-do-mestre-mandou',
     ] },

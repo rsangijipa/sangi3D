@@ -13,14 +13,28 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Import Map para Three.js ES Modules confiáveis -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      }
-    }
+  <script src="../../shared/sangi-bridge.js" defer></script>
+  <!-- Import Map para Three.js ES Modules confiáveis (local em HTTP, CDN apenas em file:) -->
+  <script>
+    (function () {
+      const localThree = location.protocol !== 'file:';
+      const cdnJsm = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/';
+      const map = document.createElement('script');
+      map.type = 'importmap';
+      map.textContent = JSON.stringify({
+        imports: localThree
+          ? {
+              three: '../../shared/vendor/three.module.js',
+              'three/addons/controls/OrbitControls.js': '../../shared/vendor/addons/controls/OrbitControls.js',
+              'three/addons/': cdnJsm
+            }
+          : {
+              three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+              'three/addons/': cdnJsm
+            }
+      });
+      document.currentScript.after(map);
+    })();
   </script>
 
   <style>
@@ -578,6 +592,19 @@
         this.playChime(587.33, 0.45, 0.06, 'sine');
         setTimeout(() => this.playChime(783.99, 0.6, 0.05, 'sine'), 80);
       }
+
+      setMuted(muted) {
+        this.enabled = !muted;
+      }
+
+      dispose() {
+        this.enabled = false;
+        if (this.ctx) {
+          const ctx = this.ctx;
+          this.ctx = null;
+          ctx.close().catch(() => {});
+        }
+      }
     }
 
     const sound = new SoundEngine();
@@ -1080,8 +1107,11 @@
         this.initControlsAndEvents();
 
         this.applyQualityPreset(appState.qualityMode);
+        this.rafId = null;
+        this.isPaused = false;
+        this.isDisposed = false;
         this.animate = this.animate.bind(this);
-        requestAnimationFrame(this.animate);
+        this.rafId = requestAnimationFrame(this.animate);
       }
 
       initRenderer() {
@@ -1716,7 +1746,7 @@
         this.composer.addPass(renderPass);
 
         this.bloomPass = new UnrealBloomPass(
-          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          new THREE.Vector2(Math.max(256, Math.floor(window.innerWidth * 0.5)), Math.max(256, Math.floor(window.innerHeight * 0.5))),
           0.42, // força suave para realçar o brilho plasmático sem estourar o texto
           0.65,
           0.78
@@ -1848,15 +1878,15 @@
         const statusEl = document.getElementById('quality-status-text');
 
         if (resolved === 'high') {
-          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
           this.renderer.shadowMap.enabled = true;
           if (this.bloomPass) this.bloomPass.enabled = true;
           if (this.ambientDust) this.ambientDust.visible = true;
           if (statusEl) statusEl.textContent = 'Perfil ativo: Alta fidelidade (PBR + Bloom + Partículas).';
         } else if (resolved === 'medium') {
-          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
           this.renderer.shadowMap.enabled = false;
-          if (this.bloomPass) this.bloomPass.enabled = true;
+          if (this.bloomPass) this.bloomPass.enabled = false;
           if (this.ambientDust) this.ambientDust.visible = true;
           if (statusEl) statusEl.textContent = 'Perfil ativo: Equilibrado (Fluidez otimizada).';
         } else {
@@ -1898,8 +1928,38 @@
         }
       }
 
+      pause() {
+        this.isPaused = true;
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+      }
+
+      resume() {
+        if (this.isDisposed || !this.isPaused) return;
+        this.isPaused = false;
+        this.clock.getDelta();
+        this.rafId = requestAnimationFrame(this.animate);
+      }
+
+      dispose() {
+        if (this.isDisposed) return;
+        this.isDisposed = true;
+        this.isPaused = true;
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+        this.controls?.dispose();
+        this.composer?.dispose?.();
+        this.renderer?.dispose();
+        sound.dispose();
+      }
+
       animate() {
-        requestAnimationFrame(this.animate);
+        if (this.isDisposed || this.isPaused) return;
+        this.rafId = requestAnimationFrame(this.animate);
 
         const dt = Math.min(this.clock.getDelta(), 0.05);
         const elapsed = this.clock.getElapsedTime();
@@ -1908,14 +1968,14 @@
         // Monitoramento de FPS e adaptação automática se necessário
         this.frameCount++;
         const now = performance.now();
-        if (now - this.lastFpsTime >= 1000) {
+        if (now - this.lastFpsTime >= 350) {
           this.currentFps = Math.round((this.frameCount * 1000) / (now - this.lastFpsTime));
           this.frameCount = 0;
           this.lastFpsTime = now;
           const fpsBadge = document.getElementById('fps-indicator');
           if (fpsBadge) fpsBadge.textContent = `${this.currentFps} FPS`;
 
-          if (appState.qualityMode === 'auto' && this.currentFps < 26 && this.activeQuality === 'high') {
+          if (appState.qualityMode === 'auto' && this.currentFps < 40 && this.activeQuality === 'high') {
             this.applyQualityPreset('medium');
           }
         }
@@ -1961,7 +2021,7 @@
 
           // Ondulação senoidal viva nos filamentos
           const posAttr = stream.geo.attributes.position;
-          const baseCurvePts = stream.curve.getPoints(48);
+          const baseCurvePts = stream.baseCurvePts || (stream.baseCurvePts = stream.curve.getPoints(48));
           for (let i = 0; i <= 48; i++) {
             const t = i / 48;
             const envelope = Math.sin(t * Math.PI);
@@ -2746,6 +2806,31 @@
     // Inicializa a interface na Etapa 1 de 6
     updateProgressBar();
     renderStepContent();
+
+    window.__SANGI_QA__ = {
+      get info() {
+        const info = atelier3D?.renderer?.info;
+        return {
+          calls: info?.render?.calls ?? 0,
+          triangles: info?.render?.triangles ?? 0,
+          paused: !!atelier3D?.isPaused,
+          disposed: !!atelier3D?.isDisposed
+        };
+      }
+    };
+
+    window.addEventListener('sangi:pause', () => atelier3D?.pause());
+    window.addEventListener('sangi:resume', () => atelier3D?.resume());
+    window.addEventListener('sangi:mute', (e) => {
+      sound.setMuted(!!e?.detail?.muted);
+    });
+    window.addEventListener('sangi:quality', (e) => {
+      const q = String(e?.detail?.quality || '').toUpperCase();
+      const map = { LOW: 'low', BALANCED: 'medium', HIGH: 'high', ULTRA: 'high' };
+      if (map[q]) atelier3D?.applyQualityPreset(map[q]);
+    });
+    window.addEventListener('sangi:reset', () => atelier3D?.resetCamera());
+    window.addEventListener('sangi:dispose', () => atelier3D?.dispose());
   </script>
 </body>
 </html>

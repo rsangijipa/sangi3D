@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-10-agencia-de-investigacao-dos-pensamentos:' + self.registration.scope + ':'
-const cacheName = prefix + 'ec51e3cbfa160b'
+const cacheName = prefix + '6f213bbbbf2ae9'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-Cj-tDkPH.js","assets/experience-BlBbhCZ2.js","assets/fallback-nN8Tg1jc.js","assets/index-DBVB0dXH.css","assets/index-DEnsMCgz.js","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-Cj-tDkPH.js","assets/experience-BlBbhCZ2.js","assets/fallback-nN8Tg1jc.js","assets/index-DBVB0dXH.css","assets/index-iXIdTtCv.js","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

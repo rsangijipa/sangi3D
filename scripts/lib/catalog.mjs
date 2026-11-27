@@ -19,9 +19,11 @@ const COLLECTIONS = {
   'Jardins da TCC': 'Jardins da TCC',
   'Kit_17_jogos_3D_mockups_e_prompts': 'Kit 17 jogos 3D',
   'ambientes-interativos-adultos-e-marcas': 'Adultos e marcas',
+  'Sangi3D_15_Experiencias': 'Sangi3D 15 Experiências',
 };
 
 const COLLECTION_ORDER = [
+  'Sangi3D 15 Experiências',
   'Jardins da TCC',
   'Jardins do Sentir',
   'Projetos 3D',
@@ -76,6 +78,12 @@ const DISTINCT_ENTRY_IDS = new Set([
   '01_jogos_html-observatorio-da-luz-index-html',
   '01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html',
   '01_jogos_html-terrario-de-vidro-terrario-de-vidro-atelier-expandido-html',
+  'sangi3d_15_experiencias-05-trem-sem-destino',
+  '01_jogos_html-trem-sem-destino-trem-sem-destino-html',
+  'sangi3d_15_experiencias-06-cidade-submersa',
+  '01_jogos_html-cidade-submersa-cidade-submersa-html',
+  'sangi3d_15_experiencias-08-universo-audioreativo',
+  '01_jogos_html-universo-audioreativo-universo-audioreativo-html',
 ]);
 
 export const idFor = (p) => String(p).replace(/[^\w-]+/g, '-').toLowerCase();
@@ -229,6 +237,20 @@ export function applyCanonicalOverrides(apps) {
       }
     }
 
+    if (app.id === 'sangi3d_15_experiencias-05-trem-sem-destino') {
+      app.name = 'Trem sem Destino (Experiência 3D)';
+      app.canonicalRole = 'variant';
+      app.variantOf = '01_jogos_html-trem-sem-destino-trem-sem-destino-html';
+    } else if (app.id === 'sangi3d_15_experiencias-06-cidade-submersa') {
+      app.name = 'Cidade Submersa (Experiência 3D)';
+      app.canonicalRole = 'variant';
+      app.variantOf = '01_jogos_html-cidade-submersa-cidade-submersa-html';
+    } else if (app.id === 'sangi3d_15_experiencias-08-universo-audioreativo') {
+      app.name = 'Universo Audioreativo (Experiência 3D)';
+      app.canonicalRole = 'variant';
+      app.variantOf = '01_jogos_html-universo-audioreativo-universo-audioreativo-html';
+    }
+
     if (app.id === '01_jogos_html-oficina-do-ritmo-oficina-do-ritmo-html') {
       app.gateBlocker = 'T19';
     }
@@ -288,12 +310,18 @@ export async function scanCatalog({
       const rootFolder = relDir.split(sep)[0];
       const collectionEntry = /^\d{2}[-_]/.test(folder) && (
         rootFolder === 'Kit_17_jogos_3D_mockups_e_prompts' ||
-        rootFolder === 'ambientes-interativos-adultos-e-marcas'
+        rootFolder === 'ambientes-interativos-adultos-e-marcas' ||
+        rootFolder === 'Sangi3D_15_Experiencias'
       );
       const standalone = !files.includes('package.json') && (
         collectionEntry || rootFolder === '01_Jogos_HTML' || (rootFolder === '02_Projetos' && dirs.includes('assets'))
       );
-      const htmls = files.filter((f) => f.toLowerCase().endsWith('.html') && (f !== 'index.html' || standalone));
+      const hasImplementedIndex = standalone && files.includes('index.html');
+      const htmls = files.filter((f) => {
+        if (!f.toLowerCase().endsWith('.html')) return false;
+        if (hasImplementedIndex && f.toLowerCase() === 'mockup.html') return false;
+        return f !== 'index.html' || standalone;
+      });
       const mdFile = files.includes('PROMPT.md')
         ? 'PROMPT.md'
         : files.includes('PROMPT_IMPLEMENTACAO.md')

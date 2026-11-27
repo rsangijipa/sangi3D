@@ -5,8 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Biblioteca das Histórias Inacabadas 3D — Jardins do Sentir</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      var threeSrc = location.protocol !== 'file:'
+        ? '../../shared/vendor/three-r128.min.js'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.write('<script src="' + threeSrc + '"><\/script>');
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
     * { box-sizing: border-box; }
@@ -370,6 +378,7 @@
       backPanel.position.set(0, 3.2, -0.35); backPanel.receiveShadow = true; shelfWall.add(backPanel);
 
       const spineColors = ['#6e2624', '#22473d', '#2b3c5e', '#785028', '#522c4a', '#3b4a33', '#8c3d2b', '#4d3625'];
+      const bookSpecs = [];
       for (let bay = -1; bay <= 1; bay++) {
         const bx = bay * 3.4;
         // Pillars
@@ -377,7 +386,7 @@
           const pil = new THREE.Mesh(new THREE.BoxGeometry(0.26, 6.2, 0.72), oakMat);
           pil.position.set(bx + ox, 3.1, 0); pil.castShadow = true; pil.receiveShadow = true; shelfWall.add(pil);
         });
-        // 5 Shelves with varied books & gold bands
+        // 5 Shelves with varied books & gold bands (collected for InstancedMesh)
         for (let row = 0; row < 5; row++) {
           const sy = 0.65 + row * 1.08;
           const plank = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.65), oakMat);
@@ -388,19 +397,47 @@
             const bw = 0.11 + Math.random() * 0.09;
             const bh = 0.62 + Math.random() * 0.26;
             const col = spineColors[Math.floor(Math.random() * spineColors.length)];
-            const book = new THREE.Mesh(
-              new THREE.BoxGeometry(bw, bh, 0.42),
-              new THREE.MeshStandardMaterial({ color: col, roughness: 0.68, metalness: 0.08 })
-            );
-            book.position.set(curX + bw / 2, sy + 0.05 + bh / 2, 0.04);
-            book.rotation.z = (Math.random() < 0.08) ? (Math.random() - 0.5) * 0.22 : 0;
-            book.castShadow = true; shelfWall.add(book);
-            // Gold foil spine band
-            const foil = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.004, 0.035, 0.02), brassMat);
-            foil.position.set(0, bh * 0.28, 0.21); book.add(foil);
+            const tilt = (Math.random() < 0.08) ? (Math.random() - 0.5) * 0.22 : 0;
+            bookSpecs.push({ x: curX + bw / 2, y: sy + 0.05 + bh / 2, z: 0.04, bw, bh, tilt, col });
             curX += bw + 0.015;
           }
         }
+      }
+      if (bookSpecs.length > 0) {
+        const unitBox = new THREE.BoxGeometry(1, 1, 1);
+        const bookInstMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.68, metalness: 0.08 });
+        const booksInst = new THREE.InstancedMesh(unitBox, bookInstMat, bookSpecs.length);
+        booksInst.castShadow = true;
+        const foilsInst = new THREE.InstancedMesh(unitBox, brassMat, bookSpecs.length);
+        const bookPivot = new THREE.Object3D();
+        const scaleDummy = new THREE.Object3D();
+        const combinedMat = new THREE.Matrix4();
+        const colTmp = new THREE.Color();
+
+        bookSpecs.forEach((b, idx) => {
+          bookPivot.position.set(b.x, b.y, b.z);
+          bookPivot.rotation.set(0, 0, b.tilt);
+          bookPivot.scale.set(1, 1, 1);
+          bookPivot.updateMatrix();
+
+          scaleDummy.position.set(0, 0, 0);
+          scaleDummy.rotation.set(0, 0, 0);
+          scaleDummy.scale.set(b.bw, b.bh, 0.42);
+          scaleDummy.updateMatrix();
+          combinedMat.multiplyMatrices(bookPivot.matrix, scaleDummy.matrix);
+          booksInst.setMatrixAt(idx, combinedMat);
+          booksInst.setColorAt(idx, colTmp.set(b.col));
+
+          scaleDummy.position.set(0, b.bh * 0.28, 0.21);
+          scaleDummy.scale.set(b.bw + 0.004, 0.035, 0.02);
+          scaleDummy.updateMatrix();
+          combinedMat.multiplyMatrices(bookPivot.matrix, scaleDummy.matrix);
+          foilsInst.setMatrixAt(idx, combinedMat);
+        });
+        booksInst.instanceMatrix.needsUpdate = true;
+        if (booksInst.instanceColor) booksInst.instanceColor.needsUpdate = true;
+        foilsInst.instanceMatrix.needsUpdate = true;
+        shelfWall.add(booksInst, foilsInst);
       }
       // Brass rolling library ladder
       const ladder = new THREE.Group();
@@ -717,8 +754,13 @@
 
       // --- Animation Loop ---
       const clock = new THREE.Clock();
+      let rafId = null;
+      let isPaused = false;
+      let isDisposed = false;
+
       function animate() {
-        requestAnimationFrame(animate);
+        if (isPaused || isDisposed) return;
+        rafId = requestAnimationFrame(animate);
         const dt = Math.min(clock.getDelta(), 0.05);
         const t = clock.elapsedTime;
 
@@ -792,11 +834,72 @@
         renderer.render(scene, camera);
       }
 
-      window.addEventListener('resize', () => {
+      function onResize() {
+        if (isDisposed) return;
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', onResize);
+
+      function disposeAll() {
+        if (isDisposed) return;
+        isDisposed = true;
+        isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        window.removeEventListener('resize', onResize);
+        controls.dispose();
+        renderer.dispose();
+        if (audioCtx) {
+          const ctx = audioCtx;
+          audioCtx = null;
+          ctx.close().catch(() => {});
+        }
+      }
+
+      window.__SANGI_QA__ = {
+        get info() {
+          return {
+            calls: renderer?.info?.render?.calls ?? 0,
+            triangles: renderer?.info?.render?.triangles ?? 0,
+            paused: isPaused,
+            disposed: isDisposed
+          };
+        }
+      };
+
+      window.addEventListener('sangi:pause', () => {
+        isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
       });
+      window.addEventListener('sangi:resume', () => {
+        if (isDisposed || !isPaused) return;
+        isPaused = false;
+        clock.getDelta();
+        animate();
+      });
+      window.addEventListener('sangi:mute', (e) => {
+        audioEnabled = !e?.detail?.muted;
+      });
+      window.addEventListener('sangi:quality', (e) => {
+        const q = String(e?.detail?.quality || '').toUpperCase();
+        const isEco = q === 'LOW';
+        renderer.setPixelRatio(isEco ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.shadowMap.enabled = !isEco;
+        motes.visible = !isEco;
+      });
+      window.addEventListener('sangi:reset', () => {
+        camera.position.set(0.35, 3.1, 4.9);
+        controls.target.set(0, 1.05, -0.2);
+        controls.update();
+      });
+      window.addEventListener('sangi:dispose', disposeAll);
 
       animate();
     })();

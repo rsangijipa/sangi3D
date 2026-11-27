@@ -1,8 +1,8 @@
 
 const prefix = 'galeria-equilibrios:' + self.registration.scope + ':'
-const cacheName = prefix + '1e3fa4030bf860'
+const cacheName = prefix + 'a67d1e77df32d4'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/index-BFkx6uXW.js","assets/index-pVuvYUnl.css","assets/scene-dQ5pLJE5.js"]
+const files = ["index.html","assets/index-BKJDv3ow.js","assets/index-pVuvYUnl.css","assets/scene-CFEgtYO3.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

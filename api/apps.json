@@ -1,5 +1,266 @@
 [
   {
+    "name": "Corpo de Partículas",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Corpo de Partículas · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/01-corpo-de-particulas/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/01-corpo-de-particulas/cena.png",
+    "order": 1,
+    "path": "Sangi3D_15_Experiencias\\01-corpo-de-particulas",
+    "mtime": 1795572141736.3643,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-01-corpo-de-particulas",
+    "contentHash": "bf6515db494d7b5f"
+  },
+  {
+    "name": "Oceano de Tinta",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Oceano de Tinta · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/02-oceano-de-tinta/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/02-oceano-de-tinta/cena.png",
+    "order": 2,
+    "path": "Sangi3D_15_Experiencias\\02-oceano-de-tinta",
+    "mtime": 1795572141784.4458,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-02-oceano-de-tinta",
+    "contentHash": "b4516a2592eb21d1"
+  },
+  {
+    "name": "Floresta Bioluminescente",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Floresta Bioluminescente · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/03-floresta-bioluminescente/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/03-floresta-bioluminescente/cena.png",
+    "order": 3,
+    "path": "Sangi3D_15_Experiencias\\03-floresta-bioluminescente",
+    "mtime": 1795572141658.468,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-03-floresta-bioluminescente",
+    "contentHash": "b98982ad153fffce"
+  },
+  {
+    "name": "Cidade da Madrugada",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Cidade da Madrugada · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/04-cidade-da-madrugada/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/04-cidade-da-madrugada/cena.png",
+    "order": 4,
+    "path": "Sangi3D_15_Experiencias\\04-cidade-da-madrugada",
+    "mtime": 1795572141865.722,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-04-cidade-da-madrugada",
+    "contentHash": "90db514093746f67"
+  },
+  {
+    "name": "Trem sem Destino (Experiência 3D)",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Trem sem Destino · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/05-trem-sem-destino/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/05-trem-sem-destino/cena.png",
+    "order": 5,
+    "path": "Sangi3D_15_Experiencias\\05-trem-sem-destino",
+    "mtime": 1795572141848.432,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-05-trem-sem-destino",
+    "canonicalRole": "variant",
+    "variantOf": "01_jogos_html-trem-sem-destino-trem-sem-destino-html",
+    "contentHash": "020294ec341e0461"
+  },
+  {
+    "name": "Cidade Submersa (Experiência 3D)",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Cidade Submersa · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/06-cidade-submersa/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/06-cidade-submersa/cena.png",
+    "order": 6,
+    "path": "Sangi3D_15_Experiencias\\06-cidade-submersa",
+    "mtime": 1795572141891.6936,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-06-cidade-submersa",
+    "canonicalRole": "variant",
+    "variantOf": "01_jogos_html-cidade-submersa-cidade-submersa-html",
+    "contentHash": "bbeec96c4256716a"
+  },
+  {
+    "name": "Laboratório de Ferrofluido",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Laboratório de Ferrofluido · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/07-laboratorio-de-ferrofluido/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/07-laboratorio-de-ferrofluido/cena.png",
+    "order": 7,
+    "path": "Sangi3D_15_Experiencias\\07-laboratorio-de-ferrofluido",
+    "mtime": 1795572141765.0017,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-07-laboratorio-de-ferrofluido",
+    "contentHash": "2f1241d64d8a510f"
+  },
+  {
+    "name": "Universo Audioreativo (Experiência 3D)",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Universo Audioreativo · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/08-universo-audioreativo/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/08-universo-audioreativo/cena.png",
+    "order": 8,
+    "path": "Sangi3D_15_Experiencias\\08-universo-audioreativo",
+    "mtime": 1795572141650.0479,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-08-universo-audioreativo",
+    "canonicalRole": "variant",
+    "variantOf": "01_jogos_html-universo-audioreativo-universo-audioreativo-html",
+    "contentHash": "8f058e9e0af72ce1"
+  },
+  {
+    "name": "Escultor de Planetas",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Escultor de Planetas · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/09-escultor-de-planetas/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/09-escultor-de-planetas/cena.png",
+    "order": 9,
+    "path": "Sangi3D_15_Experiencias\\09-escultor-de-planetas",
+    "mtime": 1795572141828.1533,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-09-escultor-de-planetas",
+    "contentHash": "789a4092d4ccd3b1"
+  },
+  {
+    "name": "Arquitetura do Impossível",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Arquitetura do Impossível · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/10-arquitetura-do-impossivel/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/10-arquitetura-do-impossivel/cena.png",
+    "order": 10,
+    "path": "Sangi3D_15_Experiencias\\10-arquitetura-do-impossivel",
+    "mtime": 1795817982793.0688,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-10-arquitetura-do-impossivel",
+    "contentHash": "e494d0c35f02cab6"
+  },
+  {
+    "name": "Museu das Memórias",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Museu das Memórias · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/11-museu-das-memorias/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/11-museu-das-memorias/cena.png",
+    "order": 11,
+    "path": "Sangi3D_15_Experiencias\\11-museu-das-memorias",
+    "mtime": 1795572141708.2732,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-11-museu-das-memorias",
+    "contentHash": "603eab0131ba1fa1"
+  },
+  {
+    "name": "Câmara Antigravitacional",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Câmara Antigravitacional · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/12-camara-antigravitacional/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/12-camara-antigravitacional/cena.png",
+    "order": 12,
+    "path": "Sangi3D_15_Experiencias\\12-camara-antigravitacional",
+    "mtime": 1795572141684.2437,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-12-camara-antigravitacional",
+    "contentHash": "2c430ff2845d5169"
+  },
+  {
+    "name": "Ateliê de Cerâmica",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Ateliê de Cerâmica · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/13-atelie-de-ceramica/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/13-atelie-de-ceramica/cena.png",
+    "order": 13,
+    "path": "Sangi3D_15_Experiencias\\13-atelie-de-ceramica",
+    "mtime": 1795572141642.9973,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-13-atelie-de-ceramica",
+    "contentHash": "21f7c74a36ed72e4"
+  },
+  {
+    "name": "Refúgio da Chuva",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Refúgio da Chuva · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/14-refugio-da-chuva/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/14-refugio-da-chuva/cena.png",
+    "order": 14,
+    "path": "Sangi3D_15_Experiencias\\14-refugio-da-chuva",
+    "mtime": 1795572141632.9292,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-14-refugio-da-chuva",
+    "contentHash": "a417091e678e9e6e"
+  },
+  {
+    "name": "Maestro Invisível",
+    "subtitle": "Sangi3D",
+    "fullTitle": "Maestro Invisível · Sangi3D",
+    "description": null,
+    "url": "/Sangi3D_15_Experiencias/15-maestro-invisivel/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Sangi3D 15 Experiências",
+    "thumb": "/Sangi3D_15_Experiencias/15-maestro-invisivel/cena.png",
+    "order": 15,
+    "path": "Sangi3D_15_Experiencias\\15-maestro-invisivel",
+    "mtime": 1795572141801.545,
+    "versions": [],
+    "id": "sangi3d_15_experiencias-15-maestro-invisivel",
+    "contentHash": "8b47e19a4678be0e"
+  },
+  {
     "name": "Escada da Coragem",
     "subtitle": "Jardins da TCC · Experiência 3D",
     "fullTitle": "Escada da Coragem — Jardins da TCC · Experiência 3D",
@@ -10,7 +271,7 @@
     "thumb": "/launcher/capas/01_jogos_html-escada-da-coragem-escada-da-coragem-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\escada-da-coragem\\escada_da_coragem_jardins_da_tcc_experi_ncia_3d.html",
-    "mtime": 1795548873846.5417,
+    "mtime": 1795817037398.7266,
     "versions": [
       {
         "url": "/01_Jogos_HTML/escada-da-coragem/escada-da-coragem.html",
@@ -19,7 +280,7 @@
       }
     ],
     "id": "01_jogos_html-escada-da-coragem-escada_da_coragem_jardins_da_tcc_experi_ncia_3d-html",
-    "contentHash": "2654dd845c7f5ca2"
+    "contentHash": "4dc660401e991171"
   },
   {
     "name": "Pensar, Sentir e Agir",
@@ -32,7 +293,7 @@
     "thumb": "/launcher/capas/01_jogos_html-pensar-sentir-e-agir-pensar-sentir-e-agir-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\pensar-sentir-e-agir\\pensar-sentir-e-agir.html",
-    "mtime": 1795409163948.5735,
+    "mtime": 1795817037918.4932,
     "versions": [
       {
         "url": "/01_Jogos_HTML/pensar-sentir-e-agir/pensar_sentir_e_agir_jardins_da_tcc_3d.html",
@@ -41,7 +302,7 @@
       }
     ],
     "id": "01_jogos_html-pensar-sentir-e-agir-pensar-sentir-e-agir-html",
-    "contentHash": "e4be2c1e0225aac9"
+    "contentHash": "3f7d62579a93fa5a"
   },
   {
     "name": "Termômetro da Ansiedade",
@@ -54,7 +315,7 @@
     "thumb": "/launcher/capas/01_jogos_html-termometro-da-ansiedade-index-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\termometro-da-ansiedade\\index.html",
-    "mtime": 1795515513148.144,
+    "mtime": 1795817038584.268,
     "versions": [
       {
         "url": "/01_Jogos_HTML/Legado_Arquivado/ambientes-html/termometro-da-ansiedade.html",
@@ -68,7 +329,7 @@
       }
     ],
     "id": "01_jogos_html-termometro-da-ansiedade-index-html",
-    "contentHash": "5dd8ee98b50c2758"
+    "contentHash": "6bc8bf3272fb7719"
   },
   {
     "name": "Tribunal dos Pensamentos",
@@ -81,7 +342,7 @@
     "thumb": "/launcher/capas/01_jogos_html-tribunal-dos-pensamentos-tribunal-dos-pensamentos-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\tribunal-dos-pensamentos\\tribunal-dos-pensamentos.html",
-    "mtime": 1795409164810.6821,
+    "mtime": 1795817039161.6887,
     "versions": [
       {
         "url": "/01_Jogos_HTML/tribunal-dos-pensamentos/tribunal_dos_pensamentos_3d_jardins_da_tcc.html",
@@ -90,7 +351,7 @@
       }
     ],
     "id": "01_jogos_html-tribunal-dos-pensamentos-tribunal-dos-pensamentos-html",
-    "contentHash": "9a1b4b5b711e253b"
+    "contentHash": "aa0abf51ab6c3cbb"
   },
   {
     "name": "Ateliê dos Remendos e Transformações",
@@ -103,10 +364,10 @@
     "thumb": "/launcher/capas/01_jogos_html-atelie-dos-remendos-e-transformacoes-ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\atelie-dos-remendos-e-transformacoes\\ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir.html",
-    "mtime": 1795309161863.2063,
+    "mtime": 1795817032437.2454,
     "versions": [],
     "id": "01_jogos_html-atelie-dos-remendos-e-transformacoes-ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir-html",
-    "contentHash": "7a6f3114857887c5"
+    "contentHash": "dab2b589837a9fcd"
   },
   {
     "name": "Biblioteca das Histórias Inacabadas",
@@ -119,10 +380,10 @@
     "thumb": "/launcher/capas/01_jogos_html-biblioteca-das-historias-inacabadas-biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\biblioteca-das-historias-inacabadas\\biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir.html",
-    "mtime": 1795309143306.5266,
+    "mtime": 1795817033327.198,
     "versions": [],
     "id": "01_jogos_html-biblioteca-das-historias-inacabadas-biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir-html",
-    "contentHash": "03e6dd5467639e06"
+    "contentHash": "4885f3df287dacbf"
   },
   {
     "name": "Casa da Árvore das Emoções",
@@ -135,7 +396,7 @@
     "thumb": "/launcher/capas/01_jogos_html-casa-da-arvore-das-emocoes-index-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\casa-da-arvore-das-emocoes\\index.html",
-    "mtime": 1795530152343.5225,
+    "mtime": 1795817034349.7095,
     "versions": [
       {
         "url": "/01_Jogos_HTML/Legado_Arquivado/ambientes-html/casa-da-arvore-das-emocoes.html",
@@ -144,7 +405,7 @@
       }
     ],
     "id": "01_jogos_html-casa-da-arvore-das-emocoes-index-html",
-    "contentHash": "c5764cb2414b85ea"
+    "contentHash": "dd1b4e1abb993ca9"
   },
   {
     "name": "Cidade das Conexões",
@@ -158,10 +419,10 @@
     "thumb": "/launcher/capas/01_jogos_html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins_do_sentir-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\cidade-das-conexoes\\cidade_das_conex_es_3d_jardins_do_sentir.html",
-    "mtime": 1795547818641.602,
+    "mtime": 1795817035801.254,
     "versions": [],
     "id": "01_jogos_html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins_do_sentir-html",
-    "contentHash": "23830166fdbb1cfd"
+    "contentHash": "6a4950a705b7f17d"
   },
   {
     "name": "Correio das Palavras Não Ditas",
@@ -174,7 +435,7 @@
     "thumb": "/launcher/capas/01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\correio-das-palavras-nao-ditas\\correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html",
-    "mtime": 1795309198803.9502,
+    "mtime": 1795817036052.2454,
     "versions": [
       {
         "url": "/01_Jogos_HTML/correio-das-palavras-nao-ditas-agencia-postal/correio_das_palavras_n_o_ditas_ag_ncia_postal_3d_fotorrealista.html",
@@ -183,7 +444,7 @@
       }
     ],
     "id": "01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html",
-    "contentHash": "bea34bfad29b4f05"
+    "contentHash": "f45e8e951f812c03"
   },
   {
     "name": "Oficina do Vitralista",
@@ -217,10 +478,10 @@
     "thumb": "/launcher/capas/04-tear-dos-vinculos.webp",
     "order": 4,
     "path": "04-tear-dos-vinculos",
-    "mtime": 1795526612917.9282,
+    "mtime": 1795818050694.558,
     "versions": [],
     "id": "04-tear-dos-vinculos",
-    "contentHash": "de4c9baf5aff06a4"
+    "contentHash": "3e03523921323321"
   },
   {
     "name": "Ateliê das Máscaras Emocionais",
@@ -235,10 +496,10 @@
     "thumb": "/launcher/capas/02_projetos-ateliemascaras.webp",
     "order": 999,
     "path": "02_Projetos\\ateliemascaras",
-    "mtime": 1795498308894.8167,
+    "mtime": 1795818061648.837,
     "versions": [],
     "id": "02_projetos-ateliemascaras",
-    "contentHash": "6e3a7683d86a4f46"
+    "contentHash": "e8d8a905956de3e3"
   },
   {
     "name": "Ateliê do Gesto Lento",
@@ -252,7 +513,7 @@
     "thumb": "/launcher/capas/02_projetos-atelie-do-gesto-lento.webp",
     "order": 999,
     "path": "02_Projetos\\atelie-do-gesto-lento",
-    "mtime": 1795410466977.811,
+    "mtime": 1795817039960.3855,
     "versions": [
       {
         "url": "/01_Jogos_HTML/Legado_Arquivado/ambientes-html/atelie-do-gesto-lento.html",
@@ -261,7 +522,7 @@
       }
     ],
     "id": "02_projetos-atelie-do-gesto-lento",
-    "contentHash": "46cac1c0ccfd1b4e"
+    "contentHash": "5ff7df7ec3faca7d"
   },
   {
     "name": "Jardim dos Ciclos",
@@ -276,10 +537,10 @@
     "thumb": "/launcher/capas/02_projetos-jardim-dos-ciclos.webp",
     "order": 999,
     "path": "02_Projetos\\jardim-dos-ciclos",
-    "mtime": 1795530268383.9958,
+    "mtime": 1795818085865.4446,
     "versions": [],
     "id": "02_projetos-jardim-dos-ciclos",
-    "contentHash": "295ae6247bde272e"
+    "contentHash": "6b5489a8f041b604"
   },
   {
     "name": "Mochila da Travessia",
@@ -292,10 +553,10 @@
     "thumb": "/launcher/capas/02_projetos-mochila-da-travessia-projeto-mochila-da-travessia-html.webp",
     "order": 999,
     "path": "02_Projetos\\mochila-da-travessia-projeto\\mochila-da-travessia.html",
-    "mtime": 1795499688283.1143,
+    "mtime": 1795817042508.8823,
     "versions": [],
     "id": "02_projetos-mochila-da-travessia-projeto-mochila-da-travessia-html",
-    "contentHash": "d120b77f2eeb36da"
+    "contentHash": "f5a1c6c543aec8db"
   },
   {
     "name": "Oficina dos Gestos Compartilhados",
@@ -309,10 +570,10 @@
     "thumb": "/launcher/capas/02_projetos-oficina-dos-gestos-compartilhados-projeto.webp",
     "order": 999,
     "path": "02_Projetos\\oficina-dos-gestos-compartilhados-projeto",
-    "mtime": 1795499770134.2688,
+    "mtime": 1795817043106.9905,
     "versions": [],
     "id": "02_projetos-oficina-dos-gestos-compartilhados-projeto",
-    "contentHash": "fd658502475031e9"
+    "contentHash": "eb0c884f54bb432a"
   },
   {
     "name": "Território dos Vínculos",
@@ -326,10 +587,10 @@
     "thumb": "/launcher/capas/02_projetos-territorio-dos-vinculos-index-html.webp",
     "order": 999,
     "path": "02_Projetos\\territorio-dos-vinculos\\index.html",
-    "mtime": 1795524028696.599,
+    "mtime": 1795816389883.5737,
     "versions": [],
     "id": "02_projetos-territorio-dos-vinculos-index-html",
-    "contentHash": "ec69e6fff4469543"
+    "contentHash": "704790bc05b3ec62"
   },
   {
     "name": "Cartografia dos Sons",
@@ -344,10 +605,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-01-cartografia-dos-sons.webp",
     "order": 1,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\01-cartografia-dos-sons",
-    "mtime": 1795494603016.8113,
+    "mtime": 1795818107242.8992,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-01-cartografia-dos-sons",
-    "contentHash": "c1c193984bcb3281"
+    "contentHash": "1bd84776b26ebfe6"
   },
   {
     "name": "Atlas das Texturas",
@@ -380,10 +641,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-03-laboratorio-de-camadas-sonoras.webp",
     "order": 3,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\03-laboratorio-de-camadas-sonoras",
-    "mtime": 1795495179457.859,
+    "mtime": 1795818145860.2405,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-03-laboratorio-de-camadas-sonoras",
-    "contentHash": "c04173ffc4dbde2e"
+    "contentHash": "cd8d7365872e27ea"
   },
   {
     "name": "Observatório da Luz",
@@ -471,10 +732,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes.webp",
     "order": 8,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\08-meteorologia-das-emocoes",
-    "mtime": 1795570590479.7632,
+    "mtime": 1795818154668.7668,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes",
-    "contentHash": "417d0317f37ac4e7"
+    "contentHash": "a99e17d937d3a29d"
   },
   {
     "name": "Estação das Trocas",
@@ -507,10 +768,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-10-porto-das-decisoes.webp",
     "order": 10,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\10-porto-das-decisoes",
-    "mtime": 1795496477483.9497,
+    "mtime": 1795818163116.6875,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-10-porto-das-decisoes",
-    "contentHash": "9725d86a2a7b45ae"
+    "contentHash": "4bf558393263632a"
   },
   {
     "name": "Bússola do Corpo",
@@ -525,10 +786,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-11-bussola-do-corpo.webp",
     "order": 11,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\11-bussola-do-corpo",
-    "mtime": 1795494613925.3533,
+    "mtime": 1795818167715.618,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-11-bussola-do-corpo",
-    "contentHash": "24c3314ae16791f6"
+    "contentHash": "2405b0cb80fd3c68"
   },
   {
     "name": "12. Cidade das Conversas",
@@ -543,10 +804,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-12-cidade-das-conversas.webp",
     "order": 12,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\12-cidade-das-conversas",
-    "mtime": 1795506533146.217,
+    "mtime": 1795818185297.605,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-12-cidade-das-conversas",
-    "contentHash": "8ec405573f4559c0"
+    "contentHash": "c66a43f853596d9c"
   },
   {
     "name": "Museu dos Pontos de Vista",
@@ -597,10 +858,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-15-casa-das-memorias.webp",
     "order": 15,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\15-casa-das-memorias",
-    "mtime": 1795485780688.894,
+    "mtime": 1795817047443.4895,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-15-casa-das-memorias",
-    "contentHash": "fbc9200a1b0bc797"
+    "contentHash": "f417a1553af1c3d1"
   },
   {
     "name": "Teatro das Histórias Possíveis",
@@ -633,10 +894,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-17-ensaio-do-cotidiano.webp",
     "order": 17,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\17-ensaio-do-cotidiano",
-    "mtime": 1795505181261.0576,
+    "mtime": 1795817084672.835,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-17-ensaio-do-cotidiano",
-    "contentHash": "32b79617ac88beb5"
+    "contentHash": "f8bef7eb130f40e7"
   },
   {
     "name": "Arquipélago Celestial",
@@ -1152,10 +1413,10 @@
     "thumb": "/launcher/capas/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-01_sala-de-espera-sonora-sala-de-espera-sonora-html.webp",
     "order": 1,
     "path": "ambientes-interativos-adultos-e-marcas\\ambientes-interativos-adultos-e-marcas\\01_sala-de-espera-sonora\\sala-de-espera-sonora.html",
-    "mtime": 1795493937979.3164,
+    "mtime": 1795816994478.1648,
     "versions": [],
     "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-01_sala-de-espera-sonora-sala-de-espera-sonora-html",
-    "contentHash": "91ec74100450329f"
+    "contentHash": "48b0e7aab125d3b0"
   },
   {
     "name": "Mesa dos Objetos que Acalmam",
@@ -1169,10 +1430,10 @@
     "thumb": "/launcher/capas/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-02_mesa-dos-objetos-que-acalmam-mesa-dos-objetos-que-acalmam-html.webp",
     "order": 2,
     "path": "ambientes-interativos-adultos-e-marcas\\ambientes-interativos-adultos-e-marcas\\02_mesa-dos-objetos-que-acalmam\\mesa-dos-objetos-que-acalmam.html",
-    "mtime": 1795499472634.9712,
+    "mtime": 1795816996471.9224,
     "versions": [],
     "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-02_mesa-dos-objetos-que-acalmam-mesa-dos-objetos-que-acalmam-html",
-    "contentHash": "c699b59f41448827"
+    "contentHash": "a8137a003736073e"
   },
   {
     "name": "Casa Seixo Yoga e Terapia",
@@ -1186,10 +1447,10 @@
     "thumb": "/launcher/capas/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-03_rochas-em-equilibrio-rochas-em-equilibrio-html.webp",
     "order": 3,
     "path": "ambientes-interativos-adultos-e-marcas\\ambientes-interativos-adultos-e-marcas\\03_rochas-em-equilibrio\\rochas-em-equilibrio.html",
-    "mtime": 1795530375363.9287,
+    "mtime": 1795817160111.0532,
     "versions": [],
     "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-03_rochas-em-equilibrio-rochas-em-equilibrio-html",
-    "contentHash": "1b72f649742bc767"
+    "contentHash": "789e829ac5d9464a"
   },
   {
     "name": "Máquina de Escrever das Intenções",
@@ -1257,11 +1518,11 @@
     "thumb": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/08_toca-discos-de-vinil/f141000f-37a1-42fe-a4dc-271ae6fcb71c.webp",
     "order": 8,
     "path": "ambientes-interativos-adultos-e-marcas\\ambientes-interativos-adultos-e-marcas\\08_toca-discos-de-vinil",
-    "mtime": 1795528110515.0142,
+    "mtime": 1795817349238.3591,
     "versions": [],
     "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-08_toca-discos-de-vinil",
     "isConcept": false,
-    "contentHash": "82e36d949022807f"
+    "contentHash": "8f11cde2bfab6d16"
   },
   {
     "name": "Máquina de Reação em Cadeia",
@@ -1275,11 +1536,11 @@
     "thumb": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/10_maquina-de-reacao-em-cadeia/4650168f-a9a2-46c5-85d3-0064cc01e96e.webp",
     "order": 10,
     "path": "ambientes-interativos-adultos-e-marcas\\ambientes-interativos-adultos-e-marcas\\10_maquina-de-reacao-em-cadeia",
-    "mtime": 1795528110517.015,
+    "mtime": 1795817349616.4275,
     "versions": [],
     "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-10_maquina-de-reacao-em-cadeia",
     "isConcept": false,
-    "contentHash": "1fd122015c2fec2b"
+    "contentHash": "23ded10c9cd5c9ed"
   },
   {
     "name": "Relógio Aberto",
@@ -1293,11 +1554,11 @@
     "thumb": "/ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/11_relogio-aberto/35c98294-7d6b-4672-87d2-64795ac4de3d.webp",
     "order": 11,
     "path": "ambientes-interativos-adultos-e-marcas\\ambientes-interativos-adultos-e-marcas\\11_relogio-aberto",
-    "mtime": 1795528110519.014,
+    "mtime": 1795817350161.0154,
     "versions": [],
     "id": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-11_relogio-aberto",
     "isConcept": false,
-    "contentHash": "93e2fcd6941b8760"
+    "contentHash": "ae6a79178abd8f12"
   },
   {
     "name": "Pinball de Madeira",
@@ -1383,10 +1644,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-02-trilha-do-mestre-mandou.webp",
     "order": 2,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\02-trilha-do-mestre-mandou",
-    "mtime": 1795501017713.417,
+    "mtime": 1795818199881.0088,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-02-trilha-do-mestre-mandou",
-    "contentHash": "81880d6e0f83c289"
+    "contentHash": "c7409d8e0f4f717a"
   },
   {
     "name": "Ateliê das Reconstruções",
@@ -1401,10 +1662,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-05-atelie-das-reconstrucoes-kintsugi.webp",
     "order": 5,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\05-atelie-das-reconstrucoes-kintsugi",
-    "mtime": 1795500790751.8748,
+    "mtime": 1795818210278.9094,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-05-atelie-das-reconstrucoes-kintsugi",
-    "contentHash": "c7acbddd57c44250"
+    "contentHash": "358d434a6093ff6d"
   },
   {
     "name": "Galeria dos Equilíbrios Impossíveis",
@@ -1419,10 +1680,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-06-galeria-dos-equilibrios-impossiveis.webp",
     "order": 6,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\06-galeria-dos-equilibrios-impossiveis",
-    "mtime": 1795502963544.5505,
+    "mtime": 1795818222555.1194,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-06-galeria-dos-equilibrios-impossiveis",
-    "contentHash": "29a375561e0b87d8"
+    "contentHash": "93e9c98d6d8b420a"
   },
   {
     "name": "Sala das Cadeiras Possíveis",
@@ -1437,10 +1698,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-07-sala-das-cadeiras-possiveis.webp",
     "order": 7,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\07-sala-das-cadeiras-possiveis",
-    "mtime": 1795514328342.0437,
+    "mtime": 1795817107317.9153,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-07-sala-das-cadeiras-possiveis",
-    "contentHash": "8c250c3e41a34efe"
+    "contentHash": "1340f650fd734120"
   },
   {
     "name": "Sopraria das Transformações",
@@ -1455,10 +1716,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-08-sopraria-das-transformacoes.webp",
     "order": 8,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\08-sopraria-das-transformacoes",
-    "mtime": 1795512859569.8562,
+    "mtime": 1795817111802.8772,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-08-sopraria-das-transformacoes",
-    "contentHash": "495722b54ba78cf2"
+    "contentHash": "13fa86fa50e294f3"
   },
   {
     "name": "Pavilhão dos Tecidos Flutuantes",
@@ -1473,10 +1734,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-09-pavilhao-dos-tecidos-flutuantes.webp",
     "order": 9,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\09-pavilhao-dos-tecidos-flutuantes",
-    "mtime": 1795523491874.276,
+    "mtime": 1795817116424.2534,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-09-pavilhao-dos-tecidos-flutuantes",
-    "contentHash": "6ad9785fdca7778f"
+    "contentHash": "2f9efe1dc6ccb1bd"
   },
   {
     "name": "Agência de Investigação dos Pensamentos",
@@ -1491,10 +1752,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-10-agencia-de-investigacao-dos-pensamentos.webp",
     "order": 10,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\10-agencia-de-investigacao-dos-pensamentos",
-    "mtime": 1795512654230.0732,
+    "mtime": 1795817121374.5737,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-10-agencia-de-investigacao-dos-pensamentos",
-    "contentHash": "00c9578ca39d10a0"
+    "contentHash": "3b2ca2f516fc4c4b"
   },
   {
     "name": "Rádio dos Pensamentos",
@@ -1509,10 +1770,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-11-radio-dos-pensamentos.webp",
     "order": 11,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\11-radio-dos-pensamentos",
-    "mtime": 1795512687095.532,
+    "mtime": 1795817125753.304,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-11-radio-dos-pensamentos",
-    "contentHash": "d80e2d596070d832"
+    "contentHash": "f23ac11785636ce3"
   },
   {
     "name": "Máquina das Consequências",
@@ -1527,10 +1788,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-12-maquina-das-consequencias.webp",
     "order": 12,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\12-maquina-das-consequencias",
-    "mtime": 1795514332526.3694,
+    "mtime": 1795817129854.9607,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-12-maquina-das-consequencias",
-    "contentHash": "5a79421fc755d98f"
+    "contentHash": "c7498b1b2e8bc06a"
   },
   {
     "name": "Central dos Planos Alternativos",
@@ -1545,10 +1806,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-13-central-dos-planos-alternativos.webp",
     "order": 13,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\13-central-dos-planos-alternativos",
-    "mtime": 1795512797897.1794,
+    "mtime": 1795817133125.6028,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-13-central-dos-planos-alternativos",
-    "contentHash": "bd0a9b17d04f9c31"
+    "contentHash": "1b93a226277768bd"
   },
   {
     "name": "Relojoaria das Prioridades",
@@ -1563,10 +1824,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-14-relojoaria-das-prioridades.webp",
     "order": 14,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\14-relojoaria-das-prioridades",
-    "mtime": 1795514336799.4895,
+    "mtime": 1795817137769.15,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-14-relojoaria-das-prioridades",
-    "contentHash": "73b4440d7f740a7d"
+    "contentHash": "a7b0c143d2f8b094"
   },
   {
     "name": "Farol da Atenção",
@@ -1581,10 +1842,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-15-farol-da-atencao.webp",
     "order": 15,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\15-farol-da-atencao",
-    "mtime": 1795512859212.0872,
+    "mtime": 1795817141229.029,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-15-farol-da-atencao",
-    "contentHash": "67d42c959feb54d7"
+    "contentHash": "a3d7cd65cb243fc8"
   },
   {
     "name": "Vale dos Balões Passageiros",
@@ -1599,10 +1860,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-16-vale-dos-baloes-passageiros.webp",
     "order": 16,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\16-vale-dos-baloes-passageiros",
-    "mtime": 1795512863978.5657,
+    "mtime": 1795817144897.3755,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-16-vale-dos-baloes-passageiros",
-    "contentHash": "3e1d4493fe6c4068"
+    "contentHash": "4b94c53a5856404f"
   },
   {
     "name": "Navegador dos Valores",
@@ -1617,10 +1878,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-17-navegador-dos-valores.webp",
     "order": 17,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\17-navegador-dos-valores",
-    "mtime": 1795512888447.6943,
+    "mtime": 1795817149268.3523,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-17-navegador-dos-valores",
-    "contentHash": "70a07fbae5c11641"
+    "contentHash": "f1eee69236de0cda"
   },
   {
     "name": "Areias do Impermanente",
@@ -1635,10 +1896,10 @@
     "thumb": "/launcher/capas/03_colecoes-expressao_e_desenvolvimento-18-areias-do-impermanente.webp",
     "order": 18,
     "path": "03_Colecoes\\Expressao_e_Desenvolvimento\\18-areias-do-impermanente",
-    "mtime": 1795512892417.5051,
+    "mtime": 1795817152866.7805,
     "versions": [],
     "id": "03_colecoes-expressao_e_desenvolvimento-18-areias-do-impermanente",
-    "contentHash": "1d047be07caf8fcf"
+    "contentHash": "cbe0c39decbd5fd1"
   },
   {
     "name": "Ateliê dos Remendos e Transformações",

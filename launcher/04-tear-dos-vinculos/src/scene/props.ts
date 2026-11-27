@@ -37,14 +37,14 @@ export function yarnBallGeometry(seed: number, R = 0.055, lite = false): THREE.B
   const core = new THREE.SphereGeometry(R * 0.965, 28, 20);
   scaleUV(core, (Math.PI * 2 * R) / 0.012, (Math.PI * R) / 0.012);
   const parts: THREE.BufferGeometry[] = [core];
-  const wraps = lite ? 12 : 22;
+  const wraps = lite ? 10 : 14;
   const r = R * 0.065;
   for (let i = 0; i < wraps; i++) {
     const axis = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize();
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis);
     const rr = R * (0.99 + rnd() * 0.035);
     const pts: THREE.Vector3[] = [];
-    const segs = 40;
+    const segs = 28;
     const wob = rnd() * 6;
     for (let s = 0; s <= segs; s++) {
       const a = (s / segs) * Math.PI * 2;
@@ -52,7 +52,7 @@ export function yarnBallGeometry(seed: number, R = 0.055, lite = false): THREE.B
       pts.push(new THREE.Vector3(Math.cos(a) * rr * lift, Math.sin(a) * rr * lift, 0).applyQuaternion(q));
     }
     const curve = new THREE.CatmullRomCurve3(pts, true);
-    const tube = new THREE.TubeGeometry(curve, lite ? 40 : 64, r, lite ? 4 : 5, true);
+    const tube = new THREE.TubeGeometry(curve, lite ? 28 : 36, r, 4, true);
     scaleUV(tube, (Math.PI * 2 * rr) / 0.011, 1);
     parts.push(tube);
   }
@@ -85,12 +85,12 @@ export function buildBasket(mat: MaterialKit): THREE.Group {
   g.add(rimM);
   // aro trançado (corda torcida sobre a borda)
   const pts: THREE.Vector3[] = [];
-  for (let i = 0; i <= 160; i++) {
-    const a = (i / 160) * Math.PI * 2;
+  for (let i = 0; i <= 96; i++) {
+    const a = (i / 96) * Math.PI * 2;
     const tw = a * 24;
     pts.push(new THREE.Vector3(Math.cos(a) * (0.268 + Math.cos(tw) * 0.009), 0.145 + Math.sin(tw) * 0.009, Math.sin(a) * (0.268 + Math.cos(tw) * 0.009)));
   }
-  const braid = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 320, 0.0045, 5, true);
+  const braid = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 120, 0.0045, 4, true);
   scaleUV(braid, 40, 1);
   g.add(mesh(braid, mat.wicker, 'cesta_trancado'));
   return g;

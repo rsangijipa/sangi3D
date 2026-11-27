@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-17-navegador-dos-valores:' + self.registration.scope + ':'
-const cacheName = prefix + 'd43ba1d97786c2'
+const cacheName = prefix + '2f911dee49fc6d'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-4zACTg_p.js","assets/experience-CuJc1vk3.js","assets/fallback-Dn7Woc0p.js","assets/index-DBVB0dXH.css","assets/index-DWT0zKU1.js","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-4zACTg_p.js","assets/experience-CuJc1vk3.js","assets/fallback-Dn7Woc0p.js","assets/index-C-tiGiGw.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

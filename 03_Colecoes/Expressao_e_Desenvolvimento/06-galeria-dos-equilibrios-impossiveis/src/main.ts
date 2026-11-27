@@ -664,8 +664,18 @@ import('./scene')
     readyEvent()
   })
 
+const disposeGaleria = () => {
+  scene?.dispose()
+}
 addEventListener('pagehide', event => {
-  if (!event.persisted) scene?.dispose()
+  if (!event.persisted) disposeGaleria()
+})
+addEventListener('sangi:dispose', disposeGaleria)
+addEventListener('beforeunload', disposeGaleria)
+addEventListener('message', (e) => {
+  if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+    disposeGaleria()
+  }
 })
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

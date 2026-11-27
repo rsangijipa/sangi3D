@@ -37,4 +37,12 @@ export class WorkshopAudio {
     source.start(at);
     source.stop(at+end);
   }
+  dispose() {
+    this.enabled = false;
+    if (this.context) {
+      const ctx = this.context;
+      this.context = undefined;
+      void ctx.close().catch(() => {});
+    }
+  }
 }

@@ -1,8 +1,8 @@
 
 const prefix = 'cidade-das-conversas:' + self.registration.scope + ':'
-const cacheName = prefix + '092bb05e0f9159'
+const cacheName = prefix + 'b5317b94e55b1f'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/index-BP1TDaeR.css","assets/index-CmhvPHxg.js","assets/miniatura-DJ-4Mi_I.png","assets/scene-CFdLJkTL.js"]
+const files = ["index.html","assets/index-BP1TDaeR.css","assets/index-C33ckXpT.js","assets/miniatura-DJ-4Mi_I.png","assets/scene-CFdLJkTL.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

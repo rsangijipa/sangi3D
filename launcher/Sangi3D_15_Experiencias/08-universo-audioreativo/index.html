@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../engine.css">
+<title>Universo Audioreativo · Sangi3D</title>
+</head>
+<body style="--accent:#7ff1dc">
+<main class="shell">
+  <nav class="bar" aria-label="Navegação"><a href="../index.html">← Experiências</a><a href="mockup.html">Mockup do recurso</a></nav>
+  <h1>Universo Audioreativo</h1>
+  <div class="layout">
+    <section aria-label="Visualização">
+      <div class="viewport">
+        <canvas id="view" aria-label="Cena 3D de Universo Audioreativo" tabindex="0"></canvas>
+        <div class="crosshair" hidden></div><div class="scene-message" id="scene-message" role="status">Carregando a cena. Abra este jogo pelo servidor local.</div>
+      </div>
+      <div class="global" role="group" aria-label="Ajustes da experiência">
+        <button id="pause" aria-pressed="false">Pausar</button><button id="sound" aria-pressed="false">Ativar som</button><button id="photo">Fotografar</button><button id="reset">Reiniciar cena</button>
+        <select id="quality" aria-label="Qualidade gráfica"><option value="LOW">Econômica</option><option value="BALANCED" selected>Equilibrada</option><option value="HIGH">Alta</option></select>
+        <button id="motion">Movimento reduzido</button>
+      </div>
+    </section>
+    <section class="panel" aria-label="Ferramentas">
+      <h2>Controles</h2>
+      <p class="instructions">Reproduza sons e observe como as três bandas moldam a cena.</p>
+      <p class="hint" id="hint"></p>
+      <div id="controls" class="rack"></div>
+      <p id="status" class="status" role="status">Modo livre.</p>
+      <small id="backend"></small>
+    </section>
+  </div>
+</main>
+<script src="../../shared/sangi-bridge.js" defer></script>
+<script type="module">import { mount } from '../runtime.js'; mount('08');</script>
+</body>
+</html>

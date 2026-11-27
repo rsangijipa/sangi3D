@@ -516,9 +516,13 @@ window.mesaQA = {
 
 // 12. Loop Principal de Renderização
 const clock = new THREE.Clock();
+let rafId = null;
+let isPaused = false;
+let isDisposed = false;
 
 function animate() {
-  requestAnimationFrame(animate);
+  if (isPaused || isDisposed) { rafId = null; return; }
+  rafId = requestAnimationFrame(animate);
 
   frameCount++;
   const now = performance.now();
@@ -605,3 +609,47 @@ function animate() {
 // Inicializa com o preset da marca
 aplicarMarca('pontoQuieto');
 animate();
+
+function disposeAll() {
+  if (isDisposed) return;
+  isDisposed = true;
+  isPaused = true;
+  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  controls?.dispose();
+  renderer?.dispose();
+  audio?.dispose();
+}
+
+window.__SANGI_QA__ = {
+  get info() {
+    return {
+      calls: renderer?.info?.render?.calls ?? 0,
+      triangles: renderer?.info?.render?.triangles ?? 0,
+      paused: isPaused,
+      disposed: isDisposed,
+    };
+  }
+};
+
+window.addEventListener('sangi:pause', () => {
+  isPaused = true;
+  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+});
+window.addEventListener('sangi:resume', () => {
+  if (isDisposed || !isPaused) return;
+  isPaused = false;
+  clock.getDelta();
+  animate();
+});
+window.addEventListener('sangi:mute', (e) => {
+  const muted = !!e?.detail?.muted;
+  if (audio.setMuted) audio.setMuted(muted);
+  else audio.isMuted = muted;
+});
+window.addEventListener('sangi:dispose', disposeAll);
+window.addEventListener('beforeunload', disposeAll);
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+    disposeAll();
+  }
+});

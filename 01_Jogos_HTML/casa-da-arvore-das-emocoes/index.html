@@ -1,12 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Casa da Árvore das Emoções — Morada do Sentir | Jardins do Sentir</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script>
+    (function () {
+      var threeSrc = location.protocol !== 'file:'
+        ? '../../shared/vendor/three-r128.min.js'
+        : 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
+      document.write('<script src="' + threeSrc + '"><\/script>');
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     :root {
       --c01-branco-luz: #F8F8F8;
@@ -3371,7 +3379,10 @@
     // ============================================================================
     // === BLOCO 7: animate (Loop com Delta Time, Física Visual e Câmera Suave) ===
     // ============================================================================
+    let isPaused = false;
+    let isDisposed = false;
     function animate() {
+      if (isPaused || isDisposed) return;
       animFrameId = requestAnimationFrame(animate);
 
       const dt = Math.min(clock.getDelta(), 0.1);
@@ -3510,10 +3521,18 @@
     // === BLOCO 9: dispose (Limpeza Completa de Geometrias, Texturas e Áudio) ===
     // ============================================================================
     function dispose() {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (isDisposed) return;
+      isDisposed = true;
+      isPaused = true;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
       window.removeEventListener('resize', resize);
       if (audioCtx) {
-        try { audioCtx.close(); } catch (e) { /* ignore */ }
+        const ctx = audioCtx;
+        audioCtx = null;
+        try { ctx.close(); } catch (e) { /* ignore */ }
       }
       if (scene) {
         scene.traverse((obj) => {
@@ -3529,6 +3548,51 @@
       }
       if (renderer) renderer.dispose();
     }
+
+    window.__SANGI_QA__ = {
+      get info() {
+        return {
+          calls: renderer?.info?.render?.calls ?? 0,
+          triangles: renderer?.info?.render?.triangles ?? 0,
+          paused: isPaused,
+          disposed: isDisposed
+        };
+      }
+    };
+
+    window.addEventListener('sangi:pause', () => {
+      isPaused = true;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    });
+    window.addEventListener('sangi:resume', () => {
+      if (isDisposed || !isPaused) return;
+      isPaused = false;
+      clock.getDelta();
+      animate();
+    });
+    window.addEventListener('sangi:mute', (e) => {
+      const muted = !!e?.detail?.muted;
+      if (muted === STATE.audioEnabled) toggleAudioState();
+    });
+    window.addEventListener('sangi:quality', (e) => {
+      const q = String(e?.detail?.quality || '').toUpperCase();
+      if (renderer) {
+        const isEco = q === 'LOW';
+        renderer.setPixelRatio(isEco ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.shadowMap.enabled = !isEco;
+      }
+    });
+    window.addEventListener('sangi:reset', () => {
+      if (camera && controls) {
+        camera.position.set(0, 8.8, 22.5);
+        controls.target.set(0, 5.8, 0);
+        controls.update();
+      }
+    });
+    window.addEventListener('sangi:dispose', dispose);
 
     window.addEventListener('beforeunload', dispose);
     window.addEventListener('load', init);

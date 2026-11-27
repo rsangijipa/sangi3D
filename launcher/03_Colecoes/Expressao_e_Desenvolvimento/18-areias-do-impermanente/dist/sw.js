@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-18-areias-do-impermanente:' + self.registration.scope + ':'
-const cacheName = prefix + '939e90f94f5078'
+const cacheName = prefix + '71c246cfcb3e93'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-Cttjni00.js","assets/experience-elAjKJ9C.js","assets/fallback-BxjYmWs4.js","assets/index-1TbKmmfS.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-Cttjni00.js","assets/experience-elAjKJ9C.js","assets/fallback-BxjYmWs4.js","assets/index-BgsIhhjf.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

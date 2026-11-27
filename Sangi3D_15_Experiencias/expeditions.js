@@ -414,8 +414,6 @@ export function impossible(ctx) {
     nav.place(0, 1.61, 3.8, 0); ctx.say('Gire a seção móvel e alinhe a ponte neste ponto.');
   }
   function turn() {
-    if (nav.pos.z <= .70 && nav.pos.z >= -3.89) { ctx.say('Saia da ponte antes de girar o mecanismo.'); return; }
-    position = (position + 1) % 4; aligned = false;
     if ((nav.pos.z <= .70 && nav.pos.z >= -3.89) || (nav.pos.z <= -17.6 && nav.pos.z >= -22.1)) { ctx.say('Saia da ponte antes de girar o mecanismo.'); return; }
     position = (position + 1) % 4; aligned = false; aligned2 = false;
     yawGoal = position * Math.PI / 2;
@@ -428,7 +426,6 @@ export function impossible(ctx) {
     aligned = true; ctx.say('Passagem alinhada. Avance para testar a travessia.');
   }
   function portalAction() {
-    nav.place(.5, 1.61, 6.18, Math.PI);
     if (nav.pos.z > -12) {
       room = 1; nav.place(0, 1.61, -14.5, 0);
       ctx.say('Portal ativado. Você entrou na Sala 2 · Pátio Invertido.');

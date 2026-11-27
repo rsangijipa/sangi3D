@@ -107,6 +107,7 @@ summary{cursor:pointer;padding:9px 0}
   }});
   document.currentScript.after(imports);
 </script>
+<script src="../../shared/sangi-bridge.js" defer></script>
 </head>
 <body>
 <div id="world" role="img" aria-label="Maquete tridimensional de uma cidade com três pontes móveis sobre um canal"></div>
@@ -909,7 +910,7 @@ function makeView(T, OrbitControls) {
     ctx.fillText('Cidade das Conexões',margin,output.height-margin);
     return new Promise(resolve=>output.toBlob(resolve,'image/png'));
   }
-  return {setCamera,setWeather,render,photo,info:()=>renderer.info.render};
+  return {setCamera,setWeather,render,photo,info:()=>renderer.info.render,dispose:()=>{controls.dispose();renderer.dispose();}};
 }
 
 
@@ -952,6 +953,15 @@ class CanalAudio {
     gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
     osc.connect(gain).connect(this.master);
     osc.start(now); osc.stop(now+duration+.01);
+  }
+  dispose() {
+    this.enabled = false;
+    if (this.context) {
+      const ctx = this.context;
+      this.context = null;
+      this.master = null;
+      ctx.close().catch(() => {});
+    }
   }
 }
 
@@ -1173,9 +1183,11 @@ function run(view) {
   view.render(sim,seconds);
   $('load').hidden=true;
   let last=0,accumulator=0,hud=0;
+  let rafId=null,isPaused=false,isDisposed=false;
   const fixed=1/60;
   function frame(now) {
-    requestAnimationFrame(frame);
+    if (isDisposed || isPaused) { rafId=null; return; }
+    rafId=requestAnimationFrame(frame);
     const dt=last?Math.min(.10,(now-last)/1000):0;
     last=now;
     if (document.hidden || contextLost) {accumulator=0;return;}
@@ -1197,7 +1209,38 @@ function run(view) {
     if (hud>=.1) {updateHUD();hud=0;}
     view.render(sim,seconds);
   }
-  requestAnimationFrame(frame);
+  rafId=requestAnimationFrame(frame);
+  window.__SANGI_QA__={
+    get info() {
+      const i=view.info()||{};
+      return {calls:i.calls??0,triangles:i.triangles??0,paused:isPaused,disposed:isDisposed};
+    }
+  };
+  window.addEventListener('sangi:pause',()=>{
+    isPaused=true;
+    if (rafId!==null) {cancelAnimationFrame(rafId);rafId=null;}
+  });
+  window.addEventListener('sangi:resume',()=>{
+    if (isDisposed||!isPaused) return;
+    isPaused=false;last=0;
+    rafId=requestAnimationFrame(frame);
+  });
+  window.addEventListener('sangi:mute',(e)=>{
+    const muted=!!e?.detail?.muted;
+    if (muted && audio.enabled) audio.toggle();
+    else if (!muted && !audio.enabled) audio.toggle();
+  });
+  window.addEventListener('sangi:reset',()=>{
+    start(lastCampaign);
+    view.render(sim,seconds);
+  });
+  window.addEventListener('sangi:dispose',()=>{
+    if (isDisposed) return;
+    isDisposed=true;isPaused=true;
+    if (rafId!==null) {cancelAnimationFrame(rafId);rafId=null;}
+    audio.dispose();
+    view.dispose?.();
+  });
   window.cidadeDiagnostics=()=>JSON.stringify({
     fase:sim.index+1,completa:sim.complete,liberadas:Math.min(unlocked+1,PHASES.length),
     pontes:sim.bridges.map(b=>({posicao:Number(b.position.toFixed(3)),erguer:b.raised})),

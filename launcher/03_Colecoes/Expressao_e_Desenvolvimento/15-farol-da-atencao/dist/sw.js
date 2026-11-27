@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-15-farol-da-atencao:' + self.registration.scope + ':'
-const cacheName = prefix + 'dd0ff2bbec6476'
+const cacheName = prefix + 'feab8377d7bb51'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-agMhQWJ5.js","assets/experience-DkfLz4a0.js","assets/fallback-DVPJfQpG.js","assets/index-DBVB0dXH.css","assets/index-YiqSwLQg.js","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-agMhQWJ5.js","assets/experience-DkfLz4a0.js","assets/fallback-DVPJfQpG.js","assets/index-Bpax0gBq.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

@@ -7,7 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      var src = location.protocol !== 'file:'
+        ? '../../shared/vendor/three-r128.min.js'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.write('<script src="' + src + '"><\/script>');
+    })();
+  </script>
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     :root {
       --panel-bg: rgba(16, 47, 56, 0.86);
@@ -3602,10 +3610,12 @@
          ===================================================================== */
       let rafId = null;
       let isPageHidden = document.hidden;
+      let isPaused = false;
+      let isDisposed = false;
       const clock = new THREE.Clock();
 
       function animate() {
-        if (isPageHidden) return;
+        if (isPageHidden || isPaused || isDisposed) return;
         rafId = requestAnimationFrame(animate);
 
         const dt = Math.min(clock.getDelta(), 0.05);
@@ -3711,11 +3721,66 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      window.addEventListener('beforeunload', () => {
-        if (rafId) cancelAnimationFrame(rafId);
+      function disposeExperience() {
+        if (isDisposed) return;
+        isDisposed = true;
+        isPaused = true;
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
         createdTextures.forEach((t) => t.dispose());
         renderer.dispose();
+        if (SoundEngine.ctx) {
+          const ctx = SoundEngine.ctx;
+          SoundEngine.ctx = null;
+          ctx.close().catch(() => {});
+        }
+      }
+
+      window.addEventListener('beforeunload', disposeExperience);
+
+      window.__SANGI_QA__ = {
+        get info() {
+          const info = renderer?.info;
+          return {
+            calls: info?.render?.calls ?? 0,
+            triangles: info?.render?.triangles ?? 0,
+            paused: isPaused,
+            disposed: isDisposed
+          };
+        }
+      };
+
+      window.addEventListener('sangi:pause', () => {
+        isPaused = true;
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
       });
+      window.addEventListener('sangi:resume', () => {
+        if (isDisposed || !isPaused) return;
+        isPaused = false;
+        clock.getDelta();
+        animate();
+      });
+      window.addEventListener('sangi:mute', (e) => {
+        soundEnabled = !e?.detail?.muted;
+        const btnS = document.getElementById('btn-sound');
+        if (btnS) {
+          btnS.setAttribute('aria-pressed', String(soundEnabled));
+          btnS.classList.toggle('active-state', soundEnabled);
+        }
+      });
+      window.addEventListener('sangi:quality', (e) => {
+        const q = String(e?.detail?.quality || '').toUpperCase();
+        applyQualityProfile(q === 'LOW' ? 'eco' : 'high');
+      });
+      window.addEventListener('sangi:reset', () => {
+        setCameraFromPreset('overview', false);
+      });
+      window.addEventListener('sangi:dispose', disposeExperience);
 
       // Initial render & boot
       applyQualityProfile('high');

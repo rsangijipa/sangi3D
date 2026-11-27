@@ -161,4 +161,13 @@ export class MarketAudio {
       }
     }
   }
+
+  dispose(): void {
+    this.enabled = false
+    if (this.ctx) {
+      const c = this.ctx
+      this.ctx = null
+      void c.close().catch(() => {})
+    }
+  }
 }

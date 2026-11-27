@@ -165,5 +165,13 @@ class LaboratorioCamadasSonorasApp {
 
 // Inicializar quando o DOM estiver pronto
 window.addEventListener('DOMContentLoaded', () => {
-  new LaboratorioCamadasSonorasApp();
+  const app = new LaboratorioCamadasSonorasApp();
+  const handleDispose = () => app.destroy();
+  window.addEventListener('sangi:dispose', handleDispose);
+  window.addEventListener('beforeunload', handleDispose);
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+      handleDispose();
+    }
+  });
 });

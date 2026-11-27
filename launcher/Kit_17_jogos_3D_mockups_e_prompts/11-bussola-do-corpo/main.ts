@@ -398,10 +398,20 @@ window.addEventListener('message',event=>{
     hostPaused = event.data.event==='pause'; syncPause(); render();
   }
 },{signal});
+const handleDispose = () => {
+  controller.abort(); releaseScene(); sound.dispose();
+};
 window.addEventListener('pagehide',event=>{
   if (event.persisted) return;
-  controller.abort(); releaseScene(); sound.dispose();
+  handleDispose();
 },{signal});
+window.addEventListener('sangi:dispose', handleDispose, {signal});
+window.addEventListener('beforeunload', handleDispose, {signal});
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+    handleDispose();
+  }
+}, {signal});
 
 render();
 if (isFallback) useFallback('Modo acessível ativo. Use as listas para escolher.');

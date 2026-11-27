@@ -483,12 +483,29 @@
     };
 
     // Sangi Bridge Integration
-    window.addEventListener('sangi:pause', () => { state.isRunning = false; });
-    window.addEventListener('sangi:resume', () => { state.isRunning = true; });
+    let rafId = null;
+    let isPaused = false;
+    let isDisposed = false;
+    window.addEventListener('sangi:pause', () => {
+      isPaused = true;
+      state.isRunning = false;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    });
+    window.addEventListener('sangi:resume', () => {
+      if (isDisposed || !isPaused) return;
+      isPaused = false;
+      state.isRunning = true;
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(animate);
+    });
     window.addEventListener('sangi:mute', (e) => {
       isMuted = e.detail?.muted ?? true;
     });
     window.addEventListener('sangi:dispose', () => {
+      if (isDisposed) return;
+      isDisposed = true;
+      isPaused = true;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
       if (audioCtx) { audioCtx.close(); audioCtx = null; }
       environment.dispose();
       renderer.dispose();
@@ -504,7 +521,8 @@
     // Main Simulation Loop
     let lastTime = performance.now();
     function animate(time) {
-      requestAnimationFrame(animate);
+      if (isPaused || isDisposed) { rafId = null; return; }
+      rafId = requestAnimationFrame(animate);
       let dt = Math.min((time - lastTime) / 1000, 0.1);
       lastTime = time;
 

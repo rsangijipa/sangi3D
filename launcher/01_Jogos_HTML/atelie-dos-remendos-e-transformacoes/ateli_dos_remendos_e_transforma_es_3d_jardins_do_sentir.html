@@ -5,8 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ateliê dos Remendos e Transformações 3D — Jardins do Sentir</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      var threeSrc = location.protocol !== 'file:'
+        ? '../../shared/vendor/three-r128.min.js'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.write('<script src="' + threeSrc + '"><\/script>');
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
     :root {
@@ -1056,9 +1064,13 @@
       // --- Main Animation Loop (Cloth Drape + Spring Physics + Sewing Kinematics) ---
       const clock = new THREE.Clock();
       let stitchTickAccum = 0;
+      let rafId = null;
+      let isPaused = false;
+      let isDisposed = false;
 
       function animate() {
-        requestAnimationFrame(animate);
+        if (isPaused || isDisposed) return;
+        rafId = requestAnimationFrame(animate);
         const dt = Math.min(clock.getDelta(), 0.05);
         const t = clock.elapsedTime;
 
@@ -1141,11 +1153,72 @@
         renderer.render(scene, camera);
       }
 
-      window.addEventListener('resize', () => {
+      function onResize() {
+        if (isDisposed) return;
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', onResize);
+
+      function disposeAll() {
+        if (isDisposed) return;
+        isDisposed = true;
+        isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        window.removeEventListener('resize', onResize);
+        controls.dispose();
+        renderer.dispose();
+        if (audioCtx) {
+          const ctx = audioCtx;
+          audioCtx = null;
+          ctx.close().catch(() => {});
+        }
+      }
+
+      window.__SANGI_QA__ = {
+        get info() {
+          return {
+            calls: renderer?.info?.render?.calls ?? 0,
+            triangles: renderer?.info?.render?.triangles ?? 0,
+            paused: isPaused,
+            disposed: isDisposed
+          };
+        }
+      };
+
+      window.addEventListener('sangi:pause', () => {
+        isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
       });
+      window.addEventListener('sangi:resume', () => {
+        if (isDisposed || !isPaused) return;
+        isPaused = false;
+        clock.getDelta();
+        animate();
+      });
+      window.addEventListener('sangi:mute', (e) => {
+        audioEnabled = !e?.detail?.muted;
+      });
+      window.addEventListener('sangi:quality', (e) => {
+        const q = String(e?.detail?.quality || '').toUpperCase();
+        const isEco = q === 'LOW';
+        renderer.setPixelRatio(isEco ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.shadowMap.enabled = !isEco;
+        dustPoints.visible = !isEco;
+      });
+      window.addEventListener('sangi:reset', () => {
+        camera.position.set(0.4, 4.3, 5.4);
+        controls.target.set(0, 0.45, 0);
+        controls.update();
+      });
+      window.addEventListener('sangi:dispose', disposeAll);
 
       animate();
     })();

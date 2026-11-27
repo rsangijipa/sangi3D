@@ -102,8 +102,12 @@ async function start() {
 
     // Iniciar loop de render
     let lastTime = performance.now();
+    let rafId = null;
+    let isPaused = false;
+    let isDisposed = false;
     function animate(now) {
-      requestAnimationFrame(animate);
+      if (isPaused || isDisposed) { rafId = null; return; }
+      rafId = requestAnimationFrame(animate);
       const delta = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
@@ -125,7 +129,37 @@ async function start() {
 
       sceneContext.renderer.render(sceneContext.scene, sceneContext.camera);
     }
-    requestAnimationFrame(animate);
+    rafId = requestAnimationFrame(animate);
+
+    const disposeAll = () => {
+      if (isDisposed) return;
+      isDisposed = true;
+      isPaused = true;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      sceneContext?.controls?.dispose();
+      sceneContext?.renderer?.dispose();
+      audio?.dispose();
+    };
+    window.addEventListener('sangi:pause', () => {
+      isPaused = true;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    });
+    window.addEventListener('sangi:resume', () => {
+      if (isDisposed || !isPaused) return;
+      isPaused = false;
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(animate);
+    });
+    window.addEventListener('sangi:mute', (e) => {
+      audio?.setMuted?.(!!e?.detail?.muted);
+    });
+    window.addEventListener('sangi:dispose', disposeAll);
+    window.addEventListener('beforeunload', disposeAll);
+    window.addEventListener('message', (e) => {
+      if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+        disposeAll();
+      }
+    });
 
   } catch (err) {
     console.warn('[Rochas] Falha no WebGL 3D, ativando modo simplificado:', err);

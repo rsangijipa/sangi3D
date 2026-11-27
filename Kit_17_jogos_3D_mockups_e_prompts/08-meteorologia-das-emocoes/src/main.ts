@@ -3,6 +3,7 @@
  * Orquestra estado, cena 3D, entrada e UI. Um comando por interacao.
  */
 
+import './style.css';
 import { createState, reducer, type GameState, type Action } from './game/state.js';
 import { Scene3D } from './scene/index.js';
 import { InputController } from './input/actions.js';
@@ -113,6 +114,7 @@ function main(): void {
     }
   }
   function dispatch(action: Action): void {
+    if (disposed) return;
     state = reducer(state, action);
     scene.setTargetWeather(state.weather);
     syncAudio();
@@ -141,26 +143,69 @@ function main(): void {
   let uiManager: UIManager | null = null;
   let last = performance.now();
   let paused = false;
+  let disposed = false;
+  let rafId = 0;
   function frame(now: number): void {
+    if (disposed || paused) { rafId = 0; return; }
+    rafId = requestAnimationFrame(frame);
     const dt = Math.min((now - last) / 1000, 0.25);
     last = now;
-    if (!paused && document.visibilityState !== 'hidden') {
+    if (document.visibilityState !== 'hidden') {
       scene.update(dt, state.weather);
       scene.render();
     }
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  rafId = requestAnimationFrame(frame);
 
   window.addEventListener('visibilitychange', () => {
     paused = document.visibilityState === 'hidden';
-    if (!paused) last = performance.now();
+    if (!paused && !disposed) {
+      last = performance.now();
+      if (!rafId) rafId = requestAnimationFrame(frame);
+    }
   });
+
+  const disposeAll = (): void => {
+    if (disposed) return;
+    disposed = true;
+    paused = true;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    scene.dispose();
+    audioManager.dispose();
+  };
+  window.addEventListener('sangi:pause', () => {
+    paused = true;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+  });
+  window.addEventListener('sangi:resume', () => {
+    if (disposed || !paused) return;
+    paused = false;
+    last = performance.now();
+    rafId = requestAnimationFrame(frame);
+  });
+  window.addEventListener('sangi:mute', (e) => {
+    const muted = Boolean((e as CustomEvent<{ muted?: boolean }>)?.detail?.muted);
+    audioManager.setRain(!muted && state.audio.rain);
+    audioManager.setWind(!muted && state.audio.wind);
+  });
+  window.addEventListener('sangi:dispose', disposeAll);
+  window.addEventListener('beforeunload', disposeAll);
+  (window as unknown as { __SANGI_QA__?: unknown }).__SANGI_QA__ = {
+    get info() {
+      return {
+        calls: scene.renderer.info.render.calls,
+        triangles: scene.renderer.info.render.triangles,
+        paused,
+        disposed,
+      };
+    },
+  };
 
   uiManager = new UIManager(hud, overlays, ui, () => state);
   uiManager.openStartOverlay();
 
   window.addEventListener('resize', () => {
+    if (disposed) return;
     scene.onResize(isMobile());
   });
 }

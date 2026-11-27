@@ -1,8 +1,8 @@
 
 const prefix = 'ambiente-12-maquina-das-consequencias:' + self.registration.scope + ':'
-const cacheName = prefix + 'b51d8f461a43e0'
+const cacheName = prefix + '6c174d44d15a6e'
 const entry = new URL('index.html', self.registration.scope).href
-const files = ["index.html","assets/content-NW0scQAq.js","assets/experience-BxqH1P2U.js","assets/fallback-B9n9WRM1.js","assets/index-CGbGTDiv.js","assets/index-DBVB0dXH.css","assets/three.module-CpB-wl7P.js"]
+const files = ["index.html","assets/content-NW0scQAq.js","assets/experience-BxqH1P2U.js","assets/fallback-B9n9WRM1.js","assets/index-DBVB0dXH.css","assets/index-D_nyWCNm.js","assets/three.module-CpB-wl7P.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })

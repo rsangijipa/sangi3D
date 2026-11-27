@@ -286,5 +286,13 @@ class App {
 
 // Inicializar aplicação
 window.addEventListener('DOMContentLoaded', () => {
-  new App();
+  const app = new App();
+  const handleDispose = () => app.dispose();
+  window.addEventListener('sangi:dispose', handleDispose);
+  window.addEventListener('beforeunload', handleDispose);
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'SANGI_APP_DISPOSE' || (e.data?.type === 'SANGI_COMMAND' && String(e.data?.command).toUpperCase() === 'DISPOSE')) {
+      handleDispose();
+    }
+  });
 });

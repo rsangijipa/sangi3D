@@ -308,4 +308,16 @@ export class CalmingAudioEngine {
     src.start(t);
     src.stop(t + 1.6);
   }
+
+  dispose() {
+    this.isMuted = true;
+    if (this.ctx) {
+      const c = this.ctx;
+      this.ctx = null;
+      this.masterGain = null;
+      this.sandNoiseGain = null;
+      this.sandNoiseFilter = null;
+      c.close().catch(() => {});
+    }
+  }
 }

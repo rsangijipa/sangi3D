@@ -470,3 +470,21 @@ task(async()=>{
     throw error;
   }
 });
+
+(window as unknown as { __SANGI_QA__?: unknown }).__SANGI_QA__ = {
+  get info() { return studio.qaInfo; }
+};
+const disposeAtelier = () => {
+  studio.dispose();
+  audio.dispose();
+};
+window.addEventListener('sangi:pause', () => studio.pause());
+window.addEventListener('sangi:resume', () => studio.resume());
+window.addEventListener('sangi:mute', (e) => { audio.enabled = !(e as CustomEvent<{ muted?: boolean }>)?.detail?.muted; });
+window.addEventListener('sangi:quality', (e) => {
+  const q = String((e as CustomEvent<{ quality?: string }>)?.detail?.quality || '').toUpperCase();
+  studio.quality(q === 'LOW' ? 'low' : q === 'BALANCED' ? 'medium' : 'auto');
+});
+window.addEventListener('sangi:reset', () => { studio.targetRotation = 0; studio.refresh(); });
+window.addEventListener('sangi:dispose', disposeAtelier);
+window.addEventListener('beforeunload', disposeAtelier);

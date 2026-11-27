@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      var src = location.protocol !== 'file:'
+        ? '../../shared/vendor/three-r128.min.js'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      document.write('<script src="' + src + '"><\/script>');
+    })();
+  </script>
+  <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     :root {
       --bg-deep: #06141a;
@@ -1510,6 +1518,27 @@
         const scale = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3, 784.0, 880.0, 987.8];
         this.playChime(scale[Math.max(0, Math.min(10, Math.round(val)))], 0.045);
       }
+      setMuted(muted) {
+        if (muted && this.enabled) {
+          this.toggle();
+        } else if (!muted && !this.enabled) {
+          this.toggle();
+        }
+      }
+      dispose() {
+        this.enabled = false;
+        this.ambientOscs.forEach((osc) => {
+          try { osc.stop(); } catch (e) {}
+          try { osc.disconnect(); } catch (e) {}
+        });
+        this.ambientOscs = [];
+        this.ambientGain = null;
+        if (this.ctx) {
+          const ctx = this.ctx;
+          this.ctx = null;
+          ctx.close().catch(() => {});
+        }
+      }
     }
 
     /* =========================================================================
@@ -2023,12 +2052,41 @@
         return this.renderer.domElement.toDataURL('image/png');
       }
 
+      pause() {
+        this.paused = true;
+        if (this.rafId) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+      }
+
+      resume() {
+        if (this.disposed || !this.paused) return;
+        this.paused = false;
+        this.start();
+      }
+
+      dispose() {
+        if (this.disposed) return;
+        this.disposed = true;
+        this.paused = true;
+        if (this.rafId) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+        this.renderer?.dispose();
+      }
+
       start() {
+        if (this.disposed || this.paused) return;
         if (this.rafId) cancelAnimationFrame(this.rafId);
         this.lastTime = performance.now();
         const loop = (now) => {
+          if (this.disposed || this.paused) {
+            this.rafId = null;
+            return;
+          }
           this.rafId = requestAnimationFrame(loop);
-          if (this.paused) return;
           const dt = Math.min(0.05, (now - this.lastTime) / 1000);
           this.lastTime = now;
           this.elapsed += dt;
@@ -3795,6 +3853,32 @@
         const loader = document.getElementById('loading-overlay');
         if (loader) loader.classList.add('hidden');
       }, 420);
+
+      window.__SANGI_QA__ = {
+        get info() {
+          const info = engine?.renderer?.info;
+          return {
+            calls: info?.render?.calls ?? 0,
+            triangles: info?.render?.triangles ?? 0,
+            paused: !!engine?.paused,
+            disposed: !!engine?.disposed
+          };
+        }
+      };
+
+      window.addEventListener('sangi:pause', () => engine?.pause());
+      window.addEventListener('sangi:resume', () => engine?.resume());
+      window.addEventListener('sangi:mute', (e) => sound?.setMuted(!!e?.detail?.muted));
+      window.addEventListener('sangi:quality', (e) => {
+        const q = String(e?.detail?.quality || '').toUpperCase();
+        const map = { LOW: 'eco', BALANCED: 'medium', HIGH: 'high', ULTRA: 'high' };
+        if (map[q]) engine?.applyQuality(map[q]);
+      });
+      window.addEventListener('sangi:reset', () => engine?.controller?.goTo('default'));
+      window.addEventListener('sangi:dispose', () => {
+        engine?.dispose();
+        sound?.dispose();
+      });
     });
   </script>
 </body>

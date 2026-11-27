@@ -1,8 +1,8 @@
 
 const prefix = 'atelie-kintsugi:' + self.registration.scope + ':'
-const cacheName = prefix + 'f58c5c9ffa187e'
+const cacheName = prefix + '236cd3e1d3b684'
 const entry = new URL('index.html',self.registration.scope).href
-const files = ["index.html","assets/cinema-BVM9jg3S.js","assets/index-4PG3CDbI.js","assets/index-CRtDmNbq.css","assets/index-DpVEJErK.js"]
+const files = ["index.html","assets/cinema-DjMUNN4o.js","assets/index-BKHOZHDT.js","assets/index-CRtDmNbq.css","assets/index-DlKYc7v8.js"]
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()))
 })
