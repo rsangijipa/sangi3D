@@ -130,11 +130,9 @@ export function forest(ctx) {
   box(scene, rail, -2.15, .68, 5.25, .09, 1.38, .10);
   const audio = atmosphereAudio(ctx, { cutoff: 1100 });
   const nav = navigator(ctx, {
-    start: [0, 1.61, 8.8], bounds: [-5.3, 5.3, -25, 11.8], speed: 3.5, ground: (x, z) => Math.abs(z + 4) < 2.43 ? .15 : bank(x, z),
-    const nav = navigator(ctx, {
-      start: [0, 1.61, 8.8], bounds: [-5.3, 5.3, -38, 11.8], speed: 3.5, ground: (x, z) => Math.abs(z + 4) < 2.43 ? .15 : bank(x, z),
-      canWalk: (x, z) => Math.abs(z + 4) > 2.44 || Math.abs(x) < 1.10
-    });
+    start: [0, 1.61, 8.8], bounds: [-5.3, 5.3, -38, 11.8], speed: 3.5, ground: (x, z) => Math.abs(z + 4) < 2.43 ? .15 : bank(x, z),
+    canWalk: (x, z) => Math.abs(z + 4) > 2.44 || Math.abs(x) < 1.10
+  });
     // Cascata lunar at far north (z = -35)
     const cascadeX = trailCenter(-35);
     box(scene, mat(0x6ad7e6, { emissive: 0x3bb8d0, emissiveIntensity: .85, transparent: true, opacity: .72 }), cascadeX, 2.4, -36.2, 3.4, 5.2, .25);
@@ -385,7 +383,6 @@ export function impossible(ctx) {
   const portal = mesh(scene, new THREE.TorusGeometry(.94, .045, 8, 58), strip, [0, 1.45, -10.9]);
   box(scene, mat(0x5a7096, { metalness: .73, roughness: .14 }), 2.95, 1.50, -10.84, 1.7, 2.85, .06);
   lamp(scene, 0x7198f2, 25, 0, 2.5, -10.7, 8);
-  let position = 1, aligned = false, yawGoal = Math.PI / 2, walked = false;
   // Sala 2 — Pátio dos Arcos Invertidos (z in [-26, -13])
   box(scene, floor, 0, -.22, -15.2, 10, .43, 5.2);
   box(scene, floor, 0, -.22, -24.6, 10, .43, 5.2);
@@ -400,11 +397,6 @@ export function impossible(ctx) {
   bridge2.rotation.y = Math.PI / 2;
   const audio = atmosphereAudio(ctx, { cutoff: 640 });
   const state = ctx.reading('A ponte está fora de alinhamento.');
-  const nearMark = () => Math.hypot(nav.pos.x, nav.pos.z - 3.8) < .84;
-  const nav = navigator(ctx, {
-    start: [0, 1.61, 7.6], bounds: [-5.8, 5.8, -12.25, 8.5], speed: 3.15,
-    canWalk: (x, z) => { if (z > .70 || z < -3.89) return true; return aligned && Math.abs(x) < .72; }
-  });
   const nearMark = () => Math.hypot(nav.pos.x, nav.pos.z - 3.8) < .84 || Math.hypot(nav.pos.x, nav.pos.z + 14.5) < 1.4;
   const nav = navigator(ctx, {
     start: [0, 1.61, 7.6], bounds: [-5.8, 5.8, -26.2, 8.5], speed: 3.15,
@@ -417,7 +409,6 @@ export function impossible(ctx) {
     }
   });
   const tools = ctx.group();
-  function observe() { nav.place(0, 1.61, 3.8, 0); ctx.say('Gire a seção móvel e alinhe a ponte neste ponto.'); }
   function observe() {
     if (room === 1) { nav.place(0, 1.61, -14.5, 0); ctx.say('Ponto da Sala 2. Alinhe a segunda passarela.'); return; }
     nav.place(0, 1.61, 3.8, 0); ctx.say('Gire a seção móvel e alinhe a ponte neste ponto.');
@@ -446,7 +437,6 @@ export function impossible(ctx) {
       ctx.say('Portal ativado. Você voltou ao átrio da Sala 1.');
     }
     if (!ctx.reduced) ctx.canvas.animate([{ opacity: .06 }, { opacity: 1 }], { duration: 460, easing: 'ease-out' });
-    ctx.say('Portal ativado. Você voltou olhando para o lado oposto.');
   }
   ctx.button('Ir ao ponto de observação', observe, tools);
   ctx.button('Girar 90°', turn, tools);
@@ -457,19 +447,15 @@ export function impossible(ctx) {
     else { nav.place(0, 1.61, -14.5, 0); ctx.say('Sala 2 · Pátio Invertido.'); }
   });
   nav.add({ x: 0, z: 3.8, range: 1.02, label: 'Alinhar plataformas', action: align },
-    { x: 0, z: -10.55, range: 1.83, label: 'Atravessar portal', action: portalAction });
-  { x: 0, z: -10.55, range: 1.83, label: 'Entrar na Sala 2', action: portalAction },
-  { x: 0, z: -14.5, range: 1.2, label: 'Alinhar passarela', action: align },
-  { x: 0, z: -24.8, range: 2.0, label: 'Retornar à Sala 1', action: portalAction });
+    { x: 0, z: -10.55, range: 1.83, label: 'Entrar na Sala 2', action: portalAction },
+    { x: 0, z: -14.5, range: 1.2, label: 'Alinhar passarela', action: align },
+    { x: 0, z: -24.8, range: 2.0, label: 'Retornar à Sala 1', action: portalAction });
   return withNavigation(nav, {
     mute: audio.mute, dispose: audio.dispose, fov: 61,
-    reset() { position = 1; aligned = walked = false; yawGoal = Math.PI / 2; moving.rotation.y = yawGoal; ctx.say('Mecanismo e travessia restaurados.'); },
     reset() { position = 1; aligned = aligned2 = walked = false; room = 0; yawGoal = Math.PI / 2; moving.rotation.y = yawGoal; bridge2.rotation.y = yawGoal; ctx.say('Mecanismo e travessia restaurados.'); },
     update(dt, time) {
       const error = THREE.MathUtils.euclideanModulo(yawGoal - moving.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
       moving.rotation.y += error * (ctx.reduced ? 1 : Math.min(1, dt * 8));
-      if (aligned && !walked && nav.pos.z < -4.15) { walked = true; ctx.say('Travessia concluída. O portal em frente retorna ao átrio.'); }
-      state.textContent = walked ? 'Travessia concluída' : aligned ? 'Passagem aberta' : 'Passagem fechada';
       bridge2.rotation.y = moving.rotation.y;
       if (!ctx.reduced) obelisk.rotation.y = time * .35;
       if (aligned && !walked && nav.pos.z < -4.15) { walked = true; ctx.say('Travessia concluída. O portal em frente leva à Sala 2.'); }
