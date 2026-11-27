@@ -52,6 +52,7 @@ export async function mount(id) {
   const keys = new Set();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let game, raf, disposed = false, last, stepCarry = 0, lost = false, fpsTime = 0, frames = 0;
+  let redraw = true;
   let audio, master, muted = true;
   let moveHandler = null;
   let paintHandler = null;
@@ -68,7 +69,7 @@ export async function mount(id) {
       button.type = 'button';
       on(button, 'click', () => {
         try {
-          Promise.resolve(callback()).catch(error => ctx.say(error.message || 'A operação falhou.'));
+          Promise.resolve(callback()).then(() => { redraw = true; }).catch(error => ctx.say(error.message || 'A operação falhou.'));
         } catch (error) { ctx.say(error.message || 'A operação falhou.'); }
       });
       parent.append(button);
@@ -101,7 +102,7 @@ export async function mount(id) {
       const input = node('input');
       Object.assign(input, { type: 'range', min, max, step, value });
       input.setAttribute('aria-label', label);
-      on(input, 'input', () => { out.textContent = input.value; change(input.valueAsNumber); });
+      on(input, 'input', () => { out.textContent = input.value; change(input.valueAsNumber); redraw = true; });
       wrap.append(row, input);
       field.append(wrap);
       return input;
@@ -114,7 +115,7 @@ export async function mount(id) {
         option.value = String(index);
         select.append(option);
       });
-      on(select, 'change', () => change(Number(select.value)));
+      on(select, 'change', () => { change(Number(select.value)); redraw = true; });
       wrap.append(select); field.append(wrap);
       return select;
     },
@@ -202,6 +203,7 @@ export async function mount(id) {
   function setPaused(value) {
     if (timers.paused === value) return;
     timers.paused = value;
+    redraw = true;
     pause.textContent = value ? 'Continuar' : 'Pausar';
     pause.setAttribute('aria-pressed', String(value));
     pointers.clear(); keys.clear(); stepCarry = 0;
@@ -212,12 +214,14 @@ export async function mount(id) {
   function reset() {
     pointers.clear(); keys.clear(); timers.time = 0; stepCarry = 0;
     game?.reset?.();
+    redraw = true;
   }
   function setQuality(value) {
     const tier = String(value || '').toUpperCase();
     ctx.low = ['LOW', 'ECONOMY'].includes(tier);
     engine.setQuality(ctx.low ? 'LOW' : tier === 'HIGH' ? 'HIGH' : 'BALANCED');
     game?.quality?.(ctx.low);
+    redraw = true;
   }
   on(pause, 'click', () => setPaused(!timers.paused));
   on(sound, 'click', () => {
@@ -294,6 +298,7 @@ export async function mount(id) {
     camera.fov = camera.aspect < 1 ? Math.min(77, fov / Math.sqrt(camera.aspect)) : fov;
     camera.updateProjectionMatrix();
     engine.renderer.setSize(w, h, false);
+    redraw = true;
   }
   const observer = new ResizeObserver(resize);
   observer.observe(view);
@@ -319,7 +324,11 @@ export async function mount(id) {
     engine.dispose();
   }
   on(window, 'pagehide', event => {
-    if (event.persisted) setPaused(true);
+    if (event.persisted) {
+      setPaused(true);
+      game?.releaseMedia?.();
+      tracks.forEach(stream => ctx.stop(stream));
+    }
     else dispose();
   });
   on(window, 'pageshow', event => { if (event.persisted) setPaused(false); });
@@ -333,6 +342,7 @@ export async function mount(id) {
     const module = await definition.load();
     if (disposed) return;
     game = module[definition.factory](ctx);
+    sound.hidden = !game.mute && !game.audio;
     setQuality(innerWidth <= 760 ? 'LOW' : 'BALANCED');
     document.querySelector('#quality').value = ctx.low ? 'LOW' : 'BALANCED';
     resize();
@@ -355,7 +365,10 @@ export async function mount(id) {
         }
         game.update?.(dt, timers.time);
       }
-      if (!lost) engine.render(scene, camera);
+      if (!lost && (!timers.paused || redraw)) {
+        engine.render(scene, camera);
+        redraw = false;
+      }
       if (!timers.paused && !lost && !ctx.low) {
         fpsTime += elapsed; frames += 1;
         if (fpsTime >= 4) {

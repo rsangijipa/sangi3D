@@ -11,13 +11,25 @@ export function navigator(ctx, settings) {
   ctx.hint((swim ? 'WASD ou setas para nadar. Suba e desça com Q e Z.' : 'WASD ou setas para andar.') + ' Arraste na cena para olhar. E interage com o ponto próximo.',true);
   const pad = ctx.group('walk');
   for (const [symbol,label,key] of [['↑','Avançar','w'],['←','Ir à esquerda','a'],['↓','Recuar','s'],['→','Ir à direita','d']]){
+    let since=0, originX=0, originZ=0;
     const button = ctx.button(symbol, () => {
       if (!button.dataset.drag) advance(key,.13);
       delete button.dataset.drag;
     },pad);
     button.setAttribute('aria-label',label);
-    ctx.on(button,'pointerdown',event => { held.add(key); button.setPointerCapture(event.pointerId); });
-    const release = () => { if (held.delete(key)) { button.dataset.drag = 'true'; setTimeout(() => delete button.dataset.drag,300); } };
+    ctx.on(button,'pointerdown',event => {
+      since=performance.now();
+      originX=pos.x; originZ=pos.z;
+      delete button.dataset.drag;
+      held.add(key);
+      button.setPointerCapture(event.pointerId);
+    });
+    const release = () => {
+      if (held.delete(key) && performance.now()-since > 100 && Math.hypot(pos.x-originX,pos.z-originZ)>.15) {
+        button.dataset.drag = 'true';
+        setTimeout(() => delete button.dataset.drag,300);
+      }
+    };
     ctx.on(button,'pointerup',release);
     ctx.on(button,'pointercancel',release);
     ctx.on(button,'lostpointercapture',release);
@@ -57,7 +69,7 @@ export function navigator(ctx, settings) {
   }
   function perform() {
     if (seated) {
-      pos.copy(seated); seated=undefined;
+      pos.copy(seated.pos); yaw=seated.yaw; pitch=seated.pitch; seated=undefined;
       ctx.say('Você se levantou.');
       updateContext(); look();
     } else if (candidate) candidate.action();
@@ -105,7 +117,7 @@ export function navigator(ctx, settings) {
     key(key){if(key==='e')perform();},
     clear(){held.clear();},
     reset(){held.clear();place(...start,originYaw);},
-    seat(x,y,z,orientation=yaw){seated=pos.clone();pos.set(x,y,z);yaw=orientation;pitch=-.05;look();updateContext();},
+    seat(x,y,z,orientation=yaw){seated??={pos:pos.clone(),yaw,pitch};pos.set(x,y,z);yaw=orientation;pitch=-.05;look();updateContext();},
     zone(name, onEnter){if(name!==inside){inside=name;onEnter(name);}},
   };
 }
