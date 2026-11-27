@@ -435,7 +435,7 @@
     "thumb": "/launcher/capas/01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html.webp",
     "order": 999,
     "path": "01_Jogos_HTML\\correio-das-palavras-nao-ditas\\correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html",
-    "mtime": 1795817036052.2454,
+    "mtime": 1795818697829.587,
     "versions": [
       {
         "url": "/01_Jogos_HTML/correio-das-palavras-nao-ditas-agencia-postal/correio_das_palavras_n_o_ditas_ag_ncia_postal_3d_fotorrealista.html",
@@ -444,7 +444,7 @@
       }
     ],
     "id": "01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html",
-    "contentHash": "f45e8e951f812c03"
+    "contentHash": "b0c444f721d0ecef"
   },
   {
     "name": "Oficina do Vitralista",
@@ -464,24 +464,6 @@
     "id": "02_projetos-01-oficina-do-vitralista",
     "canonicalRole": "canonical",
     "contentHash": "c789dad55884627f"
-  },
-  {
-    "name": "Tear dos Vínculos",
-    "subtitle": "Oficina 3D de tecelagem",
-    "fullTitle": "Tear dos Vínculos — Oficina 3D de tecelagem",
-    "description": "Oficina têxtil em 3D: escolher fio, entrelaçar por cima e por baixo, tensionar, separar e reconectar trechos, ver o tecido pronto.",
-    "url": "/04-tear-dos-vinculos/dist/index.html",
-    "direct": "/04-tear-dos-vinculos/dist/index.html",
-    "status": "ready",
-    "kind": "project",
-    "collection": "Projetos 3D",
-    "thumb": "/launcher/capas/04-tear-dos-vinculos.webp",
-    "order": 4,
-    "path": "04-tear-dos-vinculos",
-    "mtime": 1795818050694.558,
-    "versions": [],
-    "id": "04-tear-dos-vinculos",
-    "contentHash": "3e03523921323321"
   },
   {
     "name": "Ateliê das Máscaras Emocionais",
@@ -574,6 +556,24 @@
     "versions": [],
     "id": "02_projetos-oficina-dos-gestos-compartilhados-projeto",
     "contentHash": "eb0c884f54bb432a"
+  },
+  {
+    "name": "Tear dos Vínculos",
+    "subtitle": "Oficina 3D de tecelagem",
+    "fullTitle": "Tear dos Vínculos — Oficina 3D de tecelagem",
+    "description": "Oficina têxtil em 3D: escolher fio, entrelaçar por cima e por baixo, tensionar, separar e reconectar trechos, ver o tecido pronto.",
+    "url": "/02_Projetos/tear-dos-vinculos/dist/index.html",
+    "direct": "/02_Projetos/tear-dos-vinculos/dist/index.html",
+    "status": "ready",
+    "kind": "project",
+    "collection": "Projetos 3D",
+    "thumb": "/launcher/capas/02_projetos-tear-dos-vinculos.webp",
+    "order": 999,
+    "path": "02_Projetos\\tear-dos-vinculos",
+    "mtime": 1795819644598.7786,
+    "versions": [],
+    "id": "02_projetos-tear-dos-vinculos",
+    "contentHash": "3bbc0e9312a50049"
   },
   {
     "name": "Território dos Vínculos",
@@ -732,10 +732,10 @@
     "thumb": "/launcher/capas/kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes.webp",
     "order": 8,
     "path": "Kit_17_jogos_3D_mockups_e_prompts\\08-meteorologia-das-emocoes",
-    "mtime": 1795818154668.7668,
+    "mtime": 1795818953650.8267,
     "versions": [],
     "id": "kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes",
-    "contentHash": "a99e17d937d3a29d"
+    "contentHash": "b2e954dc120a4f9e"
   },
   {
     "name": "Estação das Trocas",
@@ -983,18 +983,17 @@
     "name": "Colmeia Transparente",
     "subtitle": "",
     "fullTitle": "Colmeia Transparente",
-    "description": null,
-    "url": "/Colmeia%20Transparente.html",
+    "url": "/01_Jogos_HTML/colmeia-transparente/colmeia-transparente.html",
     "status": "ready",
     "kind": "html",
     "collection": "Ambientes avulsos",
-    "thumb": "/launcher/capas/colmeia-transparente-html.webp",
+    "thumb": "/launcher/capas/01_jogos_html-colmeia-transparente-colmeia-transparente-html.webp",
     "order": 999,
-    "path": "Colmeia Transparente.html",
+    "path": "01_Jogos_HTML\\colmeia-transparente\\colmeia-transparente.html",
     "mtime": 1795507146184.6643,
     "versions": [],
-    "id": "colmeia-transparente-html",
-    "contentHash": "2d3650fc522adbc8"
+    "id": "01_jogos_html-colmeia-transparente-colmeia-transparente-html",
+    "contentHash": "cb759e9dcea9f10b"
   },
   {
     "name": "Confeitaria de Bolos",
@@ -1049,18 +1048,17 @@
     "name": "Gerador de Mundos Climáticos",
     "subtitle": "",
     "fullTitle": "Gerador de Mundos Climáticos",
-    "description": null,
-    "url": "/Gerador%20de%20Mundos%20Clim%C3%A1ticos.html",
+    "url": "/01_Jogos_HTML/gerador-de-mundos-climaticos/gerador-de-mundos-climaticos.html",
     "status": "ready",
     "kind": "html",
     "collection": "Ambientes avulsos",
-    "thumb": "/launcher/capas/gerador-de-mundos-clim-ticos-html.webp",
+    "thumb": "/launcher/capas/01_jogos_html-gerador-de-mundos-climaticos-gerador-de-mundos-climaticos-html.webp",
     "order": 999,
-    "path": "Gerador de Mundos Climáticos.html",
+    "path": "01_Jogos_HTML\\gerador-de-mundos-climaticos\\gerador-de-mundos-climaticos.html",
     "mtime": 1795507586668.8345,
     "versions": [],
-    "id": "gerador-de-mundos-clim-ticos-html",
-    "contentHash": "9052534b1b97de75"
+    "id": "01_jogos_html-gerador-de-mundos-climaticos-gerador-de-mundos-climaticos-html",
+    "contentHash": "e22f7adeb7c00a92"
   },
   {
     "name": "Jardim dos Fungos",
@@ -1388,18 +1386,17 @@
     "name": "Vulcão em Miniatura",
     "subtitle": "Laboratório geológico",
     "fullTitle": "Vulcão em Miniatura | Laboratório geológico",
-    "description": null,
-    "url": "/Vulc%C3%A3o%20em%20Miniatura.html",
+    "url": "/01_Jogos_HTML/vulcao-em-miniatura/vulcao-em-miniatura.html",
     "status": "ready",
     "kind": "html",
     "collection": "Ambientes avulsos",
-    "thumb": "/launcher/capas/vulc-o-em-miniatura-html.webp",
+    "thumb": "/launcher/capas/01_jogos_html-vulcao-em-miniatura-vulcao-em-miniatura-html.webp",
     "order": 999,
-    "path": "Vulcão em Miniatura.html",
+    "path": "01_Jogos_HTML\\vulcao-em-miniatura\\vulcao-em-miniatura.html",
     "mtime": 1795507875096.5405,
     "versions": [],
-    "id": "vulc-o-em-miniatura-html",
-    "contentHash": "315c4bf5cc387e50"
+    "id": "01_jogos_html-vulcao-em-miniatura-vulcao-em-miniatura-html",
+    "contentHash": "3b2fa699de9545f0"
   },
   {
     "name": "Sala de Espera Sonora",

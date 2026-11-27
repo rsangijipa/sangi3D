@@ -226,6 +226,9 @@
 
     .empty { color: var(--muted); text-align: center; padding: 80px 0; }
     .empty b { display: block; font-family: var(--sans); font-size: 26px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .empty.file-mode ol { display: inline-block; text-align: left; margin: 18px auto 10px; padding-left: 22px; line-height: 1.9; color: var(--text); }
+    .empty.file-mode ol b { display: inline; font: inherit; font-weight: 600; color: var(--accent); margin: 0; }
+    .empty.file-mode small { display: block; opacity: .75; }
     .toast {
       position: fixed; left: 50%; bottom: max(24px, calc(16px + var(--safe-bottom))); transform: translateX(-50%) translateY(20px); opacity: 0;
       background: var(--card-hover); border: 1px solid var(--line-strong); padding: 10px 16px; border-radius: 999px;
@@ -516,6 +519,16 @@
       get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
       set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
     };
+    // Ids antigos (antes da reorganização das pastas) → ids atuais. Mantém favoritos, histórico e links #play=.
+    const ID_ALIASES = {
+      'colmeia-transparente-html': '01_jogos_html-colmeia-transparente-colmeia-transparente-html',
+      'gerador-de-mundos-clim-ticos-html': '01_jogos_html-gerador-de-mundos-climaticos-gerador-de-mundos-climaticos-html',
+      'vulc-o-em-miniatura-html': '01_jogos_html-vulcao-em-miniatura-vulcao-em-miniatura-html',
+      '04-tear-dos-vinculos': '02_projetos-tear-dos-vinculos',
+    };
+    const aliasId = (id) => ID_ALIASES[id] ?? id;
+    store.set('launcher.fav', [...new Set(store.get('launcher.fav', []).map(aliasId))]);
+    store.set('launcher.recent', store.get('launcher.recent', []).map((r) => ({ ...r, id: aliasId(r.id) })));
     const previousView = store.get('launcher.view', 'all');
     const previousSort = store.get('launcher.sort', 'categoria');
     const state = {
@@ -899,7 +912,33 @@
 
     let lastSig = '';
     let busy = false;
+
+    // Aberto com duplo clique (file://): os jogos precisam do servidor local.
+    // Procura um launcher já rodando e redireciona; senão explica como abrir e continua tentando.
+    const FILE_MODE = location.protocol === 'file:';
+    async function findServer() {
+      const probe = (port) => {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 900);
+        return fetch(`http://127.0.0.1:${port}/launcher/loading.html`, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal })
+          .then(() => port, () => null).finally(() => clearTimeout(timer));
+      };
+      const ports = Array.from({ length: 21 }, (_, i) => 5170 + i);
+      return (await Promise.all(ports.map(probe))).find(Boolean) ?? null;
+    }
+    async function loadFileMode() {
+      const port = await findServer();
+      if (port) { location.replace(`http://127.0.0.1:${port}/${location.hash}`); return; }
+      $('#list').innerHTML = `<div class="empty file-mode"><b>Abra pelo servidor local</b>
+        Os jogos 3D precisam do servidor do launcher para funcionar.
+        <ol><li>Na pasta <i>Ambientes 3D</i>, dê dois cliques em <b>Abrir Launcher.cmd</b>.</li>
+        <li>Deixe a janela preta aberta enquanto joga.</li>
+        <li>Esta página entra sozinha assim que o servidor responder.</li></ol>
+        <small>Precisa do Node.js instalado (nodejs.org).</small></div>`;
+    }
+
     async function load() {
+      if (FILE_MODE) return loadFileMode();
       try {
         let res = await fetch('/api/apps', { cache: 'no-store' }).catch(() => null);
         if (!res || !res.ok) res = await fetch('/api/apps.json', { cache: 'no-store' }).catch(() => null);
@@ -915,7 +954,7 @@
 
         // Checa se deve abrir jogo indicado na URL hash
         if (location.hash.startsWith('#play=') && !state.activeAppId) {
-          const targetId = decodeURIComponent(location.hash.slice(6));
+          const targetId = aliasId(decodeURIComponent(location.hash.slice(6)));
           const normalizedId = targetId.replace(/-mockup-html$/, '');
           const matched = cleanApps.find(a => a.id === targetId) || cleanApps.find(a => a.id === normalizedId);
           if (matched) {
@@ -1029,7 +1068,7 @@
       if (!location.hash.startsWith('#play=') && !$('#playerModal').hidden) {
         closeApp();
       } else if (location.hash.startsWith('#play=')) {
-        const targetId = decodeURIComponent(location.hash.slice(6));
+        const targetId = aliasId(decodeURIComponent(location.hash.slice(6)));
         const normalizedId = targetId.replace(/-mockup-html$/, '');
         const matched = state.apps.find(a => a.id === targetId) || state.apps.find(a => a.id === normalizedId);
         if (matched) openApp(matched.id);
@@ -1042,7 +1081,7 @@
     // Atualiza a cada 2s enquanto algo compila; senão a cada 8s.
     (async function tick() {
       if (!document.hidden) await load();
-      setTimeout(tick, busy ? 2000 : 8000);
+      setTimeout(tick, FILE_MODE ? 3000 : busy ? 2000 : 8000);
     })();
   </script>
 </body>

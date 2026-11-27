@@ -29,7 +29,7 @@ try {
   const toggle = mobile.locator('#gameMenuToggle');
   const sheet = mobile.locator('#gameMenu');
   const frame = mobile.frameLocator('iframe.player-frame');
-  await mobile.goto(base + '/#play=colmeia-transparente-html', { waitUntil: 'domcontentloaded' });
+  await mobile.goto(base + '/#play=01_jogos_html-colmeia-transparente-colmeia-transparente-html', { waitUntil: 'domcontentloaded' });
   await frame.locator('#sangi-mobile-game-style').waitFor({ state: 'attached' });
 
   for (const [width, height] of [[360, 800], [390, 844], [412, 915], [844, 390], [768, 1024]]) {
@@ -65,7 +65,7 @@ try {
   await mobile.close();
 
   const desktop = await browser.newPage({ viewport: { width: 1366, height: 768 } });
-  await desktop.goto(base + '/#play=colmeia-transparente-html', { waitUntil: 'domcontentloaded' });
+  await desktop.goto(base + '/#play=01_jogos_html-colmeia-transparente-colmeia-transparente-html', { waitUntil: 'domcontentloaded' });
   await desktop.locator('#closePlayerBtn').waitFor();
   for (const [width, height] of [[1366, 768], [1920, 1080]]) {
     await desktop.setViewportSize({ width, height });

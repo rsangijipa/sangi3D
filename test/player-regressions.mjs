@@ -84,7 +84,7 @@ try {
     console.log('OK: cena renderizada sem erro de shader ou geometria:', slug);
   }
 
-  const tear = base + '/04-tear-dos-vinculos/dist/';
+  const tear = base + '/02_Projetos/tear-dos-vinculos/dist/';
   const tearHtml = await fetch(tear).then(response => response.text());
   const tearAssets = [...tearHtml.matchAll(/(?:href|src)="(\.\/assets\/[^"]+)"/g)];
   assert.ok(tearAssets.length >= 2);

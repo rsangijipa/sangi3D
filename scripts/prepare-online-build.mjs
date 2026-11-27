@@ -17,7 +17,6 @@ const MIRROR_DIRS = [
   '01_Jogos_HTML',
   '02_Projetos',
   '03_Colecoes',
-  '04-tear-dos-vinculos',
   'Kit_17_jogos_3D_mockups_e_prompts',
   'ambientes-interativos-adultos-e-marcas',
   'Sangi3D_15_Experiencias',
@@ -25,9 +24,6 @@ const MIRROR_DIRS = [
 ];
 
 const ROOT_HTML_FILES = [
-  'Colmeia Transparente.html',
-  'Gerador de Mundos Climáticos.html',
-  'Vulcão em Miniatura.html',
   'index.html',
 ];
 

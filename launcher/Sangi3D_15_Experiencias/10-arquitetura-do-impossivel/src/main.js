@@ -38,6 +38,7 @@ import {
   let dprScale = 1;
   let perfAccum = 0;
   let perfFrames = 0;
+  let initialized = false;
 
   const settings = {
     quality: saved.quality || (innerWidth <= 760 ? 'LOW' : 'BALANCED'),
@@ -205,6 +206,10 @@ import {
     const targetDpr = Math.max(0.7, Math.min(devicePixelRatio || 1, profile.maxDpr) * dprScale);
     renderer.setPixelRatio(targetDpr);
     renderer.setSize(w, h, false);
+    if (initialized && !paused && !contextLost) {
+      physics.syncCamera(camera);
+      renderer.render(scene, camera);
+    }
   }
 
   const resizeObserver = new ResizeObserver(resize);
@@ -565,6 +570,7 @@ import {
     dispose,
   };
 
+  initialized = true;
   applyQuality(settings.quality);
   world.updateVisuals(0, settings.reducedMotion);
   physics.syncCamera(camera);

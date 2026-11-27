@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,65 +18,148 @@
   <script src="../../shared/sangi-bridge.js" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #140f0c; color: #f6ead9; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
-    #canvas-container { position: fixed; inset: 0; z-index: 1; }
-    .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
-    .glass { background: rgba(26, 19, 14, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(235, 198, 145, 0.25); box-shadow: 0 18px 42px rgba(0,0,0,0.48); }
-    .pill { transition: all 0.2s ease; cursor: pointer; }
-    .pill:hover { border-color: rgba(235, 198, 145, 0.55); transform: translateY(-1px); }
-    .pill.active { background: linear-gradient(135deg, #a64638, #70261e); color: #fff; border-color: #f4b2a7; }
-    #toast { position: fixed; bottom: 86px; left: 50%; transform: translateX(-50%) translateY(16px); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 40; }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .custom-scroll::-webkit-scrollbar { width: 5px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(235,198,145,0.3); border-radius: 99px; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #140f0c;
+      color: #f6ead9;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .serif {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+
+    .glass {
+      background: rgba(26, 19, 14, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(235, 198, 145, 0.25);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+    }
+
+    .pill {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .pill:hover {
+      border-color: rgba(235, 198, 145, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .pill.active {
+      background: linear-gradient(135deg, #a64638, #70261e);
+      color: #fff;
+      border-color: #f4b2a7;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 86px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 40;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(235, 198, 145, 0.3);
+      border-radius: 99px;
+    }
   </style>
 </head>
+
 <body>
   <div id="canvas-container"></div>
 
   <header class="fixed top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
     <div class="glass rounded-2xl px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
-      <div class="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-300/35 flex items-center justify-center text-lg">✉️</div>
+      <div class="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-300/35 flex items-center justify-center text-lg">
+        ✉️</div>
       <div>
         <h1 class="serif text-xl font-semibold text-amber-50 leading-tight">Correio das Palavras Não Ditas</h1>
-        <p class="text-[11px] text-amber-200/75">Jardins do Sentir 3D · Escrita expressiva, selo de cera e alívio emocional</p>
+        <p class="text-[11px] text-amber-200/75">Jardins do Sentir 3D · Escrita expressiva, selo de cera e alívio
+          emocional</p>
       </div>
     </div>
     <div class="glass rounded-2xl px-3 py-2 flex items-center gap-2 pointer-events-auto">
-      <select id="quality-select" class="bg-black/35 text-xs text-amber-100 border border-amber-200/25 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer">
+      <select id="quality-select"
+        class="bg-black/35 text-xs text-amber-100 border border-amber-200/25 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer">
         <option value="high">Qualidade: Alta (PBR + 2K)</option>
         <option value="balanced" selected>Qualidade: Equilibrada</option>
         <option value="eco">Qualidade: Econômica</option>
       </select>
-      <button id="btn-audio" class="pill px-2.5 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-white/5 text-amber-100">🔊 Som</button>
+      <button id="btn-audio"
+        class="pill px-2.5 py-1.5 rounded-lg text-xs border border-amber-200/20 bg-white/5 text-amber-100">🔊
+        Som</button>
     </div>
   </header>
 
   <!-- Left Letter Composer -->
-  <aside class="fixed left-4 top-24 bottom-24 z-20 w-80 glass rounded-2xl p-4 flex flex-col gap-3 overflow-y-auto custom-scroll">
+  <aside
+    class="fixed left-4 top-24 bottom-24 z-20 w-80 glass rounded-2xl p-4 flex flex-col gap-3 overflow-y-auto custom-scroll">
     <div>
-      <label class="block text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1">Para quem (ou para qual parte de você)?</label>
-      <input id="letter-to" type="text" maxlength="60" placeholder="Ex.: Para o meu eu de alguns anos atrás..." class="w-full rounded-xl bg-black/35 border border-amber-200/25 px-3 py-2 text-xs text-amber-50 outline-none focus:border-amber-400" />
+      <label class="block text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1">Para quem (ou para
+        qual parte de você)?</label>
+      <input id="letter-to" type="text" maxlength="60" placeholder="Ex.: Para o meu eu de alguns anos atrás..."
+        class="w-full rounded-xl bg-black/35 border border-amber-200/25 px-3 py-2 text-xs text-amber-50 outline-none focus:border-amber-400" />
     </div>
 
     <div>
-      <label class="block text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1">Carta que precisava ganhar voz</label>
-      <textarea id="letter-body" rows="4" placeholder="Escreva livremente o que ficou guardado. Nenhuma carta sai deste ambiente..." class="w-full rounded-xl bg-black/35 border border-amber-200/25 p-3 text-xs text-amber-50 outline-none focus:border-amber-400 resize-none"></textarea>
+      <label class="block text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1">Carta que
+        precisava ganhar voz</label>
+      <textarea id="letter-body" rows="4"
+        placeholder="Escreva livremente o que ficou guardado. Nenhuma carta sai deste ambiente..."
+        class="w-full rounded-xl bg-black/35 border border-amber-200/25 p-3 text-xs text-amber-50 outline-none focus:border-amber-400 resize-none"></textarea>
     </div>
 
     <div>
-      <div class="text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1.5">Cor do Selo de Cera</div>
+      <div class="text-[11px] uppercase tracking-widest text-amber-300/85 font-semibold mb-1.5">Cor do Selo de Cera
+      </div>
       <div class="flex gap-2" id="seal-bar">
-        <button data-seal="#a62c2b" class="pill active px-2.5 py-1 rounded-lg text-[11px] border border-rose-300/40">🔴 Desabafo</button>
-        <button data-seal="#2c6e58" class="pill px-2.5 py-1 rounded-lg text-[11px] border border-emerald-300/30 bg-white/5">🟢 Perdão</button>
-        <button data-seal="#c48a2b" class="pill px-2.5 py-1 rounded-lg text-[11px] border border-amber-300/30 bg-white/5">🟡 Gratidão</button>
+        <button data-seal="#a62c2b" class="pill active px-2.5 py-1 rounded-lg text-[11px] border border-rose-300/40">🔴
+          Desabafo</button>
+        <button data-seal="#2c6e58"
+          class="pill px-2.5 py-1 rounded-lg text-[11px] border border-emerald-300/30 bg-white/5">🟢 Perdão</button>
+        <button data-seal="#c48a2b"
+          class="pill px-2.5 py-1 rounded-lg text-[11px] border border-amber-300/30 bg-white/5">🟡 Gratidão</button>
       </div>
     </div>
 
     <div class="flex flex-col gap-2 pt-1">
-      <button id="btn-send-tube" class="pill w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-600 to-rose-700 text-white border border-amber-300/40">💨 Lacrar e Enviar pelo Tubo Pneumático</button>
-      <button id="btn-store-chest" class="pill w-full py-2 px-3 rounded-xl text-xs font-semibold bg-amber-900/50 hover:bg-amber-800/60 text-amber-100 border border-amber-300/30">🗝️ Guardar no Baú Secreto da Bancada</button>
+      <button id="btn-send-tube"
+        class="pill w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-600 to-rose-700 text-white border border-amber-300/40">💨
+        Lacrar e Enviar pelo Tubo Pneumático</button>
+      <button id="btn-store-chest"
+        class="pill w-full py-2 px-3 rounded-xl text-xs font-semibold bg-amber-900/50 hover:bg-amber-800/60 text-amber-100 border border-amber-300/30">🗝️
+        Guardar no Baú Secreto da Bancada</button>
     </div>
 
     <div class="border-t border-amber-200/15 pt-3">
@@ -88,10 +172,14 @@
   </aside>
 
   <footer class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass rounded-2xl px-4 py-2 flex items-center gap-2">
-    <button data-cam="desk" class="pill active px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🕯️ Balcão Postal</button>
-    <button data-cam="tube" class="pill px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">💨 Tubo Pneumático</button>
-    <button data-cam="chest" class="pill px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🗝️ Baú & Carteiro</button>
-    <span class="hidden md:inline text-[11px] text-amber-200/70 pl-2 border-l border-amber-200/20">Clique nas cartas dos escaninhos para ler · Clique no baú ou no gnomo carteiro</span>
+    <button data-cam="desk" class="pill active px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🕯️ Balcão
+      Postal</button>
+    <button data-cam="tube" class="pill px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">💨 Tubo
+      Pneumático</button>
+    <button data-cam="chest" class="pill px-3 py-1.5 rounded-xl text-xs border border-amber-200/20">🗝️ Baú &
+      Carteiro</button>
+    <span class="hidden md:inline text-[11px] text-amber-200/70 pl-2 border-l border-amber-200/20">Clique nas cartas dos
+      escaninhos para ler · Clique no baú ou no gnomo carteiro</span>
   </footer>
 
   <!-- Read Letter Modal -->
@@ -101,17 +189,20 @@
         <span id="read-dest" class="text-[11px] uppercase tracking-widest text-amber-300 font-semibold"></span>
         <button id="close-read" class="text-amber-200 hover:text-white text-lg">✕</button>
       </div>
-      <p id="read-text" class="serif italic text-xl text-amber-50 leading-relaxed bg-black/30 rounded-xl p-4 border border-amber-200/20 mb-4"></p>
+      <p id="read-text"
+        class="serif italic text-xl text-amber-50 leading-relaxed bg-black/30 rounded-xl p-4 border border-amber-200/20 mb-4">
+      </p>
       <div id="read-meta" class="text-[11px] text-amber-200/70"></div>
     </div>
   </div>
 
-  <div id="toast" class="glass rounded-full px-5 py-2 text-xs text-amber-50 font-medium border border-amber-300/35"></div>
+  <div id="toast" class="glass rounded-full px-5 py-2 text-xs text-amber-50 font-medium border border-amber-300/35">
+  </div>
 
   <script>
     (() => {
       if (window.Imersivo && typeof window.Imersivo.init === 'function') {
-        try { window.Imersivo.init({ id: 'correio-palavras', title: 'Correio das Palavras Não Ditas' }); } catch (e) {}
+        try { window.Imersivo.init({ id: 'correio-palavras', title: 'Correio das Palavras Não Ditas' }); } catch (e) { }
       }
 
       // --- Audio ---
@@ -566,7 +657,7 @@
         if (audioCtx) {
           const ctx = audioCtx;
           audioCtx = null;
-          ctx.close().catch(() => {});
+          ctx.close().catch(() => { });
         }
       }
 
@@ -614,4 +705,5 @@
     })();
   </script>
 </body>
+
 </html>

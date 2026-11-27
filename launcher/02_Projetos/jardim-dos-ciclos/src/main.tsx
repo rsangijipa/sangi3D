@@ -18,8 +18,8 @@ let disposed = false;
 const disposeAll = () => {
   if (disposed) return;
   disposed = true;
-  try { root.unmount(); } catch {}
-  try { (gardenAudio as unknown as { dispose?: () => void })?.dispose?.(); } catch {}
+  try { root.unmount(); } catch { }
+  try { (gardenAudio as unknown as { dispose?: () => void })?.dispose?.(); } catch { }
 };
 
 window.addEventListener('sangi:mute', (e) => {

@@ -230,5 +230,21 @@
   {
     "origem": "ambientes-interativos-adultos-e-marcas/pousada_vento_leve_varanda_dos_sinos_de_vento.html",
     "destino": "01_Jogos_HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html"
+  },
+  {
+    "origem": "Colmeia Transparente.html",
+    "destino": "01_Jogos_HTML/colmeia-transparente/colmeia-transparente.html"
+  },
+  {
+    "origem": "Gerador de Mundos Climáticos.html",
+    "destino": "01_Jogos_HTML/gerador-de-mundos-climaticos/gerador-de-mundos-climaticos.html"
+  },
+  {
+    "origem": "Vulcão em Miniatura.html",
+    "destino": "01_Jogos_HTML/vulcao-em-miniatura/vulcao-em-miniatura.html"
+  },
+  {
+    "origem": "04-tear-dos-vinculos",
+    "destino": "02_Projetos/tear-dos-vinculos"
   }
 ]
