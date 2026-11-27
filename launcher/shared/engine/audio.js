@@ -10,9 +10,12 @@ export class ResponsiveAudio {
     this.isMuted = false;
     this.volume = 0.7;
     this._unlocked = false;
+    this._disposed = false;
+    this._timers = new Set();
   }
 
   ensureContext() {
+    if (this._disposed) return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return null;
@@ -153,15 +156,30 @@ export class ResponsiveAudio {
    * Batida de máquina de escrever
    */
   playTypewriterClack() {
+    if (this._disposed) return;
     this.playClick(420, 0.035);
-    setTimeout(() => this.playClick(850, 0.02), 15);
+    const id = setTimeout(() => {
+      this._timers.delete(id);
+      if (!this._disposed) this.playClick(850, 0.02);
+    }, 15);
+    this._timers.add(id);
   }
 
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
+    for (const id of this._timers) clearTimeout(id);
+    this._timers.clear();
+    if (this.masterGain) {
+      try { this.masterGain.disconnect(); } catch (e) {}
+      this.masterGain = null;
+    }
     if (this.ctx) {
       try {
         this.ctx.close();
       } catch (e) {}
+      this.ctx = null;
     }
+    this._unlocked = false;
   }
 }

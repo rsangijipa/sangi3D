@@ -2,15 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Cozinha das Descobertas — Experiência 3D Fotorrealista</title>
 
-  <!-- Fontes, Tailwind CSS & Three.js r128 CDN -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="./cozinha.css" />
+  <script src="../../shared/vendor/three-r128.min.js"></script>
 
   <style>
     :root {
@@ -119,6 +115,22 @@
       box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
       color: #ffffff;
     }
+
+    .recipe-guide {
+      max-width: min(100%, 36rem);
+      border-radius: 0.75rem;
+      text-align: center;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      padding: 0.4rem 0.8rem;
+      color: #ffedd5;
+    }
+
+    .btn-cook[aria-disabled="true"] { opacity: 0.7; cursor: wait; }
+    .btn-cook:focus-visible, .btn-select-rec:focus-visible, #btn-reset-recipe:focus-visible {
+      outline: 2px solid #fcd38d;
+      outline-offset: 3px;
+    }
     .btn-cook-book {
       background: linear-gradient(135deg, rgba(159, 18, 57, 0.62), rgba(124, 45, 18, 0.65));
       border: 1px solid rgba(251, 113, 133, 0.42);
@@ -152,6 +164,64 @@
     textarea {
       user-select: text;
       -webkit-user-select: text;
+    }
+
+    #ui-top-bar, body > .imv-top {
+      top: max(0.75rem, env(safe-area-inset-top));
+      left: max(0.75rem, env(safe-area-inset-left));
+      right: max(0.75rem, env(safe-area-inset-right));
+    }
+
+    body > .imv-top .imv-title { flex-shrink: 1; }
+    body > .imv-top .imv-actions { flex: none; }
+    .kitchen-embedded > .imv-top .imv-back { display: none; }
+
+    #ui-bottom-dock { bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
+    #settings-popover {
+      top: calc(3.5rem + env(safe-area-inset-top));
+      right: max(0.75rem, env(safe-area-inset-right));
+      max-width: calc(100% - 1.5rem - env(safe-area-inset-left) - env(safe-area-inset-right));
+      max-height: calc(100% - 4.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      overflow-y: auto;
+    }
+
+    .imv-root #settings-popover { top: calc(4.5rem + env(safe-area-inset-top)); }
+
+    #info-drawer {
+      padding-top: max(1.25rem, env(safe-area-inset-top));
+      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+      padding-left: max(1.25rem, env(safe-area-inset-left));
+      padding-right: max(1.25rem, env(safe-area-inset-right));
+      overscroll-behavior: contain;
+      z-index: 2147483002;
+    }
+
+    @media (max-width: 639px) {
+      #ui-top-bar button, #ui-bottom-dock button, #btn-close-drawer { min-height: 44px; }
+
+      #ui-top-bar button {
+        min-width: 44px;
+        justify-content: center;
+      }
+
+      #ui-top-bar > div:last-child, #recipe-badge, #recipe-badge > div { min-width: 0; }
+      #ui-top-bar > div:last-child > button { flex-shrink: 0; }
+
+      #camera-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: min(100%, 22rem);
+        border-radius: 1rem;
+      }
+
+      #camera-controls button { justify-content: center; }
+      #camera-controls svg { flex-shrink: 0; }
+      body > .imv-top .imv-title strong { white-space: normal; }
+    }
+
+    @media (max-width: 720px), (pointer: coarse) {
+      body > .imv-top :is(button, .imv-back), #ui-bottom-dock button { min-height: 44px; min-width: 44px; }
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -212,11 +282,11 @@
 
     <!-- Direita: Receita Ativa, Perfil Gráfico e Som -->
     <div class="flex items-center gap-2 pointer-events-auto">
-      <div class="glass-pill px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-2.5">
+      <div id="recipe-badge" class="glass-pill px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-2.5">
         <span class="text-base sm:text-lg leading-none" id="badge-recipe-icon">🍲</span>
         <div class="flex flex-col text-left">
           <span class="text-[9px] sm:text-[10px] uppercase font-bold text-orange-300/80 tracking-wider leading-tight">Receita Ativa</span>
-          <span id="badge-recipe-status" class="text-[11px] sm:text-xs font-semibold text-orange-50 leading-tight max-w-[165px] sm:max-w-none truncate">Sopa do Acolhimento (Etapa 1/3)</span>
+          <span id="badge-recipe-status" class="text-[11px] sm:text-xs font-semibold text-orange-50 leading-tight max-w-[165px] sm:max-w-none truncate">Sopa do Acolhimento · 1/5</span>
         </div>
       </div>
 
@@ -269,7 +339,7 @@
   <!-- Dock Inferior com Câmeras e Ações Culinárias -->
   <footer id="ui-bottom-dock" class="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[96%] max-w-2xl flex flex-col items-center gap-2 z-20 pointer-events-none">
     <!-- Linha 1: 4 Câmeras -->
-    <div class="glass-pill p-1.5 rounded-full flex items-center justify-center gap-1 sm:gap-1.5 pointer-events-auto flex-wrap">
+    <div id="camera-controls" class="glass-pill p-1.5 rounded-full flex items-center justify-center gap-1 sm:gap-1.5 pointer-events-auto flex-wrap">
       <button id="cam-counter" class="btn-cam active px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold text-orange-100 flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5 opacity-85" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span>Bancada Central</span>
@@ -292,12 +362,7 @@
     <div class="flex items-center justify-center gap-2 pointer-events-auto flex-wrap">
       <button id="btn-cut-action" class="btn-cook btn-cook-primary px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-2">
         <span>🔪</span>
-        <span>Cortar Ingrediente</span>
-      </button>
-
-      <button id="btn-mix-action" class="btn-cook px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold text-orange-100 flex items-center gap-2">
-        <span>🥣</span>
-        <span>Mexer Panela</span>
+        <span>Cortar cenoura</span>
       </button>
 
       <button id="btn-drawer-toggle" class="btn-cook btn-cook-book px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold text-orange-50 flex items-center gap-2">
@@ -306,11 +371,7 @@
       </button>
     </div>
 
-    <!-- Dica sutil -->
-    <div id="hint-bubble" class="text-[11px] text-orange-100/80 flex items-center gap-1.5 bg-black/35 backdrop-blur-md px-3.5 py-1 rounded-full border border-orange-400/15 transition-opacity duration-500">
-      <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
-      <span>Clique nos alimentos na bancada ou nas panelas para sequenciar a receita</span>
-    </div>
+    <p id="recipe-guide" class="recipe-guide glass-pill" role="status"></p>
   </footer>
 
   <!-- Gaveta Lateral: Caderno Culinário -->
@@ -363,6 +424,7 @@
 
         <!-- Checklist visual de etapas da receita ativa -->
         <div id="recipe-steps-list" class="mt-3.5 pt-3 border-t border-orange-500/15 space-y-1.5 text-[11px]"></div>
+        <p id="recipe-ingredients" class="mt-3 text-[11px] text-orange-100/85"></p>
       </section>
 
       <section class="bg-black/25 p-4 rounded-2xl border border-orange-500/20">
@@ -392,23 +454,27 @@
        * ========================================================== */
       const RECIPES = {
         sopa: {
-          id: 'sopa',
           name: 'Sopa do Acolhimento',
           icon: '🍲',
+          ingredients: 'Cenoura, caldo de legumes e ervas frescas.',
           steps: [
-            { title: 'Cortar a cenoura em rodelas sobre a tábua', hint: 'Etapa 1/3: Cortar cenoura' },
-            { title: 'Mexer a panela para integrar e refogar o caldo', hint: 'Etapa 2/3: Mexer a panela' },
-            { title: 'Apreciar o aroma e concluir o preparo com calma', hint: 'Etapa 3/3: Pronto!' }
+            { label: 'Cortar cenoura', icon: '🔪', target: 'board', view: 'prep', action: 'carrot', hint: 'Fatie a cenoura na tábua.' },
+            { label: 'Adicionar cenoura', icon: '🥕', target: 'board', view: 'counter', action: 'soupTransfer', hint: 'Leve as rodelas para a panela de cobre.' },
+            { label: 'Despejar caldo', icon: '🫗', target: 'jug', view: 'stove', action: 'broth', hint: 'Incline a jarra e cubra as rodelas com caldo.' },
+            { label: 'Cozinhar e mexer', icon: '🥄', target: 'pot', view: 'stove', action: 'simmer', hint: 'Aqueça o caldo e mexa com a colher de madeira.' },
+            { label: 'Servir sopa', icon: '🍲', target: 'pot', view: 'serve', action: 'serve', hint: 'Use a concha para servir a sopa na tigela.' }
           ]
         },
         salada: {
-          id: 'salada',
           name: 'Salada das Cores & Frescor',
           icon: '🥗',
+          ingredients: 'Cenoura, tomate, ervas frescas e azeite.',
           steps: [
-            { title: 'Fatiar a cenoura fresca na tábua de madeira', hint: 'Etapa 1/3: Fatiar cenoura' },
-            { title: 'Selecionar tomates e ervas frescas na tigela', hint: 'Etapa 2/3: Selecionar tigela' },
-            { title: 'Finalizar com temperos e equilibrar as cores', hint: 'Etapa 3/3: Pronta!' }
+            { label: 'Cortar cenoura', icon: '🔪', target: 'board', view: 'prep', action: 'carrot', hint: 'Fatie a cenoura na tábua.' },
+            { label: 'Fatiar tomate', icon: '🍅', target: 'board', view: 'prep', action: 'tomato', hint: 'Corte o tomate em fatias.' },
+            { label: 'Montar salada', icon: '🥗', target: 'bowl', view: 'bowls', action: 'assemble', hint: 'Passe as fatias para a tigela com ervas frescas.' },
+            { label: 'Regar com azeite', icon: '🫗', target: 'jug', view: 'bowls', action: 'oil', hint: 'Regue a salada com um fio de azeite.' },
+            { label: 'Misturar salada', icon: '🥄', target: 'bowl', view: 'bowls', action: 'mix', hint: 'Misture com cuidado e sirva na própria tigela.' }
           ]
         }
       };
@@ -421,15 +487,12 @@
 
       const appState = {
         activeRecipe: 'sopa',
-        recipeStep: 1,
+        recipeStep: 0,
         quality: window.innerWidth < 768 ? 'equilibrado' : 'ultra',
         effectsEnabled: true,
         flameEnabled: true,
         ambientMotion: true,
-        cutsMade: 0,
-        maxCuts: 4,
-        isChopping: false,
-        isStirring: false,
+        heatOn: false,
         cameraTransitioning: false
       };
 
@@ -473,7 +536,7 @@
           filter.Q.value = 0.9;
 
           this.simmerGain = this.ctx.createGain();
-          this.simmerGain.gain.value = this.enabled ? 0.14 : 0;
+          this.simmerGain.gain.value = this.enabled && appState.heatOn ? 0.14 : 0;
 
           noise.connect(filter);
           filter.connect(this.simmerGain);
@@ -599,10 +662,14 @@
 
         toggle() {
           this.enabled = !this.enabled;
-          if (this.simmerGain && this.ctx) {
-            this.simmerGain.gain.setTargetAtTime(this.enabled ? 0.14 : 0, this.ctx.currentTime, 0.1);
-          }
+          this.updateSimmer();
           return this.enabled;
+        }
+
+        updateSimmer() {
+          if (this.simmerGain && this.ctx) {
+            this.simmerGain.gain.setTargetAtTime(this.enabled && appState.heatOn ? 0.14 : 0, this.ctx.currentTime, 0.1);
+          }
         }
       }
 
@@ -1925,16 +1992,11 @@
       }
       carrotAssembly.add(carrotTopGroup);
 
-      carrotAssembly.userData = {
-        interactive: true,
-        label: 'Cenoura Orgânica — Clique para cortar',
-        action: () => cutIngredient()
-      };
-      interactiveObjects.push(carrotAssembly);
+      prepStation.userData = { interactive: true, label: 'Tábua de preparo', recipeTarget: 'board' };
+      interactiveObjects.push(prepStation);
 
       // Rodelas 3D reais de cenoura (com física de queda e acomodação sobre a tábua)
       const carrotSlices = [];
-      const activeFallingSlices = [];
 
       function createCarrotSliceMesh(radius = 0.032, thickness = 0.014) {
         const geo = new THREE.CylinderGeometry(radius, radius * 0.96, thickness, 22);
@@ -1949,16 +2011,7 @@
         return mesh;
       }
 
-      // 2 rodelas iniciais já sobre a tábua (como no mockup de referência)
-      [
-        { x: 0.19, y: 0.045, z: 0.07, r: 0.028, rx: 0, rz: 0.04 },
-        { x: 0.24, y: 0.045, z: 0.02, r: 0.024, rx: 0.05, rz: -0.02 }
-      ].forEach((cfg) => {
-        const sl = createCarrotSliceMesh(cfg.r, 0.013);
-        sl.position.set(cfg.x, cfg.y, cfg.z);
-        sl.rotation.set(cfg.rx, Math.random() * Math.PI, cfg.rz);
-        prepStation.add(sl);
-      });
+      for (let i = 0; i < 3; i++) carrotSlices.push(createCarrotSliceMesh(0.03 + i * 0.004));
 
       // Faca de Cozinha 3D (lâmina de aço forjado + cabo de madeira com rebites)
       const knifeGroup = new THREE.Group();
@@ -2093,11 +2146,7 @@
       }
       bowlStation.add(herbCluster);
 
-      bowlStation.userData = {
-        interactive: true,
-        label: 'Tomates & Ervas Frescas — Clique para interagir',
-        action: () => interactWithBowl()
-      };
+      bowlStation.userData = { interactive: true, label: 'Tigela de cerâmica', recipeTarget: 'bowl' };
       interactiveObjects.push(bowlStation);
 
       // --- 9.3 Fogão Embutido + Chama GLSL + Panela de Cobre + Sopa Dinâmica GLSL + Vapor ---
@@ -2398,12 +2447,114 @@
       spoonGroup.visible = false;
       potGroup.add(spoonGroup);
 
-      potGroup.userData = {
-        interactive: true,
-        label: 'Panela de Cobre — Clique para mexer a sopa',
-        action: () => stirPot()
-      };
+      potGroup.userData = { interactive: true, label: 'Panela de cobre', recipeTarget: 'pot' };
       interactiveObjects.push(potGroup);
+
+      const boardTomato = createOrganicTomato(0.076);
+      boardTomato.position.set(0.215, 0.1, -0.075);
+      prepStation.add(boardTomato);
+      const tomatoCenterMat = new THREE.MeshStandardMaterial({ color: 0xab301b, roughness: 0.36 });
+      const tomatoSeedMat = new THREE.MeshStandardMaterial({ color: 0xffbf70, roughness: 0.44 });
+      const tomatoSliceGeo = new THREE.CylinderGeometry(0.068, 0.065, 0.015, 24);
+      const seedGeo = new THREE.SphereGeometry(0.007, 8, 6);
+      const tomatoSlices = Array.from({ length: 3 }, () => {
+        const slice = new THREE.Mesh(tomatoSliceGeo, [materials.tomatoSkin, tomatoCenterMat, tomatoCenterMat]);
+        slice.castShadow = true;
+        for (let i = 0; i < 6; i++) {
+          const angle = i * Math.PI / 3;
+          const seed = new THREE.Mesh(seedGeo, tomatoSeedMat);
+          seed.position.set(Math.cos(angle) * 0.037, 0.007, Math.sin(angle) * 0.037);
+          seed.rotation.y = -angle;
+          seed.scale.set(1.1, 0.27, 0.55);
+          slice.add(seed);
+        }
+        return slice;
+      });
+      const recipePieces = [...carrotSlices, ...tomatoSlices];
+      const saladBites = new THREE.Group();
+      bowlStation.add(saladBites);
+      const saladHerbs = new THREE.Group();
+      saladBites.add(saladHerbs);
+      const saladLeaf = new THREE.SphereGeometry(0.03, 10, 6);
+      for (let i = 0; i < 8; i++) {
+        const leaf = new THREE.Mesh(saladLeaf, materials.herbLeaf);
+        const angle = i * 2.399;
+        const radius = 0.055 + (i % 3) * 0.035;
+        leaf.position.set(Math.cos(angle) * radius, 0.097 + (i % 4) * 0.012, Math.sin(angle) * radius);
+        leaf.scale.set(1.18, 0.14, 0.62);
+        leaf.rotation.set(0.16 * (i % 3), angle, 0.12);
+        saladHerbs.add(leaf);
+      }
+      const saladSpoon = spoonGroup.clone();
+      bowlStation.add(saladSpoon);
+
+      const servingBowl = new THREE.Group();
+      servingBowl.position.set(1.26, counterSurfaceY, 0.34);
+      kitchenRoot.add(servingBowl);
+      const servingCeramic = bowlMesh.clone();
+      servingCeramic.scale.set(0.74, 0.62, 0.74);
+      servingBowl.add(servingCeramic);
+      addContactShadow(servingBowl, 0.39, 0.36, 0, 0.002, 0, 0.65);
+      const servedSoup = soupMesh.clone();
+      servingBowl.add(servedSoup);
+      const servedGarnish = new THREE.Group();
+      servingBowl.add(servedGarnish);
+      carrotSlices.forEach((slice, index) => {
+        const garnish = slice.clone();
+        const angle = index * 2.4;
+        garnish.scale.setScalar(0.75);
+        garnish.position.set(Math.cos(angle) * 0.077, 0.003, Math.sin(angle) * 0.077);
+        servedGarnish.add(garnish);
+      });
+      for (const index of [0, 2, 4]) {
+        const herb = soupBitList[index].mesh.clone();
+        herb.position.set(Math.cos(index) * 0.1, 0.004, Math.sin(index) * 0.1);
+        servedGarnish.add(herb);
+      }
+
+      const jug = new THREE.Group();
+      kitchenRoot.add(jug);
+      const jugBody = new THREE.Mesh(new THREE.LatheGeometry([
+        [0, 0], [0.073, 0], [0.087, 0.030], [0.09, 0.13], [0.070, 0.173],
+        [0.062, 0.235], [0.067, 0.25], [0.058, 0.252], [0.050, 0.225],
+        [0.058, 0.16], [0.075, 0.125], [0.073, 0.028], [0, 0.019]
+      ].map(([x, y]) => new THREE.Vector2(x, y)), 28), materials.ceramicTurquoise);
+      jugBody.castShadow = true;
+      jug.add(jugBody);
+      const jugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.063, 0.012, 9, 16, Math.PI * 1.25), materials.ceramicTurquoise);
+      jugHandle.position.set(-0.073, 0.136, 0);
+      jugHandle.rotation.z = Math.PI * 0.375;
+      jug.add(jugHandle);
+      const jugLip = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 10), materials.ceramicTurquoise);
+      jugLip.scale.set(1.1, 0.2, 0.75);
+      jugLip.position.set(0.062, 0.246, 0);
+      jug.add(jugLip);
+      jug.userData = { interactive: true, label: 'Jarra de caldo ou azeite', recipeTarget: 'jug' };
+      interactiveObjects.push(jug);
+
+      const ladle = new THREE.Group();
+      kitchenRoot.add(ladle);
+      const ladleScoop = new THREE.Mesh(new THREE.SphereGeometry(0.067, 20, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), materials.steelHandle.clone());
+      ladleScoop.material.side = THREE.DoubleSide;
+      ladleScoop.scale.y = 0.61;
+      ladle.add(ladleScoop);
+      const ladleHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.012, 0.31, 12), materials.woodShelf);
+      ladleHandle.position.set(-0.13, 0.112, 0);
+      ladleHandle.rotation.z = 1;
+      ladle.add(ladleHandle);
+      const ladleFill = servedSoup.clone();
+      ladleFill.scale.setScalar(0.22);
+      ladleFill.position.y = -0.008;
+      ladle.add(ladleFill);
+
+      const liquidStream = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.009, 1, 12),
+        new THREE.MeshStandardMaterial({ color: 0xd88728, roughness: 0.25, transparent: true, opacity: 0.87 }));
+      kitchenRoot.add(liquidStream);
+      const liquidAxis = new THREE.Vector3(0, 1, 0);
+      const guideRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.016, 8, 48),
+        new THREE.MeshBasicMaterial({ color: 0xffbf62, transparent: true, opacity: 0.62, depthWrite: false }));
+      guideRing.rotation.x = -Math.PI / 2;
+      kitchenRoot.add(guideRing);
 
       /* ==========================================================
        * 10. CÂMERAS CINEMATOGRÁFICAS PRESERVADAS (4 PRESETS)
@@ -2411,21 +2562,29 @@
       const camPresets = {
         counter: { pos: new THREE.Vector3(0.0, 2.02, 2.75), target: new THREE.Vector3(0.0, 1.24, -0.08) },
         stove:   { pos: new THREE.Vector3(1.18, 1.88, 1.32), target: new THREE.Vector3(0.84, 1.28, 0.0) },
-        bowls:   { pos: new THREE.Vector3(-0.32, 1.76, 1.22), target: new THREE.Vector3(-0.38, 1.24, 0.06) },
+        bowls:   { pos: new THREE.Vector3(-0.29, 1.91, 1.32), target: new THREE.Vector3(-0.06, 1.23, 0.03) },
+        prep:    { pos: new THREE.Vector3(-0.91, 1.86, 1.34), target: new THREE.Vector3(-0.86, 1.18, 0.12) },
+        serve:   { pos: new THREE.Vector3(1.14, 1.96, 1.64), target: new THREE.Vector3(1.04, 1.26, 0.15) },
         wide:    { pos: new THREE.Vector3(2.45, 2.72, 3.65), target: new THREE.Vector3(-0.08, 1.32, -0.35) }
       };
 
       const targetCamPos = camPresets.counter.pos.clone();
       const targetCamLook = camPresets.counter.target.clone();
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let cameraLerpAlpha = 0;
 
-      function setCameraPreset(key) {
+      function setCameraPreset(key, immediate = reduceMotion.matches) {
         const p = camPresets[key];
         if (!p) return;
         targetCamPos.copy(p.pos);
         targetCamLook.copy(p.target);
         appState.cameraTransitioning = true;
         cameraLerpAlpha = 0.06;
+        if (immediate) {
+          camera.position.copy(targetCamPos);
+          controls.target.copy(targetCamLook);
+          appState.cameraTransitioning = false;
+        }
 
         document.querySelectorAll('.btn-cam').forEach((b) => b.classList.remove('active'));
         const activeBtn = document.getElementById(`cam-${key}`);
@@ -2449,123 +2608,345 @@
         setTimeout(() => el.remove(), 3500);
       }
 
+      const recipeButton = document.getElementById('btn-cut-action');
+      const recipeGuide = document.getElementById('recipe-guide');
+      let recipeAnimation = null;
+      const jugRest = new THREE.Vector3();
+      const floatingCarrots = [];
+      const targetMarkers = {
+        board: [prepStation, 0.041, 0.39, 0.246],
+        bowl: [bowlStation, 0.012, 0.265, 0.265],
+        pot: [stoveStation, 0.027, 0.34, 0.33],
+        jug: [jug, 0.012, 0.14, 0.13]
+      };
+
+      function currentStep() {
+        return RECIPES[appState.activeRecipe].steps[appState.recipeStep];
+      }
+
       function updateRecipeUI() {
-        const rec = RECIPES[appState.activeRecipe];
-        const stepIdx = Math.min(appState.recipeStep - 1, rec.steps.length - 1);
-        document.getElementById('badge-recipe-icon').textContent = rec.icon;
-        document.getElementById('badge-recipe-status').textContent = `${rec.name} (${rec.steps[stepIdx].hint})`;
+        const recipe = RECIPES[appState.activeRecipe];
+        const step = currentStep();
+        const running = Boolean(recipeAnimation);
+        document.getElementById('badge-recipe-icon').textContent = recipe.icon;
+        document.getElementById('badge-recipe-status').textContent =
+          `${recipe.name} · ${step ? `${appState.recipeStep + 1}/${recipe.steps.length}` : 'Pronta'}`;
+        recipeButton.textContent = step ? `${step.icon} ${step.label}` : '↻ Preparar de novo';
+        recipeButton.setAttribute('aria-disabled', String(running));
+        recipeGuide.textContent = step
+          ? `${appState.recipeStep + 1}/${recipe.steps.length} · ${running ? 'Em preparo… ' : ''}${step.hint}`
+          : appState.activeRecipe === 'sopa' ? 'Sopa servida. Bom apetite!' : 'Salada pronta. Bom apetite!';
+        guideRing.visible = Boolean(step) && !running;
+        if (step) {
+          const [station, y, width, depth] = targetMarkers[step.target];
+          guideRing.position.copy(station.position);
+          guideRing.position.y += y;
+          guideRing.scale.set(width, depth, 1);
+        }
 
         const list = document.getElementById('recipe-steps-list');
-        list.innerHTML = '';
-        rec.steps.forEach((st, idx) => {
-          const done = (idx + 1) < appState.recipeStep || (appState.recipeStep === 3 && idx === 2);
-          const current = (idx + 1) === appState.recipeStep && appState.recipeStep < 3;
+        list.replaceChildren();
+        recipe.steps.forEach((item, index) => {
+          const done = index < appState.recipeStep;
+          const current = index === appState.recipeStep;
           const row = document.createElement('div');
-          row.className = `flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${done ? 'bg-green-950/40 text-green-200 border border-green-500/25' : current ? 'bg-orange-500/20 text-orange-50 border border-orange-400/40' : 'text-orange-200/55'}`;
-          row.innerHTML = `<span>${done ? '✅' : current ? '👉' : '○'}</span><span>${st.title}</span>`;
+          row.dataset.state = done ? 'done' : current ? 'current' : 'pending';
+          if (current) row.setAttribute('aria-current', 'step');
+          row.className = `px-2.5 py-1.5 rounded-lg ${done ? 'bg-green-950/40 text-green-200' : current ? 'bg-orange-500/20 text-orange-50' : 'text-orange-200/70'}`;
+          row.textContent = `${done ? '✓' : index + 1 + '.'} ${item.label}`;
           list.appendChild(row);
         });
-      }
-
-      // Animação real de corte com faca 3D + encurtamento da cenoura + queda física de rodelas 3D
-      let chopAnimTime = 0;
-      let sliceSpawnedForCurrentChop = false;
-
-      function cutIngredient() {
-        if (appState.isChopping) return;
-        appState.isChopping = true;
-        chopAnimTime = 0;
-        sliceSpawnedForCurrentChop = false;
-
-        // Se já cortou todas as rodelas, renova suavemente uma cenoura fresca
-        if (appState.cutsMade >= appState.maxCuts) {
-          appState.cutsMade = 0;
-          carrotMesh.scale.x = 1.0;
-          carrotMesh.position.x = 0;
-          carrotSlices.forEach((s) => prepStation.remove(s));
-          carrotSlices.length = 0;
-        }
-      }
-
-      function spawnFreshCarrotSlice() {
-        audio.playChop();
-        appState.cutsMade += 1;
-
-        // Encurta fisicamente a cenoura na ponta direita
-        const remainRatio = Math.max(0.45, 1.0 - appState.cutsMade * 0.13);
-        carrotMesh.scale.x = remainRatio;
-        carrotMesh.position.x = -(1.0 - remainRatio) * 0.15;
-
-        // Cria rodela 3D real com textura úmida interna
-        const sliceRadius = 0.025 + (appState.cutsMade * 0.003);
-        const slice = createCarrotSliceMesh(sliceRadius, 0.014);
-        const startX = 0.14 - appState.cutsMade * 0.022;
-        slice.position.set(startX, 0.088, 0.02);
-        slice.rotation.set(0.3, Math.random() * Math.PI, Math.PI / 2 - 0.25);
-        prepStation.add(slice);
-        carrotSlices.push(slice);
-
-        // Física simplificada de queda, quique e acomodação sobre a tábua
-        activeFallingSlices.push({
-          mesh: slice,
-          vx: 0.32 + Math.random() * 0.16,
-          vy: 0.42,
-          vz: (Math.random() - 0.5) * 0.28,
-          vrz: -7.5,
-          settled: false
+        document.getElementById('recipe-ingredients').textContent = recipe.ingredients;
+        document.querySelectorAll('.btn-select-rec').forEach(button => {
+          const selected = button.dataset.recipe === appState.activeRecipe;
+          button.classList.toggle('active', selected);
+          button.setAttribute('aria-pressed', String(selected));
         });
+      }
 
-        // Avanço da receita ativa
-        if (appState.recipeStep === 1) {
-          appState.recipeStep = 2;
-          updateRecipeUI();
-          if (appState.activeRecipe === 'sopa') {
-            showToast('🥕 Cenoura cortada em rodelas! Agora clique em "Mexer Panela" para refogar o caldo.');
-          } else {
-            showToast('🥕 Cenoura fatiada com cuidado! Agora clique na tigela de tomates e ervas.');
+      function setHeat(on) {
+        appState.heatOn = on;
+        updateCookingEffects();
+        audio.updateSimmer();
+      }
+
+      function updateCookingEffects() {
+        const flameVisible = appState.heatOn && appState.flameEnabled;
+        flameRing.visible = flameVisible;
+        flameLight.visible = flameVisible;
+        steamGroup.visible = appState.heatOn && appState.effectsEnabled;
+        bubblesGroup.visible = steamGroup.visible;
+      }
+
+      function resetRecipe(id = appState.activeRecipe) {
+        recipeAnimation = null;
+        appState.activeRecipe = id;
+        appState.recipeStep = 0;
+        const soup = id === 'sopa';
+        setHeat(false);
+        floatingCarrots.length = 0;
+        soupMesh.visible = soupBitsGroup.visible = false;
+        soupMesh.position.y = 0.236;
+        soupBitsGroup.position.y = 0.238;
+        tomatoCenterMat.roughness = 0.36;
+        soupMesh.scale.setScalar(1);
+        soupUniforms.uStirEnergy.value = soupUniforms.uSwirlAngle.value = 0;
+        recipePieces.forEach(piece => {
+          prepStation.add(piece);
+          piece.visible = false;
+          piece.rotation.set(0, 0, 0);
+        });
+        carrotMesh.scale.x = 1;
+        carrotMesh.position.x = 0;
+        boardTomato.visible = !soup;
+        boardTomato.scale.setScalar(1);
+        tomatoMeshes.forEach(tomato => { tomato.visible = soup; });
+        saladBites.rotation.y = 0;
+        saladHerbs.visible = false;
+        saladHerbs.rotation.x = 0;
+        knifeGroup.position.copy(knifeRestPos);
+        knifeGroup.rotation.copy(knifeRestRot);
+        spoonGroup.visible = saladSpoon.visible = ladle.visible = liquidStream.visible = false;
+        servedSoup.visible = servedGarnish.visible = false;
+        servingBowl.visible = soup;
+        jugRest.set(soup ? 0.44 : 0.27, counterSurfaceY, soup ? 0.34 : 0.30);
+        jug.position.copy(jugRest);
+        jug.rotation.set(0, soup ? 0 : Math.PI, 0);
+        updateRecipeUI();
+      }
+
+      function animateRecipe(duration, frame, finish = () => {}) {
+        recipeAnimation = { duration, frame, finish, elapsed: 0 };
+      }
+
+      function advanceRecipeAnimation(dt) {
+        if (!recipeAnimation) return;
+        const animation = recipeAnimation;
+        animation.elapsed += dt;
+        const progress = Math.min(animation.elapsed / animation.duration, 1);
+        animation.frame(progress);
+        if (progress < 1) return;
+        animation.finish();
+        recipeAnimation = null;
+        appState.recipeStep += 1;
+        updateRecipeUI();
+        if (!currentStep()) audio.playChime(587.33);
+      }
+
+      function runRecipeStep(target) {
+        if (recipeAnimation) return;
+        const step = currentStep();
+        if (!step) {
+          if (!target) {
+            resetRecipe();
+            setCameraPreset('prep');
           }
-        } else {
-          showToast('🔪 Nova rodela cortada com precisão sobre a tábua.');
+          return;
         }
+        if (target && target !== step.target) {
+          showToast(step.hint);
+          return;
+        }
+        setCameraPreset(step.view);
+        recipeActions[step.action]();
+        updateRecipeUI();
       }
 
-      // Interação com a tigela de tomates & ervas
-      let bowlBounceTime = 0;
-      function interactWithBowl() {
+      function cutFood(pieces, isTomato) {
+        let sliced = 0;
+        const boardHeight = 0.046;
+        animateRecipe(1.65, progress => {
+          const stroke = progress * pieces.length;
+          const index = Math.min(Math.floor(stroke), pieces.length - 1);
+          const beat = stroke - index;
+          const x = isTomato ? 0.25 - index * 0.032 : 0.125 - index * 0.032;
+          const z = isTomato ? -0.075 : 0.02;
+          knifeGroup.rotation.set(0, Math.PI / 2, 0);
+          knifeGroup.position.set(x, 0.059 + Math.abs(beat * 2 - 1) * 0.16, z + 0.13);
+          const count = Math.min(pieces.length, Math.floor(stroke + 0.5));
+          while (sliced < count) {
+            const piece = pieces[sliced];
+            piece.visible = true;
+            piece.position.set(x, boardHeight, z + (isTomato ? -0.10 : 0.07) + (sliced % 2) * 0.04);
+            piece.rotation.y = sliced * 0.5;
+            sliced += 1;
+            if (isTomato) {
+              boardTomato.scale.x = 1 - sliced * 0.25;
+              boardTomato.visible = sliced < pieces.length;
+            } else {
+              carrotMesh.scale.x = 1 - sliced * 0.14;
+              carrotMesh.position.x = -sliced * 0.016;
+            }
+            audio.playChop();
+          }
+          if (sliced) {
+            pieces[sliced - 1].position.y = boardHeight + Math.max(0, 1 - (stroke - sliced + 0.5) * 2) * 0.042;
+          }
+        }, () => {
+          pieces.forEach(piece => { piece.position.y = boardHeight; });
+          knifeGroup.position.copy(knifeRestPos);
+          knifeGroup.rotation.copy(knifeRestRot);
+        });
+      }
+
+      const smooth = progress => progress * progress * (3 - 2 * progress);
+      const clampProgress = value => THREE.MathUtils.clamp(value, 0, 1);
+
+      function transferFood(pieces, intoSoup) {
+        const destination = intoSoup ? potGroup : saladBites;
+        const arrivals = pieces.map((piece, index) => {
+          const start = piece.getWorldPosition(new THREE.Vector3());
+          const angle = index * 2.399;
+          const radius = index % 2 === 0 ? 0.105 : 0.135;
+          const landing = new THREE.Vector3(Math.cos(angle) * radius, intoSoup ? 0.075 : 0.072 + index * 0.01, Math.sin(angle) * radius);
+          const end = destination.localToWorld(landing.clone());
+          const arc = start.clone().lerp(end, 0.56);
+          arc.y += intoSoup ? 0.72 : 0.48;
+          kitchenRoot.attach(piece);
+          return { piece, path: new THREE.QuadraticBezierCurve3(start, arc, end), landing, angle, radius };
+        });
         audio.playHerbRustle();
-        bowlBounceTime = 0.55;
-        if (appState.activeRecipe === 'salada' && appState.recipeStep === 2) {
-          appState.recipeStep = 3;
-          updateRecipeUI();
-          audio.playChime(587.33);
-          showToast('🥗 Salada das Cores & Frescor concluída! Tomates e ervas frescas equilibrados com harmonia.');
-        } else {
-          showToast('🍅 Tomates maduros e ervas frescas selecionados na tigela.');
-        }
+        animateRecipe(intoSoup ? 1.65 : 1.7, progress => {
+          arrivals.forEach(({ piece, path }, index) => {
+            const phase = clampProgress((progress - index * 0.055) / (1 - (arrivals.length - 1) * 0.055));
+            path.getPoint(smooth(phase), piece.position);
+            piece.rotation.set(Math.sin(phase * Math.PI) * 0.7, index * 0.46, Math.sin(phase * Math.PI) * 0.5);
+          });
+        }, () => {
+          arrivals.forEach(({ piece, landing, angle, radius }, index) => {
+            destination.add(piece);
+            piece.position.copy(landing);
+            piece.rotation.z = intoSoup ? 0 : 0.12 * (index % 3 - 1);
+            if (intoSoup) floatingCarrots.push({ piece, angle, radius });
+          });
+          if (!intoSoup) saladHerbs.visible = true;
+        });
       }
 
-      // Animação real de mexer a panela com colher 3D + ondulação no shader da sopa
-      let stirAnimTime = 0;
-      const STIR_DURATION = 2.6;
+      const streamVector = new THREE.Vector3();
+      function placeStream(origin, end, width) {
+        streamVector.subVectors(origin, end);
+        liquidStream.visible = true;
+        liquidStream.position.copy(end).addScaledVector(streamVector, 0.5);
+        liquidStream.scale.set(width, streamVector.length(), width);
+        liquidStream.quaternion.setFromUnitVectors(liquidAxis, streamVector.normalize());
+      }
 
-      function stirPot() {
-        if (appState.isStirring) return;
-        appState.isStirring = true;
-        stirAnimTime = 0;
-        spoonGroup.visible = true;
+      function fillPot(amount) {
+        soupMesh.visible = amount > 0;
+        soupMesh.position.y = 0.055 + 0.181 * amount;
+        soupMesh.scale.setScalar(0.95 + 0.05 * amount);
+        floatingCarrots.forEach(({ piece }) => { piece.position.y = Math.max(0.075, soupMesh.position.y + 0.003); });
+      }
+
+      function pourJug(intoSoup) {
+        const direction = intoSoup ? 1 : -1;
+        const destination = intoSoup ? stoveStation.position : bowlStation.position;
+        const raised = new THREE.Vector3(destination.x - direction * 0.24, counterSurfaceY + (intoSoup ? 0.47 : 0.39), destination.z + 0.043);
+        const origin = new THREE.Vector3();
+        const end = new THREE.Vector3();
+        liquidStream.material.color.setHex(intoSoup ? 0xd88728 : 0xe8bf45);
         audio.playStir();
-
-        if (appState.activeRecipe === 'sopa' && appState.recipeStep === 2) {
-          appState.recipeStep = 3;
-          updateRecipeUI();
-          setTimeout(() => {
-            audio.playChime(587.33);
-            showToast('🍲 Perfeito! O caldo está cremoso e perfumado. Sopa do Acolhimento concluída!');
-          }, 900);
-        } else {
-          showToast('🥄 Mexendo a panela suavemente... observe o movimento do caldo e do vapor.');
-        }
+        animateRecipe(1.9, progress => {
+          const lift = smooth(clampProgress(Math.min(progress / 0.26, (1 - progress) / 0.23)));
+          const tilt = smooth(clampProgress(Math.min((progress - 0.18) / 0.18, (0.82 - progress) / 0.18)));
+          jug.position.lerpVectors(jugRest, raised, lift);
+          jug.rotation.set(0, intoSoup ? 0 : Math.PI, -tilt * 1.35, 'YXZ');
+          const amount = clampProgress((progress - 0.32) / 0.38);
+          if (intoSoup) fillPot(amount);
+          liquidStream.visible = progress > 0.32 && progress < 0.71;
+          if (liquidStream.visible) {
+            jug.localToWorld(origin.set(0.093, 0.251, 0));
+            end.set(destination.x + Math.sin(progress * 18) * (intoSoup ? 0.028 : 0.095),
+              counterSurfaceY + (intoSoup ? potGroup.position.y + soupMesh.position.y : 0.14), destination.z + 0.04);
+            placeStream(origin, end, intoSoup ? 0.92 : 0.32);
+          }
+        }, () => {
+          liquidStream.visible = false;
+          if (!intoSoup) tomatoCenterMat.roughness = 0.26;
+        });
       }
+
+      function stirFood(inSoup) {
+        const spoon = inSoup ? spoonGroup : saladSpoon;
+        const initialRotation = saladBites.rotation.y;
+        if (inSoup) {
+          setHeat(true);
+          soupBitsGroup.visible = true;
+        }
+        audio.playStir();
+        spoon.visible = true;
+        animateRecipe(inSoup ? 3.2 : 2.15, progress => {
+          const contact = Math.sin(progress * Math.PI);
+          const angle = progress * Math.PI * (inSoup ? 6 : 4);
+          const radius = 0.12 * contact;
+          spoon.position.set(Math.cos(angle) * radius,
+            (inSoup ? 0.211 : 0.09) + (1 - contact) * 0.19, Math.sin(angle) * radius);
+          spoon.rotation.set(Math.sin(angle) * 0.27, -angle, -Math.cos(angle) * 0.27);
+          if (inSoup) {
+            soupUniforms.uStirEnergy.value = contact;
+            soupUniforms.uSwirlAngle.value = angle * 0.25;
+          } else {
+            saladBites.rotation.y = initialRotation + smooth(progress) * 2.33;
+            saladBites.children.forEach((piece, index) => {
+              piece.rotation.x = Math.sin(angle - index * 0.9) * contact * 0.24;
+            });
+          }
+        }, () => {
+          spoon.visible = false;
+          soupUniforms.uStirEnergy.value = 0;
+          if (inSoup) setHeat(false);
+        });
+      }
+
+      function serveSoup() {
+        const scoop = new THREE.Vector3(stoveStation.position.x, counterSurfaceY + 0.285, 0.045);
+        const lip = servingBowl.position.clone().add(new THREE.Vector3(-0.044, 0.34, 0));
+        const rest = scoop.clone().add(new THREE.Vector3(-0.1, 0.37, 0.09));
+        const end = servingBowl.position.clone();
+        const origin = new THREE.Vector3();
+        const arc = new THREE.QuadraticBezierCurve3(scoop, scoop.clone().lerp(lip, 0.5).add(new THREE.Vector3(0, 0.43, 0)), lip);
+        ladle.visible = true;
+        liquidStream.material.color.setHex(0xd88728);
+        audio.playStir();
+        animateRecipe(2.45, progress => {
+          if (progress < 0.19) {
+            ladle.position.lerpVectors(rest, scoop, smooth(progress / 0.19));
+          } else if (progress < 0.54) {
+            arc.getPoint(smooth((progress - 0.19) / 0.35), ladle.position);
+          } else {
+            ladle.position.lerpVectors(lip, rest, smooth(clampProgress((progress - 0.84) / 0.16)));
+          }
+          const amount = clampProgress((progress - 0.59) / 0.22);
+          ladle.rotation.z = -1.04 * smooth(clampProgress(Math.min((progress - 0.51) / 0.12, (0.93 - progress) / 0.11)));
+          ladleFill.visible = progress >= 0.19 && amount < 1;
+          servedSoup.visible = servedGarnish.visible = amount > 0.08;
+          servedSoup.position.y = 0.027 + amount * 0.073;
+          servedSoup.scale.setScalar(0.34 + amount * 0.24);
+          servedGarnish.position.y = servedSoup.position.y;
+          liquidStream.visible = amount > 0 && amount < 1;
+          if (liquidStream.visible) {
+            end.y = servingBowl.position.y + servedSoup.position.y;
+            placeStream(ladle.localToWorld(origin.set(0.058, -0.011, 0)), end, 0.78);
+          }
+          fillPot(1 - amount * 0.28);
+          soupBitsGroup.position.y = soupMesh.position.y + 0.003;
+        }, () => {
+          ladle.visible = liquidStream.visible = false;
+        });
+      }
+
+      const recipeActions = {
+        carrot: () => cutFood(carrotSlices, false),
+        tomato: () => cutFood(tomatoSlices, true),
+        soupTransfer: () => transferFood(carrotSlices, true),
+        assemble: () => transferFood(recipePieces, false),
+        broth: () => pourJug(true),
+        oil: () => pourJug(false),
+        simmer: () => stirFood(true),
+        mix: () => stirFood(false),
+        serve: serveSoup
+      };
 
       /* ==========================================================
        * 12. RAYCASTING (MOUSE E TOQUE) COM DESTAQUE SUTIL
@@ -2580,7 +2961,8 @@
       function findInteractiveRoot(obj) {
         let cur = obj;
         while (cur) {
-          if (cur.userData && cur.userData.interactive) return cur;
+          if (!cur.visible) return null;
+          if (cur.userData.interactive) return cur;
           cur = cur.parent;
         }
         return null;
@@ -2597,7 +2979,7 @@
         updatePointer(e.clientX, e.clientY);
         raycaster.setFromCamera(pointer, camera);
         const hits = raycaster.intersectObjects(interactiveObjects, true);
-        const root = hits.length > 0 ? findInteractiveRoot(hits[0].object) : null;
+        const root = hits.map(hit => findInteractiveRoot(hit.object)).find(Boolean);
 
         if (root !== hoveredRoot) {
           hoveredRoot = root;
@@ -2605,7 +2987,9 @@
         }
 
         if (root) {
-          tooltipText.textContent = root.userData.label;
+          const step = currentStep();
+          tooltipText.textContent = step && root.userData.recipeTarget === step.target
+            ? step.label : root.userData.label;
           tooltipEl.style.left = `${e.clientX}px`;
           tooltipEl.style.top = `${e.clientY}px`;
           tooltipEl.style.opacity = '1';
@@ -2627,7 +3011,11 @@
         raycaster.setFromCamera(pointer, camera);
         const hits = raycaster.intersectObjects(interactiveObjects, true);
         if (hits.length > 0) {
-          const root = findInteractiveRoot(hits[0].object);
+          const root = hits.map(hit => findInteractiveRoot(hit.object)).find(Boolean);
+          if (root?.userData.recipeTarget) {
+            runRecipeStep(root.userData.recipeTarget);
+            return;
+          }
           if (root && typeof root.userData.action === 'function') {
             root.userData.action();
           }
@@ -2672,9 +3060,7 @@
         }
       });
 
-      // Ações culinárias
-      document.getElementById('btn-cut-action').addEventListener('click', cutIngredient);
-      document.getElementById('btn-mix-action').addEventListener('click', stirPot);
+      recipeButton.addEventListener('click', () => runRecipeStep());
 
       // Câmeras
       document.getElementById('cam-counter').addEventListener('click', () => setCameraPreset('counter'));
@@ -2682,38 +3068,41 @@
       document.getElementById('cam-bowls').addEventListener('click', () => setCameraPreset('bowls'));
       document.getElementById('cam-wide').addEventListener('click', () => setCameraPreset('wide'));
 
-      // Gaveta Caderno Culinário
       const drawer = document.getElementById('info-drawer');
-      document.getElementById('btn-drawer-toggle').addEventListener('click', () => {
-        drawer.classList.remove('translate-x-full');
-      });
-      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+      const openBook = document.getElementById('btn-drawer-toggle');
+      const closeBook = document.getElementById('btn-close-drawer');
+      drawer.inert = true;
+      openBook.setAttribute('aria-controls', drawer.id);
+      openBook.setAttribute('aria-expanded', 'false');
+      function closeRecipeBook(focusTarget = openBook) {
         drawer.classList.add('translate-x-full');
+        drawer.inert = true;
+        openBook.setAttribute('aria-expanded', 'false');
+        focusTarget.focus();
+      }
+      openBook.addEventListener('click', () => {
+        drawer.classList.remove('translate-x-full');
+        drawer.inert = false;
+        openBook.setAttribute('aria-expanded', 'true');
+        closeBook.focus();
+      });
+      closeBook.addEventListener('click', () => closeRecipeBook());
+      drawer.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeRecipeBook();
       });
 
-      // Seleção de receita
-      document.querySelectorAll('.btn-select-rec').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const recId = btn.dataset.recipe;
-          if (!RECIPES[recId]) return;
-          appState.activeRecipe = recId;
-          appState.recipeStep = 1;
-          document.querySelectorAll('.btn-select-rec').forEach((b) => b.classList.remove('active'));
-          btn.classList.add('active');
-          updateRecipeUI();
-          showToast(`${RECIPES[recId].icon} Receita selecionada: ${RECIPES[recId].name}.`);
+      document.querySelectorAll('.btn-select-rec').forEach(button => {
+        button.addEventListener('click', () => {
+          resetRecipe(button.dataset.recipe);
+          closeRecipeBook(recipeButton);
+          setCameraPreset('prep');
         });
       });
 
       document.getElementById('btn-reset-recipe').addEventListener('click', () => {
-        appState.recipeStep = 1;
-        appState.cutsMade = 0;
-        carrotMesh.scale.x = 1.0;
-        carrotMesh.position.x = 0;
-        carrotSlices.forEach((s) => prepStation.remove(s));
-        carrotSlices.length = 0;
-        updateRecipeUI();
-        showToast('🔄 Receita reiniciada. Comece pela primeira etapa com tranquilidade.');
+        resetRecipe();
+        closeRecipeBook(recipeButton);
+        setCameraPreset('prep');
       });
 
       // Persistência segura das notas no Caderno Culinário
@@ -2764,11 +3153,11 @@
       document.getElementById('toggle-effects').addEventListener('change', (e) => {
         appState.effectsEnabled = e.target.checked;
         applyGraphicsProfile(appState.quality);
+        updateCookingEffects();
       });
       document.getElementById('toggle-flame').addEventListener('change', (e) => {
         appState.flameEnabled = e.target.checked;
-        flameRing.visible = appState.flameEnabled;
-        flameLight.visible = appState.flameEnabled;
+        updateCookingEffects();
       });
       document.getElementById('toggle-ambient-motion').addEventListener('change', (e) => {
         appState.ambientMotion = e.target.checked;
@@ -2781,8 +3170,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      // Inicializa UI e perfil
-      updateRecipeUI();
+      // Inicializa a bancada, o guia e o perfil gráfico
+      resetRecipe();
       applyGraphicsProfile(appState.quality);
 
       /* ==========================================================
@@ -2792,8 +3181,9 @@
 
       function animate() {
         requestAnimationFrame(animate);
-        const dt = Math.min(clock.getDelta(), 0.05);
-        const elapsed = clock.getElapsedTime();
+        const frameDelta = clock.getDelta();
+        const dt = Math.min(frameDelta, 0.05);
+        const elapsed = clock.elapsedTime;
 
         // 1. Transição suave de câmera com limites arquitetônicos
         if (appState.cameraTransitioning) {
@@ -2809,95 +3199,21 @@
         camera.position.z = Math.max(-0.4, Math.min(4.8, camera.position.z));
         camera.position.x = Math.max(-2.7, Math.min(3.1, camera.position.x));
 
-        // 2. Animação de corte com faca 3D
-        if (appState.isChopping) {
-          chopAnimTime += dt;
-          const dur = 0.72;
-          const cutX = 0.14 - appState.cutsMade * 0.022;
-          if (chopAnimTime < 0.24) {
-            const p = chopAnimTime / 0.24;
-            knifeGroup.position.lerpVectors(knifeRestPos, new THREE.Vector3(cutX - 0.12, 0.26, 0.02), p);
-            knifeGroup.rotation.set(0, 0, -0.25 * p);
-          } else if (chopAnimTime < 0.38) {
-            const p = (chopAnimTime - 0.24) / 0.14;
-            knifeGroup.position.set(cutX - 0.12, 0.26 - p * 0.195, 0.02);
-            knifeGroup.rotation.set(0, 0, -0.25 + p * 0.25);
-          } else if (chopAnimTime < 0.45) {
-            if (!sliceSpawnedForCurrentChop) {
-              sliceSpawnedForCurrentChop = true;
-              spawnFreshCarrotSlice();
-            }
-            knifeGroup.position.set(cutX - 0.12, 0.065, 0.02);
-          } else if (chopAnimTime < dur) {
-            const p = (chopAnimTime - 0.45) / (dur - 0.45);
-            knifeGroup.position.lerpVectors(new THREE.Vector3(cutX - 0.12, 0.14, 0.02), knifeRestPos, p);
-            knifeGroup.rotation.set(p * Math.PI / 2, 0, -0.08 * p);
-          } else {
-            knifeGroup.position.copy(knifeRestPos);
-            knifeGroup.rotation.copy(knifeRestRot);
-            appState.isChopping = false;
-          }
-        }
+        advanceRecipeAnimation(Math.min(frameDelta, 0.15));
 
-        // 3. Física simplificada das rodelas caindo sobre a tábua
-        for (let i = activeFallingSlices.length - 1; i >= 0; i--) {
-          const item = activeFallingSlices[i];
-          if (item.settled) continue;
-          item.vy -= 4.2 * dt; // Gravidade
-          item.mesh.position.x += item.vx * dt;
-          item.mesh.position.y += item.vy * dt;
-          item.mesh.position.z += item.vz * dt;
-          item.mesh.rotation.z = THREE.MathUtils.lerp(item.mesh.rotation.z, 0.03, dt * 8);
-          item.mesh.rotation.x = THREE.MathUtils.lerp(item.mesh.rotation.x, 0.02, dt * 8);
-
-          // Colisão com a superfície superior da tábua (y = 0.045)
-          if (item.mesh.position.y <= 0.045) {
-            item.mesh.position.y = 0.045;
-            if (Math.abs(item.vy) > 0.12) {
-              item.vy = -item.vy * 0.28;
-              item.vx *= 0.55;
-              item.vz *= 0.55;
-            } else {
-              item.settled = true;
-              activeFallingSlices.splice(i, 1);
-            }
-          }
-          // Mantém dentro dos limites da tábua
-          item.mesh.position.x = Math.min(0.32, Math.max(-0.32, item.mesh.position.x));
-          item.mesh.position.z = Math.min(0.18, Math.max(-0.18, item.mesh.position.z));
-        }
-
-        // 4. Animação de mexer a panela com colher 3D + resposta do líquido
-        if (appState.isStirring) {
-          stirAnimTime += dt;
-          const p = stirAnimTime / STIR_DURATION;
-          const fade = Math.sin(Math.min(1, p) * Math.PI);
-          const angle = stirAnimTime * 4.4;
-          const radius = 0.115 * fade;
-
-          spoonGroup.position.set(
-            Math.cos(angle) * radius,
-            0.22 + (1 - fade) * 0.24,
-            Math.sin(angle) * radius
-          );
-          spoonGroup.rotation.set(Math.sin(angle) * 0.28, -angle, -Math.cos(angle) * 0.28);
-
-          soupUniforms.uStirEnergy.value = THREE.MathUtils.lerp(soupUniforms.uStirEnergy.value, fade, dt * 6);
-          soupUniforms.uSwirlAngle.value += dt * 1.9 * fade;
-
-          if (stirAnimTime >= STIR_DURATION) {
-            appState.isStirring = false;
-            spoonGroup.visible = false;
-          }
-        } else {
-          soupUniforms.uStirEnergy.value = THREE.MathUtils.lerp(soupUniforms.uStirEnergy.value, 0, dt * 2.5);
+        if (soupMesh.visible && (appState.ambientMotion || appState.heatOn)) {
+          floatingCarrots.forEach(item => {
+            item.angle += dt * (0.11 + soupUniforms.uStirEnergy.value * 2.1);
+            item.piece.position.x = Math.cos(item.angle) * item.radius;
+            item.piece.position.z = Math.sin(item.angle) * item.radius;
+          });
         }
 
         // 5. Shaders de sopa, chama e ingredientes flutuantes
-        if (appState.ambientMotion) {
+        if (appState.ambientMotion || appState.heatOn) {
           soupUniforms.uTime.value = elapsed;
           flameUniforms.uTime.value = elapsed;
-          if (appState.flameEnabled) {
+          if (flameLight.visible) {
             flameLight.intensity = 0.8 + Math.sin(elapsed * 16.0) * 0.12;
           }
 
@@ -2910,7 +3226,7 @@
           });
 
           // Bolhas de fervura
-          if (appState.effectsEnabled) {
+          if (steamGroup.visible) {
             bubbles.forEach((b) => {
               if (!b.mesh.visible) return;
               const cycle = (elapsed * b.speed + b.phase) % 1.0;
@@ -2934,31 +3250,17 @@
           }
 
           // Movimento sutil das folhas e plantas
-          swayElements.forEach((el) => {
-            el.obj.rotation.z = Math.sin(elapsed * 1.1 + el.phase) * el.amp;
-          });
-        }
-
-        // 6. Feedback tátil na tigela de tomates ao clicar
-        if (bowlBounceTime > 0) {
-          bowlBounceTime = Math.max(0, bowlBounceTime - dt);
-          const s = 1 + Math.sin(bowlBounceTime * 18) * 0.04 * bowlBounceTime;
-          tomatoMeshes.forEach((t) => t.scale.setScalar(s));
+          if (appState.ambientMotion) {
+            swayElements.forEach((el) => {
+              el.obj.rotation.z = Math.sin(elapsed * 1.1 + el.phase) * el.amp;
+            });
+          }
         }
 
         renderer.render(scene, camera);
       }
 
       animate();
-
-      // Oculta dica inicial após alguns segundos
-      setTimeout(() => {
-        const hint = document.getElementById('hint-bubble');
-        if (hint) {
-          hint.style.opacity = '0';
-          setTimeout(() => hint.remove(), 600);
-        }
-      }, 7500);
 
       /* ==========================================================
        * 15. INTEGRAÇÃO PRESERVADA COM LAUNCHER & SISTEMA IMERSIVO
@@ -2973,10 +3275,14 @@
         scriptImersivo.src = '../../shared/imersivo.js?v=3';
         scriptImersivo.onload = function () {
           if (window.Imersivo) {
+            document.body.classList.toggle('kitchen-embedded', window.parent !== window);
             window.Imersivo.init({
-              ambienteId: 'cozinha-das-descobertas',
-              titulo: 'Cozinha das Descobertas',
-              tema: 'cozinha'
+              title: 'Cozinha das Descobertas',
+              accent: '#f97316',
+              subtitleSelector: '#badge-recipe-status',
+              hide: ['#ui-top-bar'],
+              actions: ['#btn-settings-toggle', '#btn-sound-toggle'],
+              collapseHide: ['#ui-bottom-dock']
             });
           }
         };

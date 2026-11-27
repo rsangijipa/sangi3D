@@ -1,44 +1,61 @@
-// Script para exportar o catálogo de apps para JSON estático (Vercel e offline)
-import http from 'node:http';
+// scripts/generate-catalog.mjs
+// Gera api/apps.json e launcher/api/apps.json de forma determinística e offline via scripts/lib/catalog.mjs.
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { scanCatalog } from './lib/catalog.mjs';
 
-const ROOT = process.cwd();
+export async function generateCatalog({ rootDir = process.cwd(), quiet = false } = {}) {
+  const apiDir = path.join(rootDir, 'api');
+  const launcherApiDir = path.join(rootDir, 'launcher', 'api');
+  const rootCatalogPath = path.join(apiDir, 'apps.json');
+  const launcherCatalogPath = path.join(launcherApiDir, 'apps.json');
 
-async function fetchFromRunningServer() {
-  return new Promise((resolve, reject) => {
-    http.get('http://127.0.0.1:5170/api/apps', (res) => {
-      let raw = '';
-      res.on('data', chunk => raw += chunk);
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(raw));
-        } catch (e) {
-          reject(e);
-        }
-      });
-    }).on('error', reject);
-  });
-}
-
-async function main() {
-  console.log('Obtendo catálogo de apps...');
-  let apps;
-  try {
-    apps = await fetchFromRunningServer();
-    console.log(`Catálogo obtido via servidor local: ${apps.length} apps encontrados.`);
-  } catch (err) {
-    console.log('Servidor local não estava rodando ou falhou. Mantendo arquivos existentes.');
-    return;
+  let existingCatalog = null;
+  if (fs.existsSync(rootCatalogPath)) {
+    try {
+      existingCatalog = JSON.parse(fs.readFileSync(rootCatalogPath, 'utf8'));
+    } catch {
+      existingCatalog = null;
+    }
   }
 
-  const jsonStr = JSON.stringify(apps, null, 2);
-  fs.mkdirSync(path.join(ROOT, 'api'), { recursive: true });
-  fs.mkdirSync(path.join(ROOT, 'launcher', 'api'), { recursive: true });
+  const { apps } = await scanCatalog({
+    rootDir,
+    coverDir: path.join(rootDir, 'launcher', 'capas'),
+    staticMode: true,
+    existingCatalog,
+  });
 
-  fs.writeFileSync(path.join(ROOT, 'api', 'apps.json'), jsonStr, 'utf8');
-  fs.writeFileSync(path.join(ROOT, 'launcher', 'api', 'apps.json'), jsonStr, 'utf8');
-  console.log('✅ api/apps.json e launcher/api/apps.json atualizados com sucesso!');
+  const cleanApps = apps.map((app) => {
+    const copy = { ...app };
+    delete copy.build;
+    if (copy.kind === 'project' && copy.path && !copy.url) {
+      const normPath = copy.path.replace(/\\/g, '/');
+      copy.url = `/${normPath}/dist/index.html`;
+    }
+    if (copy.status === 'concept' && !copy.url) {
+      copy.isConcept = true;
+    }
+    return copy;
+  });
+
+  const jsonStr = JSON.stringify(cleanApps, null, 2) + '\n';
+  fs.mkdirSync(apiDir, { recursive: true });
+  fs.mkdirSync(launcherApiDir, { recursive: true });
+  fs.writeFileSync(rootCatalogPath, jsonStr, 'utf8');
+  fs.writeFileSync(launcherCatalogPath, jsonStr, 'utf8');
+
+  if (!quiet) {
+    console.log(`✅ Catálogo gerado offline: ${cleanApps.length} entradas em api/apps.json e launcher/api/apps.json.`);
+  }
+  return cleanApps;
 }
 
-main().catch(console.error);
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isMain) {
+  generateCatalog().catch((err) => {
+    console.error('❌ Erro ao gerar catálogo:', err);
+    process.exit(1);
+  });
+}

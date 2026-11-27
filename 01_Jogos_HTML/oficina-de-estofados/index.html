@@ -700,7 +700,7 @@
         <div class="brand-mark" aria-hidden="true">OE</div>
         <div>
           <div class="brand-title">Oficina de Estofados</div>
-          <span class="brand-sub">Assento e encosto · Tensão, dobras e costuras PBR</span>
+          <span class="brand-sub">Modo realista · Espuma por densidade, tecido fio/viés e iluminação PBR</span>
         </div>
       </div>
 
@@ -864,6 +864,19 @@
             </div>
             <input type="range" id="rangeOffset" min="-30" max="30" step="1" value="12" aria-label="Deslocamento lateral da trama" />
           </div>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Rigidez no eixo de tração</span>
+              <span class="metric-val" id="metricAxisStiff">100%</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Fios trabalhando no viés</span>
+              <span class="metric-val" id="metricBias">0%</span>
+            </div>
+          </div>
+          <p class="desc" style="font-size:11.5px;">
+            Tecido plano estica pouco no fio (urdidura/trama) e muito no viés (45°). Com a trama girada, a tração dos grampos passa a puxar parte no viés: o pano cede, deforma e enruga na diagonal.
+          </p>
           <div class="grid-2">
             <button id="btnAutoAlign">✦ Alinhar no Esquadro</button>
             <button id="btnToggleGuide" class="btn-active" aria-pressed="true">Guia Visual: On</button>
@@ -945,20 +958,45 @@
             <span class="badge ok" id="pressStateBadge">Em repouso</span>
           </div>
           <p class="desc">
-            Pressione o centro do assento ou do encosto (clique direto na poltrona, botão abaixo ou tecla <strong>Espaço</strong>) e compare o retorno conforme o amortecimento.
+            Pressione o assento ou o encosto com a palma da mão (Ø 16 cm) — clique direto na poltrona, botão abaixo ou tecla <strong>Espaço</strong> — e compare densidade, tensão do tecido e viscoelasticidade.
           </p>
+
+          <div class="control-row">
+            <div class="control-label">
+              <span>Densidade da espuma</span>
+              <strong id="valDensity">D28</strong>
+            </div>
+            <div class="grid-2" role="radiogroup" aria-label="Densidade da espuma">
+              <button class="swatch-card" data-density="D23" role="radio">
+                <span class="swatch-name">D23</span>
+                <span class="swatch-meta">Macia · encosto, almofada</span>
+              </button>
+              <button class="swatch-card" data-density="D28" role="radio">
+                <span class="swatch-name">D28</span>
+                <span class="swatch-meta">Média · assento leve</span>
+              </button>
+              <button class="swatch-card" data-density="D33" role="radio">
+                <span class="swatch-name">D33</span>
+                <span class="swatch-meta">Firme · assento diário</span>
+              </button>
+              <button class="swatch-card" data-density="D45" role="radio">
+                <span class="swatch-name">D45</span>
+                <span class="swatch-meta">Muito firme · alto uso</span>
+              </button>
+            </div>
+          </div>
 
           <div class="control-row">
             <div class="control-label">
               <span>Força de pressão</span>
               <strong id="valForce">65 N</strong>
             </div>
-            <input type="range" id="rangeForce" min="20" max="120" step="5" value="65" aria-label="Força de pressão em Newtons" />
+            <input type="range" id="rangeForce" min="20" max="200" step="5" value="65" aria-label="Força de pressão em Newtons" />
           </div>
 
           <div class="control-row">
             <div class="control-label">
-              <span>Amortecimento da recuperação</span>
+              <span>Viscoelasticidade (memória da espuma)</span>
               <strong id="valDamping">0,45 (Equilibrado)</strong>
             </div>
             <input type="range" id="rangeDamping" min="0.08" max="0.92" step="0.02" value="0.45" aria-label="Fator de amortecimento da espuma e tecido" />
@@ -979,6 +1017,28 @@
             </div>
             <canvas id="oscilloscope" width="320" height="86" aria-label="Gráfico de deslocamento e recuperação do revestimento"></canvas>
           </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Pressão de contato</span>
+              <span class="metric-val" id="metricPressure">0,0 kPa</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Compressão da espuma</span>
+              <span class="metric-val" id="metricStrain">0%</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Tensão do tecido</span>
+              <span class="metric-val" id="metricMembrane">0 N/m</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Recuperação (t₉₀)</span>
+              <span class="metric-val" id="metricT90">—</span>
+            </div>
+          </div>
+          <p class="desc" style="font-size:11.5px;" id="foamNote">
+            Valores típicos aproximados de espuma PU flexível; fichas de fabricante variam.
+          </p>
         </section>
 
         <!-- Resumo de estado sempre visível -->
@@ -998,7 +1058,7 @@
             </div>
           </div>
           <p class="desc" style="font-size:11.5px;">
-            <strong>Aproximação física:</strong> malha de pano por restrições de distância (PBD/Verlet) limitada a <span id="iterCountLabel">6</span> iterações/quadro, colisão analítica simplificada com espuma elástica e amortecimento parametrizado.
+            <strong>Modelo físico:</strong> pano PBD/Verlet anisotrópico (fio × viés) com <span id="iterCountLabel">6</span> iterações/quadro; espuma PU com curva tensão–deformação de sólido celular (linear → platô → densificação) e ramo viscoelástico de Maxwell; tecido grampeado atua como membrana tensionada sobre a espuma.
           </p>
         </section>
       </div>
@@ -1053,7 +1113,8 @@
       <div style="border-top:1px solid var(--border);padding-top:10px;">
         <strong style="font-size:12.5px;display:block;margin-bottom:4px;">Dependências e Atalhos</strong>
         <ul>
-          <li>Three.js r128 carregado via CDN (`cdnjs.cloudflare.com`), com recuperação automática em HTML/2D caso offline.</li>
+          <li>Three.js r128 (vendor local, com reserva no cdnjs), com recuperação automática em HTML/2D caso offline.</li>
+          <li>Modo realista: iluminação por ambiente (IBL/PMREM), materiais físicos com brilho de fibra (linho) e verniz (couro), vivo tubular, grampos em U e sombra de contato. O Modo Leve desliga sombras e reduz resolução.</li>
           <li>Assets 3D, texturas PBR (linho e couro) e sons gerados 100% por código local (licença própria do projeto).</li>
           <li>Atalhos: <strong>1–4</strong> câmeras · <strong>Espaço</strong> pressionar centro · <strong>Ctrl+Z</strong> desfazer · <strong>R</strong> reiniciar.</li>
         </ul>
@@ -1063,6 +1124,12 @@
 
   <!-- Three.js r128 fixo via CDN -->
   <script src="/shared/vendor/three-r128.min.js"></script>
+  <script>
+    // Recuperação: se o vendor local não existir, carrega a mesma versão (r128) do cdnjs
+    if (typeof window.THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
 
   <script>
   (function () {
@@ -1071,7 +1138,7 @@
     /* =========================================================================
        1. ESTADO SERIALIZÁVEL (SEPARADO DA SIMULAÇÃO E DA CENA)
        ========================================================================= */
-    const STATE_VERSION = 1;
+    const STATE_VERSION = 2; // v2: densidade da espuma (aceita importar v1)
 
     function createPartState() {
       return {
@@ -1094,6 +1161,7 @@
         tension: 72,
         pressForce: 65,
         damping: 0.45,
+        foamDensity: 'D28', // 'D23' | 'D28' | 'D33' | 'D45'
         lightMode: 'natural', // 'natural' | 'rasante'
         liteMode: false,
         reducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -1196,7 +1264,14 @@
       btnExportJson: document.getElementById('btnExportJson'),
       btnImportJson: document.getElementById('btnImportJson'),
       fileImportInput: document.getElementById('fileImportInput'),
-      btnResetAll: document.getElementById('btnResetAll')
+      btnResetAll: document.getElementById('btnResetAll'),
+      metricAxisStiff: document.getElementById('metricAxisStiff'),
+      metricBias: document.getElementById('metricBias'),
+      valDensity: document.getElementById('valDensity'),
+      metricPressure: document.getElementById('metricPressure'),
+      metricStrain: document.getElementById('metricStrain'),
+      metricMembrane: document.getElementById('metricMembrane'),
+      metricT90: document.getElementById('metricT90')
     };
 
     const AudioFX = {
@@ -1305,7 +1380,10 @@
         roughness: 0.92,
         metalness: 0.02,
         bumpScale: 0.006,
-        stiffness: 0.88
+        stiffness: 0.88,
+        biasCompliance: 0.46, // linho: cede muito no viés
+        membrane: 1.0,        // fator de tensão de membrana
+        sheenHex: '#3a3327'
       },
       linho_salvia: {
         name: 'Linho Sálvia',
@@ -1316,7 +1394,10 @@
         roughness: 0.90,
         metalness: 0.02,
         bumpScale: 0.006,
-        stiffness: 0.88
+        stiffness: 0.88,
+        biasCompliance: 0.46,
+        membrane: 1.0,
+        sheenHex: '#2a3328'
       },
       couro_caramelo: {
         name: 'Couro Caramelo',
@@ -1325,9 +1406,12 @@
         valleyHex: '#633314',
         seamHex: '#e3c399',
         roughness: 1.0, // controlado pelo roughnessMap próprio
-        metalness: 0.06,
+        metalness: 0.0,
         bumpScale: 0.005,
-        stiffness: 0.95
+        stiffness: 0.95,
+        biasCompliance: 0.12, // laminado/couro: quase isotrópico
+        membrane: 1.25,
+        clearcoat: 0.28
       },
       couro_cafe: {
         name: 'Couro Café',
@@ -1336,9 +1420,12 @@
         valleyHex: '#251710',
         seamHex: '#c49f78',
         roughness: 1.0,
-        metalness: 0.08,
+        metalness: 0.0,
         bumpScale: 0.005,
-        stiffness: 0.95
+        stiffness: 0.95,
+        biasCompliance: 0.12,
+        membrane: 1.25,
+        clearcoat: 0.34
       }
     };
 
@@ -1445,7 +1532,7 @@
     }
 
     function generateLeatherTextures(spec) {
-      const size = 256;
+      const size = 512;
       const cColor = document.createElement('canvas');
       const cRough = document.createElement('canvas');
       cColor.width = cRough.width = size;
@@ -1460,7 +1547,7 @@
       const valley = hexToRgb(spec.valleyHex);
 
       // Células Worley/Voronoi periódicas para poros e grão de couro sintético
-      const grid = 16;
+      const grid = 64; // grão fino: células de ~4 mm na escala da almofada
       const ptsX = new Float32Array(grid * grid);
       const ptsY = new Float32Array(grid * grid);
       let seed = 4242;
@@ -1495,14 +1582,16 @@
           const edge = Math.min(1, (d2 - d1) * 2.4);
           const pore = Math.pow(edge, 0.55);
           // Micro-ondulação orgânica
-          const micro = 0.08 * Math.sin(x * 0.12 + Math.cos(y * 0.11) * 2.0);
+          const micro = 0.05 * Math.sin(x * 0.12 + Math.cos(y * 0.11) * 2.0);
           const hv = Math.max(0, Math.min(1, pore * 0.88 + 0.08 + micro));
           height[y * size + x] = hv;
 
           const idx = (y * size + x) * 4;
-          imgC.data[idx] = Math.round(valley[0] + (base[0] - valley[0]) * hv);
-          imgC.data[idx + 1] = Math.round(valley[1] + (base[1] - valley[1]) * hv);
-          imgC.data[idx + 2] = Math.round(valley[2] + (base[2] - valley[2]) * hv);
+          // Couro real tem pouco contraste de cor no grão: a leitura vem do relevo e do brilho
+          const tone = 0.62 + 0.38 * hv + 0.05 * Math.sin(x * 0.031 + y * 0.017);
+          imgC.data[idx] = Math.round(valley[0] + (base[0] - valley[0]) * tone);
+          imgC.data[idx + 1] = Math.round(valley[1] + (base[1] - valley[1]) * tone);
+          imgC.data[idx + 2] = Math.round(valley[2] + (base[2] - valley[2]) * tone);
           imgC.data[idx + 3] = 255;
 
           // Mapa próprio de rugosidade: sulcos foscos (~0.78), cristas acetinadas (~0.26) + marcas sutis de uso
@@ -1515,7 +1604,7 @@
       }
       ctxC.putImageData(imgC, 0, 0);
       ctxR.putImageData(imgR, 0, 0);
-      const cNormal = createNormalFromHeight(height, size, 3.8);
+      const cNormal = createNormalFromHeight(height, size, 2.2);
       return { cColor, cRough, cNormal };
     }
 
@@ -1577,7 +1666,119 @@
     }
 
     /* =========================================================================
-       4. MOTOR DE FÍSICA DE PANO (VERLET / PBD COM ESPUMA E AMORTECIMENTO)
+       3b. ESPUMA PU FLEXÍVEL — SÓLIDO CELULAR + RAMO VISCOELÁSTICO (MAXWELL)
+       -------------------------------------------------------------------------
+       σ(ε): trecho linear (paredes das células fletindo) → platô (flambagem das
+       células) → densificação (células colapsadas se tocando), ajustado para que
+       σ(40%) ≈ CLD40 típico de cada densidade. Valores aproximados de mercado.
+       ========================================================================= */
+    const FOAMS = {
+      D23: { name: 'D23', density: 23, E: 22, cld40: 3.0, hyst: 0.36, use: 'Macia — encostos e almofadas' },
+      D28: { name: 'D28', density: 28, E: 30, cld40: 4.2, hyst: 0.30, use: 'Média — assentos de uso leve' },
+      D33: { name: 'D33', density: 33, E: 38, cld40: 5.3, hyst: 0.26, use: 'Firme — assentos de uso diário' },
+      D45: { name: 'D45', density: 45, E: 52, cld40: 7.2, hyst: 0.20, use: 'Muito firme — alto tráfego' }
+    };
+    const INDENTER_RADIUS = 0.08;                                        // palma da mão Ø 16 cm
+    const INDENTER_AREA = Math.PI * INDENTER_RADIUS * INDENTER_RADIUS;   // ≈ 0,0201 m²
+    const EPS_Y = 0.06;
+    const EPS_MAX = 0.82;
+    const RAIL_TOP_Y = 0.006;     // topo da travessa no referencial da almofada
+    const RAIL_BOTTOM_Y = -0.05;  // base da travessa
+
+    // Tensão de equilíbrio da espuma em kPa para a deformação ε (compressão positiva)
+    function foamStressKPa(foam, eps) {
+      if (eps <= 0) return foam.E * eps;
+      const sy = foam.E * EPS_Y;
+      let s = eps < EPS_Y
+        ? foam.E * eps
+        : sy + ((foam.cld40 - sy) / (0.40 - EPS_Y)) * (eps - EPS_Y);
+      if (eps > 0.5) {
+        const r = (eps - 0.5) / Math.max(0.02, 0.86 - eps);
+        s += foam.cld40 * 2.2 * r * r;
+      }
+      return s;
+    }
+
+    // Tensão de membrana do tecido grampeado (N/m): pano solto quase não sustenta carga
+    function membraneTensionNpm(fabric, tensionPct, sidesFixed, cornersFixed) {
+      if (sidesFixed < 2) return 12 + sidesFixed * 18;
+      const base = 60 + 240 * (tensionPct / 100);
+      const closure = 0.7 + 0.075 * cornersFixed;
+      return base * closure * fabric.membrane;
+    }
+
+    class FoamModel {
+      constructor() { this.reset(); }
+
+      reset() {
+        this.disp = 0;        // m (afundamento no centro do contato)
+        this.vel = 0;         // m/s
+        this.q = 0;           // kPa (tensão no ramo de Maxwell)
+        this.force = 0;       // N efetivamente aplicada
+        this.time = 0;
+        this.wasPressed = false;
+        this.releasedAt = -1;
+        this.dispAtRelease = 0;
+        this.t90 = null;
+        this.strain = 0;
+        this.pressureKPa = 0;
+        this.membraneN = 0;
+      }
+
+      step(dt, thickness, appliedN, damping, foam, membraneT) {
+        const pressed = appliedN > 0;
+        // A mão carrega em ~0,12 s e solta em ~0,05 s
+        const tauF = pressed ? 0.12 : 0.05;
+        this.force += (appliedN - this.force) * (1 - Math.exp(-dt / tauF));
+
+        const tauRelax = 0.05 + damping * 1.35;          // s — memória viscoelástica
+        const Em = foam.E * (0.15 + foam.hyst * 1.2);    // kPa — rigidez do ramo de Maxwell (curto × longo prazo ≈ 1,5)
+        const mass = pressed ? 0.9 : 0.22;               // mão + antebraço vs. só espuma/tecido
+        const k0 = (INDENTER_AREA * 1000 * foam.E) / thickness;
+        const zeta = 0.06 + damping * 0.9;
+        const c = 2 * zeta * Math.sqrt(k0 * mass);
+        const geo = 3.5;                                  // fator geométrico da membrana ao redor do contato
+
+        const n = Math.max(1, Math.ceil(dt / 0.0006));
+        const h = dt / n;
+        const decay = Math.exp(-h / tauRelax);
+        const maxD = EPS_MAX * thickness;
+        for (let i = 0; i < n; i++) {
+          const eps = this.disp / thickness;
+          const sig = foamStressKPa(foam, eps) + this.q;
+          const Ffoam = sig * INDENTER_AREA * 1000;
+          const Fmem = geo * membraneT * this.disp;
+          const acc = (this.force - Ffoam - Fmem - c * this.vel) / mass;
+          this.vel += acc * h;
+          const d = this.vel * h;
+          this.disp += d;
+          this.q = this.q * decay + Em * (d / thickness);
+          if (this.disp > maxD) { this.disp = maxD; if (this.vel > 0) this.vel = 0; }
+          if (this.disp < -0.004) { this.disp = -0.004; if (this.vel < 0) this.vel = 0; }
+        }
+
+        // Medição do tempo de recuperação até 10% do afundamento (t90)
+        this.time += dt;
+        if (pressed && !this.wasPressed) {
+          this.t90 = null;
+          this.releasedAt = -1;
+        } else if (!pressed && this.wasPressed) {
+          this.releasedAt = this.time;
+          this.dispAtRelease = this.disp;
+        }
+        if (!pressed && this.releasedAt >= 0 && this.t90 === null &&
+            this.dispAtRelease > 0.002 && this.disp <= this.dispAtRelease * 0.1) {
+          this.t90 = this.time - this.releasedAt;
+        }
+        this.wasPressed = pressed;
+        this.strain = Math.max(0, this.disp / thickness);
+        this.pressureKPa = this.force / INDENTER_AREA / 1000;
+        this.membraneN = membraneT;
+      }
+    }
+
+    /* =========================================================================
+       4. MOTOR DE FÍSICA DE PANO (VERLET / PBD ANISOTRÓPICO SOBRE A ESPUMA)
        ========================================================================= */
     class ClothPatch {
       constructor(opts) {
@@ -1590,6 +1791,8 @@
         this.clothW = opts.clothW;
         this.clothD = opts.clothD;
         this.bevel = opts.bevel || 0.032;
+        this.railX = opts.railX || 0.034; // largura da travessa além da espuma (laterais)
+        this.railZ = opts.railZ || 0.018; // idem frente/fundo
 
         const count = this.nx * this.nz;
         this.pos = new Float32Array(count * 3);
@@ -1598,9 +1801,12 @@
         this.pinned = new Uint8Array(count);
         this.pinTarget = new Float32Array(count * 3);
 
-        // Estado da depressão elástica central (massa-mola acoplada para garantir curva fiel ao amortecimento)
-        this.centerDisp = 0;
-        this.centerVel = 0;
+        // Espuma viscoelástica sob o ponto de contato + orientação do fio do tecido
+        this.foam = new FoamModel();
+        this.grainRad = 0;
+        this.biasCompliance = 0.46;
+        this.axisStiffness = 1;
+        this.misalign = 0;
         this.pressPointX = 0;
         this.pressPointZ = 0;
         this.pressActive = false;
@@ -1612,6 +1818,9 @@
       }
 
       idx(ix, iz) { return iz * this.nx + ix; }
+
+      get centerDisp() { return this.foam ? this.foam.disp : 0; }
+      get centerVel() { return this.foam ? this.foam.vel : 0; }
 
       // Altura da superfície da espuma chanfrada em coordenadas locais (espuma vai de y=0 até y=foamH)
       foamSurfaceY(x, z) {
@@ -1625,19 +1834,36 @@
         if (r > 0 && r <= b) {
           yTop = (this.foamH - b) + Math.sqrt(Math.max(0, b * b - r * r));
         } else if (r > b) {
-          // Lateral da espuma descendo até a armação
+          // Lateral da espuma descendo até o topo da travessa
           const excess = r - b;
-          yTop = Math.max(0.004, (this.foamH - b) - excess * 1.45);
+          yTop = Math.max(RAIL_TOP_Y, (this.foamH - b) - excess * 1.45);
         }
-        // Deformação local da espuma sob pressão
-        const distP = Math.hypot(x - this.pressPointX, z - this.pressPointZ);
-        const radius = Math.min(this.foamW, this.foamD) * 0.34;
-        const gauss = Math.exp(-(distP * distP) / (2 * radius * radius * 0.42));
-        const indent = this.centerDisp * gauss;
-        return Math.max(0.004, yTop - indent);
+        // Além da face externa da travessa o tecido dobra e desce pela madeira
+        const ox = Math.abs(x) - (hw + this.railX);
+        const oz = Math.abs(z) - (hd + this.railZ);
+        const out = Math.max(ox, oz);
+        if (out > 0) return Math.max(RAIL_BOTTOM_Y, RAIL_TOP_Y - out * 4);
+        // Deformação local da espuma: fundo quase plano sob a palma, borda que se espalha
+        let indent = 0;
+        const cd = this.centerDisp;
+        if (cd !== 0) {
+          const distP = Math.hypot(x - this.pressPointX, z - this.pressPointZ);
+          const a = INDENTER_RADIUS;
+          let prof;
+          if (distP < a) {
+            const t = distP / a;
+            prof = 1 - 0.12 * t * t;
+          } else {
+            const t = (distP - a) / (0.45 * a + 0.04);
+            prof = 0.88 * Math.exp(-t * t);
+          }
+          indent = cd * prof;
+        }
+        return Math.max(RAIL_TOP_Y - 0.002, yTop - indent);
       }
 
       initParticles() {
+        if (this.foam) this.foam.reset();
         for (let iz = 0; iz < this.nz; iz++) {
           const v = iz / (this.nz - 1) - 0.5;
           for (let ix = 0; ix < this.nx; ix++) {
@@ -1660,7 +1886,9 @@
           const dy = this.restPos[b * 3 + 1] - this.restPos[a * 3 + 1];
           const dz = this.restPos[b * 3 + 2] - this.restPos[a * 3 + 2];
           const rest = Math.hypot(dx, dy, dz);
-          this.constraints.push({ a, b, rest, stiffness });
+          // Direção no plano do tecido: usada para separar fio (0°/90°) de viés (45°)
+          const theta = Math.atan2(dz, dx);
+          this.constraints.push({ a, b, rest, stiffness, theta, eff: stiffness });
         };
 
         for (let iz = 0; iz < this.nz; iz++) {
@@ -1678,15 +1906,28 @@
         }
       }
 
-      // Atualiza restrições de borda conforme lados fixados, cantos esticados e padrão de grampeamento
+      // Anisotropia do tecido plano: rígido no fio, complacente no viés
+      setGrain(rad, offsetPct, biasCompliance) {
+        this.grainRad = rad;
+        this.biasCompliance = biasCompliance;
+        for (let k = 0; k < this.constraints.length; k++) {
+          const con = this.constraints[k];
+          const bias = Math.abs(Math.sin(2 * (con.theta - rad)));
+          con.eff = con.stiffness * (1 - biasCompliance * bias);
+        }
+        this.axisStiffness = 1 - biasCompliance * Math.abs(Math.sin(2 * rad));
+        this.misalign = Math.min(1, Math.abs(rad * 180 / Math.PI) / 18 + Math.abs(offsetPct) / 40);
+      }
+
+      // Atualiza os pontos grampeados: o tecido dobra sobre a travessa e é cravado
+      // na face externa da madeira; a tensão puxa o pano para baixo ao longo da face
       applyStaplingState(partState, pattern, tensionPct) {
-        const count = this.nx * this.nz;
         this.pinned.fill(0);
 
         const tension = 0.014 + (tensionPct / 100) * 0.028;
-        const hw = this.foamW * 0.5 + 0.008;
-        const hd = this.foamD * 0.5 + 0.008;
-        const anchorY = 0.012;
+        const faceX = this.foamW * 0.5 + this.railX + 0.0025; // face externa lateral
+        const faceZ = this.foamD * 0.5 + this.railZ + 0.0025; // face externa frente/fundo
+        const baseY = RAIL_TOP_Y - 0.016;                     // linha de grampos na face
         const isSeq = pattern === 'sequencial';
 
         const setPin = (ix, iz, tx, ty, tz) => {
@@ -1697,96 +1938,61 @@
           this.pinTarget[i * 3 + 2] = tz;
         };
 
-        // Lados: índices centrais da borda (deixando 3 células nos cantos para a etapa 4)
+        // Lados: faixa central da borda (3 células de cada canto ficam para a etapa 4)
         const marginX = 3;
         const marginZ = 3;
-
-        if (partState.sides.front) {
-          const iz = this.nz - 1;
-          for (let ix = marginX; ix < this.nx - marginX; ix++) {
-            const u = ix / (this.nx - 1) - 0.5;
+        const sideRow = (fixedIdx, alongX, sign) => {
+          const n = alongX ? this.nx : this.nz;
+          const margin = alongX ? marginX : marginZ;
+          const span = alongX ? this.foamW : this.foamD;
+          for (let k = margin; k < n - margin; k++) {
+            const t = k / (n - 1) - 0.5;
+            let along, y;
             if (isSeq) {
-              // Padrão Sequencial: grampos agrupados com folga periódica e puxão assimétrico → gera dobras marcadas
-              if (ix % 3 === 1) continue;
-              const skew = (u + 0.5) * 0.024;
-              const pinch = Math.sin(u * Math.PI * 5) * 0.014;
-              setPin(ix, iz, u * this.foamW * 0.94 + skew, anchorY + 0.006, hd + tension * 0.55 + pinch);
+              // Sequencial (ponta a ponta): cada grampo puxa o tecido para o lado já fixado,
+              // a tração cai ao longo da borda e sobram folgas que viram franzidos
+              const prog = t + 0.5;                       // 0 → 1 na ordem de grampeamento
+              const slack = (k % 3 === 1) ? 0.007 : 0;    // a cada 3 grampos, uma folga
+              along = t * span * (1.0 + tension * 0.4) - sign * prog * 0.014;
+              y = baseY - tension * (0.75 - 0.45 * prog) + slack;
             } else {
-              // Padrão Cruzado Uniforme: simétrico do centro para as bordas → superfície bem esticada
-              setPin(ix, iz, u * this.foamW * (1.02 + tension), anchorY, hd + tension);
+              // Cruzado uniforme: do centro para as pontas, tração igual em toda a borda
+              along = t * span * (1.02 + tension);
+              y = baseY - tension * 0.8;
             }
+            if (alongX) setPin(k, fixedIdx, along, y, sign * faceZ);
+            else setPin(fixedIdx, k, sign * faceX, y, along);
           }
-        }
+        };
 
-        if (partState.sides.back) {
-          const iz = 0;
-          for (let ix = marginX; ix < this.nx - marginX; ix++) {
-            const u = ix / (this.nx - 1) - 0.5;
-            if (isSeq) {
-              if (ix % 3 === 2) continue;
-              const skew = -(u + 0.5) * 0.022;
-              const pinch = Math.cos(u * Math.PI * 5) * 0.014;
-              setPin(ix, iz, u * this.foamW * 0.94 + skew, anchorY + 0.006, -hd - tension * 0.55 - pinch);
-            } else {
-              setPin(ix, iz, u * this.foamW * (1.02 + tension), anchorY, -hd - tension);
-            }
-          }
-        }
+        if (partState.sides.front) sideRow(this.nz - 1, true, 1);
+        if (partState.sides.back) sideRow(0, true, -1);
+        if (partState.sides.left) sideRow(0, false, -1);
+        if (partState.sides.right) sideRow(this.nx - 1, false, 1);
 
-        if (partState.sides.left) {
-          const ix = 0;
-          for (let iz = marginZ; iz < this.nz - marginZ; iz++) {
-            const v = iz / (this.nz - 1) - 0.5;
-            if (isSeq) {
-              if (iz % 3 === 1) continue;
-              const skew = (v + 0.5) * 0.022;
-              setPin(ix, iz, -hw - tension * 0.55, anchorY + 0.006, v * this.foamD * 0.94 + skew);
-            } else {
-              setPin(ix, iz, -hw - tension, anchorY, v * this.foamD * (1.02 + tension));
-            }
-          }
-        }
-
-        if (partState.sides.right) {
-          const ix = this.nx - 1;
-          for (let iz = marginZ; iz < this.nz - marginZ; iz++) {
-            const v = iz / (this.nz - 1) - 0.5;
-            if (isSeq) {
-              if (iz % 3 === 2) continue;
-              const skew = -(v + 0.5) * 0.022;
-              setPin(ix, iz, hw + tension * 0.55, anchorY + 0.006, v * this.foamD * 0.94 + skew);
-            } else {
-              setPin(ix, iz, hw + tension, anchorY, v * this.foamD * (1.02 + tension));
-            }
-          }
-        }
-
-        // Cantos: 4 quadrantes das bordas
+        // Cantos: fechamento das duas bordas que se encontram no vértice
         const pinCorner = (cKey, sx, sz) => {
           if (!partState.corners[cKey]) return;
           const xList = sx < 0 ? [0, 1, 2] : [this.nx - 3, this.nx - 2, this.nx - 1];
           const zList = sz < 0 ? [0, 1, 2] : [this.nz - 3, this.nz - 2, this.nz - 1];
           const edgeX = sx < 0 ? 0 : this.nx - 1;
           const edgeZ = sz < 0 ? 0 : this.nz - 1;
-
           for (const ix of xList) {
             const u = ix / (this.nx - 1) - 0.5;
             if (isSeq) {
-              // Agrupamento de dobra em leque no canto (puxa para dentro formando prega diagonal visível)
-              const gather = 0.80;
-              setPin(ix, edgeZ, u * this.foamW * gather + sx * 0.018, anchorY + 0.010, sz * (hd + tension * 0.45));
+              // Prega em leque: o excesso não é distribuído, fica franzido no vértice
+              setPin(ix, edgeZ, u * this.foamW * 1.0 + sx * 0.004, baseY + 0.005, sz * faceZ);
             } else {
-              // Canto envelope bem esticado diagonalmente
-              setPin(ix, edgeZ, u * this.foamW * (1.04 + tension), anchorY - 0.002, sz * (hd + tension * 1.15));
+              // Canto envelope: excesso esticado na diagonal e dobrado rente
+              setPin(ix, edgeZ, u * this.foamW * (1.04 + tension), baseY - tension * 1.1, sz * faceZ);
             }
           }
           for (const iz of zList) {
             const v = iz / (this.nz - 1) - 0.5;
             if (isSeq) {
-              const gather = 0.80;
-              setPin(edgeX, iz, sx * (hw + tension * 0.45), anchorY + 0.010, v * this.foamD * gather + sz * 0.018);
+              setPin(edgeX, iz, sx * faceX, baseY + 0.005, v * this.foamD * 1.0 + sz * 0.004);
             } else {
-              setPin(edgeX, iz, sx * (hw + tension * 1.15), anchorY - 0.002, v * this.foamD * (1.04 + tension));
+              setPin(edgeX, iz, sx * faceX, baseY - tension * 1.1, v * this.foamD * (1.04 + tension));
             }
           }
         };
@@ -1798,53 +2004,27 @@
       }
 
       // Passo de simulação com iterações limitadas por frame
-      step(dt, maxIters, fabricStiffness, dampingParam, pressForceN, pattern, partState) {
-        // 1. Dinâmica massa-mola da compressão central da espuma + tecido (garante resposta clara ao amortecimento)
-        if (this.pulseTimer > 0) {
-          this.pulseTimer = Math.max(0, this.pulseTimer - dt);
-        }
-        const isPressed = this.pressActive || this.pulseTimer > 0;
-        const targetDisp = isPressed ? (pressForceN / 120) * (this.foamH * 0.54) : 0;
-
-        // Constante elástica k e amortecimento c mapeados diretamente pelo slider `dampingParam` (0.08..0.92)
-        // Baixo damping (~0.10): subamortecido (rebote elástico nítido)
-        // Alto damping (~0.88): superamortecido (recuperação lenta viscoelástica)
-        const omega = 13.5 - dampingParam * 6.5;
-        const zeta = 0.14 + dampingParam * 2.15;
-        const k = omega * omega;
-        const c = 2 * zeta * omega;
-
-        const subSteps = 3;
-        const sdt = dt / subSteps;
-        for (let s = 0; s < subSteps; s++) {
-          const acc = k * (targetDisp - this.centerDisp) - c * this.centerVel;
-          this.centerVel += acc * sdt;
-          this.centerDisp += this.centerVel * sdt;
-          if (this.centerDisp < -0.012) {
-            this.centerDisp = -0.012;
-            this.centerVel *= -0.35;
-          }
-        }
-
-        // 2. Integração Verlet dos vértices do pano
-        const clothDamp = Math.max(0.74, 0.965 - dampingParam * 0.18);
-        const count = this.nx * this.nz;
-        const gravity = -3.8 * dt * dt;
-
-        // Campo de rugas/dobras físico-estrutural influenciado pelo padrão de grampeamento
+      // p = { damping, force, pattern, partState, tension, foamSpec }
+      step(dt, maxIters, fabric, p) {
+        const partState = p.partState;
         const sidesCount = Object.values(partState.sides).filter(Boolean).length;
         const cornersCount = Object.values(partState.corners).filter(Boolean).length;
-        const isSeq = pattern === 'sequencial';
-        const wrinkleAmp = isSeq
-          ? (0.0045 + sidesCount * 0.0022 + cornersCount * 0.0020)
-          : (0.0008 + Math.max(0, 4 - cornersCount) * 0.0012);
+
+        // 1. Espuma viscoelástica + membrana do tecido sob o contato
+        if (this.pulseTimer > 0) this.pulseTimer = Math.max(0, this.pulseTimer - dt);
+        const isPressed = this.pressActive || this.pulseTimer > 0;
+        const T = membraneTensionNpm(fabric, p.tension, sidesCount, cornersCount);
+        this.foam.step(dt, this.foamH, isPressed ? p.force : 0, p.damping, p.foamSpec, T);
+
+        // 2. Integração Verlet dos vértices do pano (gravidade real)
+        const clothDamp = 0.97 - p.damping * 0.06;
+        const gravity = -9.81 * dt * dt;
 
         for (let iz = 0; iz < this.nz; iz++) {
           for (let ix = 0; ix < this.nx; ix++) {
             const i = this.idx(ix, iz);
             const i3 = i * 3;
             if (this.pinned[i]) {
-              // Move suavemente em direção ao alvo do grampo
               this.pos[i3] += (this.pinTarget[i3] - this.pos[i3]) * 0.35;
               this.pos[i3 + 1] += (this.pinTarget[i3 + 1] - this.pos[i3 + 1]) * 0.35;
               this.pos[i3 + 2] += (this.pinTarget[i3 + 2] - this.pos[i3 + 2]) * 0.35;
@@ -1853,34 +2033,48 @@
               this.prev[i3 + 2] = this.pos[i3 + 2];
               continue;
             }
-
             const vx = (this.pos[i3] - this.prev[i3]) * clothDamp;
             const vy = (this.pos[i3 + 1] - this.prev[i3 + 1]) * clothDamp;
             const vz = (this.pos[i3 + 2] - this.prev[i3 + 2]) * clothDamp;
-
             this.prev[i3] = this.pos[i3];
             this.prev[i3 + 1] = this.pos[i3 + 1];
             this.prev[i3 + 2] = this.pos[i3 + 2];
-
             this.pos[i3] += vx;
             this.pos[i3 + 1] += vy + gravity;
             this.pos[i3 + 2] += vz;
           }
         }
 
-        // 3. Resolução de restrições de distância (limitada a maxIters por frame!)
+        // Amplitudes de dobra derivadas de grampeamento, tensão, fio/viés e contato
+        const tF = p.tension / 100;
+        const isSeq = p.pattern === 'sequencial';
+        const isLinen = fabric.type === 'linen';
+        const wrinkleAmp = isSeq
+          ? (0.0035 + sidesCount * 0.0018 + cornersCount * 0.0016) * (1.15 - 0.5 * tF)
+          : (0.0006 + Math.max(0, 4 - cornersCount) * 0.0011) * (1.25 - 0.75 * tF);
+        const biasAmp = sidesCount >= 2
+          ? this.misalign * (0.0016 + 0.0032 * (1.1 - 0.6 * tF)) * (isLinen ? 1 : 0.45)
+          : 0;
+        const pressAmp = Math.max(0, this.centerDisp) * 0.10 * (1.15 - 0.8 * tF) * (isLinen ? 1 : 0.55);
+        const bca = Math.cos(this.grainRad + Math.PI / 4);
+        const bsa = Math.sin(this.grainRad + Math.PI / 4);
+        const a = INDENTER_RADIUS;
+        const fabricStiffness = fabric.stiffness;
+
+        // 3. Restrições de distância anisotrópicas (limitadas a maxIters por frame)
         const cLen = this.constraints.length;
         for (let iter = 0; iter < maxIters; iter++) {
-          for (let kIdx = 0; kIdx < cLen; kIdx++) {
-            const con = this.constraints[kIdx];
+          // Ordem alternada a cada iteração: evita que o Gauss-Seidel arraste o pano para um lado
+          const fwd = (iter & 1) === 0;
+          for (let n = 0; n < cLen; n++) {
+            const con = this.constraints[fwd ? n : cLen - 1 - n];
             const a3 = con.a * 3;
             const b3 = con.b * 3;
             const dx = this.pos[b3] - this.pos[a3];
             const dy = this.pos[b3 + 1] - this.pos[a3 + 1];
             const dz = this.pos[b3 + 2] - this.pos[a3 + 2];
             const dist = Math.hypot(dx, dy, dz) || 1e-6;
-            const diff = ((dist - con.rest) / dist) * con.stiffness * fabricStiffness;
-
+            const diff = ((dist - con.rest) / dist) * con.eff * fabricStiffness;
             const pinA = this.pinned[con.a];
             const pinB = this.pinned[con.b];
             if (!pinA && !pinB) {
@@ -1902,7 +2096,7 @@
             }
           }
 
-          // 4. Colisão simplificada com a espuma + perfil de dobras por padrão
+          // 4. Colisão com a espuma + relevo de dobras
           for (let iz = 0; iz < this.nz; iz++) {
             const v = iz / (this.nz - 1) - 0.5;
             for (let ix = 0; ix < this.nx; ix++) {
@@ -1912,28 +2106,40 @@
               const i3 = i * 3;
               const x = this.pos[i3];
               const z = this.pos[i3 + 2];
-
               let surfY = this.foamSurfaceY(x, z) + 0.0045;
-
-              // Modulação de dobras visíveis conforme o padrão de grampeamento
               const edgeProx = Math.min(1, Math.hypot(u * 2, v * 2));
+
               if (isSeq) {
-                // Dobras diagonais e ondas assimétricas características de grampeamento sequencial em leque
+                // Sequencial em leque: pregas diagonais assimétricas
                 const diag1 = Math.sin((u * 3.4 + v * 2.8) * Math.PI * 2);
                 const diag2 = Math.cos((u * 2.1 - v * 3.9) * Math.PI * 2);
                 const fold = (diag1 * 0.65 + diag2 * 0.35) * wrinkleAmp * (0.35 + edgeProx * 0.85);
                 surfY += Math.max(0, fold);
               } else {
-                // Padrão cruzado: superfície central lisa, apenas micro-prega simétrica nos cantos
+                // Cruzado: centro liso, micro-prega simétrica só nos cantos
                 const cornerMask = Math.pow(Math.abs(u * v) * 4, 2.2);
-                const fold = Math.abs(Math.sin((u - v) * Math.PI * 6)) * wrinkleAmp * cornerMask;
-                surfY += fold;
+                surfY += Math.abs(Math.sin((u - v) * Math.PI * 6)) * wrinkleAmp * cornerMask;
+              }
+
+              // Trama fora do esquadro: ondas que correm na direção do viés
+              if (biasAmp > 0.0001) {
+                const w = Math.sin((u * bca + v * bsa) * Math.PI * 7);
+                surfY += Math.max(0, w) * biasAmp * (0.4 + edgeProx * 0.8);
+              }
+
+              // Pregas radiais em volta da mão quando o tecido está pouco tensionado
+              if (pressAmp > 0.0002) {
+                const ddx = x - this.pressPointX;
+                const ddz = z - this.pressPointZ;
+                const r = Math.hypot(ddx, ddz);
+                const rt = (r - a * 1.5) / (a * 0.9);
+                const ring = Math.exp(-rt * rt);
+                if (ring > 0.02) surfY += Math.abs(Math.sin(Math.atan2(ddz, ddx) * 5)) * pressAmp * ring;
               }
 
               if (this.pos[i3 + 1] < surfY) {
                 this.pos[i3 + 1] = surfY;
               } else if (Math.abs(u) < 0.42 && Math.abs(v) < 0.42) {
-                // Mantém contato natural com a espuma sob leve sucção/adesão durante pressão
                 this.pos[i3 + 1] += (surfY - this.pos[i3 + 1]) * 0.22;
               }
             }
@@ -1945,9 +2151,13 @@
       measureWrinkleMm() {
         let sumSq = 0;
         let n = 0;
+        const lx = this.foamW * 0.5 - this.bevel;
+        const lz = this.foamD * 0.5 - this.bevel;
         for (let iz = 2; iz < this.nz - 2; iz++) {
           for (let ix = 2; ix < this.nx - 2; ix++) {
             const i3 = this.idx(ix, iz) * 3;
+            // Só a face superior plana: as laterais e a dobra sobre a travessa não contam
+            if (Math.abs(this.pos[i3]) > lx || Math.abs(this.pos[i3 + 2]) > lz) continue;
             const y = this.pos[i3 + 1];
             const base = this.foamSurfaceY(this.pos[i3], this.pos[i3 + 2]) + 0.0045;
             const d = y - base;
@@ -2056,7 +2266,8 @@
 
         this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.08;
+        this.renderer.toneMappingExposure = 1.0;
+        this.maxAniso = this.renderer.capabilities.getMaxAnisotropy();
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -2073,6 +2284,7 @@
         this.clock = new THREE.Clock();
 
         this.setupLights();
+        this.buildEnvironmentMap();
         this.buildWorkshopEnvironment();
         this.buildFabricMaterials();
         this.buildArmchair();
@@ -2095,7 +2307,8 @@
         this.keyLight = new THREE.DirectionalLight(0xfff6eb, 1.35);
         this.keyLight.position.set(2.2, 3.4, 2.4);
         this.keyLight.castShadow = true;
-        this.keyLight.shadow.mapSize.set(1024, 1024);
+        this.keyLight.shadow.mapSize.set(2048, 2048);
+        this.keyLight.shadow.normalBias = 0.012;
         this.keyLight.shadow.camera.near = 0.5;
         this.keyLight.shadow.camera.far = 9;
         const d = 1.4;
@@ -2103,7 +2316,7 @@
         this.keyLight.shadow.camera.right = d;
         this.keyLight.shadow.camera.top = d;
         this.keyLight.shadow.camera.bottom = -d;
-        this.keyLight.shadow.bias = -0.0005;
+        this.keyLight.shadow.bias = -0.0003;
         this.scene.add(this.keyLight);
 
         this.fillLight = new THREE.DirectionalLight(0xd2e2ff, 0.45);
@@ -2117,24 +2330,81 @@
         this.scene.add(this.rimLight.target);
       },
 
+      // Mapa de ambiente pré-filtrado (PMREM) de uma oficina procedural:
+      // dá reflexos reais ao couro, latão, grampos e verniz da madeira
+      buildEnvironmentMap() {
+        const env = new THREE.Scene();
+        const box = new THREE.BoxGeometry();
+        box.deleteAttribute('uv');
+        const roomMat = new THREE.MeshStandardMaterial({ side: THREE.BackSide, color: 0x8c7a68 });
+        const propMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3c });
+        const lamp = new THREE.PointLight(0xfff0dc, 5.0, 28, 2);
+        lamp.position.set(0.4, 16.2, 0.3);
+        env.add(lamp);
+        const room = new THREE.Mesh(box, roomMat);
+        room.position.set(-0.76, 13.2, 0.72);
+        room.scale.set(31.7, 28.3, 28.6);
+        env.add(room);
+        // Bancadas, estantes e rolos de tecido como volumes que bloqueiam luz
+        [[-10.9, 2.0, 1.8, -0.2, 2.3, 7.9, 4.6], [-5.6, -0.75, -0.76, 0.99, 2.0, 1.5, 4.0],
+         [6.2, 0.86, 7.8, 0.56, 3.9, 6.3, 3.7], [-2.0, 0.02, 6.1, 0.33, 2.0, 4.6, 2.1],
+         [2.3, -0.76, -2.6, -0.29, 1.5, 1.6, 1.5], [-2.2, -0.37, -5.5, 0.52, 3.9, 3.5, 3.0]
+        ].forEach(([x, y, z, ry, sx, sy, sz]) => {
+          const m = new THREE.Mesh(box, propMat);
+          m.position.set(x, y, z);
+          m.rotation.y = ry;
+          m.scale.set(sx, sy, sz);
+          env.add(m);
+        });
+        // Painéis emissivos: janelas (luz do dia, levemente fria) e luminárias quentes
+        const panel = (r, g, b, pos, scl) => {
+          const mat = new THREE.MeshBasicMaterial();
+          mat.color.setRGB(r, g, b);
+          const m = new THREE.Mesh(box, mat);
+          m.position.set(pos[0], pos[1], pos[2]);
+          m.scale.set(scl[0], scl[1], scl[2]);
+          env.add(m);
+        };
+        panel(40, 42, 46, [-16.1, 14.4, 8.2], [0.1, 2.4, 2.7]);
+        panel(40, 42, 46, [-16.1, 18.0, -8.2], [0.1, 2.4, 2.75]);
+        panel(18, 15, 11, [14.9, 12.2, -1.8], [0.15, 4.3, 6.3]);
+        panel(44, 38, 30, [-0.46, 8.9, 14.5], [4.4, 5.4, 0.09]);
+        panel(20, 17, 13, [3.2, 11.5, -12.5], [2.5, 2.0, 0.1]);
+        panel(90, 80, 66, [0, 20, 0], [1, 0.1, 1]);
+
+        const pmrem = new THREE.PMREMGenerator(this.renderer);
+        this.envRT = pmrem.fromScene(env, 0.035);
+        this.scene.environment = this.envRT.texture;
+        this.envIntensity = 0.85;
+        pmrem.dispose();
+        box.dispose();
+      },
+
       applyLightMode() {
         if (!this.ok) return;
         if (state.lightMode === 'rasante') {
           // Luz quente rasante lateral para revelar relevo de trama, poros do couro e dobras
           this.keyLight.position.set(2.8, 0.95, 0.45);
           this.keyLight.color.setHex(0xffd29d);
-          this.keyLight.intensity = 1.85;
-          this.hemiLight.intensity = 0.28;
-          this.fillLight.intensity = 0.22;
-          this.rimLight.intensity = 1.1;
+          this.keyLight.intensity = 2.1;
+          this.hemiLight.intensity = 0.05;
+          this.fillLight.intensity = 0.08;
+          this.rimLight.intensity = 0.9;
+          this.envIntensity = 0.28;
         } else {
           this.keyLight.position.set(2.2, 3.4, 2.4);
           this.keyLight.color.setHex(0xfff6eb);
-          this.keyLight.intensity = 1.35;
-          this.hemiLight.intensity = 0.68;
-          this.fillLight.intensity = 0.48;
-          this.rimLight.intensity = 0.65;
+          this.keyLight.intensity = 1.55;
+          this.hemiLight.intensity = 0.18;
+          this.fillLight.intensity = 0.22;
+          this.rimLight.intensity = 0.45;
+          this.envIntensity = 0.85;
         }
+        // A iluminação por ambiente (IBL) acompanha o modo de luz
+        this.scene.traverse((o) => {
+          const m = o.material;
+          if (m && m.isMeshStandardMaterial && !m.userData.fixedEnv) m.envMapIntensity = this.envIntensity * (m.userData.envScale || 1);
+        });
       },
 
       buildWorkshopEnvironment() {
@@ -2142,11 +2412,12 @@
         const benchMap = new THREE.CanvasTexture(woodTex.cColor);
         benchMap.encoding = THREE.sRGBEncoding;
         benchMap.wrapS = benchMap.wrapT = THREE.RepeatWrapping;
-        benchMap.repeat.set(3, 3);
+        benchMap.repeat.set(7, 7);
+        benchMap.anisotropy = Math.min(8, this.maxAniso || 1);
 
         const benchRough = new THREE.CanvasTexture(woodTex.cRough);
         benchRough.wrapS = benchRough.wrapT = THREE.RepeatWrapping;
-        benchRough.repeat.set(3, 3);
+        benchRough.repeat.set(7, 7);
 
         // Piso / bancada da oficina (y = 0)
         const floorGeo = new THREE.CylinderGeometry(2.6, 2.6, 0.06, 48);
@@ -2184,43 +2455,107 @@
         roll.castShadow = true;
         roll.receiveShadow = true;
         this.scene.add(roll);
+
+        // Parede de fundo em reboco, dá referência de escala e recebe a sombra da poltrona
+        const wallCanvas = document.createElement('canvas');
+        wallCanvas.width = wallCanvas.height = 128;
+        const wctx = wallCanvas.getContext('2d');
+        const wimg = wctx.createImageData(128, 128);
+        let ws = 77;
+        for (let i = 0; i < 128 * 128; i++) {
+          ws = (ws * 16807) % 2147483647;
+          const n = (ws / 2147483647 - 0.5) * 18;
+          wimg.data[i * 4] = 118 + n;
+          wimg.data[i * 4 + 1] = 104 + n;
+          wimg.data[i * 4 + 2] = 90 + n;
+          wimg.data[i * 4 + 3] = 255;
+        }
+        wctx.putImageData(wimg, 0, 0);
+        const wallTex = new THREE.CanvasTexture(wallCanvas);
+        wallTex.encoding = THREE.sRGBEncoding;
+        wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping;
+        wallTex.repeat.set(6, 3);
+        const wall = new THREE.Mesh(
+          new THREE.PlaneGeometry(6, 3),
+          new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.97, metalness: 0 })
+        );
+        wall.position.set(0, 1.5, -1.45);
+        wall.receiveShadow = true;
+        this.scene.add(wall);
+        const baseboard = new THREE.Mesh(
+          new THREE.BoxGeometry(6, 0.09, 0.02),
+          new THREE.MeshStandardMaterial({ color: 0x2c231d, roughness: 0.6 })
+        );
+        baseboard.position.set(0, 0.045, -1.44);
+        this.scene.add(baseboard);
+
+        // Sombra de contato (oclusão suave sob a poltrona, onde o mapa de sombras não chega)
+        const cs = document.createElement('canvas');
+        cs.width = cs.height = 256;
+        const cctx = cs.getContext('2d');
+        const grad = cctx.createRadialGradient(128, 128, 10, 128, 128, 128);
+        grad.addColorStop(0, 'rgba(0,0,0,0.62)');
+        grad.addColorStop(0.45, 'rgba(0,0,0,0.34)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        cctx.fillStyle = grad;
+        cctx.fillRect(0, 0, 256, 256);
+        const contact = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.05, 0.98),
+          new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cs), transparent: true, depthWrite: false })
+        );
+        contact.rotation.x = -Math.PI / 2;
+        contact.position.set(0, 0.0046, -0.02);
+        contact.renderOrder = 1;
+        this.scene.add(contact);
       },
 
       buildFabricMaterials() {
+        const aniso = Math.min(8, this.maxAniso || 1);
         for (const [id, spec] of Object.entries(FABRICS)) {
-          const maps = spec.type === 'linen' ? generateLinenTextures(spec) : generateLeatherTextures(spec);
-          const map = new THREE.CanvasTexture(maps.cColor);
-          map.encoding = THREE.sRGBEncoding;
-          map.wrapS = map.wrapT = THREE.RepeatWrapping;
-          map.repeat.set(spec.type === 'linen' ? 4.5 : 3.2, spec.type === 'linen' ? 4.5 : 3.2);
-          map.center.set(0.5, 0.5);
+          const isLinen = spec.type === 'linen';
+          const maps = isLinen ? generateLinenTextures(spec) : generateLeatherTextures(spec);
+          const rep = isLinen ? 7 : 2.6;
+          const prep = (canvas, srgb) => {
+            const t = new THREE.CanvasTexture(canvas);
+            if (srgb) t.encoding = THREE.sRGBEncoding;
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            t.repeat.set(rep, rep);
+            t.center.set(0.5, 0.5);
+            t.anisotropy = aniso; // nitidez da trama em ângulos rasantes
+            return t;
+          };
+          const map = prep(maps.cColor, true);
+          const roughMap = prep(maps.cRough, false);
+          const normalMap = prep(maps.cNormal, false);
 
-          const roughMap = new THREE.CanvasTexture(maps.cRough);
-          roughMap.wrapS = roughMap.wrapT = THREE.RepeatWrapping;
-          roughMap.repeat.copy(map.repeat);
-          roughMap.center.set(0.5, 0.5);
-
-          const normalMap = new THREE.CanvasTexture(maps.cNormal);
-          normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
-          normalMap.repeat.copy(map.repeat);
-          normalMap.center.set(0.5, 0.5);
-
-          this.fabricMaterials[id] = new THREE.MeshStandardMaterial({
+          const params = {
             map,
             roughnessMap: roughMap,
             normalMap,
-            normalScale: new THREE.Vector2(spec.type === 'linen' ? 0.75 : 0.9, spec.type === 'linen' ? 0.75 : 0.9),
+            normalScale: new THREE.Vector2(isLinen ? 0.85 : 0.6, isLinen ? 0.85 : 0.6),
             roughness: spec.roughness,
             metalness: spec.metalness,
             side: THREE.DoubleSide
-          });
+          };
+          const mat = new THREE.MeshPhysicalMaterial(params);
+          if (isLinen) {
+            // Brilho de fibra: o linho ganha um halo suave nas bordas e em luz rasante
+            mat.sheen = new THREE.Color(spec.sheenHex);
+            mat.userData.envScale = 0.7;
+          } else {
+            // Couro/laminado: camada de acabamento (verniz) sobre o grão
+            mat.clearcoat = spec.clearcoat;
+            mat.clearcoatRoughness = 0.42;
+            mat.userData.envScale = 1.0;
+          }
+          this.fabricMaterials[id] = mat;
         }
 
         this.seamMaterial = new THREE.LineBasicMaterial({ color: 0x7d684f });
         this.stitchMaterial = new THREE.MeshStandardMaterial({
           color: 0xe7d6bd,
-          roughness: 0.85,
-          metalness: 0.05
+          roughness: 0.7,
+          metalness: 0.0
         });
       },
 
@@ -2233,17 +2568,38 @@
         const woodMap = new THREE.CanvasTexture(woodTex.cColor);
         woodMap.encoding = THREE.sRGBEncoding;
         woodMap.wrapS = woodMap.wrapT = THREE.RepeatWrapping;
-        woodMap.repeat.set(1.5, 2);
+        woodMap.repeat.set(1, 1);
         const woodNorm = new THREE.CanvasTexture(woodTex.cNormal);
         woodNorm.wrapS = woodNorm.wrapT = THREE.RepeatWrapping;
-        woodNorm.repeat.set(1.5, 2);
+        woodNorm.repeat.set(1, 1);
 
-        const woodMat = new THREE.MeshStandardMaterial({
+        // UV em metros (1 ladrilho = 30 cm) com o veio sempre ao longo da maior dimensão da peça
+        const woodBoxUV = (geo, w, h, d) => {
+          const P = geo.attributes.position, Nn = geo.attributes.normal, U = geo.attributes.uv;
+          const dims = [w, h, d];
+          const tile = 0.3;
+          for (let i = 0; i < P.count; i++) {
+            const c = [P.getX(i), P.getY(i), P.getZ(i)];
+            const n = [Math.abs(Nn.getX(i)), Math.abs(Nn.getY(i)), Math.abs(Nn.getZ(i))];
+            const axis = n[0] > 0.5 ? 0 : (n[1] > 0.5 ? 1 : 2);
+            const ax = [0, 1, 2].filter((k) => k !== axis);
+            const longA = dims[ax[0]] >= dims[ax[1]] ? ax[0] : ax[1];
+            const shortA = longA === ax[0] ? ax[1] : ax[0];
+            U.setXY(i, c[shortA] / tile + 0.37 * axis, c[longA] / tile);
+          }
+          U.needsUpdate = true;
+        };
+
+        woodMap.anisotropy = woodNorm.anisotropy = Math.min(8, this.maxAniso || 1);
+        // Madeira envernizada: base acetinada + verniz com reflexo do ambiente
+        const woodMat = new THREE.MeshPhysicalMaterial({
           map: woodMap,
           normalMap: woodNorm,
           normalScale: new THREE.Vector2(0.35, 0.35),
-          roughness: 0.48,
-          metalness: 0.05
+          roughness: 0.55,
+          metalness: 0.0,
+          clearcoat: 0.45,
+          clearcoatRoughness: 0.35
         });
 
         const brassMat = new THREE.MeshStandardMaterial({
@@ -2253,7 +2609,9 @@
         });
 
         const addBox = (w, h, d, x, y, z, rx = 0, ry = 0, rz = 0, mat = woodMat) => {
-          const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+          const g = new THREE.BoxGeometry(w, h, d);
+          if (mat === woodMat) woodBoxUV(g, w, h, d);
+          const m = new THREE.Mesh(g, mat);
           m.position.set(x, y, z);
           m.rotation.set(rx, ry, rz);
           m.castShadow = true;
@@ -2334,14 +2692,16 @@
 
         this.simSeat = new ClothPatch({
           name: 'assento',
-          nx: 23,
-          nz: 23,
+          nx: 29,
+          nz: 29,
           foamW: 0.56,
           foamD: 0.52,
           foamH: 0.095,
           clothW: 0.66,
           clothD: 0.62,
-          bevel: 0.032
+          bevel: 0.032,
+          railX: 0.034,
+          railZ: 0.018
         });
 
         this.seatFoamMesh = this.createFoamMesh(this.simSeat, foamMat);
@@ -2368,14 +2728,16 @@
 
         this.simBack = new ClothPatch({
           name: 'encosto',
-          nx: 19,
-          nz: 19,
+          nx: 25,
+          nz: 25,
           foamW: 0.53,
           foamD: 0.42,
           foamH: 0.082,
           clothW: 0.61,
           clothD: 0.50,
-          bevel: 0.028
+          bevel: 0.028,
+          railX: 0.046,
+          railZ: 0.03
         });
 
         this.backFoamMesh = this.createFoamMesh(this.simBack, foamMat);
@@ -2409,20 +2771,26 @@
       },
 
       createFoamMesh(sim, mat) {
-        const geo = new THREE.BoxGeometry(sim.foamW, sim.foamH, sim.foamD, 14, 2, 14);
+        const geo = new THREE.BoxGeometry(sim.foamW, sim.foamH, sim.foamD, 28, 2, 28);
         geo.translate(0, sim.foamH * 0.5, 0);
-        // Chanfra os vértices superiores
+        // Chanfra os vértices superiores e guarda quais são (para afundar sob pressão)
         const pos = geo.attributes.position;
+        const topVerts = [];
         for (let i = 0; i < pos.count; i++) {
           const x = pos.getX(i);
           const y = pos.getY(i);
           const z = pos.getZ(i);
-          if (y > sim.foamH * 0.5) {
-            pos.setY(i, sim.foamSurfaceY(x, z) - 0.002);
+          if (y > sim.foamH * 0.75) {
+            topVerts.push(i);
+            pos.setY(i, sim.foamSurfaceY(x, z) - 0.006);
           }
         }
         geo.computeVertexNormals();
         const mesh = new THREE.Mesh(geo, mat);
+        // A malha visual da espuma fica ~1 cm para dentro do revestimento: os triângulos do pano
+        // (22 mm entre vértices) cortam a quina chanfrada e deixariam a espuma aparecer
+        mesh.scale.set(0.955, 1, 0.955);
+        mesh.userData.topVerts = topVerts;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         return mesh;
@@ -2461,7 +2829,7 @@
         return mesh;
       },
 
-      // Costura dupla e pontos (pesponto) que acompanham o contorno da malha de tecido
+      // Vivo (cordão revestido) que acompanha a borda da almofada + pesponto paralelo
       createSeamObjects(sim) {
         const ringIndices = [];
         const m = 2; // anel próximo à borda superior da almofada
@@ -2470,16 +2838,38 @@
         for (let ix = sim.nx - 2 - m; ix >= m; ix--) ringIndices.push(sim.idx(ix, sim.nz - 1 - m));
         for (let iz = sim.nz - 2 - m; iz >= m; iz--) ringIndices.push(sim.idx(m, iz));
 
-        const lineGeo = new THREE.BufferGeometry();
-        lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ringIndices.length * 3), 3));
-        const line = new THREE.Line(lineGeo, this.seamMaterial);
-        line.userData.ringIndices = ringIndices;
+        const N = ringIndices.length;
+        const R = 8;
+        const geo = new THREE.BufferGeometry();
+        const uvs = new Float32Array(N * R * 2);
+        const idx = [];
+        for (let k = 0; k < N; k++) {
+          for (let j = 0; j < R; j++) {
+            const i = k * R + j;
+            uvs[i * 2] = (k / N) * 40;
+            uvs[i * 2 + 1] = j / R;
+            const k2 = (k + 1) % N;
+            const j2 = (j + 1) % R;
+            const a = k * R + j, b = k2 * R + j, c = k2 * R + j2, d = k * R + j2;
+            idx.push(a, b, d, b, c, d);
+          }
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * R * 3), 3));
+        geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        geo.setIndex(idx);
+        const piping = new THREE.Mesh(geo, this.fabricMaterials[state.fabricId]);
+        piping.castShadow = true;
+        piping.receiveShadow = true;
+        piping.frustumCulled = false;
+        piping.userData.ringIndices = ringIndices;
+        piping.userData.radial = R;
 
-        // Pontos individuais de costura (InstancedMesh)
-        const stitchGeo = new THREE.BoxGeometry(0.011, 0.0035, 0.0035);
-        const stitches = new THREE.InstancedMesh(stitchGeo, this.stitchMaterial, ringIndices.length);
+        // Pesponto: dois pontos por segmento, recuados ~9 mm para dentro do vivo
+        const stitchGeo = new THREE.BoxGeometry(0.0062, 0.0011, 0.0013);
+        const stitches = new THREE.InstancedMesh(stitchGeo, this.stitchMaterial, N * 2);
         stitches.userData.ringIndices = ringIndices;
-        return { line, stitches };
+        stitches.frustumCulled = false;
+        return { line: piping, stitches };
       },
 
       createAlignmentGuide(w, d, y) {
@@ -2532,12 +2922,17 @@
         g.rotation.set(0, -0.65, 0.12);
         this.scene.add(g);
 
-        // Grampos instanciados (InstancedMesh metálico)
-        const stapleGeo = new THREE.BoxGeometry(0.014, 0.003, 0.004);
+        // Grampos em U de arame galvanizado (coroa 11 mm, pernas cravadas na madeira)
+        const w = 0.0055, legH = 0.0028;
+        const uPath = new THREE.CurvePath();
+        uPath.add(new THREE.LineCurve3(new THREE.Vector3(-w, -legH, 0), new THREE.Vector3(-w, 0, 0)));
+        uPath.add(new THREE.LineCurve3(new THREE.Vector3(-w, 0, 0), new THREE.Vector3(w, 0, 0)));
+        uPath.add(new THREE.LineCurve3(new THREE.Vector3(w, 0, 0), new THREE.Vector3(w, -legH, 0)));
+        const stapleGeo = new THREE.TubeGeometry(uPath, 24, 0.00055, 5, false);
         const stapleMat = new THREE.MeshStandardMaterial({
-          color: 0xd9dee3,
-          roughness: 0.28,
-          metalness: 0.92
+          color: 0xc9ced3,
+          roughness: 0.32,
+          metalness: 1.0
         });
         this.staplesInstanced = new THREE.InstancedMesh(stapleGeo, stapleMat, 180);
         this.staplesInstanced.count = 0;
@@ -2552,46 +2947,56 @@
         this.staplerAnim.targetPos.copy(worldTarget);
       },
 
-      // Posiciona todos os grampos cravados nas bordas de madeira conforme estado e padrão
+      // Grampos cravados na face externa das travessas, onde o tecido foi dobrado
       rebuildStaples() {
         if (!this.ok) return;
-        const dummy = new THREE.Object3D();
+        const m4 = new THREE.Matrix4();
+        const qLocal = new THREE.Quaternion();
+        const qWorld = new THREE.Quaternion();
+        const pos = new THREE.Vector3();
+        const one = new THREE.Vector3(1, 1, 1);
+        const vC = new THREE.Vector3(), vO = new THREE.Vector3(), vZ = new THREE.Vector3();
         let count = 0;
         const isSeq = state.staplePattern === 'sequencial';
 
         const addPartStaples = (group, sim, pState) => {
           group.updateMatrixWorld(true);
-          const hw = sim.foamW * 0.5 + 0.014;
-          const hd = sim.foamD * 0.5 + 0.014;
-          const y = 0.008;
+          const fx = sim.foamW * 0.5 + sim.railX + 0.003;
+          const fz = sim.foamD * 0.5 + sim.railZ + 0.003;
+          const y = RAIL_TOP_Y - 0.018;
 
-          const place = (lx, ly, lz, rotY) => {
+          // (cx,cz) = direção da coroa; (ox,oz) = normal externa da face (pernas entram em -normal)
+          const place = (lx, ly, lz, cx, cz, ox, oz) => {
             if (count >= 180) return;
-            const v = new THREE.Vector3(lx, ly, lz).applyMatrix4(group.matrixWorld);
-            dummy.position.copy(v);
-            dummy.quaternion.copy(group.quaternion);
-            dummy.rotateY(rotY);
-            dummy.updateMatrix();
-            this.staplesInstanced.setMatrixAt(count++, dummy.matrix);
+            vC.set(cx, 0, cz).normalize();
+            vO.set(ox, 0, oz).normalize();
+            vZ.crossVectors(vC, vO);
+            m4.makeBasis(vC, vO, vZ);
+            qLocal.setFromRotationMatrix(m4);
+            qWorld.copy(group.quaternion).multiply(qLocal);
+            pos.set(lx, ly, lz).applyMatrix4(group.matrixWorld);
+            m4.compose(pos, qWorld, one);
+            this.staplesInstanced.setMatrixAt(count++, m4);
           };
 
           const steps = isSeq ? [-0.20, -0.15, -0.02, 0.11, 0.16, 0.20] : [-0.18, -0.10, -0.02, 0.06, 0.14, 0.18];
+          const jit = (k) => (isSeq ? (k % 2 ? 0.004 : -0.003) : 0);
 
-          if (pState.sides.front) steps.forEach((u) => place(u * (sim.foamW / 0.56), y, hd, 0));
-          if (pState.sides.back) steps.forEach((u) => place(u * (sim.foamW / 0.56), y, -hd, 0));
-          if (pState.sides.left) steps.forEach((u) => place(-hw, y, u * (sim.foamD / 0.52), Math.PI / 2));
-          if (pState.sides.right) steps.forEach((u) => place(hw, y, u * (sim.foamD / 0.52), Math.PI / 2));
+          if (pState.sides.front) steps.forEach((u, k) => place(u * (sim.foamW / 0.56), y + jit(k), fz, 1, isSeq ? 0.08 * (k - 2) : 0, 0, 1));
+          if (pState.sides.back) steps.forEach((u, k) => place(u * (sim.foamW / 0.56), y + jit(k), -fz, 1, 0, 0, -1));
+          if (pState.sides.left) steps.forEach((u, k) => place(-fx, y + jit(k), u * (sim.foamD / 0.52), 0, 1, -1, 0));
+          if (pState.sides.right) steps.forEach((u, k) => place(fx, y + jit(k), u * (sim.foamD / 0.52), 0, 1, 1, 0));
 
           const addCorner = (sx, sz) => {
             if (isSeq) {
-              // Agrupamento em leque no canto
-              place(sx * (hw - 0.03), y, sz * hd, 0.4 * sx * sz);
-              place(sx * (hw - 0.01), y, sz * (hd - 0.01), 0.78 * sx * sz);
-              place(sx * hw, y, sz * (hd - 0.03), 1.15 * sx * sz);
+              // Leque: grampos tortos e concentrados prendendo o franzido
+              place(sx * (fx - 0.030), y + 0.004, sz * fz, 1, 0.35 * sx * sz, 0, sz);
+              place(sx * (fx - 0.014), y - 0.003, sz * fz, 1, -0.4 * sx * sz, 0, sz);
+              place(sx * fx, y + 0.002, sz * (fz - 0.022), 0.3, 1, sx, 0);
             } else {
-              // Dois grampos simétricos limpos no canto envelope
-              place(sx * (hw - 0.022), y, sz * hd, 0);
-              place(sx * hw, y, sz * (hd - 0.022), Math.PI / 2);
+              // Envelope: um grampo em cada face, rente à dobra do canto
+              place(sx * (fx - 0.022), y, sz * fz, 1, 0, 0, sz);
+              place(sx * fx, y, sz * (fz - 0.022), 0, 1, sx, 0);
             }
           };
 
@@ -2615,6 +3020,9 @@
         const mat = this.fabricMaterials[state.fabricId];
         this.seatClothMesh.material = mat;
         this.backClothMesh.material = mat;
+        this.seatSeamLine.material = mat; // o vivo é revestido com o mesmo tecido
+        this.backSeamLine.material = mat;
+        mat.envMapIntensity = (this.envIntensity || 0.85) * (mat.userData.envScale || 1);
         this.seamMaterial.color.set(spec.seamHex);
         this.stitchMaterial.color.set(spec.seamHex);
         this.applyGrainAlignment();
@@ -2627,11 +3035,15 @@
         Object.values(this.fabricMaterials).forEach((mat) => {
           [mat.map, mat.roughnessMap, mat.normalMap].forEach((tex) => {
             if (!tex) return;
-            tex.rotation = rad;
+            tex.rotation = rad; // matriz de UV atualizada pelo renderer, sem reenviar a textura
             tex.offset.set(off, off * 0.4);
-            tex.needsUpdate = true;
           });
         });
+
+        // Física: a mesma rotação passa a valer para a rigidez fio/viés do pano
+        const bc = FABRICS[state.fabricId].biasCompliance;
+        this.simSeat.setGrain(rad, state.alignOffset, bc);
+        this.simBack.setGrain(rad, state.alignOffset, bc);
 
         const showG = state.step === 1 && state.showGuide;
         this.seatGuideMesh.visible = showG;
@@ -2680,47 +3092,70 @@
         });
       },
 
-      syncClothVisual(sim, clothMesh, seamLine, stitchMesh, foamMesh) {
+      syncClothVisual(sim, clothMesh, piping, stitchMesh, foamMesh) {
         // Atualiza vértices do pano
         const posAttr = clothMesh.geometry.attributes.position;
         posAttr.array.set(sim.pos);
         posAttr.needsUpdate = true;
         clothMesh.geometry.computeVertexNormals();
 
-        // Atualiza costura dupla e pontos
-        const ring = seamLine.userData.ringIndices;
-        const lineArr = seamLine.geometry.attributes.position.array;
-        const dummy = new THREE.Object3D();
-        for (let k = 0; k < ring.length; k++) {
-          const i3 = ring[k] * 3;
-          const x = sim.pos[i3];
-          const y = sim.pos[i3 + 1] + 0.003;
-          const z = sim.pos[i3 + 2];
-          lineArr[k * 3] = x;
-          lineArr[k * 3 + 1] = y;
-          lineArr[k * 3 + 2] = z;
-
-          const nextI3 = ring[(k + 1) % ring.length] * 3;
-          const dx = sim.pos[nextI3] - x;
-          const dz = sim.pos[nextI3 + 2] - z;
-          dummy.position.set(x, y + 0.001, z);
-          dummy.rotation.set(0, -Math.atan2(dz, dx), 0);
-          dummy.updateMatrix();
-          stitchMesh.setMatrixAt(k, dummy.matrix);
-        }
-        seamLine.geometry.attributes.position.needsUpdate = true;
-        stitchMesh.instanceMatrix.needsUpdate = true;
-
-        // Sincroniza depressão sutil da espuma sob a malha
-        if (Math.abs(sim.centerDisp) > 0.0005 || Math.abs(sim.centerVel) > 0.0005) {
-          const fPos = foamMesh.geometry.attributes.position;
-          for (let i = 0; i < fPos.count; i++) {
-            const fy = fPos.getY(i);
-            if (fy > sim.foamH * 0.35) {
-              fPos.setY(i, sim.foamSurfaceY(fPos.getX(i), fPos.getZ(i)) - 0.002);
+        // Vivo tubular e pesponto acompanham a malha deformada
+        if (piping.visible) {
+          const ring = piping.userData.ringIndices;
+          const R = piping.userData.radial;
+          const N = ring.length;
+          const arr = piping.geometry.attributes.position.array;
+          const radius = 0.0042;
+          const dummy = this._dummy || (this._dummy = new THREE.Object3D());
+          for (let k = 0; k < N; k++) {
+            const i3 = ring[k] * 3;
+            const p3 = ring[(k + N - 1) % N] * 3;
+            const n3 = ring[(k + 1) % N] * 3;
+            const px = sim.pos[i3], py = sim.pos[i3 + 1] + radius * 0.55, pz = sim.pos[i3 + 2];
+            // Tangente no plano horizontal e normal lateral voltada para fora
+            let tx = sim.pos[n3] - sim.pos[p3];
+            let tz = sim.pos[n3 + 2] - sim.pos[p3 + 2];
+            const tl = Math.hypot(tx, tz) || 1;
+            tx /= tl; tz /= tl;
+            let nx = tz, nz = -tx;
+            if (nx * px + nz * pz < 0) { nx = -nx; nz = -nz; }
+            for (let j = 0; j < R; j++) {
+              const ang = (j / R) * Math.PI * 2;
+              const cx = Math.cos(ang) * radius, cy = Math.sin(ang) * radius;
+              const o = (k * R + j) * 3;
+              arr[o] = px + nx * cx;
+              arr[o + 1] = py + cy;
+              arr[o + 2] = pz + nz * cx;
+            }
+            // Pesponto: 2 pontos por segmento, recuados para dentro
+            const qx = sim.pos[n3], qz = sim.pos[n3 + 2];
+            for (let h = 0; h < 2; h++) {
+              const f = h * 0.5 + 0.25;
+              const sx = px + (qx - px) * f - nx * 0.009;
+              const sz = pz + (qz - pz) * f - nz * 0.009;
+              const sy = sim.pos[i3 + 1] + (sim.pos[n3 + 1] - sim.pos[i3 + 1]) * f + 0.0016;
+              dummy.position.set(sx, sy, sz);
+              dummy.rotation.set(0, -Math.atan2(qz - pz, qx - px), 0);
+              dummy.updateMatrix();
+              stitchMesh.setMatrixAt(k * 2 + h, dummy.matrix);
             }
           }
+          piping.geometry.attributes.position.needsUpdate = true;
+          piping.geometry.computeVertexNormals();
+          stitchMesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // Sincroniza a depressão da espuma sob a malha
+        if (Math.abs(sim.centerDisp) > 0.0003 || Math.abs(sim.centerVel) > 0.0005 || sim._foamDirty) {
+          const fPos = foamMesh.geometry.attributes.position;
+          const top = foamMesh.userData.topVerts;
+          for (let t = 0; t < top.length; t++) {
+            const i = top[t];
+            fPos.setY(i, sim.foamSurfaceY(fPos.getX(i) * 0.955, fPos.getZ(i) * 0.955) - 0.006);
+          }
           fPos.needsUpdate = true;
+          foamMesh.geometry.computeVertexNormals();
+          sim._foamDirty = Math.abs(sim.centerDisp) > 0.0003;
         }
       },
 
@@ -2886,9 +3321,11 @@
 
           // Passo da física de pano (iterações limitadas por frame!)
           const maxIters = state.liteMode ? 4 : 6;
-          const fabricStiff = FABRICS[state.fabricId].stiffness;
-          this.simSeat.step(dt, maxIters, fabricStiff, state.damping, state.pressForce, state.staplePattern, state.parts.assento);
-          this.simBack.step(dt, maxIters, fabricStiff, state.damping, state.pressForce, state.staplePattern, state.parts.encosto);
+          const fabric = FABRICS[state.fabricId];
+          const foamSpec = FOAMS[state.foamDensity] || FOAMS.D28;
+          const common = { damping: state.damping, force: state.pressForce, pattern: state.staplePattern, tension: state.tension, foamSpec };
+          this.simSeat.step(dt, maxIters, fabric, Object.assign({ partState: state.parts.assento }, common));
+          this.simBack.step(dt, maxIters, fabric, Object.assign({ partState: state.parts.encosto }, common));
 
           this.syncClothVisual(this.simSeat, this.seatClothMesh, this.seatSeamLine, this.seatStitchMesh, this.seatFoamMesh);
           this.syncClothVisual(this.simBack, this.backClothMesh, this.backSeamLine, this.backStitchMesh, this.backFoamMesh);
@@ -2903,6 +3340,7 @@
           if (!activeSim.pressActive && activeSim.pulseTimer <= 0 && Math.abs(dispMm) < 0.25) {
             dom.pressStateBadge.textContent = 'Em repouso';
           }
+          if ((this.frameCount & 3) === 0) updateFoamMetrics(activeSim.foam);
 
           this.renderer.render(this.scene, this.camera);
 
@@ -2952,11 +3390,20 @@
       ctx.beginPath();
       for (let i = 0; i < history.length; i++) {
         const x = (i / (history.length - 1)) * w;
-        const y = baseY + (history[i] / 55) * (h - 32);
+        const y = baseY + (history[i] / 80) * (h - 32);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
+    }
+
+    function fmtNum(v, d) { return v.toFixed(d).replace('.', ','); }
+
+    function updateFoamMetrics(fm) {
+      dom.metricPressure.textContent = fmtNum(fm.pressureKPa, 1) + ' kPa';
+      dom.metricStrain.textContent = Math.round(fm.strain * 100) + '%';
+      dom.metricMembrane.textContent = Math.round(fm.membraneN) + ' N/m';
+      dom.metricT90.textContent = fm.t90 === null ? '—' : fmtNum(fm.t90, 2) + ' s';
     }
 
     let fallbackActive = false;
@@ -2970,14 +3417,21 @@
       dom.fallbackView.classList.add('active');
       dom.perfText.textContent = 'Modo 2D';
       const ctx = dom.fallbackCanvas.getContext('2d');
+      const fbFoam = new FoamModel();
+      let last = performance.now();
       const tick = () => {
         requestAnimationFrame(tick);
-        const target = fallbackPressed ? (state.pressForce / 120) * 42 : 0;
-        const omega = 13.5 - state.damping * 6.5;
-        const zeta = 0.14 + state.damping * 2.15;
-        const acc = omega * omega * (target - fallbackDisp) - 2 * zeta * omega * fallbackVel;
-        fallbackVel += acc * (1 / 60);
-        fallbackDisp += fallbackVel * (1 / 60);
+        const now = performance.now();
+        const dt = Math.min(1 / 30, (now - last) / 1000);
+        last = now;
+        // Mesmo modelo físico do 3D: espuma por densidade + membrana + viscoelasticidade
+        const pState = state.parts[state.activePart];
+        const sides = Object.values(pState.sides).filter(Boolean).length;
+        const corners = Object.values(pState.corners).filter(Boolean).length;
+        const T = membraneTensionNpm(FABRICS[state.fabricId], state.tension, sides, corners);
+        fbFoam.step(dt, 0.095, fallbackPressed ? state.pressForce : 0, state.damping, FOAMS[state.foamDensity] || FOAMS.D28, T);
+        fallbackDisp = fbFoam.disp * 1000; // mm
+        updateFoamMetrics(fbFoam);
 
         const w = dom.fallbackCanvas.width;
         const h = dom.fallbackCanvas.height;
@@ -2999,7 +3453,7 @@
           const x = 95 + t * 330;
           const g = Math.exp(-Math.pow((t - 0.5) * 4, 2));
           const wrinkle = state.staplePattern === 'sequencial' ? Math.sin(t * Math.PI * 10) * 4.5 : 0;
-          const y = 128 + fallbackDisp * g + wrinkle;
+          const y = 128 + fallbackDisp * (80 / 95) * g + wrinkle;
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
@@ -3074,6 +3528,11 @@
       const aligned = Math.abs(state.alignAngle) <= 2 && Math.abs(state.alignOffset) <= 4;
       dom.alignStatusBadge.textContent = aligned ? 'Alinhada' : 'Desalinhada';
       dom.alignStatusBadge.classList.toggle('ok', aligned);
+      const gRad = (state.alignAngle * Math.PI) / 180;
+      const bc = FABRICS[state.fabricId].biasCompliance;
+      const biasShare = Math.abs(Math.sin(2 * gRad));
+      dom.metricAxisStiff.textContent = Math.round((1 - bc * biasShare) * 100) + '%';
+      dom.metricBias.textContent = Math.round(biasShare * 100) + '%';
       dom.btnToggleGuide.classList.toggle('btn-active', state.showGuide);
       dom.btnToggleGuide.textContent = 'Guia Visual: ' + (state.showGuide ? 'On' : 'Off');
 
@@ -3102,7 +3561,14 @@
       dom.rangeForce.value = state.pressForce;
       dom.valForce.textContent = state.pressForce + ' N';
       dom.rangeDamping.value = state.damping;
-      const dampDesc = state.damping < 0.28 ? 'Elástico / Rebote' : (state.damping > 0.68 ? 'Viscoelástico / Lento' : 'Equilibrado');
+      const dampDesc = state.damping < 0.28 ? 'Resiliente / Rebote' : (state.damping > 0.68 ? 'Memória / Lento' : 'Equilibrado');
+      const foam = FOAMS[state.foamDensity] || FOAMS.D28;
+      dom.valDensity.textContent = foam.density + ' kg/m³ · CLD40 ≈ ' + fmtNum(foam.cld40, 1) + ' kPa';
+      document.querySelectorAll('[data-density]').forEach((b) => {
+        const on = b.dataset.density === state.foamDensity;
+        b.classList.toggle('btn-active', on);
+        b.setAttribute('aria-checked', String(on));
+      });
       dom.valDamping.textContent = state.damping.toFixed(2).replace('.', ',') + ' (' + dampDesc + ')';
 
       // Luz, modo interação, opções
@@ -3314,7 +3780,18 @@
         showToast('Todos os cantos esticados e grampeados!', 'ok');
       });
 
-      // Etapa 5: Pressão e amortecimento
+      // Etapa 5: Densidade, pressão e viscoelasticidade
+      document.querySelectorAll('[data-density]').forEach((b) => {
+        b.addEventListener('click', () => {
+          if (state.foamDensity === b.dataset.density) return;
+          pushUndo();
+          state.foamDensity = b.dataset.density;
+          syncAllFromState();
+          AudioFX.playPress();
+          showToast('Espuma ' + FOAMS[state.foamDensity].name + ': ' + FOAMS[state.foamDensity].use + '.', 'ok');
+        });
+      });
+
       dom.rangeForce.addEventListener('input', () => {
         state.pressForce = Number(dom.rangeForce.value);
         syncAllFromState();
@@ -3439,12 +3916,13 @@
         reader.onload = () => {
           try {
             const parsed = JSON.parse(String(reader.result));
-            if (!parsed || parsed.version !== STATE_VERSION || !parsed.parts || !FABRICS[parsed.fabricId]) {
+            if (!parsed || (parsed.version !== STATE_VERSION && parsed.version !== 1) || !parsed.parts || !FABRICS[parsed.fabricId]) {
               showToast('Arquivo JSON inválido ou versão incompatível.', 'warn');
               return;
             }
             pushUndo();
-            state = Object.assign(createInitialState(), parsed);
+            state = Object.assign(createInitialState(), parsed, { version: STATE_VERSION });
+            if (!FOAMS[state.foamDensity]) state.foamDensity = 'D28';
             syncAllFromState();
             dom.settingsModal.classList.remove('open');
             showToast('Estado importado com sucesso.', 'ok');

@@ -10,17 +10,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Three.js ES Modules Import Map -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
+  <link rel="stylesheet" href="./courage-ui.css" />
+  <script>
+    // O launcher serve a cópia local. A abertura direta usa módulos HTTPS.
+    const localThree = location.protocol !== 'file:';
+    const threeBase = localThree ? '../../shared/vendor/' : 'https://unpkg.com/three@0.160.0/';
+    const threeMap = document.createElement('script');
+    threeMap.type = 'importmap';
+    threeMap.textContent = JSON.stringify({ imports: {
+      three: threeBase + (localThree ? 'three.module.js' : 'build/three.module.js'),
+      'three/addons/': threeBase + (localThree ? 'addons/' : 'examples/jsm/')
+    } });
+    document.currentScript.after(threeMap);
   </script>
 
   <style>
@@ -438,6 +439,65 @@
         animation-duration: 0.05s !important;
       }
     }
+
+    #btn-walk:disabled { opacity: 0.55; }
+    body.walk-mode .ui-hideable,
+    body.walk-mode #mobile-sheet-toggle,
+    body.walk-mode #btn-exit-contemplation { display: none !important; }
+    body.walk-mode #canvas-container canvas { touch-action: none; cursor: grab; }
+    body.walk-mode #canvas-container canvas:active { cursor: grabbing; }
+    #walk-hud {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      color: #fff4dc;
+    }
+    #walk-hud[hidden] { display: none; }
+    .walk-status {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      left: max(12px, env(safe-area-inset-left));
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      width: min(420px, calc(100vw - 24px));
+      padding: 12px;
+      border: 1px solid #c5a67180;
+      border-radius: 14px;
+      background: #17271def;
+      box-shadow: 0 6px 24px #0005;
+    }
+    #walk-phase { display: block; font: 600 18px 'Playfair Display', Georgia, serif; }
+    #walk-goal, .walk-keys { font-size: 12px; line-height: 1.45; margin-top: 4px; }
+    .walk-keys { color: #dae6ce; }
+    #walk-hud button {
+      pointer-events: auto;
+      padding: 8px 12px;
+      border: 1px solid #bdab8099;
+      border-radius: 8px;
+      background: #263d2c;
+      color: #fff4dc;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    #walk-hud button:focus-visible { outline: 2px solid #ffda95; outline-offset: 2px; }
+    .walk-touch {
+      position: absolute;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      left: max(16px, env(safe-area-inset-left));
+      display: none;
+      grid-template-columns: repeat(3, 47px);
+      gap: 5px;
+    }
+    #walk-hud .walk-touch button { min-height: 47px; font-size: 19px; touch-action: none; user-select: none; }
+    .walk-up { grid-column: 2; }
+    .walk-left { grid-column: 1; }
+    @media (any-pointer: coarse) {
+      .walk-touch { display: grid; }
+      .walk-keys { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -497,6 +557,7 @@
 
   <!-- Barra de Controles Superior Direita -->
   <nav class="ui-hideable fixed top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end max-w-[52vw] sm:max-w-none pointer-events-auto" aria-label="Controles do ambiente 3D">
+    <button id="btn-walk" type="button" disabled class="glass-btn rounded-xl px-2.5 sm:px-3 py-2 text-xs font-medium whitespace-nowrap" aria-label="Caminhar em primeira pessoa">Caminhar</button>
     <button id="btn-contemplation" class="glass-btn rounded-xl px-2.5 py-2 sm:px-3 sm:py-2 text-xs font-medium flex items-center gap-1.5" title="Modo Contemplação (tecla H)">
       <svg class="w-4 h-4 text-[#99f6e4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
@@ -863,6 +924,26 @@
   <!-- =========================================================================
        SCRIPT MODULAR: ESTADO TERAPÊUTICO + MOTOR 3D THREE.JS + ÁUDIO PROCEDURAL
        ========================================================================= -->
+
+  <section id="walk-hud" aria-label="Caminhada em primeira pessoa" hidden>
+    <div class="walk-status">
+      <div>
+        <div role="status" aria-atomic="true">
+          <strong id="walk-phase"></strong>
+          <p id="walk-goal"></p>
+        </div>
+        <p class="walk-keys">WASD ou setas para caminhar. Arraste para olhar ou vire com Q e E.</p>
+      </div>
+      <button id="walk-exit" type="button" title="Voltar à vista do jardim (Esc)">Sair</button>
+    </div>
+    <div class="walk-touch" role="group" aria-label="Caminhar. Arraste no jardim para olhar.">
+      <button class="walk-up" data-walk="forward" type="button" aria-label="Andar para frente">↑</button>
+      <button class="walk-left" data-walk="left" type="button" aria-label="Andar para a esquerda">←</button>
+      <button data-walk="back" type="button" aria-label="Andar para trás">↓</button>
+      <button data-walk="right" type="button" aria-label="Andar para a direita">→</button>
+    </div>
+  </section>
+  <script src="./courage-walk.js"></script>
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -1417,6 +1498,7 @@
         this.buildTerracottaHydrangeas();
         this.buildTreesAndCanopy();
         this.buildUndergrowthAndBoulders();
+        CourageWalk.buildGarden(THREE, this);
         this.buildSunbeamsAndPollen();
 
         this.applyQuality(appState.quality);
@@ -1568,24 +1650,22 @@
       }
 
       // Terreno inclinado orgânico + caminho de paralelepípedos com musgo
+      groundHeight(x, z) {
+        const rise = Math.max(0, Math.min(1, (2.2 - z) / 8.8)) * 2.75;
+        const sideSlope = Math.max(0, Math.abs(x) - 2.3) * 0.22;
+        const hillNoise = (fbm2D(x * 0.16 + 5, z * 0.16 + 5, 3) - 0.5) * 0.9;
+        return CourageWalk.terrainHeight(x, z, rise + sideSlope + hillNoise * 0.45 - 0.18);
+      }
+
       buildTerrainAndCobblestones() {
         // Solo com declive suave acompanhando a escadaria
-        const groundGeo = new THREE.PlaneGeometry(64, 64, 64, 64);
+        const groundGeo = new THREE.PlaneGeometry(64, 64, 96, 96);
         groundGeo.rotateX(-Math.PI / 2);
         const pos = groundGeo.attributes.position;
         for (let i = 0; i < pos.count; i++) {
           const x = pos.getX(i);
           const z = pos.getZ(i);
-          // Eleva o terreno à medida que z vai para o fundo (-z)
-          let y = 0;
-          if (z < 2.2) {
-            const t = Math.max(0, Math.min(1, (2.2 - z) / 8.8));
-            y = t * 2.75;
-          }
-          // Bordas laterais mais elevadas (jardim em terraço/vale acolhedor)
-          const sideSlope = Math.max(0, Math.abs(x) - 2.3) * 0.22;
-          const hillNoise = (fbm2D(x * 0.16 + 5, z * 0.16 + 5, 3) - 0.5) * 0.9;
-          pos.setY(i, y + sideSlope + hillNoise * 0.45 - 0.18);
+          pos.setY(i, this.groundHeight(x, z));
         }
         groundGeo.computeVertexNormals();
 
@@ -1887,7 +1967,7 @@
 
         // Banco de descanso de madeira sob o pergolado
         const bench = new THREE.Group();
-        bench.position.set(0.15, 0.02, -0.2);
+        bench.position.set(0.67, 0.02, -0.2);
 
         // Assento com ripas
         for (let s = 0; s < 3; s++) {
@@ -2487,6 +2567,7 @@
         };
 
         dom.addEventListener('pointermove', (e) => {
+          if (this.walk?.active) return;
           updatePointer(e.clientX, e.clientY);
           this.raycaster.setFromCamera(this.pointer, this.camera);
           const hits = this.raycaster.intersectObjects(this.stepHitMeshes, false);
@@ -2519,11 +2600,13 @@
         });
 
         dom.addEventListener('pointerdown', (e) => {
+          if (this.walk?.active) return;
           this.pointerDownPos = { x: e.clientX, y: e.clientY };
           this.cameraAnim = null; // Interrompe transição suave se usuário assumir o controle
         });
 
         dom.addEventListener('pointerup', (e) => {
+          if (this.walk?.active) return;
           const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
           if (dist > 8) return; // Era um arraste de câmera, não um clique
           updatePointer(e.clientX, e.clientY);
@@ -2552,19 +2635,23 @@
         const t = this.clock.elapsedTime;
         const reduced = appState.reducedMotion;
 
-        // Transição suave de câmera
-        if (this.cameraAnim) {
-          this.cameraAnim.elapsed += dt;
-          const p = Math.min(1, this.cameraAnim.elapsed / this.cameraAnim.duration);
-          const ease = 1 - Math.pow(1 - p, 3);
-          this.camera.position.lerpVectors(this.cameraAnim.startPos, this.cameraAnim.endPos, ease);
-          this.controls.target.lerpVectors(this.cameraAnim.startLook, this.cameraAnim.endLook, ease);
-          if (p >= 1) this.cameraAnim = null;
-        }
+        if (this.walk?.active) {
+          this.walk.update(dt, reduced);
+        } else {
+          // Transição suave de câmera
+          if (this.cameraAnim) {
+            this.cameraAnim.elapsed += dt;
+            const p = Math.min(1, this.cameraAnim.elapsed / this.cameraAnim.duration);
+            const ease = 1 - Math.pow(1 - p, 3);
+            this.camera.position.lerpVectors(this.cameraAnim.startPos, this.cameraAnim.endPos, ease);
+            this.controls.target.lerpVectors(this.cameraAnim.startLook, this.cameraAnim.endLook, ease);
+            if (p >= 1) this.cameraAnim = null;
+          }
 
-        // Impede que o target do OrbitControls desça abaixo do solo
-        this.controls.target.y = Math.max(0.4, Math.min(4.5, this.controls.target.y));
-        this.controls.update();
+          // Impede que o target do OrbitControls desça abaixo do solo
+          this.controls.target.y = Math.max(0.4, Math.min(4.5, this.controls.target.y));
+          this.controls.update();
+        }
 
         // Transição suave de iluminação dos degraus
         this.stepGroups.forEach((s) => {
@@ -3038,6 +3125,7 @@
 
       // Atalhos de teclado acessíveis (desativados quando digitando em campos de texto)
       window.addEventListener('keydown', (e) => {
+        if (gardenScene?.walk?.active) return;
         const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
         if (tag === 'input' || tag === 'textarea') return;
         if (e.key >= '1' && e.key <= '7') {
@@ -3067,6 +3155,10 @@
         loadingBar.style.width = '75%';
         const container = document.getElementById('canvas-container');
         gardenScene = new CourageGardenScene(container);
+        gardenScene.walk = new CourageWalk.WalkController(gardenScene, index => {
+          selectStepFromAnywhere(index, false);
+          soundscape.playStepChime(index);
+        });
         gardenScene.animate();
         loadingBar.style.width = '100%';
       } catch (err) {

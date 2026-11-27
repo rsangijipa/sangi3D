@@ -1,3 +1,5 @@
+import * as THREE from '../vendor/three.module.js';
+
 /**
  * shared/engine/assets.js
  * Gerador de geometria procedural para evitar primitivas cruas (RoundedBox, Lathe, TaperedTube, Chanfros)

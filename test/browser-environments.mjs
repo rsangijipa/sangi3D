@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { readFile, mkdir } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
+import { resolvePlaywright } from './lib/playwright-resolver.mjs';
+
 const root = fileURLToPath(new URL('..', import.meta.url));
-const require = createRequire(new URL('../03_Colecoes/Expressao_e_Desenvolvimento/07-sala-das-cadeiras-possiveis/package.json', import.meta.url));
-const { chromium } = require('playwright');
+const { chromium } = await resolvePlaywright();
 const entries = JSON.parse(await readFile(new URL('../api/apps.json', import.meta.url), 'utf8'));
 const kit = /\/(04-observatorio|05-oficina|06-torre|07-ilha|09-estacao|13-museu|14-estudio|16-teatro)[^/]+\/index\.html$/;
 const commercial = /\/(04_maquina|05_clepsidra|07_copos|08_toca|10_maquina|11_relogio|14_bancada|15_barista|18_orgao)[^/]+\/index\.html$/;

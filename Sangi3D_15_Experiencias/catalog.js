@@ -1,0 +1,17 @@
+export const definitions = {
+  "14": { title: "Refúgio da Chuva", slug: "refugio-da-chuva", factory: "shelter", load: () => import("./zones.js") },
+  "13": { title: "Ateliê de Cerâmica", slug: "atelie-de-ceramica", factory: "ceramics", load: () => import("./clay.js") },
+  "08": { title: "Universo Audioreativo", slug: "universo-audioreativo", factory: "visualizer", load: () => import("./soundscapes.js") },
+  "03": { title: "Floresta Bioluminescente", slug: "floresta-bioluminescente", factory: "forest", load: () => import("./expeditions.js") },
+  "12": { title: "Câmara Antigravitacional", slug: "camara-antigravitacional", factory: "chamber", load: () => import("./laboratory.js") },
+  "11": { title: "Museu das Memórias", slug: "museu-das-memorias", factory: "museum", load: () => import("./museum.js") },
+  "01": { title: "Corpo de Partículas", slug: "corpo-de-particulas", factory: "particles", load: () => import("./soundscapes.js") },
+  "07": { title: "Laboratório de Ferrofluido", slug: "laboratorio-de-ferrofluido", factory: "ferrofluid", load: () => import("./laboratory.js") },
+  "02": { title: "Oceano de Tinta", slug: "oceano-de-tinta", factory: "ink", load: () => import("./laboratory.js") },
+  "15": { title: "Maestro Invisível", slug: "maestro-invisivel", factory: "conductor", load: () => import("./soundscapes.js") },
+  "09": { title: "Escultor de Planetas", slug: "escultor-de-planetas", factory: "planet", load: () => import("./clay.js") },
+  "05": { title: "Trem sem Destino", slug: "trem-sem-destino", factory: "trainJourney", load: () => import("./zones.js") },
+  "04": { title: "Cidade da Madrugada", slug: "cidade-da-madrugada", factory: "midnight", load: () => import("./zones.js") },
+  "06": { title: "Cidade Submersa", slug: "cidade-submersa", factory: "submerged", load: () => import("./expeditions.js") },
+  "10": { title: "Arquitetura do Impossível", slug: "arquitetura-do-impossivel", factory: "impossible", load: () => import("./expeditions.js") },
+};

@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Restauro de Azulejos — Ateliê 3D de Conservação</title>
-<meta name="description" content="Ateliê de conservação em que você inspeciona, limpa e encaixa fragmentos de azulejos históricos.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restauro de Azulejos — Quebra-cabeça e Oficina 3D</title>
+<meta name="description" content="Restaure quatro painéis cerâmicos em um quebra-cabeça de encaixe e visite a oficina 3D.">
 <style>
   :root {
     --bg: #14171c;
@@ -415,8 +415,77 @@
     .compare-hud { bottom: 68px; min-width: 260px; padding: 8px 12px; }
   }
 </style>
+<link rel="stylesheet" href="puzzle.css">
+<script>
+  if (new URLSearchParams(location.search).get('modo') === '3d') {
+    document.documentElement.classList.add('azulejos-3d');
+  }
+</script>
+<script defer src="puzzle.js"></script>
 </head>
 <body>
+<div class="puzzle-app" id="puzzle-app">
+  <header class="puzzle-header">
+    <div class="puzzle-brand"><span class="puzzle-mark" aria-hidden="true">✥</span><span>Restauro de Azulejos</span></div>
+    <a class="puzzle-button" href="?modo=3d">Oficina 3D <span aria-hidden="true">↗</span></a>
+  </header>
+  <main class="puzzle-layout">
+    <aside class="puzzle-collection" aria-labelledby="collection-title">
+      <h2 id="collection-title">Coleção de painéis</h2>
+      <div id="puzzle-collection"></div>
+    </aside>
+    <section class="puzzle-workbench" aria-labelledby="puzzle-title">
+      <div class="puzzle-intro">
+        <div>
+          <p class="puzzle-kicker" id="puzzle-level"></p>
+          <h1 id="puzzle-title"></h1>
+          <p id="puzzle-description"></p>
+        </div>
+        <div class="puzzle-meter">
+          <span id="puzzle-progress"></span>
+          <progress id="puzzle-meter" aria-label="Progresso do painel"></progress>
+        </div>
+      </div>
+      <div class="puzzle-table">
+        <div id="puzzle-board" class="puzzle-board" role="group" aria-label="Painel de azulejos"></div>
+      </div>
+      <div class="puzzle-toolbar">
+        <button class="puzzle-button" type="button" id="puzzle-reference"><span aria-hidden="true">▧</span> Ver referência</button>
+        <button class="puzzle-button" type="button" id="puzzle-hint"><span aria-hidden="true">✧</span> Pedir dica</button>
+        <button class="puzzle-button puzzle-reset" type="button" id="puzzle-reset"><span aria-hidden="true">↻</span> Reiniciar</button>
+      </div>
+      <p id="puzzle-status" class="puzzle-status" role="status" aria-live="polite"></p>
+    </section>
+    <aside class="puzzle-pieces" aria-labelledby="tray-title">
+      <div class="puzzle-tray-heading"><h2 id="tray-title">Bandeja de peças</h2><span id="puzzle-remaining"></span></div>
+      <p id="puzzle-instructions">Escolha uma peça, gire se precisar e toque no vão. No computador, você também pode arrastar.</p>
+      <div id="puzzle-tray" aria-label="Peças disponíveis" role="group"></div>
+      <div class="puzzle-turn">
+        <button class="puzzle-button" id="puzzle-ccw" type="button" aria-label="Girar 90 graus à esquerda" title="Girar à esquerda (Q)">↶</button>
+        <span id="puzzle-selection">Selecione uma peça</span>
+        <button class="puzzle-button" id="puzzle-cw" type="button" aria-label="Girar 90 graus à direita" title="Girar à direita (E)">↷</button>
+      </div>
+      <button class="puzzle-button puzzle-next" id="puzzle-next" type="button" hidden></button>
+    </aside>
+  </main>
+  <dialog id="puzzle-guide" class="puzzle-dialog" aria-labelledby="puzzle-reference-title">
+    <div class="puzzle-dialog-head">
+      <div><p class="puzzle-kicker">Painel completo</p><h2 id="puzzle-reference-title"></h2></div>
+      <form method="dialog"><button class="puzzle-button" aria-label="Fechar referência" autofocus>✕</button></form>
+    </div>
+    <img id="puzzle-reference-image" alt="">
+  </dialog>
+  <dialog id="puzzle-reset-dialog" class="puzzle-dialog" aria-labelledby="puzzle-reset-title">
+    <div class="puzzle-dialog-head"><h2 id="puzzle-reset-title">Reiniciar painel?</h2></div>
+    <p>As peças deste painel voltarão à bandeja e serão embaralhadas.</p>
+    <form method="dialog" class="puzzle-toolbar">
+      <button class="puzzle-button" value="cancel" autofocus>Cancelar</button>
+      <button class="puzzle-button" value="reset">Reiniciar painel</button>
+    </form>
+  </dialog>
+</div>
+<div id="azulejos-oficina">
+<a href="index.html" id="puzzle-return">← Quebra-cabeça</a>
 <div id="stage-container" role="main" aria-label="Bancada 3D de restauro de azulejos">
   <canvas id="webgl-canvas" tabindex="0" aria-label="Cena interativa 3D do painel cerâmico"></canvas>
 </div>
@@ -674,8 +743,7 @@
       <div class="section-label"><span>Aproximações e Dependências</span></div>
       <p class="helper-text">
         A limpeza usa máscara de sujeira editável em grade UV (256×256 por azulejo) acoplada à rugosidade do esmalte.
-        O encaixe opera em grade 4×4 com tolerância angular de ±12°. Motor 3D via CDN Three.js r128
-        (<code>cdnjs.cloudflare.com</code>), com recuperação automática em Canvas 2D caso a rede ou WebGL2 falhem.
+        O encaixe opera em grade 4×4 com tolerância angular de ±12°. Motor Three.js r128 local, com recuperação automática em Canvas 2D caso o WebGL esteja indisponível.
         Áudio sintetizado via Web Audio API somente após ativação explícita.
       </p>
     </div>
@@ -704,7 +772,7 @@
 <!-- Fallback 2D Recovery Root (when WebGL2 or CDN Three.js fails) -->
 <section id="fallback-root" aria-label="Modo de recuperação HTML 2D">
   <div class="fallback-banner" id="fallback-reason">
-    <strong>Modo de Recuperação 2D Ativado:</strong> WebGL2 ou a biblioteca Three.js (CDN) não puderam ser carregados.
+    <strong>Modo de Recuperação 2D Ativado:</strong> WebGL ou a biblioteca Three.js local não puderam ser carregados.
     Você ainda pode limpar o painel com o pincel, girar e encaixar as 4 peças faltantes e comparar antes e depois diretamente em HTML5 Canvas.
   </div>
   <canvas id="fallback-canvas" width="512" height="512"></canvas>
@@ -721,11 +789,11 @@
   <p class="helper-text" id="fb-status" style="max-width:460px;text-align:center;"></p>
 </section>
 
-<!-- Fixed-version Three.js r128 from cdnjs -->
-<script src="/shared/vendor/three-r128.min.js"></script>
+</div>
 <script>
 (function () {
   'use strict';
+  if (!document.documentElement.classList.contains('azulejos-3d')) return;
 
   /* ============================================================================
    * 1. CONSTANTS & SERIALIZABLE STATE
@@ -3238,13 +3306,13 @@
     });
   }
 
-  window.addEventListener('load', () => {
+  function startWorkshop() {
     const master = createMasterArtwork();
     const hasThree = typeof window.THREE !== 'undefined';
     buildTileAssets(master, hasThree);
 
     if (!hasThree) {
-      startFallback2D('A biblioteca Three.js (CDN) não respondeu — verifique a conexão.');
+      startFallback2D('A biblioteca Three.js local não pôde ser carregada.');
       return;
     }
 
@@ -3257,7 +3325,13 @@
     wireUI();
     renderPieceTray();
     updateStepperBadges();
-  });
+  }
+
+  const threeScript = document.createElement('script');
+  threeScript.src = '../../shared/vendor/three-r128.min.js';
+  threeScript.addEventListener('load', startWorkshop);
+  threeScript.addEventListener('error', startWorkshop);
+  document.head.append(threeScript);
 })();
 </script>
 </body>

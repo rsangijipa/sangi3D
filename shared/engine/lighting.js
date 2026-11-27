@@ -1,3 +1,5 @@
+import * as THREE from '../vendor/three.module.js';
+
 /**
  * shared/engine/lighting.js
  * Configuração de iluminação cinemática e presets de atmosfera
@@ -74,8 +76,15 @@ export class LightingRig {
   }
 
   dispose() {
-    this.scene.remove(this.ambientLight);
-    this.scene.remove(this.mainLight);
-    this.scene.remove(this.rimLight);
+    for (const light of [this.ambientLight, this.mainLight, this.rimLight]) {
+      if (!light) continue;
+      this.scene.remove(light);
+      if (light.shadow?.map && typeof light.shadow.map.dispose === 'function') {
+        try { light.shadow.map.dispose(); } catch {}
+      }
+      if (typeof light.dispose === 'function') {
+        try { light.dispose(); } catch {}
+      }
+    }
   }
 }

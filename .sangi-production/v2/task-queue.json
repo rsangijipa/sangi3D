@@ -1,0 +1,1890 @@
+{
+  "generatedAt": "2026-11-24T18:24:19.828Z",
+  "totalTasks": 104,
+  "tasks": [
+    {
+      "taskId": "M0-INFRA-V2",
+      "appId": null,
+      "batch": "M0",
+      "milestone": "M0",
+      "branch": "engine/infra-v2",
+      "dependencies": [],
+      "writeScope": [
+        ".sangi-production/v2/**",
+        "scripts/**",
+        "shared/**",
+        "api/apps.json",
+        "launcher/**",
+        "index.html",
+        "test/**"
+      ],
+      "status": "READY_FOR_REVIEW",
+      "gateStatus": {
+        "G00": "PASSED",
+        "G01": "PASSED",
+        "G02": "PASSED",
+        "G03": "PASSED",
+        "G04": "PASSED"
+      },
+      "blockedBy": []
+    },
+    {
+      "taskId": "M1-BASELINE-ALL-102",
+      "appId": "*",
+      "batch": "M1",
+      "milestone": "M1_Baseline",
+      "branch": "qa/baseline-all-102",
+      "dependencies": [
+        "M0-INFRA-V2"
+      ],
+      "writeScope": [
+        ".sangi-production/v2/apps/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {
+        "G01": "PENDING"
+      },
+      "blockedBy": []
+    },
+    {
+      "taskId": "M2-001",
+      "appId": "01_jogos_html-escada-da-coragem-escada-da-coragem-html",
+      "name": "Escada da Coragem",
+      "batch": "M2",
+      "milestone": "M2",
+      "branch": "upgrade/01_jogos_html-escada-da-coragem-escada-da-coragem-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/escada-da-coragem/escada-da-coragem.html",
+        ".sangi-production/v2/apps/01_jogos_html-escada-da-coragem-escada-da-coragem-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M2-002",
+      "appId": "01_jogos_html-pensar-sentir-e-agir-pensar-sentir-e-agir-html",
+      "name": "Pensar, Sentir e Agir",
+      "batch": "M2",
+      "milestone": "M2",
+      "branch": "upgrade/01_jogos_html-pensar-sentir-e-agir-pensar-sentir-e-agir-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/pensar-sentir-e-agir/pensar-sentir-e-agir.html",
+        ".sangi-production/v2/apps/01_jogos_html-pensar-sentir-e-agir-pensar-sentir-e-agir-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M2-003",
+      "appId": "01_jogos_html-termometro-da-ansiedade-index-html",
+      "name": "Termômetro da Ansiedade",
+      "batch": "M2",
+      "milestone": "M2",
+      "branch": "upgrade/01_jogos_html-termometro-da-ansiedade-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/termometro-da-ansiedade/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-termometro-da-ansiedade-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M2-004",
+      "appId": "01_jogos_html-tribunal-dos-pensamentos-tribunal-dos-pensamentos-html",
+      "name": "Tribunal dos Pensamentos",
+      "batch": "M2",
+      "milestone": "M2",
+      "branch": "upgrade/01_jogos_html-tribunal-dos-pensamentos-tribunal-dos-pensamentos-",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/tribunal-dos-pensamentos/tribunal-dos-pensamentos.html",
+        ".sangi-production/v2/apps/01_jogos_html-tribunal-dos-pensamentos-tribunal-dos-pensamentos-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M3-005",
+      "appId": "01_jogos_html-atelie-dos-remendos-e-transformacoes-ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir-html",
+      "name": "Ateliê dos Remendos e Transformações",
+      "batch": "M3",
+      "milestone": "M3",
+      "branch": "upgrade/01_jogos_html-atelie-dos-remendos-e-transformacoes-ateli_dos_rem",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/atelie-dos-remendos-e-transformacoes/ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir.html",
+        ".sangi-production/v2/apps/01_jogos_html-atelie-dos-remendos-e-transformacoes-ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M3-006",
+      "appId": "01_jogos_html-biblioteca-das-historias-inacabadas-biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir-html",
+      "name": "Biblioteca das Histórias Inacabadas",
+      "batch": "M3",
+      "milestone": "M3",
+      "branch": "upgrade/01_jogos_html-biblioteca-das-historias-inacabadas-biblioteca_das",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/biblioteca-das-historias-inacabadas/biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir.html",
+        ".sangi-production/v2/apps/01_jogos_html-biblioteca-das-historias-inacabadas-biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M3-007",
+      "appId": "01_jogos_html-casa-da-arvore-das-emocoes-index-html",
+      "name": "Casa da Árvore das Emoções",
+      "batch": "M3",
+      "milestone": "M3",
+      "branch": "upgrade/01_jogos_html-casa-da-arvore-das-emocoes-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/casa-da-arvore-das-emocoes/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-casa-da-arvore-das-emocoes-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M3-008",
+      "appId": "01_jogos_html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins_do_sentir-html",
+      "name": "Cidade das Conexões",
+      "batch": "M3",
+      "milestone": "M3",
+      "branch": "upgrade/01_jogos_html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/cidade-das-conexoes/cidade_das_conex_es_3d_jardins_do_sentir.html",
+        ".sangi-production/v2/apps/01_jogos_html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins_do_sentir-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M3-009",
+      "appId": "01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html",
+      "name": "Correio das Palavras Não Ditas",
+      "batch": "M3",
+      "milestone": "M3",
+      "branch": "upgrade/01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavra",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/correio-das-palavras-nao-ditas/correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html",
+        ".sangi-production/v2/apps/01_jogos_html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-010",
+      "appId": "04-tear-dos-vinculos",
+      "name": "Tear dos Vínculos",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/04-tear-dos-vinculos",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "04-tear-dos-vinculos",
+        ".sangi-production/v2/apps/04-tear-dos-vinculos/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-011",
+      "appId": "02_projetos-ateliemascaras",
+      "name": "Ateliê das Máscaras Emocionais",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-ateliemascaras",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/ateliemascaras",
+        ".sangi-production/v2/apps/02_projetos-ateliemascaras/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-012",
+      "appId": "02_projetos-atelie-do-gesto-lento",
+      "name": "Ateliê do Gesto Lento",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-atelie-do-gesto-lento",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/atelie-do-gesto-lento",
+        ".sangi-production/v2/apps/02_projetos-atelie-do-gesto-lento/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-013",
+      "appId": "02_projetos-territorio-dos-vinculos-index-html",
+      "name": "Território dos Vínculos",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-territorio-dos-vinculos-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/territorio-dos-vinculos/index.html",
+        ".sangi-production/v2/apps/02_projetos-territorio-dos-vinculos-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-014",
+      "appId": "02_projetos-jardim-dos-ciclos",
+      "name": "Jardim dos Ciclos",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-jardim-dos-ciclos",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/jardim-dos-ciclos",
+        ".sangi-production/v2/apps/02_projetos-jardim-dos-ciclos/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-015",
+      "appId": "02_projetos-mochila-da-travessia-projeto-mochila-da-travessia-html",
+      "name": "Mochila da Travessia",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-mochila-da-travessia-projeto-mochila-da-travessia-ht",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/mochila-da-travessia-projeto/mochila-da-travessia.html",
+        ".sangi-production/v2/apps/02_projetos-mochila-da-travessia-projeto-mochila-da-travessia-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-016",
+      "appId": "02_projetos-oficina-dos-gestos-compartilhados-projeto",
+      "name": "Oficina dos Gestos Compartilhados",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-oficina-dos-gestos-compartilhados-projeto",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/oficina-dos-gestos-compartilhados-projeto",
+        ".sangi-production/v2/apps/02_projetos-oficina-dos-gestos-compartilhados-projeto/**"
+      ],
+      "status": "BLOCKED",
+      "gateStatus": {},
+      "blockedBy": [
+        "B005-missing-node_modules"
+      ]
+    },
+    {
+      "taskId": "M5-017",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-01-cartografia-dos-sons",
+      "name": "Cartografia dos Sons",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-01-cartografia-dos-sons",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/01-cartografia-dos-sons",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-01-cartografia-dos-sons/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-018",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-02-atlas-das-texturas",
+      "name": "Atlas das Texturas",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-02-atlas-das-texturas",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/02-atlas-das-texturas",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-02-atlas-das-texturas/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-019",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-03-laboratorio-de-camadas-sonoras",
+      "name": "Laboratório de Camadas Sonoras",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-03-laboratorio-de-camadas-sono",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/03-laboratorio-de-camadas-sonoras",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-03-laboratorio-de-camadas-sonoras/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-020",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz",
+      "name": "Observatório da Luz",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/04-observatorio-da-luz",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-04-observatorio-da-luz/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-021",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-05-oficina-do-tempo",
+      "name": "Oficina do Tempo",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-05-oficina-do-tempo",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/05-oficina-do-tempo",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-05-oficina-do-tempo/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-022",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-06-torre-do-impulso",
+      "name": "Torre do Impulso",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-06-torre-do-impulso",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/06-torre-do-impulso",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-06-torre-do-impulso/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-023",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-07-ilha-das-pausas",
+      "name": "Ilha das Pausas",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-07-ilha-das-pausas",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/07-ilha-das-pausas",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-07-ilha-das-pausas/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-024",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes",
+      "name": "Meteorologia das Emoções",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/08-meteorologia-das-emocoes",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-08-meteorologia-das-emocoes/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-025",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-09-estacao-das-trocas",
+      "name": "Estação das Trocas",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-09-estacao-das-trocas",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/09-estacao-das-trocas",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-09-estacao-das-trocas/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-026",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-10-porto-das-decisoes",
+      "name": "Porto das Decisões",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-10-porto-das-decisoes",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/10-porto-das-decisoes",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-10-porto-das-decisoes/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-027",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-11-bussola-do-corpo",
+      "name": "Bússola do Corpo",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-11-bussola-do-corpo",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/11-bussola-do-corpo",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-11-bussola-do-corpo/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-028",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-12-cidade-das-conversas",
+      "name": "12. Cidade das Conversas",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-12-cidade-das-conversas",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/12-cidade-das-conversas",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-12-cidade-das-conversas/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-029",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-13-museu-dos-pontos-de-vista",
+      "name": "Museu dos Pontos de Vista",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-13-museu-dos-pontos-de-vista",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/13-museu-dos-pontos-de-vista",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-13-museu-dos-pontos-de-vista/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-030",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-14-estudio-dos-limites",
+      "name": "Estúdio dos Limites",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-14-estudio-dos-limites",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/14-estudio-dos-limites",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-14-estudio-dos-limites/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-031",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-15-casa-das-memorias",
+      "name": "Casa das Memórias",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-15-casa-das-memorias",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/15-casa-das-memorias",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-15-casa-das-memorias/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-032",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-16-teatro-das-historias-possiveis",
+      "name": "Teatro das Histórias Possíveis",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-16-teatro-das-historias-possiv",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/16-teatro-das-historias-possiveis",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-16-teatro-das-historias-possiveis/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M5-033",
+      "appId": "kit_17_jogos_3d_mockups_e_prompts-17-ensaio-do-cotidiano",
+      "name": "17. Ensaio do Cotidiano",
+      "batch": "M5",
+      "milestone": "M5",
+      "branch": "upgrade/kit_17_jogos_3d_mockups_e_prompts-17-ensaio-do-cotidiano",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Kit_17_jogos_3D_mockups_e_prompts/17-ensaio-do-cotidiano",
+        ".sangi-production/v2/apps/kit_17_jogos_3d_mockups_e_prompts-17-ensaio-do-cotidiano/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-034",
+      "appId": "01_jogos_html-bancada-do-florista-bancada-do-florista-html",
+      "name": "Bancada do Florista",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-bancada-do-florista-bancada-do-florista-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/bancada-do-florista/bancada-do-florista.html",
+        ".sangi-production/v2/apps/01_jogos_html-bancada-do-florista-bancada-do-florista-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-035",
+      "appId": "01_jogos_html-caixa-de-musica-perfurada-caixa_de_m_sica_perfurada_loja_corda_e_melodia-html",
+      "name": "Caixa de Música Perfurada",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-caixa-de-musica-perfurada-caixa_de_m_sica_perfurad",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/caixa-de-musica-perfurada/caixa_de_m_sica_perfurada_loja_corda_e_melodia.html",
+        ".sangi-production/v2/apps/01_jogos_html-caixa-de-musica-perfurada-caixa_de_m_sica_perfurada_loja_corda_e_melodia-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-036",
+      "appId": "colmeia-transparente-html",
+      "name": "Colmeia Transparente",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/colmeia-transparente-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Colmeia Transparente.html",
+        ".sangi-production/v2/apps/colmeia-transparente-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-037",
+      "appId": "01_jogos_html-confeitaria-de-bolos-3d-index-html",
+      "name": "Confeitaria de Bolos",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-confeitaria-de-bolos-3d-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Confeitaria de Bolos 3D/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-confeitaria-de-bolos-3d-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-038",
+      "appId": "01_jogos_html-cozinha-das-descobertas-cozinha-das-descobertas-html",
+      "name": "Cozinha das Descobertas",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-cozinha-das-descobertas-cozinha-das-descobertas-ht",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/cozinha-das-descobertas/cozinha-das-descobertas.html",
+        ".sangi-production/v2/apps/01_jogos_html-cozinha-das-descobertas-cozinha-das-descobertas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-039",
+      "appId": "01_jogos_html-estufa-das-borboletas-estufa-das-borboletas-html",
+      "name": "Estufa das Borboletas",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-estufa-das-borboletas-estufa-das-borboletas-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/estufa-das-borboletas/estufa-das-borboletas.html",
+        ".sangi-production/v2/apps/01_jogos_html-estufa-das-borboletas-estufa-das-borboletas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-040",
+      "appId": "gerador-de-mundos-clim-ticos-html",
+      "name": "Gerador de Mundos Climáticos",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/gerador-de-mundos-clim-ticos-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Gerador de Mundos Climáticos.html",
+        ".sangi-production/v2/apps/gerador-de-mundos-clim-ticos-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-041",
+      "appId": "01_jogos_html-jardim-dos-fungos-jardim_dos_fungos_microfloresta_interativa_3d-html",
+      "name": "Jardim dos Fungos",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-jardim-dos-fungos-jardim_dos_fungos_microfloresta_",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/jardim-dos-fungos/jardim_dos_fungos_microfloresta_interativa_3d.html",
+        ".sangi-production/v2/apps/01_jogos_html-jardim-dos-fungos-jardim_dos_fungos_microfloresta_interativa_3d-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-042",
+      "appId": "01_jogos_html-lago-3d-interativo-lago-3d-interativo-html",
+      "name": "Lago 3D Interativo",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-lago-3d-interativo-lago-3d-interativo-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/lago-3d-interativo/lago-3d-interativo.html",
+        ".sangi-production/v2/apps/01_jogos_html-lago-3d-interativo-lago-3d-interativo-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-043",
+      "appId": "01_jogos_html-maquete-que-se-monta-maquete_que_se_monta_ateli_tra_o_arquitetura-html",
+      "name": "Maquete que se Monta",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-maquete-que-se-monta-maquete_que_se_monta_ateli_tr",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/maquete-que-se-monta/maquete_que_se_monta_ateli_tra_o_arquitetura.html",
+        ".sangi-production/v2/apps/01_jogos_html-maquete-que-se-monta-maquete_que_se_monta_ateli_tra_o_arquitetura-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-044",
+      "appId": "01_jogos_html-maquina-de-garra-de-brindes-m_quina_de_garra_de_brindes_doce_mel_confeitaria-html",
+      "name": "Máquina de Garra de Brindes",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-maquina-de-garra-de-brindes-m_quina_de_garra_de_br",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/maquina-de-garra-de-brindes/m_quina_de_garra_de_brindes_doce_mel_confeitaria.html",
+        ".sangi-production/v2/apps/01_jogos_html-maquina-de-garra-de-brindes-m_quina_de_garra_de_brindes_doce_mel_confeitaria-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-045",
+      "appId": "01_jogos_html-moinho-hidraulico-moinho_hidr_ulico_simulador_3d_interativo-html",
+      "name": "Moinho Hidráulico",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-moinho-hidraulico-moinho_hidr_ulico_simulador_3d_i",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/moinho-hidraulico/moinho_hidr_ulico_simulador_3d_interativo.html",
+        ".sangi-production/v2/apps/01_jogos_html-moinho-hidraulico-moinho_hidr_ulico_simulador_3d_interativo-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-046",
+      "appId": "01_jogos_html-oficina-das-velas-artesanais-oficina_das_velas_artesanais_ateli_3d_interativo-html",
+      "name": "Oficina das Velas Artesanais",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-oficina-das-velas-artesanais-oficina_das_velas_art",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/oficina-das-velas-artesanais/oficina_das_velas_artesanais_ateli_3d_interativo.html",
+        ".sangi-production/v2/apps/01_jogos_html-oficina-das-velas-artesanais-oficina_das_velas_artesanais_ateli_3d_interativo-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-047",
+      "appId": "01_jogos_html-oficina-de-bonsais-oficina-de-bonsais-html-3d-interativo-html",
+      "name": "Oficina de Bonsais",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-oficina-de-bonsais-oficina-de-bonsais-html-3d-inte",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/oficina-de-bonsais/Oficina de Bonsais — HTML 3D interativo.html",
+        ".sangi-production/v2/apps/01_jogos_html-oficina-de-bonsais-oficina-de-bonsais-html-3d-interativo-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-048",
+      "appId": "01_jogos_html-oficina-do-ritmo-oficina-do-ritmo-html",
+      "name": "Oficina do Ritmo Compartilhado",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-oficina-do-ritmo-oficina-do-ritmo-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/oficina-do-ritmo/oficina-do-ritmo.html",
+        ".sangi-production/v2/apps/01_jogos_html-oficina-do-ritmo-oficina-do-ritmo-html/**"
+      ],
+      "status": "BLOCKED",
+      "gateStatus": {},
+      "blockedBy": [
+        "T19"
+      ]
+    },
+    {
+      "taskId": "M8-049",
+      "appId": "01_jogos_html-paisagem-sonora-3d-paisagem-sonora-3d-html",
+      "name": "Paisagem Sonora",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-paisagem-sonora-3d-paisagem-sonora-3d-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/paisagem-sonora-3d/paisagem-sonora-3d.html",
+        ".sangi-production/v2/apps/01_jogos_html-paisagem-sonora-3d-paisagem-sonora-3d-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-050",
+      "appId": "01_jogos_html-pousada-vento-leve-pousada_vento_leve_varanda_dos_sinos_de_vento-html",
+      "name": "Pousada Vento Leve",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-pousada-vento-leve-pousada_vento_leve_varanda_dos_",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html",
+        ".sangi-production/v2/apps/01_jogos_html-pousada-vento-leve-pousada_vento_leve_varanda_dos_sinos_de_vento-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-051",
+      "appId": "01_jogos_html-semaforo-das-emocoes-semaforo-das-emocoes-html",
+      "name": "Semáforo das Emoções",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-semaforo-das-emocoes-semaforo-das-emocoes-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/semaforo-das-emocoes/semaforo-das-emocoes.html",
+        ".sangi-production/v2/apps/01_jogos_html-semaforo-das-emocoes-semaforo-das-emocoes-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-052",
+      "appId": "01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html",
+      "name": "Terrário de Vidro",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_pl",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/terrario-de-vidro/terr_rio_de_vidro_verde_mi_do_plantas.html",
+        ".sangi-production/v2/apps/01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-053",
+      "appId": "01_jogos_html-trem-de-engrenagens-trem_de_engrenagens_escola_maker_fa_sca-html",
+      "name": "Trem de Engrenagens",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-trem-de-engrenagens-trem_de_engrenagens_escola_mak",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/trem-de-engrenagens/trem_de_engrenagens_escola_maker_fa_sca.html",
+        ".sangi-production/v2/apps/01_jogos_html-trem-de-engrenagens-trem_de_engrenagens_escola_maker_fa_sca-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-054",
+      "appId": "vulc-o-em-miniatura-html",
+      "name": "Vulcão em Miniatura",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/vulc-o-em-miniatura-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "Vulcão em Miniatura.html",
+        ".sangi-production/v2/apps/vulc-o-em-miniatura-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-055",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-01_sala-de-espera-sonora-sala-de-espera-sonora-html",
+      "name": "Sala de Espera Sonora",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/01_sala-de-espera-sonora/sala-de-espera-sonora.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-01_sala-de-espera-sonora-sala-de-espera-sonora-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-056",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-02_mesa-dos-objetos-que-acalmam-mesa-dos-objetos-que-acalmam-html",
+      "name": "Mesa dos Objetos que Acalmam",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/02_mesa-dos-objetos-que-acalmam/mesa-dos-objetos-que-acalmam.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-02_mesa-dos-objetos-que-acalmam-mesa-dos-objetos-que-acalmam-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-057",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-03_rochas-em-equilibrio-rochas-em-equilibrio-html",
+      "name": "Casa Seixo Yoga e Terapia",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/03_rochas-em-equilibrio/rochas-em-equilibrio.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-03_rochas-em-equilibrio-rochas-em-equilibrio-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-058",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-04_maquina-de-escrever-das-intencoes",
+      "name": "Máquina de Escrever das Intenções",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/04_maquina-de-escrever-das-intencoes/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-04_maquina-de-escrever-das-intencoes/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-059",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-05_clepsidra-do-foco",
+      "name": "Clepsidra do Foco",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/05_clepsidra-do-foco/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-05_clepsidra-do-foco/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-060",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-07_copos-musicais",
+      "name": "Copos Musicais",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/07_copos-musicais/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-07_copos-musicais/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-061",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-08_toca-discos-de-vinil",
+      "name": "Toca-Discos de Vinil",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/08_toca-discos-de-vinil/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-08_toca-discos-de-vinil/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-062",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-10_maquina-de-reacao-em-cadeia",
+      "name": "Máquina de Reação em Cadeia",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/10_maquina-de-reacao-em-cadeia/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-10_maquina-de-reacao-em-cadeia/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-063",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-11_relogio-aberto",
+      "name": "Relógio Aberto",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/11_relogio-aberto/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-11_relogio-aberto/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-064",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-12_pinball-de-madeira-pinball-de-madeira-html",
+      "name": "Pinball de Madeira",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/12_pinball-de-madeira/pinball-de-madeira.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-12_pinball-de-madeira-pinball-de-madeira-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-065",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-14_bancada-da-manicure",
+      "name": "Bancada da Manicure",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/14_bancada-da-manicure/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-14_bancada-da-manicure/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-066",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-15_barista-de-bancada",
+      "name": "Barista de Bancada",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/15_barista-de-bancada/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-15_barista-de-bancada/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M6-067",
+      "appId": "ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-18_orgao-do-perfumista",
+      "name": "Órgão do Perfumista",
+      "batch": "M6",
+      "milestone": "M6",
+      "branch": "upgrade/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adu",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "ambientes-interativos-adultos-e-marcas/ambientes-interativos-adultos-e-marcas/18_orgao-do-perfumista/index.html",
+        ".sangi-production/v2/apps/ambientes-interativos-adultos-e-marcas-ambientes-interativos-adultos-e-marcas-18_orgao-do-perfumista/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-068",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-02-trilha-do-mestre-mandou",
+      "name": "Trilha do Mestre Mandou",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-02-trilha-do-mestre-mand",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/02-trilha-do-mestre-mandou",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-02-trilha-do-mestre-mandou/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-069",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-05-atelie-das-reconstrucoes-kintsugi",
+      "name": "Ateliê das Reconstruções",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-05-atelie-das-reconstruc",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/05-atelie-das-reconstrucoes-kintsugi",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-05-atelie-das-reconstrucoes-kintsugi/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-070",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-06-galeria-dos-equilibrios-impossiveis",
+      "name": "Galeria dos Equilíbrios Impossíveis",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-06-galeria-dos-equilibri",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/06-galeria-dos-equilibrios-impossiveis",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-06-galeria-dos-equilibrios-impossiveis/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-071",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-07-sala-das-cadeiras-possiveis",
+      "name": "Sala das Cadeiras Possíveis",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-07-sala-das-cadeiras-pos",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/07-sala-das-cadeiras-possiveis",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-07-sala-das-cadeiras-possiveis/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-072",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-08-sopraria-das-transformacoes",
+      "name": "Sopraria das Transformações",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-08-sopraria-das-transfor",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/08-sopraria-das-transformacoes",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-08-sopraria-das-transformacoes/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-073",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-09-pavilhao-dos-tecidos-flutuantes",
+      "name": "Pavilhão dos Tecidos Flutuantes",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-09-pavilhao-dos-tecidos-",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/09-pavilhao-dos-tecidos-flutuantes",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-09-pavilhao-dos-tecidos-flutuantes/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-074",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-10-agencia-de-investigacao-dos-pensamentos",
+      "name": "Agência de Investigação dos Pensamentos",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-10-agencia-de-investigac",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/10-agencia-de-investigacao-dos-pensamentos",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-10-agencia-de-investigacao-dos-pensamentos/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-075",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-11-radio-dos-pensamentos",
+      "name": "Rádio dos Pensamentos",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-11-radio-dos-pensamentos",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/11-radio-dos-pensamentos",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-11-radio-dos-pensamentos/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-076",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-12-maquina-das-consequencias",
+      "name": "Máquina das Consequências",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-12-maquina-das-consequen",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/12-maquina-das-consequencias",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-12-maquina-das-consequencias/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-077",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-13-central-dos-planos-alternativos",
+      "name": "Central dos Planos Alternativos",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-13-central-dos-planos-al",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/13-central-dos-planos-alternativos",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-13-central-dos-planos-alternativos/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-078",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-14-relojoaria-das-prioridades",
+      "name": "Relojoaria das Prioridades",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-14-relojoaria-das-priori",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/14-relojoaria-das-prioridades",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-14-relojoaria-das-prioridades/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-079",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-15-farol-da-atencao",
+      "name": "Farol da Atenção",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-15-farol-da-atencao",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/15-farol-da-atencao",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-15-farol-da-atencao/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-080",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-16-vale-dos-baloes-passageiros",
+      "name": "Vale dos Balões Passageiros",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-16-vale-dos-baloes-passa",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/16-vale-dos-baloes-passageiros",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-16-vale-dos-baloes-passageiros/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-081",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-17-navegador-dos-valores",
+      "name": "Navegador dos Valores",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-17-navegador-dos-valores",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/17-navegador-dos-valores",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-17-navegador-dos-valores/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M7-082",
+      "appId": "03_colecoes-expressao_e_desenvolvimento-18-areias-do-impermanente",
+      "name": "Areias do Impermanente",
+      "batch": "M7",
+      "milestone": "M7",
+      "branch": "upgrade/03_colecoes-expressao_e_desenvolvimento-18-areias-do-impermanent",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "03_Colecoes/Expressao_e_Desenvolvimento/18-areias-do-impermanente",
+        ".sangi-production/v2/apps/03_colecoes-expressao_e_desenvolvimento-18-areias-do-impermanente/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-083",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-atelie-dos-remendos-e-transformacoes-html",
+      "name": "Ateliê dos Remendos e Transformações",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-atelie-dos-remendo",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/atelie-dos-remendos-e-transformacoes.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-atelie-dos-remendos-e-transformacoes-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-084",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-biblioteca-das-historias-inacabadas-html",
+      "name": "Biblioteca das Histórias Inacabadas",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-biblioteca-das-his",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/biblioteca-das-historias-inacabadas.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-biblioteca-das-historias-inacabadas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-085",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-cartografia-do-corpo-sentido-html",
+      "name": "Cartografia do Corpo Sentido",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-cartografia-do-cor",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/cartografia-do-corpo-sentido.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-cartografia-do-corpo-sentido-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-086",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-cidade-das-conexoes-html",
+      "name": "Cidade das Conexões",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-cidade-das-conexoe",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/cidade-das-conexoes.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-cidade-das-conexoes-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-087",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-correio-das-palavras-nao-ditas-html",
+      "name": "Correio das Palavras Não Ditas",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-correio-das-palavr",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/correio-das-palavras-nao-ditas.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-correio-das-palavras-nao-ditas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-088",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-estacao-das-escolhas-html",
+      "name": "Estação das Escolhas",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-estacao-das-escolh",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/estacao-das-escolhas.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-estacao-das-escolhas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-089",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-estudio-das-sombras-e-da-luz-html",
+      "name": "Estúdio das Sombras e da Luz",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-estudio-das-sombra",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/estudio-das-sombras-e-da-luz.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-estudio-das-sombras-e-da-luz-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-090",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-laboratorio-das-leis-imaginarias-html",
+      "name": "Laboratório das Leis Imaginárias",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-laboratorio-das-le",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/laboratorio-das-leis-imaginarias.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-laboratorio-das-leis-imaginarias-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-091",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-laboratorio-dos-sons-e-silencios-html",
+      "name": "Laboratório dos Sons e Silêncios",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-laboratorio-dos-so",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/laboratorio-dos-sons-e-silencios.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-laboratorio-dos-sons-e-silencios-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-092",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-museu-das-perspectivas-html",
+      "name": "Museu das Perspectivas",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-museu-das-perspect",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/museu-das-perspectivas.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-museu-das-perspectivas-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-093",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-oficina-dos-robos-imperfeitos-html",
+      "name": "Oficina dos Robôs Imperfeitos",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-oficina-dos-robos-",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/oficina-dos-robos-imperfeitos.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-oficina-dos-robos-imperfeitos-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-094",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-planetario-das-memorias-html",
+      "name": "Planetário das Memórias",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-planetario-das-mem",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/planetario-das-memorias.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-planetario-das-memorias-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-095",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-santuario-zen-3d-html",
+      "name": "Santuário Zen",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-santuario-zen-3d-h",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/santuario-zen-3d.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-santuario-zen-3d-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-096",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-teatro-das-possibilidades-html",
+      "name": "Teatro das Possibilidades",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-teatro-das-possibi",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/teatro-das-possibilidades.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-teatro-das-possibilidades-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M9_Legado-097",
+      "appId": "01_jogos_html-legado_arquivado-ambientes-html-vila-dos-encontros-html",
+      "name": "Vila dos Encontros",
+      "batch": "M9_Legado",
+      "milestone": "M9_Legado",
+      "branch": "upgrade/01_jogos_html-legado_arquivado-ambientes-html-vila-dos-encontros",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/Legado_Arquivado/ambientes-html/vila-dos-encontros.html",
+        ".sangi-production/v2/apps/01_jogos_html-legado_arquivado-ambientes-html-vila-dos-encontros-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-098",
+      "appId": "01_jogos_html-oficina-do-vitralista-index-html",
+      "name": "Oficina do Vitralista",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-oficina-do-vitralista-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/oficina-do-vitralista/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-oficina-do-vitralista-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-099",
+      "appId": "01_jogos_html-observatorio-da-luz-index-html",
+      "name": "Observatório da Luz",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-observatorio-da-luz-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/observatorio-da-luz/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-observatorio-da-luz-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-100",
+      "appId": "01_jogos_html-oficina-de-estofados-index-html",
+      "name": "Oficina de Estofados",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-oficina-de-estofados-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/oficina-de-estofados/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-oficina-de-estofados-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M8-101",
+      "appId": "01_jogos_html-restauro-de-azulejos-index-html",
+      "name": "Restauro de Azulejos",
+      "batch": "M8",
+      "milestone": "M8",
+      "branch": "upgrade/01_jogos_html-restauro-de-azulejos-index-html",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "01_Jogos_HTML/restauro-de-azulejos/index.html",
+        ".sangi-production/v2/apps/01_jogos_html-restauro-de-azulejos-index-html/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    },
+    {
+      "taskId": "M4-102",
+      "appId": "02_projetos-01-oficina-do-vitralista",
+      "name": "Oficina do Vitralista",
+      "batch": "M4",
+      "milestone": "M4",
+      "branch": "upgrade/02_projetos-01-oficina-do-vitralista",
+      "dependencies": [
+        "M1-BASELINE-ALL-102"
+      ],
+      "writeScope": [
+        "02_Projetos/01-oficina-do-vitralista",
+        ".sangi-production/v2/apps/02_projetos-01-oficina-do-vitralista/**"
+      ],
+      "status": "PENDING",
+      "gateStatus": {},
+      "blockedBy": []
+    }
+  ]
+}

@@ -3996,13 +3996,40 @@
 
       rafId = requestAnimationFrame(animate);
 
-      // Expose cleanup hook
-      window.addEventListener('beforeunload', () => {
+      // Expose cleanup hook & Sangi3D Universal Bridge
+      function performDispose() {
         cancelAnimationFrame(rafId);
-        audio.dispose();
-        envRT.dispose();
-        pmrem.dispose();
-        renderer.dispose();
+        try { audio.dispose(); } catch {}
+        try { envRT.dispose(); } catch {}
+        try { pmrem.dispose(); } catch {}
+        try { renderer.dispose(); } catch {}
+      }
+
+      window.addEventListener('beforeunload', performDispose);
+
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({
+            type: 'SANGI_APP_READY',
+            id: 'maquina-de-garra-de-brindes',
+            capabilities: { webgl2: true, touch: true, audio: true, physics: 'kinematics' }
+          }, '*');
+        } catch {}
+      }
+
+      window.addEventListener('message', (e) => {
+        if (!e.data || typeof e.data !== 'object') return;
+        if (e.data.type === 'SANGI_APP_PAUSE') {
+          cancelAnimationFrame(rafId);
+        } else if (e.data.type === 'SANGI_APP_RESUME') {
+          lastTime = performance.now();
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(animate);
+        } else if (e.data.type === 'SANGI_APP_MUTE') {
+          try { audio.setMuted(Boolean(e.data.muted)); } catch {}
+        } else if (e.data.type === 'SANGI_APP_DISPOSE') {
+          performDispose();
+        }
       });
     }
 

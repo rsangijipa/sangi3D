@@ -2,12 +2,10 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { resolvePlaywright } from './lib/playwright-resolver.mjs';
 
-const { chromium } = process.env.SANGI_PLAYWRIGHT
-  ? await import(pathToFileURL(process.env.SANGI_PLAYWRIGHT).href)
-  : await import('playwright');
+const { chromium } = await resolvePlaywright();
 
 const port = Number(process.env.SANGI_TEST_PORT || 5296);
 const base = `http://127.0.0.1:${port}`;
@@ -62,9 +60,26 @@ try {
         const iframe = page.locator('iframe.player-frame');
         await iframe.waitFor({ state: 'visible' });
         const frame = page.frameLocator('iframe.player-frame');
-        await frame.locator('canvas').first().waitFor({ state: 'visible' });
         const game = page.frames().find(candidate => candidate.url().endsWith(app.url));
         assert.ok(game, app.url);
+        if (slug === 'restauro-de-azulejos') {
+          await frame.getByRole('heading', { name: 'Rosácea de Cobalto' }).waitFor({ timeout: 5000 });
+          await frame.getByRole('button', { name: /Jardim de Açafrão/ }).click();
+          assert.equal(await frame.locator('#puzzle-board button').count(), 16);
+          assert.match(await frame.locator('#puzzle-progress').innerText(), /0 de 6/);
+          await frame.getByRole('button', { name: 'Pedir dica' }).click();
+          assert.equal(await frame.locator('#puzzle-board .is-hinted').count(), 1);
+          assert.equal(await frame.locator('#puzzle-tray .is-hinted').count(), 1);
+          await frame.getByRole('button', { name: 'Ver referência' }).click();
+          await frame.getByRole('dialog', { name: 'Jardim de Açafrão' }).waitFor();
+          await frame.getByRole('button', { name: 'Fechar referência' }).click();
+          await frame.getByRole('button', { name: 'Reiniciar', exact: true }).click();
+          await frame.getByRole('button', { name: 'Reiniciar painel', exact: true }).click();
+          await game.waitForFunction(() => document.getElementById('puzzle-status').textContent.includes('Peças embaralhadas'));
+          if (captures) await page.screenshot({ path: resolve(captures, slug + (mobile ? '-puzzle-mobile' : '-puzzle') + '.png') });
+          await frame.getByRole('link', { name: 'Oficina 3D' }).click();
+        }
+        await frame.locator('canvas').first().waitFor({ state: 'visible' });
         await game.waitForFunction(() => window.renderedDraws > 0);
         assert.deepEqual(errors, []);
         await page.waitForTimeout(550);

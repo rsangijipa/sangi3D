@@ -18,6 +18,7 @@ export type UiCallbacks = {
   onClearBulletin: () => void;
   onRestart: (confirmed: boolean) => void;
   onExport: () => void;
+  onStart: (mode: GameState['mode']) => void;
   onStepChange: (step: Step) => void;
 };
 
@@ -58,6 +59,8 @@ export class UIManager {
 
   private renderPanel(container: HTMLElement, s: GameState): void {
     container.innerHTML = '';
+    this.dialElements.clear();
+    this.valueElements.clear();
 
     if (s.step === 'compose' || s.step === 'review') {
       const panel = document.createElement('section');
@@ -267,10 +270,9 @@ export class UIManager {
   }
 
   private syncDials(s: GameState): void {
-    for (const kind of ['sun', 'cloud', 'rain', 'wind'] as WeatherKind[]) {
+    for (const [kind, wrap] of this.dialElements) {
       const val = this.valueElements.get(kind)!;
       val.textContent = String(s.weather[kind]);
-      const wrap = this.dialElements.get(kind)!;
       const svg = wrap.querySelector('svg')!;
       const knob = svg.querySelector(`#knob-${kind}`) as SVGLineElement | null;
       if (knob) {
@@ -460,8 +462,8 @@ export class UIManager {
       btn.style.padding = '10px 14px';
       btn.innerHTML = `<div style="font-weight:700">${m.title}</div><div style="font-size:0.8rem;color:#5b4a3a">${m.desc}</div>`;
       btn.addEventListener('click', () => {
-        this.cb.onStepChange('choose-mode');
         this.closeOverlays();
+        this.cb.onStart(m.id);
       });
       modeList.appendChild(btn);
     }
@@ -479,12 +481,11 @@ export class UIManager {
     btnStart.className = 'btn-primary';
     btnStart.textContent = TEXTS.btnStart;
     btnStart.addEventListener('click', () => {
-      this.cb.onStepChange('choose-mode');
       this.closeOverlays();
+      this.cb.onStart(this.state().mode);
     });
     actions.appendChild(btnStart);
     el.appendChild(actions);
-    nInput.focus();
   }
 
   // ------------------------------------------------------------------

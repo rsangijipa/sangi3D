@@ -75,10 +75,11 @@
     root.classList.add('imv-root');
     if (cfg.theme === 'light') root.classList.add('imv-light');
     if (cfg.accent) root.style.setProperty('--imv-accent', cfg.accent);
+    var styleEl = null;
     if (cfg.css) {
-      var st = make('style');
-      st.textContent = cfg.css;
-      document.head.appendChild(st);
+      styleEl = make('style');
+      styleEl.textContent = cfg.css;
+      document.head.appendChild(styleEl);
     }
 
     // barra superior
@@ -206,7 +207,7 @@
     fs.addEventListener('click', function () {
       var d = document;
       if (d.fullscreenElement) d.exitFullscreen();
-      else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(function () {});
+      else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(function () { });
     });
     tools.appendChild(fs);
     var hideBtn = make('button', 'imv-btn', svg('hide') + '<span class="imv-label">Recolher</span>');
@@ -232,21 +233,81 @@
     reveal.addEventListener('click', function () {
       setCollapsed(false);
     });
-    window.addEventListener(
-      'keydown',
-      function (e) {
-        var t = e.target;
-        var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-        if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.key === 'h' || e.key === 'H') {
-          setCollapsed(!root.classList.contains('imv-collapsed'));
-        } else if (e.key === 'Escape') {
-          closePanels(null);
-        }
-      },
-      true,
-    );
+    var onKeydown = function (e) {
+      var t = e.target;
+      var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+      if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'h' || e.key === 'H') {
+        setCollapsed(!root.classList.contains('imv-collapsed'));
+      } else if (e.key === 'Escape') {
+        closePanels(null);
+      }
+    };
+    window.addEventListener('keydown', onKeydown, true);
     if (readCollapsed()) setCollapsed(true);
+
+    // Sangi3D Universal Bridge
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          type: 'SANGI_APP_READY',
+          title: cfg.title || document.title,
+          capabilities: {
+            webgl2: Boolean(window.WebGL2RenderingContext),
+            touch: 'ontouchstart' in window,
+            imersivo: true
+          }
+        }, '*');
+      } catch (e) { }
+    }
+
+    var destroyed = false;
+    function destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      window.removeEventListener('message', onBridgeMessage);
+      window.removeEventListener('keydown', onKeydown, true);
+      if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+      if (top.parentNode) top.parentNode.removeChild(top);
+      if (bottom.parentNode) bottom.parentNode.removeChild(bottom);
+      if (reveal.parentNode) reveal.parentNode.removeChild(reveal);
+      panels.forEach(function (p) {
+        if (p.el && p.el.parentNode) p.el.parentNode.removeChild(p.el);
+      });
+      root.classList.remove('imv-root', 'imv-light', 'imv-collapsed');
+      api = null;
+      if (typeof cfg.onDispose === 'function') cfg.onDispose();
+    }
+
+    function onBridgeMessage(e) {
+      if (!e.data || typeof e.data !== 'object') return;
+      var cmd = e.data.type === 'SANGI_COMMAND'
+        ? String(e.data.command || '').toUpperCase()
+        : (e.data.type && String(e.data.type).indexOf('SANGI_APP_') === 0
+          ? String(e.data.type).slice('SANGI_APP_'.length).toUpperCase()
+          : '');
+      if (!cmd) return;
+      if (cmd === 'PAUSE') {
+        if (typeof cfg.onPause === 'function') cfg.onPause();
+      } else if (cmd === 'RESUME') {
+        if (typeof cfg.onResume === 'function') cfg.onResume();
+      } else if (cmd === 'MUTE') {
+        var muted = e.data.payload && typeof e.data.payload.muted === 'boolean'
+          ? e.data.payload.muted
+          : (typeof e.data.muted === 'boolean' ? e.data.muted : true);
+        if (typeof cfg.onMute === 'function') cfg.onMute(muted);
+      } else if (cmd === 'UNMUTE') {
+        if (typeof cfg.onMute === 'function') cfg.onMute(false);
+      } else if (cmd === 'RESET') {
+        if (typeof cfg.onReset === 'function') cfg.onReset();
+      } else if (cmd === 'SET_QUALITY') {
+        var q = (e.data.payload && e.data.payload.quality) || e.data.quality;
+        if (typeof cfg.onQualityChange === 'function' && q) cfg.onQualityChange(q);
+      } else if (cmd === 'DISPOSE') {
+        destroy();
+      }
+    }
+    window.addEventListener('message', onBridgeMessage);
 
     api = {
       addAction: addAction,
@@ -254,6 +315,8 @@
       addPanel: addPanel,
       panels: panelApis,
       setCollapsed: setCollapsed,
+      destroy: destroy,
+      dispose: destroy,
       top: top,
       bottom: bottom,
     };

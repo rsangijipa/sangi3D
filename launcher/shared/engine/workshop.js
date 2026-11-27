@@ -1,6 +1,6 @@
-import * as THREE from '/shared/vendor/three.module.js';
-import { MaterialFactory } from '/shared/engine/materials.js';
-import { beam, makePlant, mesh, profile, roundedBox } from '/shared/engine/scene-details.js';
+import * as THREE from '../vendor/three.module.js';
+import { MaterialFactory } from './materials.js';
+import { beam, makePlant, mesh, profile, roundedBox } from './scene-details.js';
 
 export function buildWorkshop(workshop) {
   const oak = MaterialFactory.wood(0xb78756, .62);
