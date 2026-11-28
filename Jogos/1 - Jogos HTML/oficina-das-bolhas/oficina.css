@@ -1,0 +1,75 @@
+:root {
+  --accent: #f2afd6;
+  --background: #201927;
+  --text: #fdf6fb;
+}
+
+.bubble-tools {
+  display: grid;
+  gap: .86rem;
+}
+
+.bubble-tools button,
+.bubble-tools summary {
+  min-height: 44px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.bubble-tools .blow-button {
+  background: #f2b1d8;
+  border-color: #f7cbe7;
+  color: #39213a;
+  font-weight: 750;
+}
+
+.bubble-tools button[aria-pressed="true"] {
+  border-color: #e7a8ce;
+  box-shadow: inset 0 0 0 1px #e7a8ce;
+}
+
+.bubble-primary, .bubble-modes, .bubble-camera { display: flex; flex-wrap: wrap; gap: .4rem; }
+.bubble-primary > button { flex: 1 1 43%; }
+.bubble-primary > button:last-child { flex-basis: 100%; }
+.bubble-modes > button { flex: 1 1 auto; }
+.bubble-readings { margin: 0; display: grid; grid-template-columns: repeat(3,1fr); gap: .3rem; padding: .72rem 0; border-block: 1px solid #5a435d; }
+.bubble-readings dt { color: var(--muted); font-size: .75rem; }
+.bubble-readings dd { margin: .23rem 0 0; font: 400 1.25rem/1.1 Georgia, serif; color: #f5c5e2; font-variant-numeric: tabular-nums; }
+.bubble-camera > button { min-width: 44px; }
+.bubble-camera > :nth-child(-n + 2) { font-size: 1.22rem; line-height: 1; }
+.bubble-options { position: relative; border: 1px solid #5a435d; border-radius: 8px; }
+.bubble-options summary { display: flex; align-items: center; gap: .45em; padding: .2rem .65rem; }
+.bubble-options summary::before { content: '▸'; }
+.bubble-options[open] summary::before { content: '▾'; }
+
+.bubble-options-inner {
+  display: grid;
+  gap: .55rem;
+  width: 100%;
+  padding: .8rem;
+  border-top: 1px solid #5a435d;
+  color: #fff4fb;
+}
+
+.bubble-options-inner label { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .15rem .5rem; }
+.bubble-options-inner input { grid-column: 1 / -1; min-height: 44px; width: 100%; margin: 0; accent-color: #f2afd6; }
+.bubble-options-inner output { font-variant-numeric: tabular-nums; }
+.bubble-options-inner p { margin: 0; font-size: .85em; line-height: 1.4; }
+.bubble-options-inner div { display: flex; flex-wrap: wrap; gap: .4rem; }
+.bubble-options-inner button { flex: 1; }
+
+.bubble-stage-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.bubble-stage-canvas:active { cursor: grabbing; }
+.bubble-error { position: absolute; inset: 0; margin: auto; width: fit-content; height: fit-content; padding: 1rem; max-width: 26rem; }
+
+@media (max-width: 700px) and (orientation: portrait) {
+  .wb-workspace { grid-template-rows: minmax(0, 1.64fr) minmax(0, 1fr); }
+  .bubble-tools { gap: .6rem; }
+  .bubble-primary > button, .bubble-primary > button:last-child { flex: 1 1 auto; }
+  .wb-stage-footer .wb-actions { flex: none; }
+  .bubble-readings { padding-block: .5rem; }
+}
+
+@media (max-height: 550px) and (orientation: landscape) {
+  .bubble-tools { gap: .45rem; }
+}

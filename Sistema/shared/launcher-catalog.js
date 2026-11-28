@@ -9,19 +9,19 @@
     { id: 'natureza', label: 'Natureza e cultivo', hue: 145, entries: [
       'bancada-do-florista', 'colmeia-transparente', 'estufa-das-borboletas', 'jardim-dos-fungos',
       'lago-3d-interativo', 'oficina-de-bonsais', 'terrario-de-vidro',
-      'floresta-bioluminescente', 'escultor-de-planetas',
+      'floresta-bioluminescente', 'escultor-de-planetas', 'universo-de-uma-gota',
     ] },
     { id: 'oficinas', label: 'Arte e artesanato', hue: 36, entries: [
       'atelie-das-reconstrucoes-kintsugi', 'oficina-das-velas-artesanais', 'oficina-de-estofados',
       'oficina-do-vitralista', 'pavilhao-dos-tecidos-flutuantes', 'restauro-de-azulejos',
       'sopraria-das-transformacoes', 'tear-dos-vinculos',
-      'atelie-de-ceramica', 'oceano-de-tinta',
+      'atelie-de-ceramica', 'oceano-de-tinta', 'oficina-de-mosaicos',
     ] },
     { id: 'ciencia', label: 'Ciência e mecanismos', hue: 215, entries: [
       'arquitetura-do-impossivel', 'camara-antigravitacional', 'laboratorio-de-ferrofluido',
       'galeria-dos-equilibrios-impossiveis', 'gerador-de-mundos-climaticos', 'maquete-que-se-monta',
       'maquina-de-garra-de-brindes', 'maquina-de-reacao-em-cadeia', 'moinho-hidraulico',
-      'pinball-de-madeira', 'relogio-aberto', 'trem-de-engrenagens', 'vulcao-em-miniatura',
+      'pinball-de-madeira', 'relogio-aberto', 'trem-de-engrenagens', 'vulcao-em-miniatura', 'oficina-das-bolhas',
     ] },
     { id: 'sentidos', label: 'Som, luz e sentidos', hue: 275, entries: [
       'atlas-das-texturas', 'caixa-de-musica-perfurada', 'cartografia-dos-sons', 'copos-musicais',
@@ -54,6 +54,9 @@
 
   // Registra a data de publicação de cada novidade, independente do mtime do arquivo.
   const publications = [
+    { date: '2026-11-28', type: 'new', entries: [
+      'oficina-das-bolhas', 'universo-de-uma-gota', 'oficina-de-mosaicos',
+    ] },
     { date: '2026-11-24', type: 'new', entries: [
       'cidade-submersa', 'arquipelago-celestial', 'biblioteca-infinita', 'trem-sem-destino',
       'universo-audioreativo', 'oficina-de-estofados', 'restauro-de-azulejos',

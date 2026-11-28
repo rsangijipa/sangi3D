@@ -1,0 +1,110 @@
+:root {
+  color-scheme: dark;
+  --background: #111716;
+  --text: #f3f3eb;
+  --accent: #9bdccc;
+  --muted: color-mix(in srgb, var(--text) 72%, var(--background));
+  --surface: color-mix(in srgb, var(--background) 92%, white);
+  --line: color-mix(in srgb, var(--text) 18%, var(--background));
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--background); color: var(--text); }
+
+.sangi-workbench {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  overflow: hidden;
+}
+
+.wb-header, .wb-header-actions, .wb-dialog-title, .wb-stage-footer { display: flex; align-items: center; gap: 10px; }
+.wb-header { min-width: 0; }
+.wb-header-actions { margin-inline-start: auto; gap: 6px; }
+.wb-title { min-width: 0; padding-inline: 6px; }
+.wb-title h1 { margin: 0; font: 500 clamp(1.35rem, 3vw, 2.35rem)/1.1 Georgia, serif; }
+.wb-title p { margin: 0 0 4px; color: var(--accent); font-size: .75rem; font-weight: 650; }
+.wb-title p:empty { display: none; }
+.wb-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(255px, 22vw); gap: 10px; min-height: 0; }
+.wb-view { display: grid; grid-template-rows: minmax(0, 1fr) auto; position: relative; overflow: hidden; background: #111818; }
+.wb-view, .wb-panel { border: 1px solid var(--line); border-radius: 14px; min-width: 0; min-height: 0; }
+.wb-stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; touch-action: none; }
+.wb-stage > canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.wb-stage-footer { justify-content: space-between; align-items: center; min-width: 0; padding: 8px 13px; background: var(--surface); }
+.wb-stage-footer:has(> :empty + :empty) { display: none; }
+.wb-hint { margin: 0; color: var(--muted); font-size: .84rem; line-height: 1.3; }
+.wb-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.wb-actions:empty { display: none; }
+.wb-panel { background: var(--surface); overflow: auto; padding: 15px; scrollbar-color: var(--line) transparent; overscroll-behavior: contain; }
+.wb-panel h2, .wb-help h2, .wb-confirm h2 { font-size: 1.02rem; margin: 0; }
+.wb-status { margin: 8px 0 13px; min-height: 1.4em; color: var(--accent); font-size: .84rem; line-height: 1.35; }
+.wb-status:empty { display: none; }
+.wb-tools { display: grid; align-content: start; gap: 8px; }
+.wb-tools > label, .wb-help > label { display: grid; align-items: center; gap: 3px; color: var(--muted); font-size: .86rem; }
+.wb-tools :where(p, legend, small) { margin: 0; }
+.wb-tools fieldset { min-inline-size: 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+
+.sangi-workbench :where(button, select, .wb-back) {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 92%, white);
+  color: var(--text);
+  font-family: inherit;
+  font-size: .86rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.sangi-workbench :where(button[aria-pressed='true'], button.is-active, button[data-primary]) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface));
+}
+.sangi-workbench :where(button, select, a):focus-visible, .wb-stage :focus-visible, .sangi-workbench input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sangi-workbench :where(button, select):disabled { opacity: .55; cursor: default; }
+.sangi-workbench input[type='range'] { min-block-size: 32px; accent-color: var(--accent); width: 100%; margin: 0; }
+.sangi-workbench .wb-back { display: inline-flex; align-items: center; gap: 5px; color: var(--text); text-decoration: none; flex: none; }
+.wb-overlay { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 20px; text-align: center; background: #0b1115df; z-index: 2; }
+.wb-overlay p { margin: 0; }
+.sangi-workbench dialog { inline-size: min(420px, calc(100% - 24px)); max-height: calc(100dvh - 24px); padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text); }
+.sangi-workbench dialog::backdrop { background: #0009; }
+.wb-help[open], .wb-confirm form { display: grid; gap: 12px; }
+.wb-dialog-title { justify-content: space-between; }
+.wb-help p, .wb-confirm p { margin: 0; color: var(--muted); line-height: 1.5; }
+
+@media (hover: hover) {
+  .sangi-workbench :where(button, .wb-back):hover { border-color: var(--accent); }
+}
+
+@media (max-width: 700px) and (orientation: portrait), (max-width: 550px) {
+  .sangi-workbench { gap: 7px; padding: max(6px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); }
+  .wb-title { padding-inline: 0; }
+  .wb-title p { display: none; }
+  .wb-title h1 { font-size: clamp(.99rem, 4.4vw, 1.55rem); }
+  .wb-header { gap: 7px; }
+  .wb-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr); gap: 6px; }
+  .wb-panel { padding: 10px; }
+  .wb-stage-footer { padding: 5px 9px; }
+  .wb-hint { font-size: .75rem; }
+  .wb-back span { display: none; }
+  .sangi-workbench .wb-back { justify-content: center; min-inline-size: 44px; }
+}
+
+@media (orientation: landscape) and (max-height: 510px) {
+  .sangi-workbench { gap: 6px; padding-block: max(5px, env(safe-area-inset-top)) max(5px, env(safe-area-inset-bottom)); }
+  .wb-workspace { grid-template-columns: minmax(0, 1fr) minmax(220px, 29vw); gap: 6px; }
+  .wb-title p { display: none; }
+  .wb-title h1 { font-size: clamp(1.15rem, 3vw, 1.56rem); }
+  .wb-panel { padding: 8px; }
+  .wb-stage-footer { padding: 5px 9px; }
+  .wb-hint { font-size: .75rem; }
+}
