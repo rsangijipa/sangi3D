@@ -1,46 +1,22 @@
 import * as THREE from '../../../Sistema/shared/vendor/three.module.js';
-import {radius, randomGenerator} from './simulation.js';
-import {createSpecimenArt} from './specimen-art.js';
+import {SLIDE_RADIUS} from './js/ecosystem.js';
+import {createPRNG} from './js/ecosystem.js';
+import {
+  OPTIC_MODES,
+  createSharedOpticUniforms,
+  FIELD_VERTEX,
+  FIELD_FRAGMENT,
+} from './js/optics/optical-shaders.js';
+import {createOrganismAssembly, updateOrganismAssembly} from './js/organisms/organism-meshes.js';
 
-const vertex = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = vec4(position.xy, 0.9999, 1.0);
-  }
-`;
-
-const field = `
-  varying vec2 vUv;
-  uniform float aspect;
-  uniform float lightLevel;
-  uniform float time;
-  uniform vec2 center;
-  uniform float zoom;
-  float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453);
-  }
-  float noise(vec2 p) {
-    vec2 i=floor(p), f=fract(p);
-    f=f*f*(3.0-2.0*f);
-    return mix(mix(hash(i), hash(i+vec2(1.,0.)), f.x), mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.)),f.x), f.y);
-  }
-  void main() {
-    vec2 p = vUv - .5;
-    vec2 lens = p * vec2(mix(1.14, .90, step(1.0, aspect)), .96);
-    vec2 drift = p * vec2(aspect, 1.) / zoom + center * .033;
-    float dist = length(lens);
-    float vignette = 1. - smoothstep(.13, .76, dist);
-    float flood = 1. - smoothstep(.08, .65, length(drift - vec2(-.16,.1)));
-    float fibers = noise(drift*vec2(13.,31.) + vec2(time*.054,0.)) * noise(drift*29. + 32.);
-    float haze = noise(drift*6.8+21.)*.52 + noise(drift*10.6-12.)*.29 + fibers*.35;
-    vec3 color = vec3(.005,.012,.02) + (vec3(.013,.056,.079) * flood + vec3(.015,.035,.068)*haze) * vignette*lightLevel;
-    color += vec3(.074,.17,.19) * smoothstep(.57,.587,dist) * (1.-smoothstep(.587,.596,dist)) * (.22+.1*haze);
-    color -= smoothstep(.59,.72,dist)*vec3(.004,.008,.012);
-    color += (hash(gl_FragCoord.xy) - .5) * .011 * vignette;
-    gl_FragColor = vec4(max(color, 0.0),1.0);
-  }
-`;
+export const OBJECTIVES = [
+  {power: 4, total: 40, na: 0.10, zoom: 0.72, label: '4× (NA 0,10)'},
+  {power: 10, total: 100, na: 0.25, zoom: 1.0, label: '10× (NA 0,25)'},
+  {power: 20, total: 200, na: 0.40, zoom: 1.55, label: '20× (NA 0,40)'},
+  {power: 40, total: 400, na: 0.65, zoom: 2.35, label: '40× (NA 0,65)'},
+  {power: 60, total: 600, na: 0.85, zoom: 3.10, label: '60× (NA 0,85)'},
+  {power: 100, total: 1000, na: 1.25, zoom: 4.10, label: '100× (NA 1,25 · imersão)'},
+];
 
 const meniscusVertex = `
   varying vec2 vUv;
@@ -52,72 +28,47 @@ const meniscusVertex = `
 
 const meniscusFragment = `
   varying vec2 vUv;
-  uniform float lightLevel;
+  uniform float uLight;
+  uniform int uOpticMode;
   void main() {
-    vec2 p = (vUv - .5) * 2.;
+    vec2 p = (vUv - 0.5) * 2.0;
     float theta = atan(p.y, p.x);
-    float d = length(p) + sin(theta * 6. + .25) * .007 + cos(theta * 11.) * .003;
-    float shade = smoothstep(.87,.96,d) * (1. - smoothstep(.96,.997,d));
-    float rim = smoothstep(.962,.979,d) * (1. - smoothstep(.979,.989,d));
-    float glint = (sin(theta * 2. + .1) + 1.) * .30 + .23;
-    vec3 color = mix(vec3(.06,.17,.23), vec3(.42,.68,.69), glint) * lightLevel;
-    gl_FragColor = vec4(color, (shade * .28 + rim * .80) * glint);
-  }
-`;
-
-const specimenVertex = `
-  varying vec2 vUv;
-  uniform float phase;
-  uniform float time;
-  uniform float flex;
-  void main() {
-    vUv = uv;
-    vec3 pt = position;
-    pt.y += sin(pt.x * 10.7 + time * 2.4 + phase) * flex * (pt.x * pt.x + .1);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pt, 1.0);
-  }
-`;
-
-const specimenFragment = `
-  varying vec2 vUv;
-  uniform sampler2D sampleMap;
-  uniform float blur;
-  uniform float lightLevel;
-  uniform float fade;
-  uniform float flash;
-  void main() {
-    vec2 delta = vec2(.014,.024) * blur;
-    vec4 pixel = texture2D(sampleMap, vUv) * .56;
-    pixel += texture2D(sampleMap, vUv + vec2(delta.x,delta.y*.45)) * .11;
-    pixel += texture2D(sampleMap, vUv - vec2(delta.x,delta.y*.45)) * .11;
-    pixel += texture2D(sampleMap, vUv + vec2(-delta.x*.44,delta.y)) * .11;
-    pixel += texture2D(sampleMap, vUv - vec2(-delta.x*.44,delta.y)) * .11;
-    vec3 tint = vec3(.91,1.024,1.055);
-    vec3 rgb = pixel.rgb * tint * lightLevel + vec3(.15,.22,.09) * flash * pixel.a;
-    gl_FragColor = vec4(rgb, pixel.a * fade);
+    float d = length(p) + sin(theta * 6.0 + 0.25) * 0.006 + cos(theta * 11.0) * 0.003;
+    float shade = smoothstep(0.88, 0.96, d) * (1.0 - smoothstep(0.96, 0.997, d));
+    float rim = smoothstep(0.962, 0.979, d) * (1.0 - smoothstep(0.979, 0.989, d));
+    float glint = (sin(theta * 2.0 + 0.1) + 1.0) * 0.30 + 0.23;
+    vec3 darkCol = mix(vec3(0.06, 0.17, 0.23), vec3(0.42, 0.68, 0.69), glint) * uLight;
+    vec3 brightCol = vec3(0.25, 0.30, 0.32);
+    vec3 color = uOpticMode == 1 ? brightCol : darkCol;
+    gl_FragColor = vec4(color, (shade * 0.28 + rim * 0.80) * glint);
   }
 `;
 
 const debrisVertex = `
   attribute float diameter;
   attribute float variation;
+  attribute float kind; // 0: detrito, 1: mineral, 2: microbolha, 3: fibra
   attribute vec3 tint;
   varying float vVariation;
   varying vec3 vTint;
   varying float vBlur;
+  varying float vKind;
   uniform float time;
   uniform float density;
   uniform float zoom;
   uniform float focus;
+  uniform float na;
   void main() {
     vec3 pt = position;
-    pt.xy += vec2(sin(time*.46+variation*390.), cos(time*.39+variation*318.)) * (.07+variation*.18);
-    pt.xy += vec2(cos(time*1.6+variation*54.),sin(time*1.44+variation*582.))*.034;
-    vBlur = min(1., abs(focus - pt.z) * .19);
+    float brown = (kind > 1.5 && kind < 2.5) ? 0.03 : (0.06 + variation * 0.14);
+    pt.xy += vec2(sin(time * 0.44 + variation * 390.0), cos(time * 0.37 + variation * 318.0)) * brown;
+    pt.xy += vec2(cos(time * 1.5 + variation * 54.0), sin(time * 1.38 + variation * 582.0)) * 0.028;
+    vBlur = min(1.0, abs(focus - pt.z) * (0.14 + na * 0.25));
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pt, 1.0);
-    gl_PointSize = clamp((diameter + vBlur*4.1) * density * zoom, 1., 22.);
+    gl_PointSize = clamp((diameter + vBlur * 4.5) * density * zoom, 1.0, 26.0);
     vVariation = variation;
     vTint = tint;
+    vKind = kind;
   }
 `;
 
@@ -125,34 +76,46 @@ const debrisFragment = `
   varying float vVariation;
   varying float vBlur;
   varying vec3 vTint;
+  varying float vKind;
   uniform float lightLevel;
+  uniform int opticMode;
   void main() {
-    vec2 pt = gl_PointCoord - .5;
-    float d = length(pt * vec2(1.0, .8+vVariation*.43));
-    float core = 1.-smoothstep(.03,.28+vBlur*.10,d);
-    float ring = smoothstep(.21,.36,d)*(1.-smoothstep(.37,.50,d));
-    float bokeh = (core * (.72-vBlur*.36) + ring*.27) * (.45+vVariation*.55);
-    gl_FragColor = vec4(vTint*lightLevel,bokeh);
+    vec2 pt = gl_PointCoord - 0.5;
+    float d = length(pt * vec2(1.0, vKind > 2.5 ? 2.2 : 0.85 + vVariation * 0.35));
+    if (d > 0.5) discard;
+    float core = 1.0 - smoothstep(0.03, 0.28 + vBlur * 0.12, d);
+    float ring = smoothstep(0.24, 0.38, d) * (1.0 - smoothstep(0.39, 0.50, d));
+    float alpha = 0.0;
+    vec3 col = vTint;
+    if (vKind > 1.5 && vKind < 2.5) {
+      // Microbolha refrativa
+      alpha = (ring * 0.85 + core * 0.12) * (1.0 - vBlur * 0.35);
+      col = mix(vTint, vec3(0.88, 0.98, 1.0), 0.65);
+    } else {
+      alpha = (core * (0.70 - vBlur * 0.35) + ring * 0.22) * (0.42 + vVariation * 0.55);
+    }
+    if (opticMode == 1) {
+      col = mix(vec3(0.25, 0.26, 0.22), col * 0.5, 0.5);
+      alpha *= 0.65;
+    } else if (opticMode == 4) {
+      alpha *= 0.18;
+    }
+    gl_FragColor = vec4(col * lightLevel, alpha);
   }
 `;
 
-const backgroundForms = [
-  [1, -4.6, 0.26, -2.4, 2.7, .74, .44], [1, -4.05, -0.9, -1.8, 1.68, .7, .68],
-  [4, 4.3, -0.2, -2.3, 2.45, 0.8, .52], [2, 6.5, 2.52, -1.8, 6.8, .91, .38],
-  [3, -7.75, 2.17, -3.5, 4.0, -.23, .54], [1, 6.3, -.8, -.8, 3.23, -.46, .76],
-  [2, -6.2, -2.63, -1.5, 7.3, .34, .55], [0, 7.7, -2.84, -3.45, 4.18, .1, .42],
-  [1, -1.95, -3.66, -0.65, 1.43, -.8, .77], [1, 0.37, 3.45, -1.6, 1.29, .34, .64],
-  [4, -2.44, 1.35, -2.1, 1.3, .9, .55], [2, 6.22, -4.1, -2.1, 6.2, -.2, .43],
-  [1, -7.15, 0.36, -.27, 2.09, .2, .54], [1, 9.26, 1.68, -1.56, 2.79, 0.6, .41],
-  [3, .02, -2.28, -2.78, 1.93, -1.7, .36], [4, -5.93, 3.94, -1.83, 2.37, 0.6, .68],
-  [1, 3.83, 0.7, -1.76, 1.92, -1.12, .66], [1, 1.13, -3.98, -2.8, 1.37, -.36, .64],
-  [2, -4.07, 5.25, -2.2, 6.1, -.42, .38], [1, 4.45, 4.24, -.45, 2.76, .7, .57],
-  [1, 2.12, .42, -2.53, 1.03, -1.3, .58], [4, 2.26, -4.26, -1.68, 1.5, .29, .54],
-  [3, 4.17, -3.6, -3.48, 2.57, .9, .51], [1, -9.9, -2.08, -1.1, 2.01, -1.1, .5],
-];
+function shortestAngleLerp(a, b, t) {
+  const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+  return a + diff * t;
+}
 
 export function microscope(stage) {
-  const renderer = new THREE.WebGLRenderer({antialias: true, alpha: false, powerPreference: 'high-performance'});
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: false,
+    preserveDrawingBuffer: true,
+    powerPreference: 'high-performance',
+  });
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', 'Campo do microscópio. Setas deslocam a lâmina e Enter identifica o organismo central.');
@@ -160,101 +123,163 @@ export function microscope(stage) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 150);
-  const fieldUniforms = {aspect: {value: 1}, lightLevel: {value: 1}, time: {value: 0}, center: {value: new THREE.Vector2()}, zoom: {value: 1}};
-  const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-    uniforms: fieldUniforms, vertexShader: vertex, fragmentShader: field, depthWrite: false, depthTest: false,
-  }));
+  const sharedUniforms = createSharedOpticUniforms();
+
+  const backdrop = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      uniforms: sharedUniforms,
+      vertexShader: FIELD_VERTEX,
+      fragmentShader: FIELD_FRAGMENT,
+      depthWrite: false,
+      depthTest: false,
+    }),
+  );
   backdrop.frustumCulled = false;
   backdrop.renderOrder = -100;
   scene.add(backdrop);
-  const meniscus = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2.04, radius * 2.04), new THREE.ShaderMaterial({
-    uniforms: {lightLevel: fieldUniforms.lightLevel}, vertexShader: meniscusVertex, fragmentShader: meniscusFragment, transparent: true, depthWrite: false,
-  }));
-  meniscus.position.z = -2.9;
+
+  const meniscus = new THREE.Mesh(
+    new THREE.PlaneGeometry(SLIDE_RADIUS * 2.04, SLIDE_RADIUS * 2.04),
+    new THREE.ShaderMaterial({
+      uniforms: {uLight: sharedUniforms.uLight, uOpticMode: sharedUniforms.uOpticMode},
+      vertexShader: meniscusVertex,
+      fragmentShader: meniscusFragment,
+      transparent: true,
+      depthWrite: false,
+    }),
+  );
+  meniscus.position.z = -3.3;
   meniscus.renderOrder = -40;
   scene.add(meniscus);
 
-  const art = createSpecimenArt().map((canvasTexture) => {
-    const texture = new THREE.CanvasTexture(canvasTexture);
-    texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-    return texture;
-  });
-  const plane = new THREE.PlaneGeometry(1, 0.6, 14, 8);
-  function specimen(type, size, fade, flex) {
-    const uniforms = {
-      sampleMap: {value: art[type]}, blur: {value: 0}, lightLevel: {value: 1}, fade: {value: fade}, flash: {value: 0},
-      phase: {value: type * 1.65}, time: {value: 0}, flex: {value: flex},
-    };
-    const material = new THREE.ShaderMaterial({uniforms, vertexShader: specimenVertex, fragmentShader: specimenFragment, transparent: true, depthWrite: false, side: THREE.DoubleSide});
-    const mesh = new THREE.Mesh(plane, material);
-    mesh.userData = {size, fade};
-    mesh.scale.set(size, size, 1);
-    scene.add(mesh);
-    return mesh;
-  }
-
-  const forms = backgroundForms.map(([type, x, y, z, size, angle, fade]) => {
-    const mesh = specimen(type, size, fade, type === 2 ? 0.10 : 0.04);
-    mesh.position.set(x, y, z);
-    mesh.rotation.z = angle;
-    return mesh;
-  });
-  const active = [null, null, null, null, null];
-  const random = randomGenerator(158354);
-  const baseCount = 970;
-  const dustPos = new Float32Array(baseCount * 3);
-  const dustColors = new Float32Array(baseCount * 3);
-  const dustSize = new Float32Array(baseCount);
-  const dustVar = new Float32Array(baseCount);
-  for (let i = 0; i < baseCount; i++) {
+  // Partículas diferenciadas: detritos, minerais, microbolhas refrativas, fibras
+  const random = createPRNG(158354);
+  const maxParticles = 2200;
+  const pPos = new Float32Array(maxParticles * 3);
+  const pCol = new Float32Array(maxParticles * 3);
+  const pSize = new Float32Array(maxParticles);
+  const pVar = new Float32Array(maxParticles);
+  const pKind = new Float32Array(maxParticles);
+  const palette = [
+    [0.34, 0.56, 0.50], // detrito orgânico
+    [0.62, 0.54, 0.36], // sedimento mineral
+    [0.72, 0.92, 0.96], // microbolha
+    [0.44, 0.65, 0.42], // microalga/fibra
+  ];
+  for (let i = 0; i < maxParticles; i++) {
     const angle = random() * Math.PI * 2;
-    const distance = (radius - .35) * Math.sqrt(random());
-    const color = [[.22, .52, .61], [.45, .60, .68], [.63, .46, .25], [.34, .57, .40], [.65, .77, .77]][i % 5];
-    dustPos.set([Math.cos(angle) * distance, Math.sin(angle) * distance, (random() - .56) * 9.7], i * 3);
-    dustColors.set(color, i * 3);
-    dustSize[i] = .9 + random() ** 4 * 5.35;
-    dustVar[i] = random();
+    const distance = (SLIDE_RADIUS - 0.35) * Math.sqrt(random());
+    const kind = i % 9 === 0 ? 2 : i % 5 === 0 ? 1 : i % 7 === 0 ? 3 : 0;
+    pPos.set([Math.cos(angle) * distance, Math.sin(angle) * distance, (random() - 0.5) * 6.4], i * 3);
+    pCol.set(palette[kind], i * 3);
+    pSize[i] = kind === 2 ? 2.8 + random() * 4.5 : 0.9 + Math.pow(random(), 3) * 4.6;
+    pVar[i] = random();
+    pKind[i] = kind;
   }
-  const dustGeometry = new THREE.BufferGeometry();
-  dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-  dustGeometry.setAttribute('diameter', new THREE.BufferAttribute(dustSize, 1));
-  dustGeometry.setAttribute('variation', new THREE.BufferAttribute(dustVar, 1));
-  dustGeometry.setAttribute('tint', new THREE.BufferAttribute(dustColors, 3));
-  const dustUniforms = {time: {value: 0}, density: {value: 1}, zoom: {value: 1}, focus: {value: 0}, lightLevel: {value: 1}};
-  const dust = new THREE.Points(dustGeometry, new THREE.ShaderMaterial({uniforms: dustUniforms, vertexShader: debrisVertex, fragmentShader: debrisFragment, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending}));
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  dustGeo.setAttribute('diameter', new THREE.BufferAttribute(pSize, 1));
+  dustGeo.setAttribute('variation', new THREE.BufferAttribute(pVar, 1));
+  dustGeo.setAttribute('kind', new THREE.BufferAttribute(pKind, 1));
+  dustGeo.setAttribute('tint', new THREE.BufferAttribute(pCol, 3));
+
+  const dustUniforms = {
+    time: sharedUniforms.uTime,
+    density: {value: 1},
+    zoom: sharedUniforms.uZoom,
+    focus: sharedUniforms.uFocus,
+    na: sharedUniforms.uNA,
+    lightLevel: sharedUniforms.uLight,
+    opticMode: sharedUniforms.uOpticMode,
+  };
+  const dustMat = new THREE.ShaderMaterial({
+    uniforms: dustUniforms,
+    vertexShader: debrisVertex,
+    fragmentShader: debrisFragment,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+  });
+  const dust = new THREE.Points(dustGeo, dustMat);
   dust.renderOrder = -25;
   scene.add(dust);
 
-  const foodGeometry = new THREE.BufferGeometry();
-  const foodCount = 90;
-  const foodPosition = new THREE.BufferAttribute(new Float32Array(foodCount * 3), 3).setUsage(THREE.DynamicDrawUsage);
-  foodGeometry.setAttribute('position', foodPosition);
-  foodGeometry.setAttribute('diameter', new THREE.BufferAttribute(Float32Array.from({length: foodCount}, () => 2.4 + random() * 4), 1));
-  foodGeometry.setAttribute('variation', new THREE.BufferAttribute(Float32Array.from({length: foodCount}, random), 1));
-  foodGeometry.setAttribute('tint', new THREE.BufferAttribute(Float32Array.from({length: foodCount * 3}, (_, index) => [.9, .94, .36][index % 3]), 3));
-  const foodPoints = new THREE.Points(foodGeometry, dust.material);
+  // Partículas de alimento depositado (multi-tipo)
+  const foodGeo = new THREE.BufferGeometry();
+  const maxFoodPts = 48 * 16;
+  const foodPos = new THREE.BufferAttribute(new Float32Array(maxFoodPts * 3), 3).setUsage(THREE.DynamicDrawUsage);
+  const foodTint = new THREE.BufferAttribute(new Float32Array(maxFoodPts * 3), 3).setUsage(THREE.DynamicDrawUsage);
+  foodGeo.setAttribute('position', foodPos);
+  foodGeo.setAttribute('diameter', new THREE.BufferAttribute(Float32Array.from({length: maxFoodPts}, () => 2.2 + random() * 3.4), 1));
+  foodGeo.setAttribute('variation', new THREE.BufferAttribute(Float32Array.from({length: maxFoodPts}, random), 1));
+  foodGeo.setAttribute('kind', new THREE.BufferAttribute(new Float32Array(maxFoodPts), 1));
+  foodGeo.setAttribute('tint', foodTint);
+  const foodPoints = new THREE.Points(foodGeo, dustMat);
   foodPoints.frustumCulled = false;
   foodPoints.renderOrder = 5;
   scene.add(foodPoints);
 
+  // Linha de trajetória do organismo selecionado
+  const trailGeo = new THREE.BufferGeometry();
+  const trailPos = new Float32Array(64 * 3);
+  trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3).setUsage(THREE.DynamicDrawUsage));
+  const trailLine = new THREE.Line(
+    trailGeo,
+    new THREE.LineBasicMaterial({color: 0x84ced6, transparent: true, opacity: 0.65}),
+  );
+  trailLine.frustumCulled = false;
+  trailLine.visible = false;
+  scene.add(trailLine);
+
+  // Grade calibrada opcional (espaçamento de 40 µm = 1 unidade)
+  const gridVerts = [];
+  for (let i = -12; i <= 12; i++) {
+    gridVerts.push(i, -12, -3.1, i, 12, -3.1);
+    gridVerts.push(-12, i, -3.1, 12, i, -3.1);
+  }
+  const gridGeo = new THREE.BufferGeometry();
+  gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridVerts, 3));
+  const gridLines = new THREE.LineSegments(
+    gridGeo,
+    new THREE.LineBasicMaterial({color: 0x69b88b, transparent: true, opacity: 0.20}),
+  );
+  gridLines.visible = false;
+  scene.add(gridLines);
+
+  // Registro de malhas 3D ativas indexado por agent.id estável
+  const assemblies = new Map();
   let width = 0;
   let height = 0;
   let density = 1;
   let profile = 'high';
+  let opticMode = 'darkfield';
+  let objectiveIndex = 1;
+  let anatomyState = {
+    active: false,
+    selectedId: null,
+    highlightOrganelle: null,
+    membraneAlpha: 1.0,
+    pitch: 0,
+    yaw: 0,
+  };
+  let trailsVisible = false;
+
   const observer = new ResizeObserver(resize);
   observer.observe(stage);
 
   function resize() {
     const nextWidth = Math.max(1, stage.clientWidth);
     const nextHeight = Math.max(1, stage.clientHeight);
-    const nextDensity = Math.min(window.devicePixelRatio || 1, {low: .85, medium: 1.25, high: 1.7}[profile]);
+    const maxDpr = {low: 1.0, medium: 1.25, high: 1.75, ultra: 2.0}[profile] || 1.5;
+    const nextDensity = Math.min(window.devicePixelRatio || 1, maxDpr);
     if (width === nextWidth && height === nextHeight && density === nextDensity) return;
     width = nextWidth;
     height = nextHeight;
     density = nextDensity;
     renderer.setPixelRatio(density);
     renderer.setSize(width, height, false);
-    fieldUniforms.aspect.value = width / height;
+    sharedUniforms.uAspect.value = width / height;
   }
 
   const pivot = new THREE.Vector3();
@@ -264,42 +289,43 @@ export function microscope(stage) {
   const slide = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
   function unitsPerPixel() {
-    return (camera.top - camera.bottom) / height;
+    return (camera.top - camera.bottom) / Math.max(1, height);
   }
 
   function worldAt(x, y) {
     const bounds = canvas.getBoundingClientRect();
-    pointer.set(2 * (x - bounds.left) / bounds.width - 1, 1 - 2 * (y - bounds.top) / bounds.height);
+    pointer.set((2 * (x - bounds.left)) / bounds.width - 1, 1 - (2 * (y - bounds.top)) / bounds.height);
     ray.setFromCamera(pointer, camera);
     return ray.ray.intersectPlane(slide, new THREE.Vector3());
   }
 
-  function targetAt(x, y) {
-    let best = null;
-    let nearest = 1;
-    for (let i = 0; i < active.length; i++) {
-      const mesh = active[i];
-      if (!mesh) continue;
-      projected.copy(mesh.position).project(camera);
-      const screenX = (projected.x * 0.5 + 0.5) * width;
-      const screenY = (-projected.y * 0.5 + 0.5) * height;
-      const dx = x - screenX;
-      const dy = y - screenY;
-      const angle = mesh.rotation.z;
-      const extent = mesh.userData.size / unitsPerPixel();
-      const ratio = [[.39, .21], [.39, .12], [.45, .22], [.34, .23], [.24, .24]][i];
-      const lx = (dx * Math.cos(angle) - dy * Math.sin(angle)) / Math.max(extent * ratio[0], 23);
-      const ly = (dx * Math.sin(angle) + dy * Math.cos(angle)) / Math.max(extent * ratio[1], 23);
-      const distance = Math.hypot(lx, ly);
-      if (distance < nearest) {
-        best = i;
-        nearest = distance;
+  function targetCandidatesAt(x, y, simulation) {
+    const candidates = [];
+    const upp = unitsPerPixel();
+    for (const agent of simulation.agents) {
+      const asm = assemblies.get(agent.id);
+      if (!asm) continue;
+      projected.set(agent.x, agent.y, agent.z).project(camera);
+      const sx = (projected.x * 0.5 + 0.5) * width;
+      const sy = (-projected.y * 0.5 + 0.5) * height;
+      const extent = (agent.size * 0.45) / Math.max(0.0001, upp);
+      const hitR = Math.max(22, extent);
+      const dist = Math.hypot(x - sx, y - sy) / hitR;
+      if (dist <= 1.0) {
+        candidates.push({agent, dist, zDiff: Math.abs(agent.z - sharedUniforms.uFocus.value)});
       }
     }
-    return best;
+    candidates.sort((a, b) => a.zDiff - b.zDiff || a.dist - b.dist);
+    return candidates.map((c) => c.agent);
   }
 
-  function render(simulation, view, alpha) {
+  function targetAt(x, y, simulation) {
+    if (!simulation) return null;
+    const list = targetCandidatesAt(x, y, simulation);
+    return list.length > 0 ? list[0] : null;
+  }
+
+  function render(simulation, view, alpha = 1) {
     const {zoom, light, focus, tiltX, tiltY} = view;
     const aspect = width / Math.max(height, 1);
     const halfHeight = Math.max(4.43, 4.17 / aspect) / zoom;
@@ -308,66 +334,213 @@ export function microscope(stage) {
     camera.top = halfHeight;
     camera.bottom = -halfHeight;
     camera.updateProjectionMatrix();
+
     pivot.set(view.x, view.y, 0);
     camera.position.set(view.x + tiltX * 22, view.y + tiltY * 22, 24);
     camera.lookAt(pivot);
     camera.updateMatrixWorld();
+
     const t = simulation.time;
-    fieldUniforms.time.value = t;
-    fieldUniforms.lightLevel.value = light;
-    fieldUniforms.center.value.set(view.x, view.y);
-    fieldUniforms.zoom.value = zoom;
-    const animationTime = view.reduced ? 0 : t;
-    dustUniforms.time.value = animationTime;
+    const animTime = view.reduced ? 0 : t;
+    sharedUniforms.uTime.value = animTime;
+    sharedUniforms.uLight.value = light;
+    sharedUniforms.uFocus.value = focus;
+    sharedUniforms.uZoom.value = zoom;
+    sharedUniforms.uCenter.value.set(view.x, view.y);
+    sharedUniforms.uNA.value = OBJECTIVES[objectiveIndex]?.na || 0.65;
+    if (simulation.sample) {
+      sharedUniforms.uWaterTint.value.set(...simulation.sample.waterTint);
+      sharedUniforms.uTurbidity.value = simulation.sample.turbidity;
+    }
+
     dustUniforms.density.value = density;
-    dustUniforms.zoom.value = zoom;
-    dustUniforms.focus.value = focus;
-    dustUniforms.lightLevel.value = Math.min(1.18, light);
-    dustGeometry.setDrawRange(0, {low: 410, medium: 690, high: baseCount}[profile]);
+    const particleBudget = {low: 400, medium: 700, high: 950, ultra: 1600}[profile] || 950;
+    dustGeo.setDrawRange(0, particleBudget);
 
-    for (const mesh of forms) {
-      const uniforms = mesh.material.uniforms;
-      uniforms.time.value = animationTime;
-      uniforms.blur.value = Math.min(.99, .30 + Math.abs(mesh.position.z - focus) * .29);
-      uniforms.lightLevel.value = light * .88;
-    }
+    // Sincroniza organismos ativos
+    const activeIds = new Set();
+    const selectedId = anatomyState.selectedId;
     for (const agent of simulation.agents) {
-      const {index, previous, size, phase} = agent;
-      const mesh = active[index] ?? (active[index] = specimen(index, size, 1, [0.034, 0, 0.15, 0.09, 0.012][index]));
-      mesh.position.set(THREE.MathUtils.lerp(previous.x, agent.x, alpha), THREE.MathUtils.lerp(previous.y, agent.y, alpha), THREE.MathUtils.lerp(previous.z, agent.z, alpha));
-      mesh.rotation.z = THREE.MathUtils.lerp(previous.angle, agent.angle, alpha);
-      mesh.rotation.x = Math.sin(animationTime * (.38 + index * .09) + phase) * (index === 1 ? .23 : .14);
-      mesh.rotation.y = Math.cos(animationTime * .6 + phase) * .26;
-      mesh.scale.y = size * (1 + Math.sin(animationTime * 1.25 + phase) * (index === 3 ? .073 : .022));
-      const uniforms = mesh.material.uniforms;
-      uniforms.time.value = animationTime;
-      uniforms.blur.value = Math.min(1.9, Math.abs(mesh.position.z - focus) * .37);
-      uniforms.lightLevel.value = light;
-      uniforms.flash.value = agent.energy;
+      activeIds.add(agent.id);
+      let asm = assemblies.get(agent.id);
+      if (!asm) {
+        asm = createOrganismAssembly(agent, sharedUniforms, profile);
+        assemblies.set(agent.id, asm);
+        scene.add(asm.group);
+      }
+
+      const isolatedOut = anatomyState.active && selectedId && agent.id !== selectedId;
+      asm.group.visible = !isolatedOut;
+      if (!asm.group.visible) continue;
+
+      const lx = THREE.MathUtils.lerp(agent.previous.x, agent.x, alpha);
+      const ly = THREE.MathUtils.lerp(agent.previous.y, agent.y, alpha);
+      const lz = THREE.MathUtils.lerp(agent.previous.z, agent.z, alpha);
+      const lAngle = shortestAngleLerp(agent.previous.angle, agent.angle, alpha);
+
+      if (!asm.dynamicParts.filamentSegments) {
+        asm.group.position.set(lx, ly, lz);
+        if (anatomyState.active && agent.id === selectedId) {
+          asm.group.rotation.set(anatomyState.pitch, anatomyState.yaw, lAngle);
+        } else {
+          asm.group.rotation.set(
+            Math.sin(animTime * 0.45 + agent.phase) * 0.14,
+            Math.cos(animTime * 0.55 + agent.phase) * 0.18,
+            lAngle,
+          );
+        }
+      }
+
+      const dofFactor = 0.22 + sharedUniforms.uNA.value * 0.36;
+      const blur = anatomyState.active && agent.id === selectedId ? 0 : Math.min(1.85, Math.abs(lz - focus) * dofFactor);
+      const isSelected = agent.id === selectedId;
+      updateOrganismAssembly(
+        asm,
+        agent,
+        animTime,
+        blur,
+        light,
+        isSelected ? anatomyState.highlightOrganelle : null,
+        isSelected && anatomyState.active ? anatomyState.membraneAlpha : 1.0,
+      );
     }
 
-    let point = 0;
-    for (const item of simulation.food) {
-      for (let i = 0; i < 18; i++) {
-        const angle = i * 2.399963 + t * .42;
-        const spread = .08 + (22 - item.remaining) * .005 + i / 57;
-        foodPosition.setXYZ(point++, item.x + Math.cos(angle) * spread, item.y + Math.sin(angle) * spread, .45);
+    // Remove organismos que saíram da simulação (predados/reset)
+    for (const [id, asm] of assemblies.entries()) {
+      if (!activeIds.has(id)) {
+        scene.remove(asm.group);
+        for (const m of asm.materials) m.dispose();
+        assemblies.delete(id);
       }
     }
-    foodGeometry.setDrawRange(0, point);
-    foodPosition.needsUpdate = true;
+
+    // Trajetória do selecionado
+    const selAgent = selectedId ? simulation.getAgentById(selectedId) : null;
+    if (trailsVisible && selAgent && selAgent.trail.length > 1) {
+      trailLine.visible = true;
+      const len = Math.min(64, selAgent.trail.length);
+      for (let i = 0; i < len; i++) {
+        const p = selAgent.trail[selAgent.trail.length - len + i];
+        trailPos[i * 3] = p.x;
+        trailPos[i * 3 + 1] = p.y;
+        trailPos[i * 3 + 2] = p.z;
+      }
+      trailGeo.setDrawRange(0, len);
+      trailGeo.attributes.position.needsUpdate = true;
+    } else {
+      trailLine.visible = false;
+    }
+
+    // Alimento suspenso colorido por categoria
+    const foodPalette = {
+      organic: [0.90, 0.88, 0.42],
+      bacteria: [0.68, 0.92, 0.78],
+      microalgae: [0.42, 0.86, 0.48],
+      detritus: [0.76, 0.58, 0.38],
+      nutrients: [0.50, 0.86, 0.94],
+    };
+    let ptIdx = 0;
+    for (const item of simulation.food) {
+      const col = foodPalette[item.type] || foodPalette.organic;
+      for (let i = 0; i < 14 && ptIdx < maxFoodPts; i++) {
+        const ang = i * 2.399963 + t * 0.42;
+        const spread = 0.07 + (item.maxRemaining - item.remaining) * 0.008 + i / 65;
+        foodPos.setXYZ(ptIdx, item.x + Math.cos(ang) * spread, item.y + Math.sin(ang) * spread, item.z + 0.25);
+        foodTint.setXYZ(ptIdx, col[0], col[1], col[2]);
+        ptIdx++;
+      }
+    }
+    foodGeo.setDrawRange(0, ptIdx);
+    foodPos.needsUpdate = true;
+    foodTint.needsUpdate = true;
+
     renderer.render(scene, camera);
   }
 
+  // Empilhamento de foco (focus stacking) em 5 planos Z
+  function focusStack(simulation, view) {
+    const originalFocus = view.focus;
+    const planes = [-1.4, -0.7, 0, 0.7, 1.4].map((d) => THREE.MathUtils.clamp(originalFocus + d, -3.2, 3.2));
+    const w = canvas.width;
+    const h = canvas.height;
+    const buffers = [];
+
+    for (const z of planes) {
+      render(simulation, {...view, focus: z}, 1);
+      const off = document.createElement('canvas');
+      off.width = w;
+      off.height = h;
+      const ctx = off.getContext('2d');
+      ctx.drawImage(canvas, 0, 0);
+      buffers.push(ctx.getImageData(0, 0, w, h).data);
+    }
+    view.focus = originalFocus;
+    render(simulation, view, 1);
+
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = w;
+    outCanvas.height = h;
+    const outCtx = outCanvas.getContext('2d');
+    const outImg = outCtx.createImageData(w, h);
+    const out = outImg.data;
+    const stride = w * 4;
+
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const idx = (y * w + x) * 4;
+        let bestBuf = buffers[2];
+        let bestScore = -1;
+        for (let b = 0; b < buffers.length; b++) {
+          const data = buffers[b];
+          const c = data[idx] + data[idx + 1] + data[idx + 2];
+          const gx = Math.abs(c - (data[idx + 4] + data[idx + 5] + data[idx + 6]));
+          const gy = Math.abs(c - (data[idx + stride] + data[idx + stride + 1] + data[idx + stride + 2]));
+          const score = gx + gy;
+          if (score > bestScore) {
+            bestScore = score;
+            bestBuf = data;
+          }
+        }
+        out[idx] = bestBuf[idx];
+        out[idx + 1] = bestBuf[idx + 1];
+        out[idx + 2] = bestBuf[idx + 2];
+        out[idx + 3] = 255;
+      }
+    }
+    outCtx.putImageData(outImg, 0, 0);
+    return outCanvas;
+  }
+
   resize();
+
   return {
     canvas,
     render,
     worldAt,
     targetAt,
+    targetCandidatesAt,
     unitsPerPixel,
+    focusStack,
+    setOpticMode(mode) {
+      if (!(mode in OPTIC_MODES)) return;
+      opticMode = mode;
+      sharedUniforms.uOpticMode.value = OPTIC_MODES[mode].id;
+    },
+    getOpticMode() { return opticMode; },
+    setFluorescenceChannel(ch) {
+      sharedUniforms.uFluorescenceChannel.value = ch;
+    },
+    setObjective(idx) {
+      objectiveIndex = Math.max(0, Math.min(OBJECTIVES.length - 1, idx));
+      return OBJECTIVES[objectiveIndex];
+    },
+    setAnatomyState(next) {
+      Object.assign(anatomyState, next);
+    },
+    setTrailsVisible(v) { trailsVisible = Boolean(v); },
+    setGridVisible(v) { gridLines.visible = Boolean(v); },
     quality(value) {
-      if (!(value in {low: 1, medium: 1, high: 1})) return;
+      if (!(value in {low: 1, medium: 1, high: 1, ultra: 1})) return;
       profile = value;
       resize();
     },
@@ -378,7 +551,8 @@ export function microscope(stage) {
         if (object.geometry) resource.add(object.geometry);
         if (object.material) resource.add(object.material);
       });
-      for (const item of [...resource, ...art]) item.dispose();
+      for (const item of resource) item.dispose();
+      assemblies.clear();
       renderer.dispose();
       canvas.remove();
     },

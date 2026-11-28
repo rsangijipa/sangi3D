@@ -15,7 +15,7 @@ import {
   createDefaultState,
 } from './js/state.js';
 import { createShellMuseumMaterials } from './js/materials.js';
-import { createParametricShellController } from './js/shell-geometry.js';
+import { createShellAnatomyController } from './js/shell-anatomy.js';
 import { buildMuseumWorld } from './js/museum-world.js';
 import { createShellAudioEngine } from './js/audio-engine.js';
 import { createUIController } from './js/ui-controller.js';
@@ -44,7 +44,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0c1016);
@@ -72,7 +72,7 @@ controls.maxPolarAngle = Math.PI * 0.47;
 const state = createDefaultState();
 const mats = createShellMuseumMaterials(SEED);
 const world = buildMuseumWorld(scene, mats, SEED);
-const shell = createParametricShellController(scene, mats);
+const shell = createShellAnatomyController(scene, mats);
 const audio = createShellAudioEngine();
 
 // Pós-processamento seletivo macro DoF leve para Modo Fotografia (desligável p/ inspeção)
@@ -141,8 +141,14 @@ function getEffectiveQualityKey() {
 
 function rebuildShellNow() {
   const qProf = QUALITY_PROFILES[getEffectiveQualityKey()] || QUALITY_PROFILES.medium;
+  const texture = TEXTURE_STYLES[state.textureStyle] || TEXTURE_STYLES.banded;
   mats.setOuterTexture(state.textureStyle);
-  const metrics = shell.rebuild(state, qProf.segU, qProf.segV);
+  const metrics = shell.rebuild({
+    ...state,
+    viewMode: state.cutaway ? 'cutaway' : 'whole',
+    ribsCount: texture.ribFreq,
+    ribsIntensity: texture.ribAmp,
+  }, qProf.segU, qProf.segV);
   world.syncCaliperToShellWidth(metrics.width);
   ui.syncToolbar(metrics);
   return metrics;

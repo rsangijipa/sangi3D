@@ -445,6 +445,8 @@
     @media(max-height:450px) { .settings-drawer { max-height: 45vh; } #hint-pill { display:none; } }
     @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   </style>
+<link rel="stylesheet" href="../_kit/s3d-kit.css" />
+<script src="../_kit/s3d-kit.js"></script>
 </head>
 <body>
   <div id="loader" aria-live="polite">
@@ -1724,6 +1726,7 @@
       setTimeout(fadeHint, 7500);
 
       function triggerGust() {
+        if (window.__s3dKit) window.__s3dKit.goal('gust', '<b>Rajada.</b> Galhos grossos mal se movem; ramos finos e folhas oscilam mais — o vento segue a hierarquia dos ramos.');
         simState.gust = Math.min(1.15, simState.gust + 0.65);
       }
 
@@ -1775,6 +1778,7 @@
 
       function applyCameraPreset(key) {
         const p = CAM_PRESETS[key] || CAM_PRESETS.original;
+        if (window.__s3dKit && (key === 'canopy' || key === 'dramatic')) window.__s3dKit.goal('frames', '<b>Novo enquadramento.</b> As nuvens ficam no céu: só a copa muda de posição na tela.');
         camState.targetYaw = p.yaw;
         camState.targetPitch = p.pitch;
         camState.targetDist = p.dist;
@@ -1793,10 +1797,16 @@
         applyCameraPreset('original');
       });
 
+      const moodsSeen = new Set(['afternoon']);
       document.querySelectorAll('[data-mood]').forEach((btn) => {
         btn.addEventListener('click', () => {
           const moodKey = btn.dataset.mood;
           if (!MOODS[moodKey]) return;
+          moodsSeen.add(moodKey);
+          if (window.__s3dKit) {
+            if (moodsSeen.has('golden') && moodsSeen.has('dusk')) window.__s3dKit.goal('hours', '<b>Horários.</b> Na hora dourada e no crepúsculo o sol baixo tinge as bordas das nuvens.');
+            if (moodKey === 'storm' || moodKey === 'rain') window.__s3dKit.goal('weather', '<b>Tempo fechado.</b> Mais cobertura e nuvens mais escuras na base.');
+          }
           targetMood = MOODS[moodKey];
           rainLevel=moodKey==='rain'?.78:0;document.getElementById('slider-rain').value=Math.round(rainLevel*100);document.getElementById('val-rain').textContent=Math.round(rainLevel*100)+'%';
           simState.cloudCover = targetMood.cloudCover;
@@ -1821,7 +1831,7 @@
       document.getElementById('slider-leaves').addEventListener('input',e=>{leafDensity=Number(e.target.value)/100;document.getElementById('val-leaves').textContent=e.target.value+'%';applyLeafDensity();});
       document.getElementById('slider-rain').addEventListener('input',e=>{rainLevel=Number(e.target.value)/100;document.getElementById('val-rain').textContent=e.target.value+'%';});
       const pauseBtn=document.getElementById('btn-pause');function syncPause(){pauseBtn.setAttribute('aria-pressed',String(paused));pauseBtn.textContent=paused?'Retomar movimento':'Pausar movimento';}syncPause();pauseBtn.addEventListener('click',()=>{paused=!paused;syncPause();});document.getElementById('btn-gust').addEventListener('click',()=>{triggerGust();});
-      document.getElementById('btn-photo').addEventListener('click',()=>{renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='copa-e-nuvens.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);},'image/png');});
+      document.getElementById('btn-photo').addEventListener('click',()=>{ if (window.__s3dKit) window.__s3dKit.photo(); });
       setQuality(highQuality);
       let frameSum=0,frameCount=0,slowWindows=0,fastWindows=0;
       function adapt(raw){if(qualityMode!==0||document.hidden||raw>.3)return;frameSum+=raw;frameCount++;if(frameSum<3)return;const avg=frameSum/frameCount;slowWindows=avg>.042?slowWindows+1:0;fastWindows=avg<.021?fastWindows+1:0;frameSum=0;frameCount=0;if(highQuality&&slowWindows>=2){setQuality(false);slowWindows=0;}else if(!highQuality&&fastWindows>=5&&!matchMedia('(max-width:700px)').matches){setQuality(true);fastWindows=0;}}
@@ -1864,6 +1874,7 @@
         if (copaDisposed) return;
         animFrameId = requestAnimationFrame(animate);
         if (sangiPaused || document.hidden) return;
+        if (window.__s3dKit) window.__s3dKit.frame();
         const raw=clock.getDelta();adapt(raw);
         const dt = Math.min(raw, 0.05);
         const motionDt=paused?0:dt;simElapsed+=motionDt;const elapsed=simElapsed;
@@ -1990,9 +2001,71 @@
       window.addEventListener('beforeunload', cleanupCopa);
       window.addEventListener('pagehide', cleanupCopa);
       window.addEventListener('sangi:dispose', cleanupCopa);
-      window.addEventListener('sangi:pause', () => { sangiPaused = true; clock.stop(); if (audioCtx && audioEnabled) audioCtx.suspend().catch(() => {}); });
-      window.addEventListener('sangi:resume', () => { sangiPaused = false; clock.start(); if (audioCtx && audioEnabled) audioCtx.resume().catch(() => {}); });
-      window.addEventListener('sangi:mute', () => { if (audioEnabled) toggleAudio(); });
+      // Pausa (usuário × host × aba) arbitrada pelo S3DKit; mute do host não altera a preferência de som.
+      let hostMuted = false;
+      window.addEventListener('sangi:mute', (e) => {
+        hostMuted = e && e.detail ? !!e.detail.muted : true;
+        if (!audioCtx) return;
+        if (hostMuted) audioCtx.suspend().catch(() => {});
+        else if (audioEnabled && !sangiPaused) audioCtx.resume().catch(() => {});
+      });
+      // CPU espelho do vertex shader de vento (barkMaterial) para QA: deslocamento de um ponto
+      function windOffset(pos, flex, flutter, t, w, g) {
+        const amp = w + g * 1.45;
+        const slow = Math.sin(t * 1.25 + pos.y * 0.28 + pos.x * 0.19) * 0.24;
+        const med = Math.cos(t * 2.75 + pos.x * 0.45 + pos.z * 0.3) * 0.085;
+        const trem = Math.sin(t * 5.8 + pos.x * 0.9 + pos.z * 1.4) * 0.022 * flutter;
+        return new THREE.Vector3((slow + med + trem) * flex * amp, 0, (slow * 0.55 - med * 0.65) * flex * amp);
+      }
+      window.__s3dKit = S3DKit.create({
+        id: 's3d122', title: 'Copa e Nuvens', photoName: 'copa-e-nuvens',
+        noQuality: true, noPhoto: true, side: 'left', top: 'calc(max(12px, env(safe-area-inset-top)) + 76px)',
+        tutorial: [
+          'Olhe para cima: uma copa contra o céu de nuvens. Arraste para olhar; pinça, scroll ou +/- para aproximar.',
+          'Troque o <b>clima e o horário</b> na barra inferior. Toque no céu (sem arrastar) para soprar uma <b>rajada</b>.',
+          'Complete o <b>Diário de campo</b> no seu ritmo e salve uma foto. Sem tempo, sem pontuação.'
+        ],
+        goals: [
+          { id: 'gust', label: 'Provoque uma rajada de vento' },
+          { id: 'hours', label: 'Veja a hora dourada e o crepúsculo' },
+          { id: 'weather', label: 'Feche o tempo (nuvens densas ou chuva)' },
+          { id: 'frames', label: 'Mude o enquadramento' },
+          { id: 'photo', label: 'Fotografe a copa' }
+        ],
+        canvas: () => renderer.domElement,
+        render: () => renderer.render(scene, camera),
+        rendererInfo: () => renderer.info,
+        setPaused: (pp) => {
+          sangiPaused = pp;
+          if (pp) clock.stop(); else clock.start();
+          if (!audioCtx) return;
+          if (pp) audioCtx.suspend().catch(() => {});
+          else if (audioEnabled && !hostMuted) audioCtx.resume().catch(() => {});
+        },
+        applyQuality: (lvl) => { qualityMode = lvl === 'low' ? 2 : lvl === 'high' ? 1 : 0; setQuality(qualityMode === 0 ? !matchMedia('(max-width:700px)').matches : qualityMode === 1); },
+        onReset: () => { applyCameraPreset('original'); const b = document.querySelector('[data-mood="afternoon"]'); if (b) b.click(); },
+        qa: {
+          // Domo do céu acompanha a câmera e as nuvens dependem só da direção -> sem paralaxe/deriva ao mover a câmera
+          skyFollowsCamera: () => +skyDome.position.distanceTo(camera.position).toFixed(6),
+          // Diferença máxima de deslocamento por vento entre a base de cada folha e o ponto do ramo onde nasce
+          leafBranchDrift: (samples = 200) => {
+            let maxD = 0, maxW = 0;
+            const surf = new THREE.Vector3(0.03, 0.03, 0.0);
+            const n = Math.min(samples, leafSites.length);
+            for (let i = 0; i < n; i++) {
+              const site = leafSites[i];
+              for (const tt of [0.3, 1.7, 4.2, 9.9]) {
+                const a = windOffset(site.p, site.flex, 1, tt, 1, 1.15);
+                const b = windOffset(site.p.clone().add(surf), site.flex, 1, tt, 1, 1.15); // vértice da casca do ramo (~raio do galho fino)
+                maxD = Math.max(maxD, a.distanceTo(b)); maxW = Math.max(maxW, a.length());
+              }
+            }
+            return { sites: n, maxBaseDrift: +maxD.toFixed(5), maxWindDisplacement: +maxW.toFixed(3) };
+          },
+          orbit: (dy) => { camState.targetYaw += dy; camState.yaw += dy; }
+        }
+      });
+      window.addEventListener('sangi:reset', () => { const b = document.querySelector('[data-mood="afternoon"]'); if (b) b.click(); });
       window.addEventListener('sangi:reset', () => { applyCameraPreset('original'); });
     })();
   </script>

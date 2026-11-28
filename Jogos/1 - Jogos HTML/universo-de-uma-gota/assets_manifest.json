@@ -1,0 +1,42 @@
+{
+  "project": "Universo de uma Gota 2.0 — Laboratório de Vida Microscópica",
+  "version": "2.0.0",
+  "license": "Proprietário / Sangi3D (código original) + MIT (Three.js)",
+  "assets": [
+    {
+      "name": "Three.js r187",
+      "path": "../../../Sistema/shared/vendor/three.module.js",
+      "type": "library",
+      "license": "MIT",
+      "origin": "Sistema/shared/vendor"
+    },
+    {
+      "name": "Sangi Workbench Shell",
+      "path": "../../../Sistema/shared/sangi-workbench.js",
+      "type": "framework",
+      "license": "Sangi3D",
+      "origin": "Sistema/shared"
+    },
+    {
+      "name": "Geometrias e malhas procedurais 3D de 20 organismos",
+      "path": "js/organisms/organism-meshes.js",
+      "type": "procedural-3d",
+      "license": "Original Sangi3D",
+      "origin": "Gerado proceduralmente em tempo real"
+    },
+    {
+      "name": "Shaders ópticos (Campo Escuro, Campo Claro, Fase, DIC, Fluorescência)",
+      "path": "js/optics/optical-shaders.js",
+      "type": "glsl-shader",
+      "license": "Original Sangi3D",
+      "origin": "Implementação GLSL original"
+    },
+    {
+      "name": "Síntese de áudio sensorial",
+      "path": "js/audio-engine.js",
+      "type": "web-audio",
+      "license": "Original Sangi3D",
+      "origin": "Síntese procedural via Web Audio API"
+    }
+  ]
+}

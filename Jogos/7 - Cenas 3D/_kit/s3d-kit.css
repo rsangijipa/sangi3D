@@ -1,0 +1,79 @@
+/* S3D Kit — camada comum das Cenas 3D (tutorial, diário, foto, qualidade, pausa, erros).
+   Escopo: classes prefixadas .s3dk- para não colidir com o CSS de cada cena. */
+.s3dk-bar {
+  position: fixed; z-index: 40;
+  top: var(--s3dk-top, calc(max(12px, env(safe-area-inset-top)) + 56px));
+  right: max(12px, env(safe-area-inset-right));
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.s3dk-btn, .s3dk-select {
+  min-height: 40px; min-width: 40px; padding: 0 10px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(12, 14, 12, 0.66); color: #f6f1e8;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font: 500 0.76rem/1 inherit; font-family: inherit; cursor: pointer;
+}
+.s3dk-btn:hover { background: rgba(40, 40, 32, 0.8); }
+.s3dk-btn:focus-visible, .s3dk-select:focus-visible, .s3dk-primary:focus-visible, .s3dk-ghost:focus-visible, .s3dk-toggle:focus-visible { outline: 2px solid #ffca80; outline-offset: 2px; }
+.s3dk-journal {
+  position: fixed; z-index: 39;
+  top: calc(var(--s3dk-top, calc(max(12px, env(safe-area-inset-top)) + 56px)) + 50px);
+  right: max(12px, env(safe-area-inset-right));
+  width: 250px; max-height: 46vh; overflow-y: auto;
+  background: rgba(12, 14, 12, 0.74); color: #f6f1e8;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px; padding: 10px 12px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.s3dk-journal.collapsed .s3dk-jbody { display: none; }
+.s3dk-jhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.s3dk-jhead h3 { font-size: 0.8rem; font-weight: 600; margin: 0; }
+.s3dk-toggle { min-height: 32px; min-width: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: transparent; color: inherit; cursor: pointer; }
+.s3dk-journal ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.s3dk-journal li { font-size: 0.74rem; line-height: 1.35; opacity: 0.72; display: flex; gap: 8px; }
+.s3dk-journal li::before { content: ''; flex: 0 0 12px; height: 12px; margin-top: 2px; border-radius: 50%; border: 1.5px solid rgba(255, 200, 130, 0.55); }
+.s3dk-journal li.done { opacity: 1; }
+.s3dk-journal li.done::before { background: #ffb85c; border-color: #ffb85c; }
+.s3dk-meter { margin-top: 10px; font-size: 0.7rem; opacity: 0.8; }
+.s3dk-meter div { height: 5px; border-radius: 999px; background: rgba(255,255,255,0.14); margin-top: 4px; overflow: hidden; }
+.s3dk-meter b { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #5a7a2a, #ffb85c); }
+.s3dk-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 6, 4, 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  padding: 16px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.s3dk-overlay[hidden] { display: none; }
+.s3dk-card { width: min(420px, 100%); background: rgba(16, 18, 14, 0.94); color: #f6f1e8; border: 1px solid rgba(255,255,255,0.18); border-radius: 18px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.s3dk-card h2 { font-size: 1.05rem; margin: 0 0 8px; }
+.s3dk-card p { font-size: 0.86rem; line-height: 1.5; margin: 0; opacity: 0.9; }
+.s3dk-dots { display: flex; gap: 6px; margin: 14px 0; }
+.s3dk-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.22); }
+.s3dk-dots i.on { background: #ffb85c; }
+.s3dk-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
+.s3dk-primary { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #d9661f; color: #fff8ed; font-weight: 600; font-family: inherit; cursor: pointer; }
+.s3dk-ghost { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.22); background: transparent; color: inherit; font-family: inherit; cursor: pointer; }
+.s3dk-toast {
+  position: fixed; left: 50%; z-index: 50; bottom: var(--s3dk-toast-bottom, 160px);
+  transform: translateX(-50%); max-width: min(440px, calc(100% - 32px));
+  background: rgba(16, 18, 14, 0.92); color: #fff3e0; border: 1px solid rgba(255, 200, 130, 0.3);
+  border-radius: 12px; padding: 10px 14px; font: 0.8rem/1.4 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+.s3dk-toast.show { opacity: 1; }
+.s3dk-toast b, .s3dk-card b { color: #ffca80; }
+.s3dk-flash { position: fixed; inset: 0; background: #fff8ec; opacity: 0; pointer-events: none; z-index: 55; transition: opacity 0.35s ease; }
+.s3dk-flash.on { opacity: 0.7; transition: none; }
+.s3dk-fatal { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; background: #070906; color: #ffb380; text-align: center; padding: 24px; font: 0.92rem/1.5 'Inter', -apple-system, 'Segoe UI', sans-serif; }
+.s3dk-bar.s3dk-left, .s3dk-journal.s3dk-left { right: auto; left: max(12px, env(safe-area-inset-left)); }
+.s3dk-bar.s3dk-left { justify-content: flex-start; }
+body.s3dk-ui-hidden .s3dk-bar, body.s3dk-ui-hidden .s3dk-journal { opacity: 0; pointer-events: none; }
+@media (pointer: coarse) {
+  .s3dk-btn, .s3dk-select, .s3dk-toggle { min-height: 44px; min-width: 44px; }
+}
+@media (max-width: 600px) {
+  .s3dk-select { display: none; }
+  .s3dk-btn span { display: none; }
+  .s3dk-journal { left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); width: auto; max-height: 34vh; }
+}
+@media (prefers-reduced-motion: reduce) { .s3dk-flash.on { opacity: 0.25; } }

@@ -18,7 +18,7 @@
   <script>
     (function () {
       const localThree = location.protocol !== 'file:';
-      const cdnJsm = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/';
+      const cdnJsm = '../../../Sistema/shared/vendor/three-0.160.0/examples/jsm/';
       const map = document.createElement('script');
       map.type = 'importmap';
       map.textContent = JSON.stringify({
@@ -29,7 +29,7 @@
               'three/addons/': cdnJsm
             }
           : {
-              three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+              three: '../../../Sistema/shared/vendor/three-0.160.0/build/three.module.js',
               'three/addons/': cdnJsm
             }
       });

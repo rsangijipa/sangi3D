@@ -8,6 +8,18 @@
 
 export const SEED = 2509;
 
+export const TEXTURE_STYLES = {
+  nacre:  { short: 'Nacarado', ribAmp: 0.008, ribFreq: 16 },
+  ribbed: { short: 'Costelas', ribAmp: 0.045, ribFreq: 26 },
+  banded: { short: 'Náutilo', ribAmp: 0.015, ribFreq: 12 },
+};
+
+export const PHOTO_FRAMINGS = {
+  table: { id: 'table', pos: [2.35, 2.05, 3.05], mobilePos: [2.75, 2.55, 3.85], target: [0, 0.25, 0] },
+  cut: { id: 'cut', pos: [0.15, 2.85, 1.75], mobilePos: [0.18, 3.45, 2.15], target: [0, 0.18, 0] },
+  macro: { id: 'macro', pos: [1.25, 1.15, 1.62], mobilePos: [1.45, 1.35, 2.05], target: [0.05, 0.24, 0] },
+};
+
 export const WORKSTATIONS = {
   morphology: {
     id: 'morphology',
@@ -202,7 +214,8 @@ export function createDefaultState() {
     spiralTurns: 3.15,      // Voltas
     aperture: 0.62,         // Taxa de expansão / abertura (0.2 a 1.2)
     scaleRatio: 1.0,        // Escala geral (0.5 a 1.5)
-    spirePitch: 0.0,        // Elevação helicoidal (0 planar a 1.2 agulha)
+    spirePitch: 0.22,       // Elevação helicoidal (0 planar a 1.2 agulha)
+    textureStyle: 'banded',
     ribsCount: 18,          // Quantidade de costelas
     ribsIntensity: 0.02,    // Amplitude das costelas / pregas
     wallThickness: 0.024,   // Espessura da parede calcificada
@@ -275,6 +288,7 @@ export function createDefaultState() {
     soundEnabled: false,
     muted: false,
     masterVolume: 0.48,
+    volume: 0.48,
     ambientVolume: 0.5,
     effectsVolume: 0.7,
     reducedMotion: prefersReduced,

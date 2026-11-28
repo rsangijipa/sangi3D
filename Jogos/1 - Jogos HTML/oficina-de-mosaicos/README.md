@@ -8,6 +8,7 @@ Na raiz de Ambientes 3D, rode `node Sistema/launcher/server.mjs --no-prebuild` e
 
 ## Jogar
 
+- **Começar guia** destaca um espaço livre e orienta o assentamento, o giro, o rejunte e a revisão em órbita. Use o painel 3D ou os botões do guia. Você pode sair a qualquer momento e continuar a obra na bancada livre.
 - Em **Peça**, escolha o esmalte e a forma. Clique ou toque no espaço livre. Arraste para assentar várias tesselas na sequência. A bancada sinaliza sobreposição e mantém a peça assentada no lugar.
 - **Girar** roda uma tessela 45°. **Cortar** abre uma junta entre os dois fragmentos. **Pintar** troca o esmalte de uma tessela. **Retirar** libera a posição.
 - **Rejunte** oferece Areia, Cal e Ardósia. Aplique por toque ou arraste, ou use **Preencher tudo** para cobrir simultaneamente as juntas e os vazios.
@@ -26,3 +27,5 @@ Na raiz de Ambientes 3D, rode `node Sistema/launcher/server.mjs --no-prebuild` e
 - [Celular em paisagem](capturas/paisagem.jpg)
 
 O [manifesto de recursos](ASSETS.md) registra a origem dos elementos. O [relatório de testes](TESTES.md) descreve as verificações e as condições de execução.
+
+Na raiz, rode `node "Jogos/1 - Jogos HTML/oficina-de-mosaicos/guide.browser.test.mjs"` para verificar o guia com teclado e toque emulado.

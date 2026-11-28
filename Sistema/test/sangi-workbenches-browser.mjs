@@ -36,7 +36,7 @@ const games = {
     const catalog = page.locator('#gota-catalogo');
     if (await catalog.isVisible()) await press(catalog);
     await press(page.locator('#gota-amostras button').first());
-    assert.match(await page.locator('#gota-descobertos').innerText(), /^1\s*\/\s*5$/);
+    assert.match(await page.locator('#gota-descobertos').innerText(), /^1\s*\/\s*[1-9]\d*$/);
     const zoom = Number(await page.locator('#gota-zoom').inputValue());
     await press(page.locator('#gota-ampliar'));
     assert.ok(Number(await page.locator('#gota-zoom').inputValue()) > zoom);

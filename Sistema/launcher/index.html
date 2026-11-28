@@ -401,7 +401,7 @@
         <nav class="tabs" id="navTabs" aria-label="Navegação principal">
           <button type="button" data-view="all">Explorar</button>
           <button type="button" data-view="releases">Lançamentos</button>
-          <button type="button" data-view="scenes">Cenas</button>
+          <button type="button" data-view="scenes">Cenas 3D</button>
           <button type="button" data-view="improve">A aprimorar</button>
         </nav>
         <label class="search">
@@ -543,12 +543,15 @@
     store.set('launcher.recent', store.get('launcher.recent', []).map((r) => ({ ...r, id: aliasId(r.id) })));
     const previousView = store.get('launcher.view', 'all');
     const previousSort = store.get('launcher.sort', 'categoria');
-    const isImprovePage = () => new URLSearchParams(location.search).get('acervo') === 'aprimorar';
+    const collectionViews = { aprimorar: 'improve', cenas: 'scenes' };
+    const collectionView = () => {
+      const key = new URLSearchParams(location.search).get('acervo');
+      return Object.hasOwn(collectionViews, key) ? collectionViews[key] : null;
+    };
     const state = {
       apps: [], q: '',
-      view: isImprovePage() ? 'improve'
-        : previousView === 'col:Legado arquivado' ? 'archive'
-        : previousView === 'improve' ? 'all' : previousView,
+      view: collectionView() ?? (previousView === 'col:Legado arquivado' ? 'archive'
+        : Object.values(collectionViews).includes(previousView) ? 'all' : previousView),
       sort: ['categoria', 'az', 'recentes'].includes(previousSort) ? previousSort : 'categoria',
       releaseFilter: 'all',
       improveMobile: false,
@@ -735,6 +738,7 @@
       }
       const recentN = state.recent.filter((r) => state.apps.some((a) => a.id === r.id)).length;
       $('#navMain').innerHTML =
+        navBtn('scenes', 'Cenas 3D', state.apps.filter((a) => a.collection === 'Cenas 3D').length, icon('scenes')) +
         navBtn('curated', 'Curadoria', priority.length, icon('curated')) +
         navBtn('fav', 'Favoritos', state.apps.filter((a) => state.fav.has(a.id)).length, icon('fav')) +
         navBtn('recent', 'Histórico', recentN, icon('recent'));
@@ -752,7 +756,7 @@
       const headings = {
         all: ['Seleção principal', 'Os ambientes que terão prioridade nas próximas melhorias.'],
         releases: ['Lançamentos', 'Veja as estreias e as novas versões do catálogo.'],
-        scenes: ['Cenas 3D', 'Cenas botânicas e contemplativas em Three.js: folhas, flores, musgo, bosque e santuário zen.'],
+        scenes: ['Cenas 3D', 'Explore paisagens, arquitetura e detalhes da natureza em cenas interativas.'],
         improve: ['A aprimorar', 'Jogos e experiências que serão aprimorados aos poucos.'],
         mobile: ['Adaptados para celular', 'Testados com toque simulado em retrato e layout verificado em paisagem.'],
         curated: ['Curadoria', 'Explore os jogos e recursos da seleção principal por tipo de experiência.'],
@@ -852,9 +856,10 @@
       $('#menuBtn').setAttribute('aria-expanded', String(open));
     }
     function setView(view, updateUrl = true) {
-      if (updateUrl && (view === 'improve') !== isImprovePage()) {
+      const collectionKey = Object.keys(collectionViews).find((key) => collectionViews[key] === view);
+      if (updateUrl && (collectionKey ? view : null) !== collectionView()) {
         const url = new URL(location.href);
-        if (view === 'improve') url.searchParams.set('acervo', 'aprimorar');
+        if (collectionKey) url.searchParams.set('acervo', collectionKey);
         else url.searchParams.delete('acervo');
         history.replaceState({ ...history.state, catalogView: state.view }, '');
         history.pushState({ catalogView: view }, '', url);
@@ -1139,8 +1144,10 @@
         const matched = state.apps.find(a => a.id === targetId) || state.apps.find(a => a.id === normalizedId);
         if (matched) openApp(matched.id);
       }
-      if (!location.hash.startsWith('#play=') && isImprovePage() !== (state.view === 'improve')) {
-        setView(isImprovePage() ? 'improve' : event.state?.catalogView ?? 'all', false);
+      if (!location.hash.startsWith('#play=')) {
+        const view = collectionView();
+        const currentCollection = Object.values(collectionViews).includes(state.view) ? state.view : null;
+        if (view !== currentCollection) setView(view ?? event.state?.catalogView ?? 'all', false);
       }
     });
 

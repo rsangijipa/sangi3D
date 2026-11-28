@@ -6,6 +6,8 @@
 <title>Folhagem Reticulada & Inflorescências 3D — Three.js</title>
 <script src="/Sistema/shared/sangi-bridge.js"></script>
 <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+<link rel="stylesheet" href="../_kit/s3d-kit.css" />
+<script src="../_kit/s3d-kit.js"></script>
 <style>
   :root {
     --bg: #080f07;
@@ -87,6 +89,8 @@
 <script>
 (function() {
   'use strict';
+  if (typeof THREE === 'undefined') { S3DKit.fatal('Não foi possível carregar o motor 3D. Verifique a conexão.'); return; }
+  if (!S3DKit.webglAvailable()) { S3DKit.fatal('Seu navegador não conseguiu iniciar o WebGL. Ative a aceleração de hardware ou tente outro navegador.'); return; }
   const wrap = document.getElementById('canvas-wrap');
   const isMobile = matchMedia('(max-width: 720px)').matches;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -488,7 +492,8 @@
 
     stalkGroup.add(fInst, bInst, sInst);
     root.add(stalkGroup);
-    stemsAnim.push({ group: stalkGroup, phase: s * 0.85, speed: 1.15 + rnd() * 0.4 });
+    fInst.userData.kind = 'floret'; bInst.userData.kind = 'bud'; sInst.userData.kind = 'stamen';
+    stemsAnim.push({ group: stalkGroup, phase: s * 0.85, speed: 1.15 + rnd() * 0.4, fInst, bInst, sInst });
   }
 
   // Background mossy understory mounds & fern fronds for organic depth
@@ -557,8 +562,13 @@
 
   // Input & Camera Controls
   let pointerDown = false, lastX = 0, lastY = 0;
-  const onPointerDown = (e) => { pointerDown = true; lastX = e.clientX; lastY = e.clientY; camState.autoOrbit = false; };
-  const onPointerUp = () => { pointerDown = false; };
+  let downX = 0, downY = 0;
+  const onPointerDown = (e) => { pointerDown = true; lastX = downX = e.clientX; lastY = downY = e.clientY; camState.autoOrbit = false; };
+  const onPointerUp = (e) => {
+    if (pointerDown && e && Math.hypot(e.clientX - downX, e.clientY - downY) < 8 && e.target === renderer.domElement) inspectAt(e.clientX, e.clientY);
+    pointerDown = false;
+  };
+  const onPointerCancel = () => { pointerDown = false; };
   const onPointerMove = (e) => {
     if (!pointerDown) return;
     camState.targetTheta -= (e.clientX - lastX) * 0.0065;
@@ -577,6 +587,8 @@
   };
   wrap.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerCancel);
+  window.addEventListener('blur', onPointerCancel);
   window.addEventListener('pointermove', onPointerMove);
   wrap.addEventListener('wheel', onWheel, { passive: false });
   wrap.addEventListener('keydown', onKeyDown);
@@ -608,6 +620,8 @@
   });
   btnMood.addEventListener('click', (e) => {
     moodIdx = (moodIdx + 1) % moods.length;
+    moodsSeen.add(moodIdx);
+    if (moodsSeen.size === 3 && typeof kit !== 'undefined') kit.goal('moods', '<b>Três climas.</b> A mesma folha muda de tom e contraste com a luz.');
     const m = moods[moodIdx];
     e.target.textContent = 'Clima: ' + m.name;
     scene.background.setHex(m.bg); scene.fog.color.setHex(m.bg);
@@ -635,6 +649,92 @@
     });
   });
 
+  // ---- S3D-118: inspeção, LOD e diário ----
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const leafMeshes = leavesAnim.map((l) => l.pivot.children[0]);
+  const INFO = {
+    leaf: '<b>Folha bulada</b> — o tecido entre nervuras se eleva em “almofadas”; a rede reticulada fica afundada.',
+    floret: '<b>Flor aberta</b> — florzinha de 5 pétalas com estames amarelos; estágio maduro da panícula.',
+    bud: '<b>Botão</b> — estágio fechado. Compare com as flores abertas no mesmo cacho.',
+    stem: '<b>Pedúnculo ramificado</b> — eixo da inflorescência em panícula; cada ramo carrega seu próprio cacho.'
+  };
+  function inspectAt(cx, cy) {
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const targets = leafMeshes.slice();
+    stemsAnim.forEach((s) => { targets.push(s.fInst, s.group.children[0]); if (s.bInst.visible) targets.push(s.bInst); if (s.sInst.visible) targets.push(s.sInst); });
+    const hit = raycaster.intersectObjects(targets, false)[0];
+    if (!hit) return;
+    let kind = hit.object.userData.kind || (leafMeshes.indexOf(hit.object) >= 0 ? 'leaf' : 'stem');
+    if (kind === 'stamen') kind = 'floret';
+    kit.toast(INFO[kind]);
+    kit.goal(kind);
+    kit.tick(kind === 'leaf' ? 520 : 760);
+  }
+
+  // LOD: estames e botões somem com a distância (por cacho); mais barato de longe.
+  const lodPos = new THREE.Vector3();
+  let lodScale = 1;
+  const lodCounts = { stamens: 0, buds: 0 };
+  function updateLOD() {
+    lodCounts.stamens = 0; lodCounts.buds = 0;
+    for (let i = 0; i < stemsAnim.length; i++) {
+      const s = stemsAnim[i];
+      s.group.getWorldPosition(lodPos);
+      const d = camera.position.distanceTo(lodPos);
+      s.sInst.visible = d < 5.2 * lodScale;
+      s.bInst.visible = d < 9.0 * lodScale;
+      if (s.sInst.visible) lodCounts.stamens++;
+      if (s.bInst.visible) lodCounts.buds++;
+    }
+  }
+
+  const moodsSeen = new Set([0]);
+  const kit = S3DKit.create({
+    id: 's3d118', title: 'Folhagem Reticulada & Inflorescências', photoName: 'folhagem-reticulada',
+    tutorial: [
+      'Uma roseta tropical de folhas buladas com cachos florais vermelhos. Arraste para orbitar; scroll, pinça ou setas para aproximar.',
+      'Use os <b>ângulos de câmera</b> para comparar o relevo da folha com os cachos florais. O botão <b>Clima</b> muda a luz.',
+      'Toque nas estruturas para identificá-las e complete o <b>Diário de campo</b> no seu ritmo. Sem tempo, sem pontuação.'
+    ],
+    goals: [
+      { id: 'leaf', label: 'Toque numa folha bulada' },
+      { id: 'bud', label: 'Encontre um botão fechado' },
+      { id: 'floret', label: 'Encontre uma flor aberta' },
+      { id: 'stem', label: 'Toque num pedúnculo ramificado' },
+      { id: 'moods', label: 'Veja a roseta nos 3 climas' },
+      { id: 'photo', label: 'Fotografe um espécime' }
+    ],
+    canvas: () => renderer.domElement,
+    render: () => renderer.render(scene, camera),
+    rendererInfo: () => renderer.info,
+    setPaused: (p) => { paused = p; if (!p) lastNow = performance.now(); },
+    applyQuality: (lvl) => {
+      const pr = lvl === 'low' ? 1 : lvl === 'balanced' ? 1.25 : 1.65;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pr));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      sun.castShadow = lvl !== 'low';
+      bgLeafInst.visible = lvl !== 'low';
+      lodScale = lvl === 'low' ? 0.7 : lvl === 'balanced' ? 0.9 : 1.15;
+    },
+    onReset: () => resetScene(),
+    qa: {
+      lod: () => { updateLOD(); return Object.assign({ radius: +camState.radius.toFixed(2) }, lodCounts); },
+      setRadius: (r) => { camState.targetRadius = r; camState.radius = r; camera.position.sub(camState.target).setLength(r).add(camState.target); camera.updateMatrixWorld(); },
+      // Distância entre uma flor e seu ramo, medida no referencial do ramo antes/depois do vento (deve ser constante)
+      floretInStalkFrame: () => {
+        const s = stemsAnim[0], m = new THREE.Matrix4(), p = new THREE.Vector3();
+        s.fInst.getMatrixAt(0, m); p.setFromMatrixPosition(m);
+        s.group.updateMatrixWorld(true);
+        const w = p.clone().applyMatrix4(s.fInst.matrixWorld);
+        const back = w.applyMatrix4(new THREE.Matrix4().copy(s.group.matrixWorld).invert());
+        return { local: p.toArray().map((v) => +v.toFixed(4)), roundTrip: back.toArray().map((v) => +v.toFixed(4)), stalkRotZ: +s.group.rotation.z.toFixed(4) };
+      }
+    }
+  });
+
   const onResize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -649,6 +749,7 @@
     const rawDt = Math.min(0.05, Math.max(0.001, (now - lastNow) * 0.001));
     lastNow = now;
     if (paused || document.hidden) return;
+    kit.frame();
     const dt = reducedMotion ? 0 : rawDt;
     simT += dt;
     const t = simT;
@@ -692,6 +793,7 @@
     }
     pollenPts.geometry.attributes.position.needsUpdate = true;
 
+    updateLOD();
     renderer.render(scene, camera);
   }
   rafId = requestAnimationFrame(animate);
@@ -703,6 +805,8 @@
     wrap.removeEventListener('pointerdown', onPointerDown);
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointercancel', onPointerCancel);
+    window.removeEventListener('blur', onPointerCancel);
     wrap.removeEventListener('wheel', onWheel);
     wrap.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('resize', onResize);
@@ -719,17 +823,17 @@
     if (scene.environment) scene.environment.dispose();
     renderer.dispose();
   }
-  window.addEventListener('sangi:pause', () => { paused = true; });
-  window.addEventListener('sangi:resume', () => { paused = false; lastNow = performance.now(); });
+  // Pausa/retomada do host são arbitradas pelo S3DKit (usuário × host × aba oculta).
   window.addEventListener('sangi:mute', () => {});
-  window.addEventListener('sangi:reset', () => {
+  function resetScene() {
     camState.targetTheta = defaultCam.theta; camState.targetPhi = defaultCam.phi; camState.targetRadius = defaultCam.radius;
     camState.desiredTarget.copy(defaultCam.target); camState.autoOrbit = false;
     wind = 0.4; rngWind.value = 40; document.getElementById('val-wind').textContent = '40%';
     pollenAmt = 0.8; rngPollen.value = 80; document.getElementById('val-pollen').textContent = '80%';
     pMat.opacity = 0.68; pollinators.forEach((p) => p.mesh.visible = true);
     moodIdx = 2; btnMood.click();
-  });
+  }
+  window.addEventListener('sangi:reset', resetScene);
   window.addEventListener('sangi:dispose', cleanup);
   window.addEventListener('pagehide', cleanup);
 })();

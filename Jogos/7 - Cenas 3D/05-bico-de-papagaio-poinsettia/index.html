@@ -50,6 +50,8 @@
   @media(max-height:470px){#panel{max-height:calc(100dvh - 85px);width:min(310px,48vw);left:auto;right:8px}header .brand .muted{display:none}#info{max-width:42vw}}
   @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
+<link rel="stylesheet" href="../_kit/s3d-kit.css" />
+<script src="../_kit/s3d-kit.js"></script>
 </head>
 <body>
 <div id="view" aria-label="Cena tridimensional de uma planta em estufa"></div>
@@ -594,8 +596,10 @@
       ray.setFromCamera(new T.Vector2((x - r.left) / r.width * 2 - 1, 1 - (y - r.top) / r.height * 2), camera);
       const hits = ray.intersectObjects(pickables, false);
       if (hits.length) {
-        const data = tags[hits[0].object.userData.part];
+        const part = hits[0].object.userData.part;
+        const data = tags[part];
         $('infoTitle').textContent = data[0]; $('infoBody').textContent = data[1];
+        if (window.__s3dKit) { window.__s3dKit.goal(part); window.__s3dKit.tick(part === 'flower' ? 900 : 640); }
       }
     }
     const onDown = e => { if (e.button !== 0 && e.pointerType === 'mouse') return; view.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); clickStart = pointers.size === 1 ? { x: e.clientX, y: e.clientY } : null; };
@@ -615,6 +619,8 @@
     };
     const endPointer = e => { if (e.type === 'pointerup' && clickStart && pointers.size === 1) inspect(e.clientX, e.clientY); pointers.delete(e.pointerId); clickStart = null; };
     const onWheel = e => { e.preventDefault(); cam.dr = clamp(cam.dr * Math.exp(e.deltaY * 0.001), 0.65, 24); clearCam(); };
+    // Diário: chegar ao macro dos ciátios (preset ou zoom manual perto da coroa)
+    document.querySelectorAll('[data-cam="cyathia"]').forEach(b => b.addEventListener('click', () => { if (window.__s3dKit) window.__s3dKit.goal('macro', '<b>Macro dos ciátios.</b> Note as taças verdes com glândulas amarelas de néctar: são as flores de verdade.'); }));
     const onKey = e => {
       if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-'].includes(e.key)) return;
       e.preventDefault(); clearCam();
@@ -637,7 +643,8 @@
 
     const lightModes = [{ bg: 0x748d78, sun: 0xffe4bd, i: 2.05, hemi: 0.96, fill: 0.58, pos: [-4.2, 8.2, 5.2], ex: 1.10 }, { bg: 0x9d8d6d, sun: 0xffb269, i: 2.4, hemi: 0.68, fill: 0.5, pos: [-6, 5, 2], ex: 1.04 }, { bg: 0x34443c, sun: 0xffe2be, i: 2.85, hemi: 0.32, fill: 0.25, pos: [-3, 6, 3], ex: 1.0 }];
     function setLight(n) { const l = lightModes[n]; scene.background.setHex(l.bg); scene.fog.color.setHex(l.bg); sun.color.setHex(l.sun); sun.intensity = l.i; sun.position.set(...l.pos); hemi.intensity = l.hemi; fill.intensity = l.fill; renderer.toneMappingExposure = l.ex; }
-    $('light').onchange = e => setLight(+e.target.value);
+    const lightsSeen = new Set([0]);
+    $('light').onchange = e => { setLight(+e.target.value); lightsSeen.add(+e.target.value); if (lightsSeen.size === 3 && window.__s3dKit) window.__s3dKit.goal('lights', '<b>Três luzes.</b> A bráctea muda de vermelho-vivo a carmim conforme a luz atravessa ou reflete.'); };
 
     let wind = 0.25, bloom = 1, motion = !reduced, dew = true;
     function pressed(id, v) { $(id).setAttribute('aria-pressed', String(v)); }
@@ -648,7 +655,7 @@
     $('motion').onclick = () => { motion = !motion; pressed('motion', motion); }; pressed('motion', motion);
     function panel(open) { $('panel').hidden = !open; $('panelBtn').setAttribute('aria-expanded', String(open)); document.body.classList.toggle('panel-open', open); }
     $('panelBtn').onclick = () => panel($('panel').hidden); $('closeBtn').onclick = () => panel(false); panel(!mobile);
-    $('water').onclick = () => { if (watering > 0) return; if (moisture >= 95) { $('status').textContent = 'Substrato já bastante úmido.'; return; } watering = 3.8; spawn = 0; $('water').disabled = true; $('status').textContent = 'Regando o substrato…'; };
+    $('water').onclick = () => { if (window.__s3dKit) window.__s3dKit.goal('water'); if (watering > 0) return; if (moisture >= 95) { $('status').textContent = 'Substrato já bastante úmido.'; return; } watering = 3.8; spawn = 0; $('water').disabled = true; $('status').textContent = 'Regando o substrato…'; };
 
     let audio = null, soundOn = false;
     async function toggleSound() {
@@ -700,6 +707,7 @@
       raf = requestAnimationFrame(loop);
       const raw = (now - last) / 1000, dt = clamp(raw, 0, 0.05); last = now;
       if (sangiPaused || document.hidden) return;
+      if (window.__s3dKit) window.__s3dKit.frame();
       time += dt;
       if (cam.auto && motion) cam.dt += dt * 0.23;
       const k = 1 - Math.exp(-dt * 9);
@@ -789,9 +797,57 @@
       if (scene.environment) scene.environment.dispose();
       renderer.dispose();
     }
-    window.addEventListener('sangi:pause', () => { sangiPaused = true; if (audio && soundOn) audio.ctx.suspend().catch(() => {}); });
-    window.addEventListener('sangi:resume', () => { sangiPaused = false; last = performance.now(); if (audio && soundOn) audio.ctx.resume().catch(() => {}); });
-    window.addEventListener('sangi:mute', () => { if (soundOn) toggleSound(); });
+    // Pausa (usuário × host × aba) arbitrada pelo S3DKit.
+    let hostMuted = false;
+    window.addEventListener('sangi:mute', (e) => {
+      hostMuted = e && e.detail ? !!e.detail.muted : true;
+      if (!audio) return;
+      if (hostMuted) audio.ctx.suspend().catch(() => {});
+      else if (soundOn && !sangiPaused) audio.ctx.resume().catch(() => {});
+    });
+    window.__s3dKit = S3DKit.create({
+      id: 's3d121', title: 'Bico-de-papagaio (Poinsettia)', photoName: 'poinsettia',
+      noQuality: true,
+      tutorial: [
+        'Uma poinsétia numa estufa. Arraste para girar; pinça, scroll ou +/- para aproximar.',
+        'As partes vermelhas são <b>brácteas</b> (folhas modificadas). As flores verdadeiras são os pequenos <b>ciátios</b> no centro: use a câmera <b>Macro ciátios</b>.',
+        'Toque nas estruturas para ler a legenda e complete o <b>Diário de campo</b> no seu ritmo.'
+      ],
+      goals: [
+        { id: 'bract', label: 'Toque numa bráctea vermelha' },
+        { id: 'leaf', label: 'Toque numa folha verde' },
+        { id: 'flower', label: 'Encontre um ciátio (a flor real)' },
+        { id: 'macro', label: 'Use a câmera macro dos ciátios' },
+        { id: 'lights', label: 'Compare as 3 luzes' },
+        { id: 'water', label: 'Regue o substrato' },
+        { id: 'photo', label: 'Registre um detalhe' }
+      ],
+      canvas: () => renderer.domElement,
+      render: () => renderer.render(scene, camera),
+      rendererInfo: () => renderer.info,
+      audio: () => (audio && soundOn && !hostMuted ? { ctx: audio.ctx, out: audio.ctx.destination } : null),
+      setPaused: (p) => {
+        sangiPaused = p; last = performance.now();
+        if (!audio) return;
+        if (p) audio.ctx.suspend().catch(() => {});
+        else if (soundOn && !hostMuted) audio.ctx.resume().catch(() => {});
+      },
+      applyQuality: (lvl) => {
+        const v = lvl === 'low' ? 'low' : lvl === 'high' ? 'high' : 'auto';
+        $('quality').value = v; $('quality').dispatchEvent(new Event('change'));
+      },
+      onReset: () => resetAll(),
+      qa: {
+        partsDistinct: () => {
+          const byPart = {};
+          pickables.forEach(m => { const k = m.userData.part; byPart[k] = byPart[k] || new Set(); byPart[k].add(m.geometry.uuid); });
+          return Object.fromEntries(Object.entries(byPart).map(([k, v]) => [k, v.size]));
+        },
+        captions: () => Object.keys(tags),
+        macro: () => { setCam('cyathia', true); return { radius: +cam.r.toFixed(3), minZoom: 0.65, target: cam.target.toArray().map(v => +v.toFixed(2)) }; },
+        inspectCenter: () => { const r = renderer.domElement.getBoundingClientRect(); inspect(r.left + r.width / 2, r.top + r.height / 2); return $('infoTitle').textContent; }
+      }
+    });
     window.addEventListener('sangi:reset', resetAll);
     window.addEventListener('sangi:dispose', cleanup);
     window.addEventListener('pagehide', cleanup);

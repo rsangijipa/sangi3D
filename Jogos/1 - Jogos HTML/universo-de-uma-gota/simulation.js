@@ -1,3 +1,4 @@
+export {createEcosystemSimulation} from './js/ecosystem.js';
 export const radius = 12.5;
 export const step = 1 / 60;
 

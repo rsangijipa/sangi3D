@@ -1297,7 +1297,7 @@
 
       async function threeRenderer() {
         if (backend?.name === 'Three.js') return;
-        const T = await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
+        const T = await import('../../../Sistema/shared/vendor/three-0.160.1/build/three.module.js');
         const el = document.createElement('canvas');
         el.id = 'threeview';
         el.setAttribute('aria-label', 'Cena 3D Three.js');

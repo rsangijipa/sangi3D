@@ -368,6 +368,13 @@ export function createScene(stage) {
   cursor.visible = false;
   scene.add(cursor);
 
+  const guideOutline = new THREE.Mesh(new THREE.RingGeometry(CELL * .59, CELL * .70, 4, 1, Math.PI / 4),
+    new THREE.MeshBasicMaterial({ color: '#fff38f', depthTest: false, depthWrite: false }));
+  guideOutline.rotation.x = -Math.PI / 2;
+  guideOutline.renderOrder = 7;
+  guideOutline.visible = false;
+  scene.add(guideOutline);
+
   const ghost = new THREE.Group();
   ghost.visible = false;
   const ghostMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: .62, depthWrite: false });
@@ -399,6 +406,7 @@ export function createScene(stage) {
   let azimuth = 0;
   let zoom = 1;
   let orbitMode = false;
+  let guidedCell = null;
   let frame = 0;
   let disposed = false;
   let suspended = false;
@@ -553,6 +561,16 @@ export function createScene(stage) {
     invalidate();
   }
 
+  function guideTarget(index) {
+    guidedCell = index;
+    guideOutline.visible = index !== null && !orbitMode;
+    if (guideOutline.visible) {
+      const [x, z] = coordinates(index);
+      guideOutline.position.set(x, .409, z);
+    }
+    invalidate();
+  }
+
   function setOrbit(enabled) {
     orbitMode = enabled;
     canvas.dataset.orbit = String(enabled);
@@ -560,7 +578,7 @@ export function createScene(stage) {
     azimuth = enabled ? .26 : 0;
     zoom = 1;
     frameCamera();
-    invalidate();
+    guideTarget(guidedCell);
   }
 
   function moveOrbit(dx, dy) {
@@ -638,5 +656,5 @@ export function createScene(stage) {
     canvas.remove();
   }
 
-  return { canvas, update, preview, cellAt, setOrbit, moveOrbit, zoomBy, suspend, quality, renderNow, dispose };
+  return { canvas, update, preview, guideTarget, cellAt, setOrbit, moveOrbit, zoomBy, suspend, quality, renderNow, dispose };
 }

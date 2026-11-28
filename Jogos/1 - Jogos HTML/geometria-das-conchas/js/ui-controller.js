@@ -4,7 +4,7 @@
  * ferramentas "Espiral, abertura, escala, textura", alternância Inteira/Corte,
  * catálogo/comparação de 3 formas e Modo Fotografia (foco, enquadramento, exposição e PNG).
  */
-import { PHOTO_FRAMINGS, TEXTURE_STYLES } from './state.js';
+import { TEXTURE_STYLES } from './state.js';
 
 export function createUIController({ state, callbacks }) {
   const $ = (id) => document.getElementById(id);

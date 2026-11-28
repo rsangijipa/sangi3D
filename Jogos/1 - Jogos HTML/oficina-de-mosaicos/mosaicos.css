@@ -20,6 +20,17 @@
   gap: .32rem;
 }
 
+.mosaic-guide { width: 100%; }
+.mosaic-guide > div:not([hidden]) {
+  display: grid;
+  gap: .5rem;
+  padding: .6rem;
+  border: 1px solid #ad997d58;
+  border-radius: .56rem;
+  background: #292a21;
+}
+.mosaic-guide p { font-size: .84rem; line-height: 1.4; }
+
 .mosaic-tools button, .mosaic-tools select, .mosaic-tools summary {
   box-sizing: border-box;
   min-height: 44px;

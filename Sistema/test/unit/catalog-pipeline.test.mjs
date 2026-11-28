@@ -64,6 +64,32 @@ describe('Catalog & Build Pipeline (catalog.mjs, verify-catalog, prepare-online-
     assert.equal(second.apps.find((a) => a.id === obsCanon.id).mtime, obsCanon.mtime, 'mtime estável quando o conteúdo não muda');
   });
 
+  it('mantém a Agência Postal como variante com identidade própria sem depender da data dos arquivos', async () => {
+    const ws = makeTempWorkspace('correios');
+    const games = path.join(ws, 'Jogos', '1 - Jogos HTML');
+    const title = '<title>Correio das Palavras Não Ditas</title>';
+    const active = path.join(games, 'correio-das-palavras-nao-ditas', 'correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html');
+    const agency = path.join(games, 'correio-das-palavras-nao-ditas-agencia-postal', 'correio_das_palavras_n_o_ditas_ag_ncia_postal_3d_fotorrealista.html');
+    const legacy = path.join(ws, 'Jogos', '9 - Arquivados', 'correio-das-palavras-nao-ditas.html');
+    write(active, title);
+    write(agency, title);
+    write(legacy, title);
+    const { scanCatalog } = await import('../../scripts/lib/catalog.mjs');
+
+    for (const [staticMode, newest] of [[false, legacy], [true, agency]]) {
+      const future = new Date(Date.now() + 60000);
+      fs.utimesSync(newest, future, future);
+      const { apps } = await scanCatalog({ rootDir: ws, staticMode });
+      assert.equal(apps.length, 3);
+      const original = apps.find((app) => app.name === 'Correio das Palavras Não Ditas' && app.collection !== 'Legado arquivado');
+      const variant = apps.find((app) => app.name === 'Correio das Palavras Não Ditas — Agência Postal');
+      assert.ok(original && variant);
+      assert.equal(variant.variantOf, original.id);
+      assert.equal(variant.canonicalRole, 'variant');
+      assert.match(decodeURIComponent(variant.url), /\/correio-das-palavras-nao-ditas-agencia-postal\//);
+    }
+  });
+
   it('verifyCatalog aponta conceito+pronto, capa ausente, nome duplicado, arquivo ausente e cópia de shared desatualizada', async () => {
     const ws = makeTempWorkspace('verify');
     write(path.join(ws, 'Jogos', '1 - Jogos HTML', 'app1', 'index.html'), '<html>app1</html>');

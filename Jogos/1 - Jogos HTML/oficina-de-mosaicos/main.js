@@ -11,6 +11,13 @@ const hints = {
   erase: 'Toque numa peça para removê-la da argamassa.',
 };
 
+const guideSteps = [
+  { title: 'Assentar', tool: 'place', action: 'Assentar peça', hint: 'Escolha uma cor e assente uma peça no espaço destacado.' },
+  { title: 'Girar', tool: 'rotate', action: 'Girar peça 45°', hint: 'Gire a mesma peça e observe como ela ocupa o espaço.' },
+  { title: 'Rejuntar', tool: 'grout', action: 'Aplicar rejunte', hint: 'Escolha a cor do rejunte e preencha a junta da peça.' },
+  { title: 'Revisar', action: 'Concluir guia', hint: 'Observe o acabamento de lado. Arraste para mudar o ângulo.' },
+];
+
 const ui = workbench({
   title: 'Oficina de Mosaicos',
   subtitle: 'Ateliês artísticos',
@@ -42,6 +49,16 @@ function initialize(view) {
     `<option value="${key}">${typeof value === 'string' ? value : value.name}</option>`).join('');
   ui.tools.innerHTML = `
     <div class="mosaic-tools">
+      <section class="mosaic-guide" aria-label="Guia da primeira peça">
+        <button type="button" id="mosaic-guide-start">Começar guia</button>
+        <div id="mosaic-guide-panel" hidden>
+          <p id="mosaic-guide-instruction" aria-live="polite"></p>
+          <div class="mosaic-group">
+            <button type="button" id="mosaic-guide-action" aria-describedby="mosaic-guide-instruction"></button>
+            <button type="button" id="mosaic-guide-exit">Sair do guia</button>
+          </div>
+        </div>
+      </section>
       <div class="mosaic-group mosaic-pattern">
         <label for="mosaic-preset">Padrão</label>
         <select id="mosaic-preset">${options(presets)}</select>
@@ -87,6 +104,10 @@ function initialize(view) {
     </div>
   `;
   const get = (id) => ui.tools.querySelector(id);
+  const guideStart = get('#mosaic-guide-start');
+  const guidePanel = get('#mosaic-guide-panel');
+  const guideInstruction = get('#mosaic-guide-instruction');
+  const guideAction = get('#mosaic-guide-action');
   const toolButtons = [...ui.tools.querySelectorAll('[data-mosaic-tool]')];
   const swatches = [...ui.tools.querySelectorAll('[data-mosaic-color]')];
   const pattern = get('#mosaic-preset');
@@ -95,6 +116,7 @@ function initialize(view) {
   const orbitButton = get('#mosaic-orbit');
   const groutSelect = get('#mosaic-grout');
   const groutGroup = get('.mosaic-joints');
+  const groutAll = get('#mosaic-grout-all');
   const colorsGroup = get('.mosaic-palette');
   const shapeGroup = get('.mosaic-shape');
   const shapeSelect = get('#mosaic-shape');
@@ -117,6 +139,7 @@ function initialize(view) {
   let lastSound = -1000;
   let storageBlocked = false;
   let restored = false;
+  let guide = null;
   try {
     const previous = localStorage.getItem(STORAGE_KEY);
     if (previous) {
@@ -160,6 +183,7 @@ function initialize(view) {
     colorsGroup.hidden = tool === 'grout';
     shapeGroup.hidden = tool === 'grout';
     groutGroup.hidden = tool !== 'grout';
+    groutAll.disabled = guide !== null;
   }
 
   function refresh() {
@@ -180,10 +204,15 @@ function initialize(view) {
     if (beforeGesture) noteEdit(beforeGesture);
     beforeGesture = null;
     cleared.clear();
+    if (guide?.advanceOnRelease) advanceGuide();
   }
 
   function apply(index, continuous = false) {
     if (index === null || orbiting || paused || (continuous && cleared.has(index))) return;
+    if (guide && (index !== guide.cell || tool !== guideSteps[guide.step].tool)) {
+      ui.setStatus('Use a ferramenta do guia no espaço destacado ou saia para editar livremente.');
+      return;
+    }
     const before = beforeGesture || structuredClone(board);
     const result = editBoard(board, index, tool, brush);
     const notes = {
@@ -217,10 +246,15 @@ function initialize(view) {
       ui.sound({ frequency, end: frequency * .67, duration: tool === 'grout' ? .19 : .075, volume: .09, type: 'triangle' });
       lastSound = performance.now();
     }
+    if (guide) {
+      if (continuous) guide.advanceOnRelease = true;
+      else advanceGuide();
+    }
   }
 
   function load(newBoard, message) {
     endGesture();
+    closeGuide();
     const previous = board;
     board = newBoard;
     brush.grout = board.grout;
@@ -234,6 +268,7 @@ function initialize(view) {
     const source = backward ? undo : redo;
     const destination = backward ? redo : undo;
     if (!source.length) return;
+    closeGuide();
     destination.push(board);
     board = source.pop();
     brush.grout = board.grout;
@@ -265,6 +300,81 @@ function initialize(view) {
     refreshPreview();
     ui.setStatus(`Giro da próxima peça · ${brush.angle}°`);
   }
+
+  function showGuideStep() {
+    const step = guideSteps[guide.step];
+    const row = Math.floor(guide.cell / SIDE) + 1;
+    const column = guide.cell % SIDE + 1;
+    guideInstruction.textContent = `${guide.step + 1} de ${guideSteps.length} · ${step.title}. ${step.hint}${step.tool ? ` Linha ${row}, coluna ${column}.` : ''}`;
+    guideAction.textContent = step.action;
+    if (step.tool) {
+      setTool(step.tool);
+      view.guideTarget(guide.cell);
+      focusedCell = guide.cell;
+    } else {
+      view.guideTarget(null);
+      setOrbit(true);
+    }
+    ui.setStatus(step.title);
+  }
+
+  function advanceGuide() {
+    guide.advanceOnRelease = false;
+    guide.step++;
+    showGuideStep();
+  }
+
+  function closeGuide(restoreFocus = false) {
+    if (!guide) return;
+    const { previousTool, previousOrbit } = guide;
+    guide = null;
+    guidePanel.hidden = true;
+    guideStart.hidden = false;
+    view.guideTarget(null);
+    setOrbit(false);
+    setTool(previousTool);
+    if (previousOrbit) setOrbit(true);
+    if (restoreFocus) guideStart.focus({ preventScroll: true });
+  }
+
+  listen(guideStart, 'click', () => {
+    if (paused || ongoing.size) return;
+    const center = (SIDE - 1) / 2;
+    let distance = Infinity;
+    let cell = null;
+    for (const [index, tile] of board.tiles.entries()) {
+      if (tile || board.filled[index]) continue;
+      const offset = Math.abs(index % SIDE - center) + Math.abs(Math.floor(index / SIDE) - center);
+      if (offset >= distance) continue;
+      distance = offset;
+      cell = index;
+    }
+    if (cell === null) {
+      ui.setStatus('O guia precisa de um espaço vazio sem rejunte. Escolha um novo padrão ou continue na bancada livre.');
+      return;
+    }
+    guide = { cell, step: 0, previousTool: tool, previousOrbit: orbiting, advanceOnRelease: false };
+    guideStart.hidden = true;
+    guidePanel.hidden = false;
+    setOrbit(false);
+    showGuideStep();
+    guideAction.focus({ preventScroll: true });
+  });
+  listen(guideAction, 'click', () => {
+    if (!guide || paused || ongoing.size) return;
+    const step = guideSteps[guide.step];
+    if (step.tool) {
+      if (tool !== step.tool || orbiting) setTool(step.tool);
+      apply(guide.cell);
+    } else {
+      closeGuide(true);
+      ui.setStatus('Primeira peça concluída. Continue na bancada livre.');
+    }
+  });
+  listen(get('#mosaic-guide-exit'), 'click', () => {
+    closeGuide(true);
+    ui.setStatus('Guia encerrado. Suas alterações continuam na bancada.');
+  });
 
   for (const button of toolButtons) listen(button, 'click', () => setTool(button.dataset.mosaicTool));
   for (const button of swatches) listen(button, 'click', () => {
@@ -298,7 +408,7 @@ function initialize(view) {
   listen(orbitButton, 'click', () => setOrbit(!orbiting));
   listen(get('#mosaic-out'), 'click', () => view.zoomBy(1 / 1.2));
   listen(get('#mosaic-in'), 'click', () => view.zoomBy(1.2));
-  listen(get('#mosaic-grout-all'), 'click', () => {
+  listen(groutAll, 'click', () => {
     if (board.grout === brush.grout && board.filled.every(Boolean)) {
       ui.setStatus('Toda a base já está rejuntada.');
       return;
@@ -325,8 +435,10 @@ function initialize(view) {
   });
   listen(get('#mosaic-png'), 'click', () => {
     view.preview(null, brush, tool, false);
+    view.guideTarget(null);
     view.renderNow();
     if (ui.capture(view.canvas, 'oficina-de-mosaicos.png')) ui.setStatus('Imagem da bancada preparada para exportação.');
+    if (guide && guideSteps[guide.step].tool) view.guideTarget(guide.cell);
     refreshPreview();
   });
 

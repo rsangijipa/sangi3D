@@ -78,8 +78,13 @@ const CORREIO_ACTIVE_ID =
   '1-jogos-html-correio-das-palavras-nao-ditas-correio_das_palavras_n_o_ditas_3d_jardins_do_sentir-html';
 const CORREIO_LEGACY_ID =
   '9-arquivados-correio-das-palavras-nao-ditas-html';
+const CORREIO_AGENCIA_ID =
+  '1-jogos-html-correio-das-palavras-nao-ditas-agencia-postal-correio_das_palavras_n_o_ditas_ag_ncia_postal_3d_fotorrealista-html';
 
 const DISTINCT_ENTRY_IDS = new Set([
+  CORREIO_ACTIVE_ID,
+  CORREIO_LEGACY_ID,
+  CORREIO_AGENCIA_ID,
   '2-projetos-01-oficina-do-vitralista',
   '1-jogos-html-oficina-do-vitralista-index-html',
   '4-kit-17-jogos-04-observatorio-da-luz',
@@ -181,23 +186,6 @@ function computeEntryContentHash(rootDir, entry) {
 }
 
 export function applyCanonicalOverrides(apps) {
-  const byId = new Map(apps.map((a) => [a.id, a]));
-  let agenciaVersion = null;
-
-  // Desanexa correio-das-palavras-nao-ditas-agencia-postal do legado (#87) e guarda para #9
-  const legacyCorreio = byId.get(CORREIO_LEGACY_ID);
-  if (legacyCorreio && Array.isArray(legacyCorreio.versions)) {
-    const kept = [];
-    for (const v of legacyCorreio.versions) {
-      if (/correio-das-palavras-nao-ditas-agencia-postal/i.test(v.path || v.url || '')) {
-        agenciaVersion = v;
-      } else {
-        kept.push(v);
-      }
-    }
-    legacyCorreio.versions = kept;
-  }
-
   for (const app of apps) {
     if (BATCH1_KIT17_IDS.has(app.id)) {
       app.kind = 'html';
@@ -256,13 +244,13 @@ export function applyCanonicalOverrides(apps) {
     if (app.id === '1-jogos-html-oficina-do-ritmo-oficina-do-ritmo-html') {
       app.gateBlocker = 'T19';
     }
-  }
-
-  const activeCorreio = byId.get(CORREIO_ACTIVE_ID);
-  if (activeCorreio && agenciaVersion) {
-    activeCorreio.versions = activeCorreio.versions || [];
-    if (!activeCorreio.versions.some((v) => v.url === agenciaVersion.url)) {
-      activeCorreio.versions.push(agenciaVersion);
+    if (app.id === CORREIO_ACTIVE_ID) {
+      app.canonicalRole = 'canonical';
+    } else if (app.id === CORREIO_AGENCIA_ID) {
+      app.name = 'Correio das Palavras Não Ditas — Agência Postal';
+      app.collection = 'Jardins do Sentir';
+      app.canonicalRole = 'variant';
+      app.variantOf = CORREIO_ACTIVE_ID;
     }
   }
 

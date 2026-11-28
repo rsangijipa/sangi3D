@@ -1,31 +1,31 @@
-# Universo de uma Gota
+# Universo de uma Gota 2.0 — Laboratório de Vida Microscópica
 
-Microscópio interativo de campo escuro para explorar cinco formas vivas em uma lâmina fictícia. Use a lente, ajuste a iluminação, acompanhe um organismo, observe a resposta ao alimento e guarde fotografias em PNG. As fichas identificam os grupos usados como referência visual.
+Laboratório virtual de microbiologia na plataforma Sangi3D para explorar 20 formas de vida microscópica em 10 amostras virtuais de água e microambientes, com organismos 3D deformáveis, 5 modalidades ópticas, anatomia celular interativa, física de fluidos em microescala, ferramentas científicas e diário persistente.
 
 ## Abrir
 
-Na raiz do repositório, rode `node Sistema/launcher/server.mjs` e abra a experiência pelo catálogo Sangi3D. O mesmo jogo funciona pela rota direta do `index.html` servido pelo launcher. Requer navegador com WebGL 2. Os módulos Three.js e Sangi3D são servidos pelo próprio repositório.
+Na raiz do repositório, rode `node Sistema/launcher/server.mjs` e abra **Universo de uma Gota** pelo catálogo Sangi3D. Requer navegador com WebGL 2. Os módulos Three.js e Sangi3D são servidos localmente pelo próprio repositório (funcionamento offline).
 
-## Controles
+## Modos e controles
 
-- Arraste o campo para deslocar a lâmina. Use a roda, uma pinça de dois dedos ou os botões de ampliação. A posição da lâmina também tem botões direcionais e controle de inclinação.
-- Selecione um organismo no campo ou use **Organismos** para localizar uma amostra. **Acompanhar** mantém o organismo selecionado sob a lente.
-- Com foco no campo, as setas deslocam a lâmina, `+` e `−` ajustam a ampliação e `Enter` identifica a forma central. Use `Alt` com o arraste ou as setas para inclinar.
-- Mova **Foco** para alterar o plano de nitidez e **Luz** para variar a intensidade. **Fotografar** exporta o enquadramento atual.
-- Ative **Alimento** e toque perto de um ciliado ou de uma ameba. No teclado, ative a ferramenta, focalize o campo e pressione `Enter` para depositar a porção no centro da lente.
-- **Menu** oferece ajuste de som, qualidade e reinício. A pausa é acionada pelo cabeçalho ou pelo launcher. Áudio só é ativado explicitamente.
+- **Percurso guiado**: escolha uma amostra virtual, passe pela bancada, localize um organismo e refine o foco. Abra o diário para salvar uma observação local. Use **Sair do percurso** para voltar à observação livre a qualquer momento.
+- **Observação**: escolha a amostra (10 lâminas), modalidade óptica (Campo escuro, Campo claro, Contraste de fase, DIC, Fluorescência simulada), objetiva (`4×` a `100×`), zoom fino, foco `Z` (µm) e iluminação. Deposite 5 tipos de recursos alimentares e acompanhe organismos.
+- **Anatomia**: isole o organismo selecionado, ajuste a transparência da membrana, rotacione em 3D e destaque organelas compatíveis com distinção entre observação óptica e visualização didática.
+- **Ecossistema**: ajuste temperatura, luminosidade, corrente, oxigênio, salinidade, pH e velocidade temporal didática (`0×` a `10×`) com gráficos em tempo real.
+- **Ferramentas**: régua microscópica (µm), marcadores científicos, trajetórias, grade calibrada de 40 µm, contagem no campo e empilhamento de foco (focus stacking).
+- **Bancada 3D**: estação opcional para pipetar a gota, posicionar lamínula e montar a lâmina no microscópio.
+- **Diário e Fotografia**: captura PNG limpa ou com barra de escala, gravação WebM (quando suportada) e álbum persistente em IndexedDB com exportação JSON.
+- **Descoberta**: 10 atividades opcionais de exploração científica sem cronômetros ou punições.
 
-## Modelo e recursos
+**Salvar registro** guarda a cena e a anotação no diário. Para baixar uma imagem, use **Fotografar** ou **Foto com escala**.
 
-O campo usa cinco agentes em uma região circular com profundidade limitada. O passo da simulação é de 1/60 s, com até seis passos por quadro e interpolação gráfica. Ciliado e ameba podem desviar para uma porção próxima. A deriva, a aproximação browniana e a alimentação são ilustrativas. Ciliação, deformação, refração aparente e movimento de partículas são recursos de renderização. Ampliação e profundidade usam uma escala aproximada de 40 µm por unidade virtual.
+## Modelo e validação científica
 
-| Recurso | Origem |
-| --- | --- |
-| Cinco formas, membranas, estruturas internas e cerdas | Texturas procedurais originais em `specimen-art.js` |
-| Menisco, iluminação e partículas | Geometria e shaders originais em `microscope.js` |
-| Ícones e áudio | SVGs e síntese Web Audio incluídos no código local e no shell Sangi3D |
-| Three.js r187 | `Sistema/shared/vendor/three.module.js`, licença MIT |
+A escala usa a convenção de `40 µm` por unidade virtual. A física em microescala adota arrasto viscoso dominante, campo vetorial 2D/3D de fluido, movimento browniano e separação espacial O(n). Modalidades ópticas, fluorescência e ciclos reprodutivos acelerados são aproximações computacionais educativas e não substituem um microscópio real ou diagnóstico laboratorial.
 
 ## Verificação
 
-Na raiz do repositório, rode `node --test "Jogos/1 - Jogos HTML/universo-de-uma-gota/simulation.test.mjs"` para verificar contenção, resposta ao alimento e determinismo. O teste de navegador do launcher aceita `node Sistema/test/sangi-workbenches-browser.mjs universo-de-uma-gota`. Os resultados e as limitações estão em [RELATORIO_TESTES.md](RELATORIO_TESTES.md). As capturas do navegador estão em `capturas/`.
+Na raiz do repositório:
+- Testes unitários e de ecossistema: `node --test "Jogos/1 - Jogos HTML/universo-de-uma-gota/simulation.test.mjs" "Jogos/1 - Jogos HTML/universo-de-uma-gota/tests/organisms.test.mjs" "Jogos/1 - Jogos HTML/universo-de-uma-gota/tests/ecosystem.test.mjs"`
+- Teste de navegador (Chromium + Playwright): `node "Jogos/1 - Jogos HTML/universo-de-uma-gota/tests/browser.test.mjs"`
+- Para gerar capturas no teste de navegador, defina `SANGI_GOTA_CAPTURES` com a pasta de saída desejada.

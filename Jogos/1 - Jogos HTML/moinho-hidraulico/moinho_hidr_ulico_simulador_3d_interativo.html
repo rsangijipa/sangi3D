@@ -360,6 +360,17 @@
       margin: 0;
     }
 
+    .guide-status {
+      margin: 0;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: var(--text-muted);
+    }
+
+    .guide-status.ready {
+      color: var(--accent-ok);
+    }
+
     .guide-actions {
       display: flex;
       gap: 6px;
@@ -854,8 +865,8 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "../../../Sistema/shared/vendor/three.module.js",
+      "three/addons/": "../../../Sistema/shared/vendor/addons/"
     }
   }
   </script>
@@ -935,13 +946,14 @@
         </section>
 
         <!-- Guided Mode / Challenges Card -->
-        <aside id="guide-card" class="guide-card" aria-live="polite">
+        <aside id="guide-card" class="guide-card" aria-labelledby="guide-title">
           <div class="guide-step-tag">
-            <span id="guide-tag-text">Modo Guiado — Passo 1/4</span>
+            <span id="guide-tag-text"></span>
             <button class="icon-btn" id="btn-guide-skip" style="min-height:28px;padding:2px 8px;font-size:0.72rem;">Pular</button>
           </div>
-          <h3 class="guide-title" id="guide-title">Abrir a comporta</h3>
-          <p class="guide-desc" id="guide-desc">Use a ferramenta Abrir comporta para liberar água na calha e iniciar o giro da roda.</p>
+          <h3 class="guide-title" id="guide-title"></h3>
+          <p class="guide-desc" id="guide-desc"></p>
+          <p id="guide-status" class="guide-status" role="status"></p>
           <div id="guide-extra"></div>
           <div class="guide-actions" id="guide-nav">
             <button class="btn-secondary" id="btn-guide-prev" style="min-height:34px;padding:4px 10px;">Anterior</button>
@@ -966,7 +978,7 @@
       <div id="hover-pill" class="hover-pill" aria-live="polite">Clique para interagir</div>
       <nav class="dock" aria-label="Ferramentas principais do moinho">
         <button class="dock-btn" id="tool-comporta" data-tool="comporta">
-          <span class="step-num">1</span>Abrir comporta
+          <span class="step-num">1</span>Comporta
         </button>
         <button class="dock-btn" id="tool-vazao" data-tool="vazao">
           <span class="step-num">2</span>Alterar vazão
@@ -1002,7 +1014,7 @@
       <ul>
         <li><strong>Atalhos:</strong> <code>1–4</code> selecionam ferramentas, <code>Espaço</code> alterna pausa, <code>H</code> recolhe/exibe interface, <code>Esc</code> sai da ferramenta ou fecha painéis.</li>
         <li><strong>Física:</strong> Simulação em passo fixo (60 Hz) com vazão por trechos (riacho → comporta/calha → roda → jusante), torque proporcional à vazão, relação de transmissão real e redução de rotação sob carga. Modelo didático para exploração de engenharia, não calibrado para dimensionamento industrial.</li>
-        <li><strong>Uso local:</strong> Se abrir fora de um servidor HTTP e módulos ES forem bloqueados pelo navegador, execute <code>python -m http.server 8000</code> na pasta e acesse <code>http://localhost:8000/</code>.</li>
+        <li><strong>Uso local:</strong> Abra pelo launcher Sangi3D ou sirva a raiz do projeto por HTTP para disponibilizar os módulos gráficos locais.</li>
       </ul>
       <div class="control-group">
         <button class="btn-secondary" id="btn-run-diag">Executar Autodiagnóstico de Física e Estado</button>
@@ -1027,13 +1039,13 @@
     </div>
   </div>
 
-  <!-- Fallback Screen (CDN failure or WebGL error) -->
+  <!-- Fallback Screen (local module failure or WebGL error) -->
   <div id="fallback-screen" role="alert">
     <div class="fallback-card">
       <h3 style="margin:0;color:var(--accent-brass-hover);">Não foi possível iniciar a cena WebGL</h3>
       <p id="fallback-msg" style="margin:0;font-size:0.88rem;color:var(--text-muted);line-height:1.5;"></p>
       <p style="margin:0;font-size:0.82rem;color:var(--text-muted);">
-        Dica: Este arquivo carrega Three.js r160 pela internet na primeira execução. Para uso offline, baixe <code>three.module.js</code> e <code>OrbitControls.js</code> em uma pasta <code>vendor/</code> e aponte o <code>importmap</code> para <code>./vendor/</code>.
+        Abra pelo launcher Sangi3D com a pasta Sistema junto ao projeto. Se os arquivos já estiverem disponíveis, verifique se o navegador oferece WebGL 2 e tente novamente.
       </p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-primary" id="btn-fallback-retry">Tentar novamente</button>
@@ -1161,8 +1173,8 @@
       };
     }
 
-    function pushHistory() {
-      historyStack.push(snapshotConfig(state));
+    function pushHistory(previous = snapshotConfig(state)) {
+      historyStack.push(previous);
       if (historyStack.length > MAX_HISTORY) historyStack.shift();
       redoStack.length = 0;
       state.dirty = true;
@@ -1280,16 +1292,22 @@
     // Actions (all reversible and validated)
     const actions = {
       setGateOpen(val, record = true) {
+        const next = clamp(val, 0, 1);
+        if (state.gateOpen === next) return;
         if (record) pushHistory();
-        state.gateOpen = clamp(val, 0, 1);
+        state.gateOpen = next;
         audio.triggerClick(360 + state.gateOpen * 220);
-        renderUI();
+        updateGateControls();
+        updateTelemetryDOM();
       },
       setUpstreamFlow(val, record = true) {
+        const next = clamp(val, 0.05, 1.50);
+        if (state.upstreamFlow === next) return;
         if (record) pushHistory();
-        state.upstreamFlow = clamp(val, 0.05, 1.50);
+        state.upstreamFlow = next;
         audio.triggerClick(280 + state.upstreamFlow * 160);
-        renderUI();
+        updateFlowControls();
+        updateTelemetryDOM();
       },
       setClutch(engaged, record = true) {
         const next = Boolean(engaged);
@@ -1370,8 +1388,11 @@
         }
       },
       setMode(mode) {
+        if (mode === 'guiado' && state.mode !== 'guiado') {
+          state.guideStep = 0;
+          actions.setCamera('roda');
+        }
         state.mode = mode;
-        if (mode === 'guiado') state.guideStep = 0;
         renderUI();
       },
       setCamera(preset) {
@@ -1405,8 +1426,8 @@
         redoStack.length = 0;
         if (sceneApi) {
           sceneApi.rebuildGears(state.gearRatio);
-          sceneApi.transitionCamera('geral');
         }
+        actions.setCamera('geral');
         showToast(presetKey === 'empty' ? 'Moinho reiniciado (vazio)' : 'Demonstração inicial restaurada');
         renderUI();
       }
@@ -1654,43 +1675,77 @@
       toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
     }
 
+    function wheelHasStopped(rpm) {
+      return state.gateOpen === 0 && state.flowFlume < 0.02 && rpm < 0.5;
+    }
+
     const GUIDE_STEPS = [
       {
-        title: '1. Abrir a comporta',
-        desc: 'Abra a comporta de madeira para liberar a água do riacho pela calha. Observe a roda acelerar à medida que os alcatruzes enchem.',
+        title: 'Estabelecer o ponto de partida',
+        desc: 'Feche a comporta e observe a vazão se aproximar de zero. Espere a roda ficar abaixo de 0,5 RPM antes de começar o teste.',
         tool: 'comporta',
-        check: () => state.gateOpen >= 0.35
+        check: wheelHasStopped,
+        ready: 'Comporta fechada e roda parada.'
       },
       {
-        title: '2. Alterar a vazão',
-        desc: 'Regule a vazão do riacho (m³/s) para controlar a energia hidráulica disponível. Mais água gera maior torque na roda.',
+        title: 'Abrir a comporta',
+        desc: 'Abra a comporta em pelo menos 35%. Acompanhe a água pela calha e a subida da rotação quando o fluxo chega à roda.',
+        tool: 'comporta',
+        check: rpm => state.gateOpen >= 0.35 && rpm >= 1,
+        ready: 'A água chegou à roda e ela começou a girar.'
+      },
+      {
+        title: 'Observar a desaceleração',
+        desc: 'Feche a comporta novamente. Compare a queda da vazão com a da rotação: a roda ainda gira enquanto perde velocidade.',
+        tool: 'comporta',
+        check: wheelHasStopped,
+        ready: 'A vazão caiu e a roda voltou a parar.'
+      },
+      {
+        title: 'Alterar a vazão',
+        desc: 'Reabra a comporta em pelo menos 35%. Regule a vazão do riacho para pelo menos 0,65 m³/s e observe a leitura da calha.',
         tool: 'vazao',
-        check: () => state.upstreamFlow >= 0.65
+        check: () => state.gateOpen >= 0.35 && state.upstreamFlow >= 0.65 && state.flowFlume >= 0.2,
+        ready: 'A calha voltou a receber água.'
       },
       {
-        title: '3. Conectar os eixos',
+        title: 'Conectar os eixos',
         desc: 'Engate a luva de acoplamento para transmitir o giro da roda às engrenagens e experimente relações 1:1, 1:2 ou 2:1.',
         tool: 'eixos',
-        check: () => state.clutchEngaged === true
+        check: () => state.clutchEngaged && getOutputRPM() > 1,
+        ready: 'O eixo de saída está girando.'
       },
       {
-        title: '4. Escolher carga e testar',
-        desc: 'Acione a Mó de Grãos, o Martelo Pilão ou a Serra Alternativa. Note como a carga reduz a rotação da roda e eleva o torque.',
+        title: 'Escolher carga e testar',
+        desc: 'Acione a Mó de Grãos, o Martelo Pilão ou a Serra Alternativa. Se a roda parar sob carga, aumente a abertura da comporta ou experimente outra relação de transmissão.',
         tool: 'carga',
-        check: () => state.loadType !== 'none' && state.clutchEngaged && getOutputRPM() > 3
+        check: () => state.loadType !== 'none' && state.clutchEngaged && getOutputRPM() > 3,
+        ready: 'A roda está transmitindo movimento à carga.'
       }
     ];
+
+    function updateGuideStatus(wheelRpm) {
+      const step = GUIDE_STEPS[state.guideStep];
+      const ready = step.check(wheelRpm);
+      const status = document.getElementById('guide-status');
+      const message = ready ? step.ready : state.paused ? 'Retome a simulação para acompanhar a resposta da roda.' : '';
+      if (status.textContent !== message) status.textContent = message;
+      status.classList.toggle('ready', ready);
+      document.getElementById('btn-guide-next').disabled = !ready;
+    }
 
     function updateTelemetryDOM() {
       const wRpm = getWheelRPM();
       const oRpm = getOutputRPM();
       const flowEl = document.getElementById('val-flow');
+      const flowToolEl = document.getElementById('lbl-flume-flow');
       const wEl = document.getElementById('val-wheel-rpm');
       const oEl = document.getElementById('val-out-rpm');
       const pEl = document.getElementById('val-power');
       const badge = document.getElementById('status-badge');
 
       if (flowEl) flowEl.textContent = state.flowFlume.toFixed(2);
+      if (flowToolEl) flowToolEl.textContent = `${state.flowFlume.toFixed(2)} m³/s`;
       if (wEl) wEl.textContent = wRpm.toFixed(1);
       if (oEl) oEl.textContent = oRpm.toFixed(1);
       if (pEl) pEl.textContent = `${Math.round(state.mechanicalPower)}`;
@@ -1711,6 +1766,8 @@
         }
       }
 
+      if (state.mode === 'guiado') updateGuideStatus(wRpm);
+
       // Update live challenges
       if (state.mode === 'desafios') {
         if (state.loadType === 'millstone' && state.clutchEngaged && oRpm >= 25 && oRpm <= 45) {
@@ -1730,6 +1787,7 @@
       const tag = document.getElementById('guide-tag-text');
       const title = document.getElementById('guide-title');
       const desc = document.getElementById('guide-desc');
+      const status = document.getElementById('guide-status');
       const extra = document.getElementById('guide-extra');
       const nav = document.getElementById('guide-nav');
 
@@ -1740,19 +1798,19 @@
       card.classList.add('visible');
 
       if (state.mode === 'guiado') {
-        const idx = clamp(state.guideStep, 0, GUIDE_STEPS.length - 1);
+        const idx = state.guideStep;
         const step = GUIDE_STEPS[idx];
-        const ok = step.check();
-        tag.textContent = `Modo Guiado — Passo ${idx + 1}/${GUIDE_STEPS.length}${ok ? ' ✓' : ''}`;
+        tag.textContent = `Modo Guiado — Passo ${idx + 1}/${GUIDE_STEPS.length}`;
         title.textContent = step.title;
         desc.textContent = step.desc;
-        extra.innerHTML = ok
-          ? `<div class="hint-box" style="border-color:var(--accent-ok);color:#cdeed6;">Condição atendida! Avance para o próximo passo ou continue testando.</div>`
-          : '';
+        status.hidden = false;
+        extra.textContent = '';
         nav.style.display = 'flex';
         document.getElementById('btn-guide-prev').disabled = idx === 0;
         document.getElementById('btn-guide-next').textContent = idx === GUIDE_STEPS.length - 1 ? 'Concluir' : 'Próximo';
+        updateGuideStatus(getWheelRPM());
       } else if (state.mode === 'desafios') {
+        status.hidden = true;
         tag.textContent = 'Desafios Opcionais (sem pressão)';
         title.textContent = 'Experimentos de Engenharia';
         desc.textContent = 'Teste combinações de comporta, vazão e engrenagens para cumprir qualquer meta abaixo:';
@@ -1776,6 +1834,21 @@
       }
     }
 
+    function updateGateControls() {
+      const input = document.getElementById('inp-gate');
+      if (!input) return;
+      const opening = Math.round(state.gateOpen * 100);
+      input.value = opening;
+      document.getElementById('lbl-gate').textContent = `${opening}%`;
+    }
+
+    function updateFlowControls() {
+      const input = document.getElementById('inp-flow');
+      if (!input) return;
+      input.value = Math.round(state.upstreamFlow * 100);
+      document.getElementById('lbl-flow').textContent = `${state.upstreamFlow.toFixed(2)} m³/s`;
+    }
+
     function renderContextPanel() {
       const panel = document.getElementById('context-panel');
       const titleEl = document.getElementById('panel-title');
@@ -1793,7 +1866,7 @@
       panel.classList.add('open');
 
       if (state.activeTool === 'comporta') {
-        titleEl.textContent = '1. Abrir Comporta';
+        titleEl.textContent = '1. Regular a comporta';
         const pct = Math.round(state.gateOpen * 100);
         bodyEl.innerHTML = `
           <div class="control-group">
@@ -1810,12 +1883,15 @@
           </div>
         `;
         const inp = bodyEl.querySelector('#inp-gate');
+        let before;
         inp.addEventListener('input', (e) => {
-          const v = Number(e.target.value) / 100;
-          bodyEl.querySelector('#lbl-gate').textContent = `${Math.round(v * 100)}%`;
-          actions.setGateOpen(v, false);
+          before ??= snapshotConfig(state);
+          actions.setGateOpen(Number(e.target.value) / 100, false);
         });
-        inp.addEventListener('change', () => pushHistory());
+        inp.addEventListener('change', () => {
+          if (before && before.gateOpen !== state.gateOpen) pushHistory(before);
+          before = null;
+        });
         bodyEl.querySelectorAll('[data-gate-preset]').forEach(btn => {
           btn.addEventListener('click', () => actions.setGateOpen(Number(btn.dataset.gatePreset)));
         });
@@ -1834,16 +1910,19 @@
             <button class="btn-secondary" data-flow-preset="1.40">Cheia</button>
           </div>
           <div class="hint-box">
-            A vazão efetiva na calha é <strong>${state.flowFlume.toFixed(2)} m³/s</strong> (riacho × abertura da comporta). O torque hidráulico cresce diretamente com o volume de água despejado nos alcatruzes.
+            A vazão efetiva na calha é <strong id="lbl-flume-flow">${state.flowFlume.toFixed(2)} m³/s</strong> (riacho × abertura da comporta). O torque hidráulico cresce diretamente com o volume de água despejado nos alcatruzes.
           </div>
         `;
         const inp = bodyEl.querySelector('#inp-flow');
+        let before;
         inp.addEventListener('input', (e) => {
-          const v = Number(e.target.value) / 100;
-          bodyEl.querySelector('#lbl-flow').textContent = `${v.toFixed(2)} m³/s`;
-          actions.setUpstreamFlow(v, false);
+          before ??= snapshotConfig(state);
+          actions.setUpstreamFlow(Number(e.target.value) / 100, false);
         });
-        inp.addEventListener('change', () => pushHistory());
+        inp.addEventListener('change', () => {
+          if (before && before.upstreamFlow !== state.upstreamFlow) pushHistory(before);
+          before = null;
+        });
         bodyEl.querySelectorAll('[data-flow-preset]').forEach(btn => {
           btn.addEventListener('click', () => actions.setUpstreamFlow(Number(btn.dataset.flowPreset)));
         });
@@ -2265,7 +2344,7 @@
     window.__MOINHO_DIAG__ = runSelfDiagnostics;
 
     // =========================================================================
-    // 5. THREE.JS r160 SCENE, PROCEDURAL PBR TEXTURES & INTERACTION
+    // 5. LOCAL THREE.JS SCENE, PROCEDURAL PBR TEXTURES & INTERACTION
     // =========================================================================
     let sceneApi = null;
 
@@ -2281,7 +2360,7 @@
         const controlsMod = await import('three/addons/controls/OrbitControls.js');
         OrbitControls = controlsMod.OrbitControls;
       } catch (err) {
-        showFallback(`Falha ao carregar módulos Three.js r160 da CDN (${err?.message || 'sem conexão'}).`);
+        showFallback(`Falha ao carregar os módulos gráficos locais (${err?.message || 'arquivos indisponíveis'}).`);
         return;
       }
 
@@ -2306,7 +2385,7 @@
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.08;
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x223331);
@@ -3053,6 +3132,7 @@
       const pointer = new THREE.Vector2();
       const hoverPill = document.getElementById('hover-pill');
       let draggingTool = null;
+      let dragPrevious = null;
       let dragStartY = 0;
       let dragStartVal = 0;
       let pointerDownPos = { x: 0, y: 0 };
@@ -3099,6 +3179,7 @@
         const hit = pickInteractive();
         if (hit && (hit.userData.toolId === 'comporta' || hit.userData.toolId === 'vazao')) {
           draggingTool = hit.userData.toolId;
+          dragPrevious = snapshotConfig(state);
           dragStartY = e.clientY;
           dragStartVal = draggingTool === 'comporta' ? state.gateOpen : state.upstreamFlow;
           controls.enabled = false;
@@ -3111,12 +3192,14 @@
         if (draggingTool) {
           controls.enabled = true;
           renderer.domElement.releasePointerCapture?.(e.pointerId);
-          if (dist > 6) {
-            pushHistory();
-          } else {
+          if (draggingTool === 'comporta' ? state.gateOpen !== dragStartVal : state.upstreamFlow !== dragStartVal) {
+            pushHistory(dragPrevious);
+          }
+          if (dist <= 6) {
             actions.setTool(draggingTool);
           }
           draggingTool = null;
+          dragPrevious = null;
           return;
         }
         if (dist < 6) {
@@ -3130,6 +3213,14 @@
             }
           }
         }
+      });
+      renderer.domElement.addEventListener('pointercancel', () => {
+        if (!draggingTool) return;
+        if (draggingTool === 'comporta') actions.setGateOpen(dragStartVal, false);
+        else actions.setUpstreamFlow(dragStartVal, false);
+        controls.enabled = true;
+        draggingTool = null;
+        dragPrevious = null;
       });
 
       // =====================================================================

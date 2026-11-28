@@ -1,0 +1,505 @@
+{
+  "method": "Chrome 158.0.8127.37 headless, 1280x800; DOMContentLoaded, espera de canvas até 6 s e observação curta",
+  "results": [
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/arquipelago-celestial/arquipelago-celestial.html",
+      "status": 200,
+      "title": "Arquipélago Celestial — Sangi3D",
+      "canvas": 1,
+      "buttons": 21,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/atelie-dos-remendos-e-transformacoes/ateli_dos_remendos_e_transforma_es_3d_jardins_do_sentir.html",
+      "status": 200,
+      "title": "Ateliê dos Remendos e Transformações 3D — Jardins do Sentir",
+      "canvas": 1,
+      "buttons": 22,
+      "issues": [
+        "Recurso net::ERR_FAILED https://cdn.tailwindcss.com/3.4.17",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        "JS THREE.OrbitControls is not a constructor"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/bancada-do-florista/bancada-do-florista.html",
+      "status": 200,
+      "title": "Bancada do Florista · Ateliê Botânico 3D",
+      "canvas": 1,
+      "buttons": 2,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/biblioteca-das-historias-inacabadas/biblioteca_das_hist_rias_inacabadas_3d_jardins_do_sentir.html",
+      "status": 200,
+      "title": "Biblioteca das Histórias Inacabadas 3D — Jardins do Sentir",
+      "canvas": 1,
+      "buttons": 10,
+      "issues": [
+        "Recurso net::ERR_FAILED https://cdn.tailwindcss.com/3.4.17",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
+        "JS THREE.OrbitControls is not a constructor"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/biblioteca-infinita/biblioteca-infinita.html",
+      "status": 200,
+      "title": "Biblioteca Infinita — Sangi3D",
+      "canvas": 1,
+      "buttons": 15,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/caixa-de-musica-perfurada/caixa_de_m_sica_perfurada_loja_corda_e_melodia.html",
+      "status": 200,
+      "title": "Caixa de Música Perfurada — Loja Corda e Melodia",
+      "canvas": 0,
+      "buttons": 526,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Work+Sans:wght@400;500;600&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/geometries/RoundedBoxGeometry.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/casa-da-arvore-das-emocoes/index.html",
+      "status": 200,
+      "title": "Casa da Árvore das Emoções — Morada do Sentir | Jardins do Sentir",
+      "canvas": 1,
+      "buttons": 87,
+      "issues": [
+        "Recurso net::ERR_FAILED https://cdn.tailwindcss.com/3.4.17",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
+        "JS THREE.OrbitControls is not a constructor"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/casa-flutuante/index.html",
+      "status": 200,
+      "title": "Casa Flutuante no Lago · Sangi3D",
+      "canvas": 1,
+      "buttons": 13,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/cidade-das-conexoes/cidade_das_conex_es_3d_jardins_do_sentir.html",
+      "status": 200,
+      "title": "Cidade das Conexões 3D · Jardins do Sentir & Arquitetura dos Vínculos",
+      "canvas": 1,
+      "buttons": 22,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/cidade-submersa/cidade-submersa.html",
+      "status": 200,
+      "title": "Cidade Submersa — Sangi3D",
+      "canvas": 1,
+      "buttons": 15,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/colmeia-transparente/colmeia-transparente.html",
+      "status": 200,
+      "title": "Colmeia Transparente",
+      "canvas": 0,
+      "buttons": 11,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/Confeitaria%20de%20Bolos%203D/index.html",
+      "status": 200,
+      "title": "Confeitaria de Bolos 3D | Maison Amélie",
+      "canvas": 1,
+      "buttons": 26,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/correio-das-palavras-nao-ditas/correio_das_palavras_n_o_ditas_3d_jardins_do_sentir.html",
+      "status": 200,
+      "title": "Correio das Palavras Não Ditas 3D — Jardins do Sentir",
+      "canvas": 1,
+      "buttons": 10,
+      "issues": [
+        "Recurso net::ERR_FAILED https://cdn.tailwindcss.com/3.4.17",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
+        "JS THREE.OrbitControls is not a constructor"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/cozinha-das-descobertas/cozinha-das-descobertas.html",
+      "status": 200,
+      "title": "Cozinha das Descobertas — Experiência 3D Fotorrealista",
+      "canvas": 1,
+      "buttons": 23,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/escada-da-coragem/escada_da_coragem_jardins_da_tcc_experi_ncia_3d.html",
+      "status": 200,
+      "title": "Escada da Coragem — Jardins da TCC · Experiência 3D",
+      "canvas": 1,
+      "buttons": 46,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/estufa-das-borboletas/estufa-das-borboletas.html",
+      "status": 200,
+      "title": "Estufa das Borboletas",
+      "canvas": 0,
+      "buttons": 25,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/estufa-dos-sentimentos/index.html",
+      "status": 200,
+      "title": "# 071 — Estufa dos Sentimentos",
+      "canvas": 1,
+      "buttons": 39,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/geometria-das-conchas/index.html",
+      "status": 200,
+      "title": "# 025 — Geometria das Conchas",
+      "canvas": 1,
+      "buttons": 32,
+      "issues": [
+        "JS The requested module './state.js' does not provide an export named 'PHOTO_FRAMINGS'"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/gerador-de-mundos-climaticos/gerador-de-mundos-climaticos.html",
+      "status": 200,
+      "title": "Gerador de Mundos Climáticos",
+      "canvas": 1,
+      "buttons": 26,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/jardim-de-areia/index.html",
+      "status": 200,
+      "title": "# 053 — Jardim de Areia",
+      "canvas": 1,
+      "buttons": 29,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/jardim-dos-caminhos-possiveis/index.html",
+      "status": 200,
+      "title": "# 073 — Jardim dos Caminhos Possíveis",
+      "canvas": 1,
+      "buttons": 26,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/jardim-dos-fungos/jardim_dos_fungos_microfloresta_interativa_3d.html",
+      "status": 200,
+      "title": "Jardim dos Fungos — Microfloresta Interativa 3D (Edição Realismo)",
+      "canvas": 0,
+      "buttons": 53,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/lago-3d-interativo/lago-3d-interativo.html",
+      "status": 200,
+      "title": "Lago 3D Interativo — Reflexos, Peixes e Autoestima",
+      "canvas": 1,
+      "buttons": 23,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/maquete-que-se-monta/maquete_que_se_monta_ateli_tra_o_arquitetura.html",
+      "status": 200,
+      "title": "Maquete que se Monta — Ateliê Traço Arquitetura",
+      "canvas": 0,
+      "buttons": 29,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Inter:wght@400;500;600&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/maquina-de-garra-de-brindes/m_quina_de_garra_de_brindes_doce_mel_confeitaria.html",
+      "status": 200,
+      "title": "Máquina de Garra de Brindes — Doce Mel Confeitaria",
+      "canvas": 0,
+      "buttons": 41,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Rubik:wght@400;500;600;700&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/geometries/RoundedBoxGeometry.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/moinho-hidraulico/moinho_hidr_ulico_simulador_3d_interativo.html",
+      "status": 200,
+      "title": "Moinho Hidráulico — Simulador 3D Interativo",
+      "canvas": 1,
+      "buttons": 24,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/museu-das-memorias/index.html",
+      "status": 200,
+      "title": "# 072 — Museu das Memórias",
+      "canvas": 1,
+      "buttons": 41,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/observatorio-da-luz/index.html",
+      "status": 200,
+      "title": "Observatório da Luz — Exploração Sensorial de Iluminação",
+      "canvas": 1,
+      "buttons": 53,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/observatorio-das-auroras/index.html",
+      "status": 200,
+      "title": "# 054 — Observatório das Auroras",
+      "canvas": 1,
+      "buttons": 26,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-das-bolhas/index.html",
+      "status": 200,
+      "title": "Oficina das Bolhas — Sangi3D",
+      "canvas": 1,
+      "buttons": 17,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-das-velas-artesanais/oficina_das_velas_artesanais_ateli_3d_interativo.html",
+      "status": 200,
+      "title": "Oficina das Velas Artesanais — Ateliê 3D Interativo",
+      "canvas": 1,
+      "buttons": 27,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-de-bonsais/Oficina%20de%20Bonsais%20%E2%80%94%20HTML%203D%20interativo.html",
+      "status": 200,
+      "title": "Oficina de Bonsais · Pátio de Cultivo e Contemplação Zen 3D",
+      "canvas": 0,
+      "buttons": 23,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-de-estofados/index.html",
+      "status": 200,
+      "title": "Oficina de Estofados — Simulador 3D Interativo",
+      "canvas": 1,
+      "buttons": 50,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-de-mosaicos/index.html",
+      "status": 200,
+      "title": "Oficina de Mosaicos — Sangi3D",
+      "canvas": 1,
+      "buttons": 31,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-do-ritmo/oficina-do-ritmo.html",
+      "status": 200,
+      "title": "Oficina do Ritmo Compartilhado — Experiência 3D",
+      "canvas": 1,
+      "buttons": 42,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Mulish:wght@400;600;700;800&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/oficina-do-vitralista/index.html",
+      "status": 200,
+      "title": "Oficina do Vitralista — Ateliê 3D Realista",
+      "canvas": 1,
+      "buttons": 27,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/paisagem-sonora-3d/paisagem-sonora-3d.html",
+      "status": 200,
+      "title": "Paisagem Sonora 3D — Riacho e Pássaros",
+      "canvas": 1,
+      "buttons": 21,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/pensar-sentir-e-agir/pensar-sentir-e-agir.html",
+      "status": 200,
+      "title": "Pensar, Sentir e Agir — Jardins da TCC • Experiência 3D",
+      "canvas": 0,
+      "buttons": 12,
+      "issues": [
+        "Recurso net::ERR_FAILED https://cdn.tailwindcss.com/",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/pousada-vento-leve/pousada_vento_leve_varanda_dos_sinos_de_vento.html",
+      "status": 200,
+      "title": "Pousada Vento Leve — Varanda dos Sinos de Vento",
+      "canvas": 2,
+      "buttons": 46,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:wght@300;400;500;600;700&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/restauro-de-azulejos/index.html",
+      "status": 200,
+      "title": "Restauro de Azulejos — Quebra-cabeça e Oficina 3D",
+      "canvas": 0,
+      "buttons": 77,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/semaforo-das-emocoes/semaforo-das-emocoes.html",
+      "status": 200,
+      "title": "Semáforo das Emoções 3D — Praça do Semáforo",
+      "canvas": 0,
+      "buttons": 12,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/termometro-da-ansiedade/index.html",
+      "status": 200,
+      "title": "Termômetro da Ansiedade · Jardins da TCC 3D",
+      "canvas": 1,
+      "buttons": 18,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/terrario-de-vidro/terrario-de-vidro-atelier-expandido.html",
+      "status": 200,
+      "title": "Terrário de Vidro — Verde Miúdo Plantas",
+      "canvas": 1,
+      "buttons": 41,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/trem-de-engrenagens/trem_de_engrenagens_escola_maker_fa_sca.html",
+      "status": 200,
+      "title": "Trem de Engrenagens — Escola Maker Faísca",
+      "canvas": 1,
+      "buttons": 42,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap",
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/trem-sem-destino/trem-sem-destino.html",
+      "status": 200,
+      "title": "Trem sem Destino — Sangi3D",
+      "canvas": 1,
+      "buttons": 15,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/tribunal-dos-pensamentos/tribunal-dos-pensamentos.html",
+      "status": 200,
+      "title": "Tribunal dos Pensamentos 3D — Jardins da TCC",
+      "canvas": 1,
+      "buttons": 33,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      ]
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/universo-audioreativo/universo-audioreativo.html",
+      "status": 200,
+      "title": "Universo Audioreativo — Sangi3D",
+      "canvas": 1,
+      "buttons": 15,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/universo-de-uma-gota/index.html",
+      "status": 200,
+      "title": "Universo de uma Gota — Sangi3D",
+      "canvas": 1,
+      "buttons": 71,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/vale-dos-vaga-lumes/index.html",
+      "status": 200,
+      "title": "Vale dos Vaga-lumes — Sangi3D",
+      "canvas": 1,
+      "buttons": 24,
+      "issues": []
+    },
+    {
+      "url": "/Jogos/1%20-%20Jogos%20HTML/vulcao-em-miniatura/vulcao-em-miniatura.html",
+      "status": 200,
+      "title": "Vulcão em Miniatura | Laboratório geológico",
+      "canvas": 1,
+      "buttons": 23,
+      "issues": [
+        "Recurso net::ERR_NAME_NOT_RESOLVED https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      ]
+    }
+  ]
+}

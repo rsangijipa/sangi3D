@@ -1,0 +1,17 @@
+{
+  "scene": "S3D-117 Folha em Contraluz",
+  "note": "Todos os assets são gerados proceduralmente em runtime (canvas 2D + geometria Three.js). Nenhum arquivo externo além do motor.",
+  "engine": { "id": "three-r128", "path": "/Sistema/shared/vendor/three-r128.min.js", "license": "MIT" },
+  "assets": [
+    { "id": "leaf.blade", "role": "folha herói", "type": "PlaneGeometry 48x72 deformada", "scale": "2.02 x 2.88 u", "pivot": "leafPivot (nó do galho, 0,0 = inserção do pecíolo)", "material": "ShaderMaterial SSS aproximado (transmissão posterior + nervuras)", "textures": ["leaf.color 1024²", "leaf.vein 1024²", "leaf.alpha 1024²"], "lod": "único", "collider": "raycast na malha", "origin": "procedural (este arquivo)", "license": "projeto Sangi3D" },
+    { "id": "leaf.petiole", "role": "pecíolo", "type": "TubeGeometry 18x10", "pivot": "leafPivot", "material": "bark (MeshStandard)", "lod": "único", "collider": "nenhum", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "leaf.dew", "role": "gotas aderentes (4)", "type": "SphereGeometry 16x12 compartilhada", "scale": "raio 0.013–0.024 u", "pivot": "superfície da lâmina (u,v)", "material": "MeshPhysical clearcoat transparente", "lod": "único", "collider": "nenhum", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "branch", "role": "galho e nó", "type": "TubeGeometry x3 + Dodecahedron", "material": "bark 512² + bump 512²", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "sun.disc+flare", "role": "sol ocluso e difração", "type": "Plane + ShaderMaterial aditivo", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "bokeh", "role": "copa desfocada", "type": "InstancedMesh (40/70/95 por qualidade)", "texture": "bokeh disc 256²", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "grass", "role": "capim em primeiro plano", "texture": "grass 128x512", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "motes", "role": "pólen", "type": "Points (72), desligado em LOW", "origin": "procedural", "license": "projeto Sangi3D" },
+    { "id": "audio.forest", "role": "vento + pássaros + cliques de UI", "type": "Web Audio sintetizado", "origin": "procedural", "license": "projeto Sangi3D" }
+  ],
+  "budget_measured": { "drawCalls": 20, "triangles": 12034, "geometries": 17, "textures": 7, "context": "painel de navegador do Claude Desktop, perfil LOW, 2026-11-28" }
+}

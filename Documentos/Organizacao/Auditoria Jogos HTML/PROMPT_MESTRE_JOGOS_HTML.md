@@ -1,0 +1,34 @@
+# Prompt de implementação — Sangi3D, coleção 1 - Jogos HTML
+
+Evolua a coleção `Jogos/1 - Jogos HTML/` do workspace Ambientes 3D. Use `Triagem dos 47 jogos.csv` para identificar cada entrada, controles declarados, proposta de fases e ocorrências. Os 47 itens correspondem às fichas do pacote Sangi3D Auditoria 3.0. As sugestões históricas de assets, simulação e fases devem ser conferidas na implementação local. Preserve títulos, IDs, URLs, saves, integrações com launcher, identidade e mecânicas existentes. Trabalhe por lote, com um entregável verificável por jogo.
+
+## 1. Reproduza e estabilize
+
+1. Abra a raiz com `node Sistema/launcher/server.mjs --no-prebuild` e consulte `/api/apps`. Compare a rota real de cada jogo com a entrada e com `Sistema/api/apps.json`. O ensaio local retornou 50 rotas nessa pasta, 46 das 47 fichas. A Agência Postal existe na árvore, mas ficou fora do catálogo dinâmico consultado. Investigue regra, identidade e redirect com o outro Correio antes de mudar status ou rota.
+2. Rode `node Sistema/scripts/check-all-games.mjs <trecho-do-id>` quando útil e complemente o teste com a primeira ação real. Um canvas criado antes de um erro não representa uma cena utilizável. Para jogos como Restauro, que exibem a interface do quebra-cabeça na abertura, teste a interação DOM prevista e depois o acesso ao modo 3D, quando aplicável.
+3. Reproduza dependências remotas por jogo com uma execução em rede normal e outra com localhost permitido e rede externa bloqueada. Separe falha do módulo principal, addon de controle, estilo e fonte opcional. O smoke de referência recebeu HTTP 200 nas 50 rotas, com 22 páginas com canvas e sem ocorrência registrada. Houve falhas de DNS e bloqueios de URL pelo ambiente de teste. Use o JSON por rota para revalidar. Para addons críticos, use versão compatível com a revisão efetiva do Three.js, verifique origem e licença e valide a versão local antes de substituir o import. Mantenha as particularidades de HTML isolado, módulos locais e render próprio de cada entrada.
+4. Geometria das Conchas é um achado adjacente. Em `Jogos/1 - Jogos HTML/geometria-das-conchas/js/ui-controller.js`, verificar a importação local de `PHOTO_FRAMINGS` face ao export de `state.js`. O navegador reproduziu o erro sem depender de CDN. Trate a correção em tarefa própria, com teste de abertura, enquadramento e foto.
+
+## 2. Entregue os três pilotos antes de escalar
+
+| Piloto | Arquivos e comportamento alvo | Demonstração verificável |
+| --- | --- | --- |
+| Oficina de Mosaicos | `index.html`, `main.js`, `model.js` e `scene.js` da pasta `oficina-de-mosaicos`. Guiar assentamento/giro, rejunte e revisão; preservar exportação, histórico, armazenamento e criação livre. Reforçar leitura tátil e cromática da grade. | Assentar e girar uma peça, rejuntar, desfazer e refazer. O JSON exportado deve refletir a obra e o recriar deve preservar estado. Execute `node Sistema/test/sangi-workbenches-browser.mjs oficina-de-mosaicos`. |
+| Universo de uma Gota | `main.js`, `microscope.js`, `js/laboratory-world.js`, `js/sample-registry.js` e `js/journal-system.js` de `universo-de-uma-gota`. Conectar bancada, observação e diário já existentes. Aprimorar foco do campo e indicação da ferramenta ativa. | Abrir amostra virtual, localizar um item, mudar objetiva, acompanhar, salvar no diário e exportar PNG válido. A cópia local já mostrou contador `1 / 20` e objetiva de 20×. Use asserções compatíveis com essa versão, pois a suíte compartilhada tem cenários baseados em um catálogo anterior de cinco itens. |
+| Moinho Hidráulico | `moinho-hidraulico/moinho_hidr_ulico_simulador_3d_interativo.html`. Revisar o módulo remoto e os modos Livre, Guiado e Desafios presentes. Organizar a câmera e a luz para mostrar comporta, roda e transmissão, com leitura clara de rotação. | Abrir/fechar comporta no Guiado e observar aceleração/desaceleração repetível. Reset restaura a pose e o estado. A produção do roteiro depende de o módulo carregar com rede externa bloqueada. |
+
+## 3. Propague o que for validado
+
+- **Ateliês.** Uma ação guiada, uma criação com mais autonomia e um modo livre. O suporte a desfazer acompanha o modelo de estado da obra. Camada gráfica de ferramenta pode mostrar a área atingida sem obstruir a peça.
+- **Natureza e exploração.** Primeiro enquadramento com marco, vista de detalhe com câmera estável e opção de comparação. Distribua geometria e materiais pela escala em que são observados. Preserve exploração sem cronômetro.
+- **Mecânica.** Demonstrar a relação entre controle e consequência em uma montagem simples. Introduzir dificuldade por mudança no arranjo ou na combinação de controles. Use simulação causal proporcional à mecânica e registre tolerância e passo de atualização quando relevante.
+- **Narrativa e áudio.** Preservar espaço para pular, recuar, silenciar, recusar dados e sair. Manter autoplay desativado, feedback textual e uma entrada local para demonstrações que oferecem microfone. No retorno ao launcher, confira estados suspensos e recursos liberados.
+
+Defina a composição do ambiente e a iluminação antes de produzir texturas e objetos de maior detalhe. Reuse assets disponíveis e procedurais. Para cada asset novo registre origem, licença, escala, custo e versão. Quando houver aquisição ou normalização de pacote, use pipeline local verificável, com inspeção de malhas e texturas, verificação do manifesto e aprovação visual antes da admissão. A disponibilidade de `game-dev` precisa ser conferida no ambiente de execução.
+
+## 4. Conclua cada lote com evidência
+
+- Verifique desktop 1366 × 768, retrato 390 × 844, paisagem 844 × 390 e largura menor 360 × 640, com toque e teclado. Teste arquivo direto servido por HTTP e iframe do catálogo. Em Android e iPhone reais, verifique gestos, tela rotacionada, pausa, foco e áudio.
+- Fluxo mínimo: abrir → executar a primeira ação guiada → verificar consequência → repetir ou desfazer quando aplicável → pausar e retomar → sair e abrir novamente. Para experiências que persistem criação ou observação, acrescente exportação e reabertura verificáveis. Teste mídia bloqueada, input inválido, recurso faltando e recuperação gráfica quando pertinentes.
+- Antes/depois: para os três pilotos, fixe câmera, layout, iluminação e ação. Capture a cena e registre o que evoluiu. Em hardware identificado, meça 30 s após aquecer por 5 s; registre p50/p95, draw calls, triângulos, DPR e tempo até a primeira ação. Metas iniciais de p95 ≤ 33,3 ms no perfil Baixo em celular e ≤ 20 ms no Alto em desktop. Use essas medições para escolher efeitos a manter.
+- Entregue arquivos revisados, comandos usados, capturas funcionais, manifesto dos recursos novos, estado dos critérios e um resumo das pendências. Classifique os resultados como estáticos, observados em execução ou pendentes. Atualize o catálogo e as capas pela rotina do projeto depois de validar os jogos abrangidos pelo lote.

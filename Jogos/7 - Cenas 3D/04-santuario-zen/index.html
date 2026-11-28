@@ -6,6 +6,8 @@
   <title>Santuário Zen 3D — Fotorrealismo, Meditação & Incenso</title>
   <script src="/Sistema/shared/sangi-bridge.js"></script>
   <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+  <link rel="stylesheet" href="../_kit/s3d-kit.css" />
+  <script src="../_kit/s3d-kit.js"></script>
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
     body, html {
@@ -159,6 +161,12 @@
         <span>Tocar Tigela</span>
       </button>
 
+      <button id="btn-season" class="glass-panel btn-preset px-3.5 py-2 rounded-xl text-xs font-medium text-amber-100 flex items-center gap-2 border border-amber-400/30" title="Escolher estação do ano">
+        <span>🍂</span><span id="season-label">Estação: Verão</span>
+      </button>
+      <button id="btn-calm" class="glass-panel btn-preset px-3.5 py-2 rounded-xl text-xs font-medium text-amber-100 flex items-center gap-2 border border-amber-400/30" aria-pressed="false" title="Modo calmo: remove fumaça animada e cintilação">
+        <span>🌙</span><span id="calm-label">Modo calmo: OFF</span>
+      </button>
       <button id="btn-audio-toggle" class="glass-panel btn-preset px-3.5 py-2 rounded-xl text-xs font-medium text-amber-100 flex items-center gap-2 border border-amber-400/30">
         <span id="audio-icon">🔇</span>
         <span id="audio-label">Som Relaxante</span>
@@ -321,6 +329,8 @@
       // ==========================================
       // 1. STATE & CAMERA PRESETS
       // ==========================================
+      if (typeof THREE === 'undefined') { S3DKit.fatal('Não foi possível carregar o motor 3D. Verifique a conexão.'); return; }
+      if (!S3DKit.webglAvailable()) { S3DKit.fatal('Seu navegador não conseguiu iniciar o WebGL. Ative a aceleração de hardware ou tente outro navegador.'); return; }
       const state = {
         smokeDensity: 1.0,
         fireIntensity: 1.0,
@@ -2911,22 +2921,30 @@
         noiseSrc.start();
       }
 
+      function setAmbientLevel() {
+        if (!audioCtx || !ambientGain) return;
+        const now = audioCtx.currentTime;
+        ambientGain.gain.cancelScheduledValues(now);
+        ambientGain.gain.setValueAtTime(Math.max(0.0001, ambientGain.gain.value), now);
+        ambientGain.gain.exponentialRampToValueAtTime(state.audioActive && !hostMuted ? 0.36 : 0.0001, now + 0.9);
+      }
       function toggleAmbientAudio() {
         initAudio();
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
         state.audioActive = !state.audioActive;
-        const now = audioCtx.currentTime;
-        ambientGain.gain.cancelScheduledValues(now);
-        ambientGain.gain.setValueAtTime(Math.max(0.0001, ambientGain.gain.value), now);
-        ambientGain.gain.exponentialRampToValueAtTime(state.audioActive ? 0.36 : 0.0001, now + 0.9);
+        if (state.audioActive) hostMuted = false;
+        setAmbientLevel();
 
         document.getElementById('audio-icon').textContent = state.audioActive ? '🔊' : '🔇';
         document.getElementById('audio-label').textContent = state.audioActive ? 'Som: ON' : 'Som Relaxante';
       }
 
+      let hostMuted = !!window.__SANGI_MUTED__;
       function strikeSingingBowl() {
+        if (typeof kit !== 'undefined') kit.goal('bowl', '<b>Tigela tibetana.</b> Parciais levemente desafinados criam o batimento ondulante do som.');
+        if (hostMuted) { state.bowlRingTime = performance.now() * 0.001; showToast('🔔 Tigela tocada (som silenciado)'); return; }
         initAudio();
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -3093,11 +3111,13 @@
           if (info.type === 'bowl') {
             strikeSingingBowl();
           } else if (info.type === 'incense') {
+            if (typeof kit !== 'undefined') kit.goal('incense', '<b>Incenso.</b> A fumaça sobe em fio laminar e depois se quebra em turbulência.');
             state.smokeDensity = state.smokeDensity > 1.4 ? 1.0 : 1.75;
             document.getElementById('slider-smoke').value = Math.round(state.smokeDensity * 100);
             document.getElementById('val-smoke').textContent = Math.round(state.smokeDensity * 100) + '%';
             showToast('💨 Espiral de fumaça do incenso intensificada');
           } else if (info.type === 'buddha') {
+            if (typeof kit !== 'undefined') kit.goal('buddha');
             showToast('🪷 "A paz vem de dentro. Não a procure à sua volta."');
           } else if (info.type === 'salt') {
             state.saltLampBoost = state.saltLampBoost > 1.2 ? 0.65 : 1.45;
@@ -3143,18 +3163,112 @@
       window.addEventListener('beforeunload', cleanupZen);
       window.addEventListener('pagehide', cleanupZen);
       window.addEventListener('sangi:dispose', cleanupZen);
-      window.addEventListener('sangi:pause', () => { zenPaused = true; if (audioCtx && state.audioActive) audioCtx.suspend().catch(() => {}); });
-      window.addEventListener('sangi:resume', () => { zenPaused = false; lastTime = performance.now(); if (audioCtx && state.audioActive) audioCtx.resume().catch(() => {}); });
-      window.addEventListener('sangi:mute', () => { if (state.audioActive) toggleAmbientAudio(); });
-      window.addEventListener('sangi:reset', () => {
+      // Pausa: S3DKit arbitra usuário × host × aba oculta e chama setZenPaused (para RAF lógico e áudio).
+      function setZenPaused(p) {
+        zenPaused = p;
+        try { lastTime = performance.now(); } catch (e) { /* loop ainda não iniciado */ }
+        if (!audioCtx) return;
+        if (p) audioCtx.suspend().catch(() => {});
+        else if (state.audioActive && !hostMuted) audioCtx.resume().catch(() => {});
+      }
+      window.addEventListener('sangi:mute', (e) => {
+        hostMuted = e && e.detail ? !!e.detail.muted : true;
+        if (audioCtx && !hostMuted && state.audioActive && !zenPaused) audioCtx.resume().catch(() => {});
+        setAmbientLevel();
+        document.getElementById('audio-icon').textContent = state.audioActive && !hostMuted ? '🔊' : '🔇';
+      });
+
+      // ---- S3D-120: estações e modo calmo ----
+      const SEASONS = [
+        { name: 'Verão', sun: 0xffa640, k: 1.0, fog: 0x1e110a, bg: 0x160d08, sky: 0xffdfb8 },
+        { name: 'Outono', sun: 0xff7a30, k: 0.85, fog: 0x24110a, bg: 0x1a0c06, sky: 0xffc89a },
+        { name: 'Inverno', sun: 0xcfe0ff, k: 0.62, fog: 0x10131a, bg: 0x0c0e14, sky: 0xd8e4ff },
+        { name: 'Primavera', sun: 0xffe0a8, k: 0.95, fog: 0x1c1a0e, bg: 0x14120a, sky: 0xf2f0c8 }
+      ];
+      let seasonIdx = 0, seasonK = 1.0;
+      const seasonsSeen = new Set([0]);
+      function applySeason(i) {
+        seasonIdx = i;
+        const S = SEASONS[i];
+        sunLight.color.setHex(S.sun); seasonK = S.k;
+        scene.fog.color.setHex(S.fog); scene.background.setHex(S.bg);
+        ambientLight.color.setHex(S.sky);
+        document.getElementById('season-label').textContent = 'Estação: ' + S.name;
+      }
+      document.getElementById('btn-season').addEventListener('click', () => {
+        applySeason((seasonIdx + 1) % SEASONS.length);
+        seasonsSeen.add(seasonIdx);
+        showToast('🍃 Estação: ' + SEASONS[seasonIdx].name);
+        if (seasonsSeen.size === SEASONS.length) kit.goal('seasons', '<b>Quatro estações.</b> A cor e a altura da luz mudam o clima do santuário.');
+      });
+      let calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const calmBtn = document.getElementById('btn-calm');
+      function setCalm(c) {
+        calm = c;
+        calmBtn.setAttribute('aria-pressed', String(c));
+        calmBtn.classList.toggle('active', c);
+        document.getElementById('calm-label').textContent = 'Modo calmo: ' + (c ? 'ON' : 'OFF');
+        smokePuffs.forEach((pp) => { pp.sprite.visible = !c; });
+        if (c) { controls.autoRotate = false; }
+      }
+      calmBtn.addEventListener('click', () => { setCalm(!calm); if (calm) kit.goal('calm', '<b>Modo calmo.</b> Sem fumaça animada nem cintilação; a luz fica estável.'); });
+
+      let breathHeld = 0;
+      const kit = S3DKit.create({
+        id: 's3d120', title: 'Santuário Zen', photoName: 'santuario-zen',
+        tutorial: [
+          'Um santuário iluminado pelo fim de tarde. Arraste para olhar ao redor, scroll ou pinça para aproximar.',
+          'Escolha a <b>estação</b>, toque no incenso, na tigela, no Buda e nas luminárias. O <b>Modo calmo</b> remove a fumaça animada e a cintilação.',
+          'Siga o guia de respiração se quiser. Sem metas obrigatórias, sem tempo: o <b>Diário</b> só registra o que você já explorou.'
+        ],
+        goals: [
+          { id: 'incense', label: 'Toque no incenso' },
+          { id: 'bowl', label: 'Toque a tigela tibetana' },
+          { id: 'buddha', label: 'Contemple o Buda' },
+          { id: 'seasons', label: 'Passe pelas 4 estações' },
+          { id: 'breath', label: 'Acompanhe um ciclo de respiração (11 s)' },
+          { id: 'calm', label: 'Experimente o modo calmo' },
+          { id: 'photo', label: 'Fotografe o santuário' }
+        ],
+        top: 'calc(max(12px, env(safe-area-inset-top)) + 70px)',
+        side: 'left',
+        canvas: () => renderer.domElement,
+        render: () => renderer.render(scene, camera),
+        rendererInfo: () => renderer.info,
+        audio: () => ({ ctx: audioCtx, out: ambientGain }),
+        setPaused: setZenPaused,
+        applyQuality: (lvl) => {
+          const b = document.querySelector('.qual-btn[data-quality="' + (lvl === 'low' ? 'eco' : lvl === 'balanced' ? 'high' : 'ultra') + '"]');
+          if (b && !b.classList.contains('active')) b.click();
+        },
+        onReset: () => resetZen(),
+        qa: {
+          smokeAnimated: () => !calm && smokePuffs.some((pp) => pp.sprite.visible && pp.mat.opacity > 0.001),
+          calm: (c) => { if (c !== undefined) setCalm(!!c); return calm; },
+          audio: () => ({ ctx: audioCtx ? audioCtx.state : 'none', active: state.audioActive, muted: hostMuted, gain: ambientGain ? +ambientGain.gain.value.toFixed(4) : null }),
+          zenPaused: () => zenPaused,
+          season: () => SEASONS[seasonIdx].name,
+          ribbonTime: () => +ribbonUniforms.uTime.value.toFixed(3)
+        }
+      });
+      setCalm(calm);
+      function resetZen() {
         const photoBtn = document.querySelector('[data-cam="photo"]');
         if (photoBtn) photoBtn.click();
-      });
+        applySeason(0);
+        ['smoke', 'fire', 'sun', 'glow', 'breeze'].forEach((k) => {
+          const el = document.getElementById('slider-' + k);
+          if (el) { el.value = '100'; el.dispatchEvent(new Event('input')); }
+        });
+        state.saltLampBoost = 1.0; state.lotusBoost = 1.0;
+      }
+      window.addEventListener('sangi:reset', resetZen);
 
       // ==========================================
       // 18. ANIMATION LOOP
       // ==========================================
       let lastTime = performance.now();
+      let zenT = performance.now() * 0.001;
       let frameCount = 0;
       let fpsTimer = 0;
       const fpsBadge = document.getElementById('fps-badge');
@@ -3168,10 +3282,12 @@
         if (zenDisposed) return;
         zenRafId = requestAnimationFrame(animate);
         if (zenPaused || document.hidden) { lastTime = nowMs; return; }
+        kit.frame();
 
         const dt = Math.min((nowMs - lastTime) * 0.001, 0.1);
         lastTime = nowMs;
-        const t = nowMs * 0.001;
+        zenT += dt;
+        const t = zenT; // relógio da cena: congela na pausa (antes usava o relógio de parede)
 
         frameCount++;
         fpsTimer += dt;
@@ -3195,16 +3311,16 @@
         // 1. Volumetric God Rays & Sun Intensity
         godRayUniforms.uTime.value = t;
         godRayUniforms.uIntensity.value = state.sunIntensity;
-        sunLight.intensity = 5.4 * state.sunIntensity;
+        sunLight.intensity = 5.4 * state.sunIntensity * seasonK;
         windowBounceLight.intensity = 8.5 * state.sunIntensity;
         patchMat.opacity = 0.42 * state.sunIntensity;
 
         // 2. Incense Smoke Ribbon + Volumetric Puffs
-        ribbonUniforms.uTime.value = t;
+        if (!calm) ribbonUniforms.uTime.value = t;
         ribbonUniforms.uDensity.value = state.smokeDensity;
         ribbonUniforms.uBreeze.value = state.breezeStrength;
 
-        smokePuffs.forEach((p, idx) => {
+        if (!calm) smokePuffs.forEach((p, idx) => {
           p.age += dt * (0.68 + (idx % 5) * 0.055);
           if (p.age > p.maxLife) p.age = 0;
           const lifeRatio = p.age / p.maxLife;
@@ -3230,7 +3346,7 @@
           f.uniforms.uTime.value = t;
           f.uniforms.uBreeze.value = state.breezeStrength;
           f.uniforms.uIntensity.value = fireMod;
-          const flicker = 1.0 + Math.sin(t * 14 + f.phase) * 0.08 + Math.cos(t * 23 + f.phase) * 0.05;
+          const flicker = calm ? 1.0 : 1.0 + Math.sin(t * 14 + f.phase) * 0.08 + Math.cos(t * 23 + f.phase) * 0.05;
           const s = f.baseScale * Math.max(0.2, fireMod);
           f.mesh.scale.set(s, s * flicker, s);
           f.halo.material.opacity = 0.44 * fireMod * flicker;
@@ -3252,6 +3368,8 @@
         lotusHalo.material.opacity = 0.48 * state.glowIntensity * state.lotusBoost * breathPulse;
 
         if (state.breathingGuide) {
+          breathHeld += dt;
+          if (breathHeld > 11) kit.goal('breath', '<b>Um ciclo completo.</b> Inspire 4 · sustente · expire devagar.');
           const cycle = t % 11;
           if (cycle < 4) breathStatus.textContent = 'Inspire profundamente pelo nariz...';
           else if (cycle < 7.5) breathStatus.textContent = 'Sustente a presença no agora...';

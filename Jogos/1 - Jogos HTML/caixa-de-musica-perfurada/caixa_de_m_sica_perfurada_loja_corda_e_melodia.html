@@ -12,8 +12,8 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "../../../Sistema/shared/vendor/three-0.160.0/build/three.module.js",
+      "three/addons/": "../../../Sistema/shared/vendor/three-0.160.0/examples/jsm/"
     }
   }
   </script>
@@ -2246,7 +2246,7 @@
       } catch {
         // Fallback automático para Three.js r128 (cdnjs) caso o módulo ESM r160 esteja indisponível
         if (!window.THREE) {
-          await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+          await loadScript('../../../Sistema/shared/vendor/three-r128.min.js');
         }
         if (!window.THREE) throw new Error('Three.js indisponível');
         return { THREE: window.THREE, addons: {}, isModern: false };

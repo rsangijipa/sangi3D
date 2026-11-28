@@ -1,16 +1,22 @@
-# Verificação de Universo de uma Gota
+# Relatório de Testes — Universo de uma Gota 2.0
 
-Execução em 28 de novembro de 2026 no Windows com Node.js 26.5.0, Chromium 158.0.8127.37, Playwright e SwiftShader. Os contextos do navegador cobriram 1440 × 900 com mouse e teclado, 390 × 844 em retrato com toque emulado e 844 × 390 em paisagem com toque emulado. A verificação da contenção cobriu 15 min de simulação. Cada sessão de navegador executou um fluxo funcional curto.
+Execução em 28 de novembro de 2026 no Windows com Node.js v26.5.0, Chromium (Playwright) e renderização por software SwiftShader.
 
-| Teste | Resultado observado |
-| --- | --- |
-| T01 · Volume | Cinco organismos permaneceram dentro do raio e dos limites de profundidade no teste de 15 min com deposição intermitente de alimento. |
-| T02 · Ampliação | O controle aumentou a ampliação nos três tamanhos; na captura, o enquadramento mais próximo preservou membrana, cílios e detalhes internos do ciliado. A pinça também aumentou o zoom com dois pontos de toque emulados. |
-| T03 · Alimentação | O ciliado alterou a trajetória em relação à execução sem alimento. Ingestão setou a energia para 1 e removeu a porção. A mudança de estado também foi confirmada pelo aviso de ingestão na interface. |
-| T-UX · Observação | Identificação pelo toque, pelo catálogo e pelo teclado, deslocamento por setas e exportação de PNG com imagem capturada. Área do campo e ausência de rolagem horizontal conferidas nos três tamanhos. |
-| T-STATE · Ciclo de vida | Pausa e retomada pela interface e pelo bridge. Reinício restaurou 40× e limpou o catálogo. Uma nova lâmina reproduziu o estado inicial e a mesma evolução sem entradas. |
-| T-RENDER · Entrada e saída | Campo inicial renderizado sem erros de página ou requisições externas. Perfil baixo alternado pelo menu no desktop. Retorno ao catálogo verificado no launcher. |
+## Testes Computacionais (Node `--test`)
 
-Os testes de navegador usaram renderização por software. Não houve medição de FPS sustentado, consumo de memória de GPU ou validação em aparelho físico. As duas orientações foram verificadas em contextos separados. A resposta dos organismos é um modelo didático.
+| Suíte | Resultado | Cobertura |
+| --- | --- | --- |
+| `simulation.test.mjs` | 3/3 aprovados | Contenção 15 min (T01), atração/ingestão de alimento (T03), determinismo e reinicialização (T-STATE). |
+| `tests/organisms.test.mjs` | 3/3 aprovados | 20 organismos com anatomia e referências válidas, 10 amostras coerentes e 5 modalidades ópticas. |
+| `tests/ecosystem.test.mjs` | 4/4 aprovados | Simulação longa (10 min / 36.000 passos) sem NaN, contenção X/Y/Z, teto populacional, conservação de área em pseudópodes da ameba, determinismo por seed e formação de vacúolo alimentar. |
 
-Capturas da execução em [desktop](capturas/desktop.jpg), [retrato](capturas/retrato.jpg) e [paisagem](capturas/paisagem.jpg).
+## Testes de Navegador (`tests/browser.test.mjs`)
+
+- Viewports verificados: `1440×900` (desktop), `390×844` (retrato móvel), `844×390` (paisagem móvel), `360×640` (mobile compacto) e `1920×1080` (Full HD).
+- Fluxos verificados: renderização WebGL 2 sem erros de página ou console, ausência de rolagem horizontal, identificação de organismos no catálogo (`1 / 20`), troca de objetivas, alternância entre as 5 modalidades ópticas, troca de amostra, modos Anatomia / Ecossistema / Ferramentas e exportação de fotografia PNG.
+- Capturas geradas: `capturas/desktop.jpg`, `capturas/retrato.jpg`, `capturas/paisagem.jpg` e `miniatura.jpg`.
+
+## Limitações conhecidas
+
+- Os testes automatizados de navegador rodaram em SwiftShader (software rendering), não representando medição de FPS sustentado em hardware móvel físico Android/iOS.
+- O teste legado `Sistema/test/sangi-workbenches-browser.mjs` espera a contagem fixa `/^1\s*\/\s*5$/` da versão 1.0, enquanto a versão 2.0 exibe `1 / 20` conforme a expansão do catálogo para 20 organismos.

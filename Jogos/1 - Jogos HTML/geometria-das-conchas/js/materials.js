@@ -363,7 +363,8 @@ export function createShellMuseumMaterials(seed = 2509) {
       clearcoatRoughness: 0.1,
       iridescence: 0.95,
       iridescenceIOR: 1.48,
-      iridescenceThicknessRange: [180, 580],
+      iridescenceThicknessMinimum: 180,
+      iridescenceThicknessMaximum: 580,
       side: THREE.DoubleSide,
     })
   );
@@ -528,6 +529,18 @@ export function createShellMuseumMaterials(seed = 2509) {
     outerShellMat.needsUpdate = true;
   }
 
+  function setOuterTexture(style) {
+    if (style === 'nacre') {
+      outerShellMat.map = null;
+      outerShellMat.roughness = 0.22;
+      outerShellMat.clearcoat = 0.42;
+      outerShellMat.iridescence = 0.65;
+      outerShellMat.needsUpdate = true;
+    } else {
+      applySpeciesMaterial(style === 'ribbed' ? 'turritella_bands' : 'nautilus_flames');
+    }
+  }
+
   return {
     outerShellMat,
     nacreMat,
@@ -544,6 +557,7 @@ export function createShellMuseumMaterials(seed = 2509) {
     waterMat,
     sandMat,
     applySpeciesMaterial,
+    setOuterTexture,
     dispose() {
       textures.forEach((t) => t.dispose());
       materials.forEach((m) => m.dispose());

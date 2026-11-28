@@ -6,6 +6,8 @@
 <title>Tronco com Rosetas de Musgo Estrelado 3D — Three.js</title>
 <script src="/Sistema/shared/sangi-bridge.js"></script>
 <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+<link rel="stylesheet" href="../_kit/s3d-kit.css" />
+<script src="../_kit/s3d-kit.js"></script>
 <style>
   :root {
     --bg: #070907;
@@ -87,6 +89,8 @@
 <script>
 (function() {
   'use strict';
+  if (typeof THREE === 'undefined') { S3DKit.fatal('Não foi possível carregar o motor 3D. Verifique a conexão.'); return; }
+  if (!S3DKit.webglAvailable()) { S3DKit.fatal('Seu navegador não conseguiu iniciar o WebGL. Ative a aceleração de hardware ou tente outro navegador.'); return; }
   const wrap = document.getElementById('canvas-wrap');
   const isMobile = matchMedia('(max-width: 720px)').matches;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -265,6 +269,22 @@
   const rosetteMat = new THREE.MeshStandardMaterial({
     vertexColors: true, roughness: 0.62, metalness: 0.02, side: THREE.DoubleSide, envMapIntensity: 0.85
   });
+  // Umidade (0..1) -> abertura das rosetas no vertex shader. Seco: folhas se fecham e erguem; úmido: abrem rentes à casca.
+  const humidU = { value: 0.6 };
+  rosetteMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uWet = humidU;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uWet;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        float rr = length(transformed.xz);
+        float openF = mix(0.42, 1.0, uWet);
+        transformed.xz *= openF;
+        transformed.y += rr * (1.0 - uWet) * 0.85;`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float uWet;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        diffuseColor.rgb *= mix(vec3(0.92, 0.86, 0.70), vec3(0.78, 0.98, 0.86), uWet);`);
+  };
 
   const clusters = [
     { a: -0.18, y: 1.85, r: 0.55, n: 130 },
@@ -343,6 +363,34 @@
   instRosettes.instanceMatrix.needsUpdate = true;
   if (instRosettes.instanceColor) instRosettes.instanceColor.needsUpdate = true;
   scene.add(instRosettes);
+  const rosetteMeta = []; // posição angular/altura de cada roseta, para verificar aderência à casca
+  {
+    const m = new THREE.Matrix4(), v = new THREE.Vector3();
+    for (let i = 0; i < totalRosettes; i++) { instRosettes.getMatrixAt(i, m); v.setFromMatrixPosition(m); rosetteMeta.push(v.clone()); }
+  }
+
+  // Gotículas: retidas pelas rosetas por capilaridade; quantidade visível segue a umidade.
+  const dropCount = Math.min(360, totalRosettes);
+  const dropInst = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshPhysicalMaterial({
+    color: 0xeefcff, roughness: 0.04, metalness: 0.0, clearcoat: 1, clearcoatRoughness: 0.03, transparent: true, opacity: 0.6, depthWrite: false
+  }), dropCount);
+  {
+    const step = Math.max(1, Math.floor(totalRosettes / dropCount));
+    const n = new THREE.Vector3();
+    for (let i = 0; i < dropCount; i++) {
+      const base = rosetteMeta[(i * step) % totalRosettes];
+      const ang = Math.atan2(base.x, base.z + 3.0);
+      n.set(Math.sin(ang), 0, Math.cos(ang));
+      dummy.position.copy(base).addScaledVector(n, 0.03 + rnd() * 0.02).add(new THREE.Vector3((rnd() - 0.5) * 0.06, (rnd() - 0.5) * 0.06, 0));
+      dummy.quaternion.identity();
+      const r = 0.008 + rnd() * 0.012;
+      dummy.scale.set(r, r * 0.9, r);
+      dummy.updateMatrix();
+      dropInst.setMatrixAt(i, dummy.matrix);
+    }
+  }
+  dropInst.count = Math.round(dropCount * 0.6);
+  scene.add(dropInst);
 
   // Sporophyte capsule geometry
   const setaCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0.09,0.01), new THREE.Vector3(0.015,0.16,0.04)]);
@@ -406,8 +454,14 @@
   const btnPanel = document.getElementById('btn-panel');
   const panel = document.getElementById('panel');
 
+  let wetTarget = 0.6;
   rngWet.addEventListener('input', (e) => {
     const v = e.target.value / 100;
+    wetTarget = v;
+    if (typeof kit !== 'undefined') {
+      if (v <= 0.15) kit.goal('dry', '<b>Seco.</b> As rosetas se fecham e erguem as folhas para perder menos água; o tom fica palha.');
+      if (v >= 0.85) kit.goal('wet', '<b>Úmido.</b> A água corre pelas fissuras por capilaridade; as rosetas se abrem em estrela e a casca brilha.');
+    }
     document.getElementById('val-wet').textContent = e.target.value + '%';
     barkMat.roughness = 0.90 - v * 0.56;
     barkMat.metalness = 0.02 + v * 0.12;
@@ -422,6 +476,7 @@
     torchOn = !torchOn;
     btnTorch.classList.toggle('active', torchOn);
     torch.intensity = torchOn ? 2.6 : 0.0;
+    if (torchOn && typeof kit !== 'undefined') kit.goal('torch', '<b>Lanterna macro.</b> Luz rasante revela o relevo da casca e o brilho das gotículas.');
   });
   btnPanel.addEventListener('click', () => {
     const c = panel.classList.toggle('collapsed');
@@ -446,8 +501,32 @@
   });
 
   let pointerDown = false, lastX = 0, lastY = 0;
-  const onPointerDown = (e) => { pointerDown = true; lastX = e.clientX; lastY = e.clientY; camState.autoOrbit = false; };
-  const onPointerUp = () => { pointerDown = false; };
+  let downX = 0, downY = 0;
+  const onPointerDown = (e) => { pointerDown = true; lastX = downX = e.clientX; lastY = downY = e.clientY; camState.autoOrbit = false; };
+  const onPointerUp = (e) => {
+    if (pointerDown && e && Math.hypot(e.clientX - downX, e.clientY - downY) < 8 && e.target === renderer.domElement) inspectAt(e.clientX, e.clientY);
+    pointerDown = false;
+  };
+  const onPointerCancel = () => { pointerDown = false; };
+  const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const INFO = {
+    rosette: '<b>Roseta de musgo estrelado</b> — folhas em espiral que se abrem com água e se fecham na seca (resposta higroscópica).',
+    seta: '<b>Esporófito</b> — haste (seta) com cápsula que libera esporos; geração que nasce sobre o gametófito.',
+    lichen: '<b>Líquen crostoso</b> — associação fungo + alga colada à casca; cresce milímetros por ano.',
+    cushion: '<b>Almofada de musgo</b> — tufo denso que retém água sob as rosetas.',
+    bark: '<b>Casca fissurada</b> — as fissuras guardam umidade e matéria orgânica: o microhabitat das briófitas.'
+  };
+  function inspectAt(cx, cy) {
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObjects([instRosettes, setaInst, lichenInst, cushionInst, trunk], false)[0];
+    if (!hit) return;
+    const kind = hit.object === instRosettes ? 'rosette' : hit.object === setaInst ? 'seta' : hit.object === lichenInst ? 'lichen' : hit.object === cushionInst ? 'cushion' : 'bark';
+    kit.toast(INFO[kind]);
+    kit.goal(kind === 'cushion' ? 'rosette' : kind === 'bark' ? 'barkg' : kind);
+    kit.tick(kind === 'bark' ? 480 : 760);
+  }
   const onPointerMove = (e) => {
     if (!pointerDown) return;
     camState.targetTheta = clamp(camState.targetTheta - (e.clientX - lastX) * 0.005, -1.15, 1.15);
@@ -471,18 +550,82 @@
   };
   wrap.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerCancel);
+  window.addEventListener('blur', onPointerCancel);
   window.addEventListener('pointermove', onPointerMove);
   wrap.addEventListener('wheel', onWheel, { passive: false });
   wrap.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', onResize);
 
   let paused = false, disposed = false, rafId = 0, simT = 0, lastNow = performance.now();
+  // Umidade aparente com inércia (capilaridade aproximada: molha rápido, seca devagar).
+  let wet = 0.6;
+  function applyWet(v) {
+    humidU.value = v;
+    barkMat.roughness = 0.90 - v * 0.56;
+    barkMat.metalness = 0.02 + v * 0.12;
+    barkMat.envMapIntensity = 0.4 + v * 0.7;
+    rosetteMat.roughness = 0.78 - v * 0.42;
+    dropInst.count = Math.round(dropCount * Math.max(0, (v - 0.2) / 0.8));
+    kit.meter(v);
+  }
+  const kit = S3DKit.create({
+    id: 's3d119', title: 'Tronco com Rosetas de Musgo Estrelado', photoName: 'tronco-musgo-estrelado',
+    tutorial: [
+      'Um tronco úmido coberto de rosetas de musgo estrelado. Arraste para explorar a casca; scroll, pinça ou setas para aproximar.',
+      'Mude a <b>Umidade da casca</b>: as rosetas se abrem com água e se fecham na seca. A <b>Lanterna Macro</b> cria luz rasante.',
+      'Toque em rosetas, esporófitos e líquens para identificá-los. Complete o <b>Diário de campo</b> no seu ritmo e registre uma macrofoto.'
+    ],
+    goals: [
+      { id: 'wet', label: 'Encharque a casca (umidade ≥ 85%)' },
+      { id: 'dry', label: 'Deixe secar (umidade ≤ 15%)' },
+      { id: 'rosette', label: 'Toque numa roseta' },
+      { id: 'seta', label: 'Encontre um esporófito' },
+      { id: 'lichen', label: 'Encontre um líquen' },
+      { id: 'torch', label: 'Acenda a lanterna macro' },
+      { id: 'photo', label: 'Registre uma macrofotografia' }
+    ],
+    meter: { label: 'Umidade aparente' },
+    canvas: () => renderer.domElement,
+    render: () => renderer.render(scene, camera),
+    rendererInfo: () => renderer.info,
+    setPaused: (p) => { paused = p; if (!p) lastNow = performance.now(); },
+    applyQuality: (lvl) => {
+      const pr = lvl === 'low' ? 1 : lvl === 'balanced' ? 1.25 : 1.65;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pr));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      bgTreeInst.visible = lvl !== 'low';
+      cushionInst.visible = lvl !== 'low';
+      spores.visible = lvl !== 'low';
+    },
+    onReset: () => resetScene(),
+    qa: {
+      wet: () => +wet.toFixed(3),
+      setWet: (v) => { rngWet.value = String(Math.round(v * 100)); rngWet.dispatchEvent(new Event('input')); },
+      look: () => ({ barkRough: +barkMat.roughness.toFixed(3), rosetteRough: +rosetteMat.roughness.toFixed(3), drops: dropInst.count, open: +humidU.value.toFixed(3) }),
+      // Distância máxima entre a base de cada roseta e a superfície deslocada da casca (deve ser ~0.014 = offset de contato)
+      rosetteAdhesion: () => {
+        let maxErr = 0;
+        for (const p of rosetteMeta) {
+          const ang = Math.atan2(p.x, p.z + 3.0);
+          const surf = 3.31 + barkDisp(ang, p.y);
+          maxErr = Math.max(maxErr, Math.abs(Math.hypot(p.x, p.z + 3.0) - surf));
+        }
+        return { rosettes: rosetteMeta.length, maxDistToBark: +maxErr.toFixed(4) };
+      }
+    }
+  });
+  applyWet(wet);
   function animate(now) {
     if (disposed) return;
     rafId = requestAnimationFrame(animate);
     const rawDt = Math.min(0.05, Math.max(0.001, (now - lastNow) * 0.001));
     lastNow = now;
     if (paused || document.hidden) return;
+    kit.frame();
+    // molha em ~1 s, seca em ~4 s
+    const k = wetTarget > wet ? 2.4 : 0.6;
+    if (Math.abs(wetTarget - wet) > 0.001) { wet += (wetTarget - wet) * (1 - Math.exp(-k * rawDt)); applyWet(wet); }
     const dt = reducedMotion ? 0 : rawDt;
     simT += dt;
     const t = simT;
@@ -521,6 +664,8 @@
     wrap.removeEventListener('pointerdown', onPointerDown);
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointercancel', onPointerCancel);
+    window.removeEventListener('blur', onPointerCancel);
     wrap.removeEventListener('wheel', onWheel);
     wrap.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('resize', onResize);
@@ -537,16 +682,16 @@
     if (scene.environment) scene.environment.dispose();
     renderer.dispose();
   }
-  window.addEventListener('sangi:pause', () => { paused = true; });
-  window.addEventListener('sangi:resume', () => { paused = false; lastNow = performance.now(); });
+  // Pausa/retomada do host são arbitradas pelo S3DKit.
   window.addEventListener('sangi:mute', () => {});
-  window.addEventListener('sangi:reset', () => {
+  function resetScene() {
     camState.targetTheta = defaultCam.theta; camState.targetPhi = defaultCam.phi; camState.targetRadius = defaultCam.radius;
     camState.desiredTarget.copy(defaultCam.target); camState.autoOrbit = false;
     rngWet.value = 60; rngWet.dispatchEvent(new Event('input'));
     rngSpores.value = 75; rngSpores.dispatchEvent(new Event('input'));
     if (torchOn) btnTorch.click();
-  });
+  }
+  window.addEventListener('sangi:reset', resetScene);
   window.addEventListener('sangi:dispose', cleanup);
   window.addEventListener('pagehide', cleanup);
 })();

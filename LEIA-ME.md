@@ -47,13 +47,15 @@ Links e favoritos antigos (`01_Jogos_HTML/...`, `Colmeia Transparente.html`, `04
 
 ## Para quem mantém
 
-Conferir se todos os jogos abrem (abre cada um num navegador invisível e lista erros de JavaScript, arquivos faltando ou tela 3D vazia):
+Para conferir a abertura dos jogos em navegador headless e registrar erros, recursos ausentes ou falhas nos fluxos de teste:
 
 ```
 node Sistema/scripts/check-all-games.mjs
 ```
 
 Para conferir só alguns, passe um trecho do id: `node Sistema/scripts/check-all-games.mjs vitralista`.
+
+Use `--offline` para bloquear requisições fora do servidor local. O relatório `.tmp/check-all-games.json` registra o critério de abertura aplicado a cada jogo, que pode ser uma interação específica ou a presença de um canvas visível.
 
 Publicar online: `node Sistema/scripts/prepare-online-build.mjs` compila o que estiver desatualizado e monta a pasta `Publicacao_Online/` (fora do git) com o launcher e os jogos. Publique essa pasta na Vercel (ela já traz o `vercel.json`).
 

@@ -342,13 +342,152 @@
         display: none;
       }
     }
+
+    /* ---- S3D-117: tutorial, diário de campo, foto, pausa, qualidade ---- */
+    .icon-btn, .preset-btn { min-height: 40px; }
+    @media (pointer: coarse) {
+      .icon-btn, .preset-btn { min-height: 44px; min-width: 44px; }
+      input[type="range"] { height: 28px; background: transparent; }
+      input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 999px; background: rgba(255, 232, 198, 0.18); }
+      input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -10px; }
+    }
+    .overlay {
+      position: fixed; inset: 0; z-index: 25;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(5, 8, 3, 0.62);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    }
+    .overlay[hidden] { display: none; }
+    .card {
+      width: min(420px, 100%);
+      background: rgba(18, 20, 13, 0.92);
+      border: 1px solid rgba(255, 224, 178, 0.2);
+      border-radius: 18px; padding: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      user-select: text;
+    }
+    .card h2 { font-size: 1.05rem; color: #fff5e6; margin-bottom: 8px; }
+    .card p { font-size: 0.86rem; line-height: 1.5; color: rgba(246, 232, 212, 0.86); }
+    .card .step-dots { display: flex; gap: 6px; margin: 14px 0; }
+    .card .step-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 224, 178, 0.22); }
+    .card .step-dots i.on { background: #ffb85c; }
+    .card-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+    .btn-primary {
+      min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0;
+      background: #e0601e; color: #fff8ed; font: 600 0.84rem inherit; font-family: inherit; cursor: pointer;
+    }
+    .btn-primary:focus-visible, .btn-ghost:focus-visible { outline: 2px solid #ffca80; outline-offset: 2px; }
+    .btn-ghost {
+      min-height: 44px; padding: 0 14px; border-radius: 12px;
+      border: 1px solid rgba(255, 224, 178, 0.22); background: transparent;
+      color: #f8efe0; font-family: inherit; font-size: 0.82rem; cursor: pointer;
+    }
+    .journal {
+      position: fixed; z-index: 11;
+      top: calc(max(14px, env(safe-area-inset-top)) + 64px); right: 16px;
+      width: 248px; max-height: calc(100% - 260px); overflow-y: auto;
+      background: rgba(14, 16, 10, 0.72);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 224, 178, 0.16); border-radius: 14px;
+      padding: 12px 14px; transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .journal.collapsed .journal-body { display: none; }
+    .journal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .journal-head h3 { font-size: 0.8rem; font-weight: 600; color: #fff5e6; }
+    .journal-toggle { min-height: 32px; min-width: 32px; border-radius: 8px; border: 1px solid rgba(255,224,178,0.18); background: transparent; color: #f8efe0; cursor: pointer; font-size: 0.8rem; }
+    .journal ul { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 7px; }
+    .journal li { font-size: 0.74rem; color: rgba(246, 232, 212, 0.7); display: flex; gap: 8px; align-items: flex-start; line-height: 1.35; }
+    .journal li::before { content: ''; flex: 0 0 12px; height: 12px; margin-top: 2px; border-radius: 50%; border: 1.5px solid rgba(255, 200, 130, 0.5); }
+    .journal li.done { color: #fff1dc; }
+    .journal li.done::before { background: #ffb85c; border-color: #ffb85c; }
+    .journal .backlight-meter { margin-top: 10px; font-size: 0.7rem; color: rgba(246,232,212,0.7); }
+    .journal .meter { height: 5px; border-radius: 999px; background: rgba(255,232,198,0.14); margin-top: 4px; overflow: hidden; }
+    .journal .meter b { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #8f1609, #ff9f43); transition: width 0.2s linear; }
+    body.ui-hidden .journal { opacity: 0; pointer-events: none; transform: translateY(-8px); }
+    .toast {
+      position: fixed; left: 50%; z-index: 20;
+      bottom: calc(max(14px, env(safe-area-inset-bottom)) + 150px);
+      transform: translateX(-50%); max-width: min(440px, calc(100% - 32px));
+      background: rgba(18, 20, 13, 0.9); border: 1px solid rgba(255, 200, 130, 0.3);
+      border-radius: 12px; padding: 10px 14px; font-size: 0.8rem; line-height: 1.4;
+      color: #fff3e0; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .toast.show { opacity: 1; }
+    .toast b { color: #ffca80; }
+    #shutter-flash { position: fixed; inset: 0; background: #fff8ec; opacity: 0; pointer-events: none; z-index: 22; transition: opacity 0.35s ease; }
+    #shutter-flash.on { opacity: 0.75; transition: none; }
+    .quality-select {
+      height: 40px; border-radius: 12px; padding: 0 8px;
+      border: 1px solid rgba(255, 224, 178, 0.18); background: rgba(16, 18, 12, 0.7);
+      color: #f8efe0; font-family: inherit; font-size: 0.74rem;
+    }
+    .quality-select:focus-visible { outline: 2px solid #ffca80; outline-offset: 2px; }
+    @media (pointer: coarse) { .quality-select { height: 44px; } .journal-toggle { min-height: 44px; min-width: 44px; } }
+    #pause-overlay .card { text-align: center; }
+    #pause-overlay .card-actions { justify-content: center; }
+    @media (max-width: 600px) {
+      .journal { top: calc(max(10px, env(safe-area-inset-top)) + 58px); right: 10px; left: 10px; width: auto; max-height: 34vh; padding: 8px 12px; }
+      .quality-select { display: none; }
+      .toast { bottom: calc(max(10px, env(safe-area-inset-bottom)) + 236px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation-duration: 3s; }
+      #shutter-flash.on { opacity: 0.25; }
+    }
   </style>
 </head>
 <body>
   <div id="loading-veil" aria-live="polite">
     <div class="spinner"></div>
-    <span style="font-size:0.78rem;color:rgba(255,235,205,0.75);letter-spacing:0.02em;">Renderizando luz e nervuras...</span>
+    <span id="loading-msg" style="font-size:0.78rem;color:rgba(255,235,205,0.75);letter-spacing:0.02em;">Renderizando luz e nervuras...</span>
+    <button id="btn-retry" class="btn-primary" type="button" hidden onclick="location.reload()">Tentar novamente</button>
   </div>
+
+  <div id="shutter-flash" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="tutorial" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="tut-title">
+    <div class="card">
+      <h2 id="tut-title">Folha em Contraluz</h2>
+      <p id="tut-text"></p>
+      <div class="step-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="card-actions">
+        <button id="tut-skip" class="btn-ghost" type="button">Pular</button>
+        <button id="tut-next" class="btn-primary" type="button">Próximo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pause-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <div class="card">
+      <h2 id="pause-title">Pausado</h2>
+      <p>A folha espera por você.</p>
+      <div class="card-actions">
+        <button id="pause-reset" class="btn-ghost" type="button">Reiniciar cena</button>
+        <button id="pause-help" class="btn-ghost" type="button">Ver tutorial</button>
+        <button id="pause-resume" class="btn-primary" type="button">Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="journal" class="journal" aria-label="Diário de campo">
+    <div class="journal-head">
+      <h3>Diário de campo <span id="journal-count">0/6</span></h3>
+      <button id="journal-toggle" class="journal-toggle" type="button" aria-expanded="true" aria-controls="journal-body" title="Recolher diário">–</button>
+    </div>
+    <div id="journal-body" class="journal-body">
+      <ul>
+        <li data-goal="backlight">Alinhe o sol atrás da folha até as nervuras acenderem</li>
+        <li data-goal="midrib">Toque na nervura central</li>
+        <li data-goal="lateral">Toque em uma nervura lateral</li>
+        <li data-goal="wound">Encontre uma mordida ou furo de inseto</li>
+        <li data-goal="dew">Faça uma gota de orvalho escorrer (vento ou toque)</li>
+        <li data-goal="photo">Fotografe a folha</li>
+      </ul>
+      <div class="backlight-meter">Contraluz <span id="backlight-val">0%</span><div class="meter"><b id="backlight-bar"></b></div></div>
+    </div>
+  </aside>
 
   <div id="canvas-container" role="application" aria-label="Cena 3D interativa de uma folha translúcida em contraluz na floresta"></div>
   <div class="vignette"></div>
@@ -359,6 +498,16 @@
       <p>Macro botânica 3D · Arraste para orbitar ou toque na folha</p>
     </div>
     <div class="top-actions">
+      <select id="quality-select" class="quality-select" aria-label="Qualidade gráfica" title="Qualidade gráfica">
+        <option value="auto">Auto</option>
+        <option value="low">Leve</option>
+        <option value="balanced">Equilibrada</option>
+        <option value="high">Alta</option>
+      </select>
+      <button id="btn-pause" class="icon-btn" type="button" title="Pausar (Esc)" aria-label="Pausar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"></line><line x1="15" y1="5" x2="15" y2="19"></line></svg>
+        <span>Pausa</span>
+      </button>
       <button id="btn-audio" class="icon-btn" type="button" aria-pressed="false" title="Ativar ou silenciar som da floresta (M)">
         <svg id="icon-audio-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -413,8 +562,9 @@
         <button class="preset-btn" type="button" data-preset="side">Lateral 3D</button>
         <button class="preset-btn" type="button" data-preset="low">Contraluz</button>
         <button class="preset-btn" type="button" id="btn-nudge">Tocar Folha</button>
+        <button class="preset-btn" type="button" id="btn-photo" title="Fotografar (P)">📷 Foto</button>
       </div>
-      <span class="hint-text">Arraste para girar · Scroll para zoom</span>
+      <span class="hint-text">Arraste: girar · Scroll/±: zoom · Toque na folha: inspecionar</span>
     </div>
   </section>
 
@@ -423,11 +573,38 @@
     (function () {
       'use strict';
 
-      if (typeof THREE === 'undefined') {
+      function showFatal(msg) {
         var veil = document.getElementById('loading-veil');
-        if (veil) veil.innerHTML = '<span style="color:#ffb380;font-size:0.9rem;">Não foi possível carregar o motor 3D.</span>';
+        if (!veil) return;
+        veil.classList.remove('fade-out');
+        var sp = veil.querySelector('.spinner');
+        if (sp) sp.style.display = 'none';
+        var m = document.getElementById('loading-msg');
+        if (m) { m.textContent = msg; m.style.color = '#ffb380'; m.style.fontSize = '0.9rem'; m.style.maxWidth = '320px'; m.style.textAlign = 'center'; }
+        var r = document.getElementById('btn-retry');
+        if (r) r.hidden = false;
+      }
+
+      if (typeof THREE === 'undefined') {
+        showFatal('Não foi possível carregar o motor 3D. Verifique a conexão e tente novamente.');
         return;
       }
+
+      // Safe storage (private mode / blocked storage must not break the scene)
+      var STORE_KEY = 'sangi.s3d117.folha.v1';
+      function loadStore() {
+        try {
+          var raw = window.localStorage.getItem(STORE_KEY);
+          var obj = raw ? JSON.parse(raw) : null;
+          return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : {};
+        } catch (err) { return {}; }
+      }
+      function saveStore(obj) {
+        try { window.localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch (err) {}
+      }
+      var store = loadStore();
+      var reducedMotion = false;
+      try { reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (err) {}
 
       // =========================================================================
       // 1. STATE & CONFIGURATION
@@ -479,12 +656,23 @@
         100
       );
 
-      var renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        powerPreference: 'high-performance',
-        alpha: false
-      });
+      var renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          powerPreference: 'high-performance',
+          alpha: false,
+          preserveDrawingBuffer: false
+        });
+      } catch (err) {
+        showFatal('Seu navegador não conseguiu iniciar o WebGL. Ative a aceleração de hardware ou tente outro navegador.');
+        return;
+      }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.domElement.addEventListener('webglcontextlost', function (ev) {
+        ev.preventDefault();
+        showFatal('O contexto gráfico foi perdido (memória da GPU). Recarregue para continuar.');
+      }, false);
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1109,16 +1297,41 @@
         clearcoatRoughness: 0.02
       });
       var dewGeom = new THREE.SphereGeometry(1, 16, 12);
+
+      // Leaf surface in leafPivot space — mirrors buildLeafGeometry() so drops sit on the blade.
+      // u in [-1,1] across the blade, v in [0,1] from petiole (0) to tip (1). Units: scene metres (approx.).
+      var LEAF_W = 2.02, LEAF_H = 2.88;
+      function leafSurface(u, v, out) {
+        var archZ = Math.sin(v * Math.PI) * 0.16;
+        var cupZ = -Math.pow(Math.abs(u), 1.65) * 0.14 * Math.sin(v * Math.PI);
+        var veinV = Math.abs(u) * 0.045 * Math.sin(v * Math.PI);
+        var rippleZ = Math.sin(v * 11.0 + u * 3.0) * 0.018 * Math.sin(v * Math.PI);
+        out.set(u * LEAF_W * 0.5 + Math.sin(v * Math.PI * 1.2) * 0.035, -v * LEAF_H - 0.16, archZ + cupZ + veinV + rippleZ);
+        return out;
+      }
+      function uLimit(v) { return Math.max(0.02, leafHalfWidth(v) * 2.0 * 0.8); }
+
+      // Adhesive dew drops: stick until the driving force (wind + leaf motion) beats adhesion,
+      // then slide down the blade, funnel toward the midrib and drip from the tip. Approximation, not CFD.
+      var dewDrops = [];
+      var dewStats = { totalSlide: 0, drips: 0 };
       [
-        { pos: [0.34, -1.65, 0.135], scale: [0.026, 0.022, 0.016] },
-        { pos: [-0.28, -2.02, 0.115], scale: [0.020, 0.018, 0.013] },
-        { pos: [0.18, -2.35, 0.075], scale: [0.015, 0.014, 0.011] }
+        { u: 0.30, v: 0.50, r: 0.024 },
+        { u: -0.26, v: 0.64, r: 0.019 },
+        { u: 0.16, v: 0.76, r: 0.015 },
+        { u: -0.12, v: 0.40, r: 0.013 }
       ].forEach(function (d) {
-        var drop = new THREE.Mesh(dewGeom, dewMat);
-        drop.position.set(d.pos[0], d.pos[1], d.pos[2]);
-        drop.scale.set(d.scale[0], d.scale[1], d.scale[2]);
-        leafPivot.add(drop);
+        var mesh = new THREE.Mesh(dewGeom, dewMat);
+        leafPivot.add(mesh);
+        dewDrops.push({ mesh: mesh, u: d.u, v: d.v, r: d.r, vel: 0, falling: false, fallVel: new THREE.Vector3(), respawnAt: 0, home: { u: d.u, v: d.v } });
       });
+      var _dv = new THREE.Vector3();
+      function placeDrop(d) {
+        leafSurface(d.u, d.v, _dv);
+        d.mesh.position.set(_dv.x, _dv.y, _dv.z + d.r * 0.7);
+        d.mesh.scale.set(d.r * (1 + Math.min(d.vel, 0.6) * 0.3), d.r * (1.0 + Math.min(d.vel, 0.6)), d.r * 0.68);
+      }
+      dewDrops.forEach(placeDrop);
 
       // =========================================================================
       // 6. FORKED WOODY BRANCH & TWIGS
@@ -1498,6 +1711,35 @@
         presetBtns.forEach(function (b) { b.classList.remove('active'); });
       }
 
+      // ---- Inspection: classify a tapped point on the blade from the procedural maps ----
+      var veinCtx = leafTextures.veinTex.image.getContext('2d');
+      var alphaCtx = leafTextures.alphaTex.image.getContext('2d');
+      function sampleMin(ctx, cx, cy, rad) {
+        var x0 = Math.max(0, Math.round(cx - rad)), y0 = Math.max(0, Math.round(cy - rad));
+        var s = Math.round(rad * 2);
+        var data = ctx.getImageData(x0, y0, s, s).data, m = 255;
+        for (var i = 0; i < data.length; i += 4) if (data[i] < m) m = data[i];
+        return m / 255;
+      }
+      var INFO = {
+        midrib: '<b>Nervura central</b> — o eixo espesso que leva água e açúcares entre pecíolo e ponta. Na contraluz ela fica escura porque é grossa e opaca.',
+        lateral: '<b>Nervura lateral</b> — ramos arqueados que se unem perto da borda (laços anastomosados) e criam a malha que você vê acender.',
+        wound: '<b>Mordida / furo de inseto</b> — o tecido ao redor oxida e forma uma borda marrom. A luz atravessa livremente o vazio.',
+        tissue: '<b>Lâmina (mesofilo)</b> — tecido fino entre as nervuras. É por aqui que a luz passa e tinge tudo de vermelho-âmbar.'
+      };
+      function inspectAt(uv) {
+        var cu = uv.x, cv = 1 - uv.y;
+        var px = cu * 1024, py = cv * 1024;
+        var kind = 'tissue';
+        var midX = (0.5 + 0.015 * Math.sin(cv * Math.PI * 1.4) - 0.01 * cv) * 1024;
+        if (sampleMin(alphaCtx, px, py, 16) < 0.2) kind = 'wound';
+        else if (Math.abs(px - midX) < 18) kind = 'midrib';
+        else if (sampleMin(veinCtx, px, py, 7) < 0.3) kind = 'lateral';
+        showToast(INFO[kind]);
+        if (kind !== 'tissue') completeGoal(kind);
+        playTick(kind === 'tissue' ? 520 : 760);
+      }
+
       function nudgeLeaf(strengthX, strengthZ) {
         state.leafImpulseVelZ += strengthZ;
         state.leafImpulseVelX += strengthX;
@@ -1529,7 +1771,7 @@
         isDragging = false;
         try { container.releasePointerCapture(e.pointerId); } catch (err) {}
 
-        if (dragDistance < 8) {
+        if (dragDistance < 8 && touchCount() < 2) {
           var rect = renderer.domElement.getBoundingClientRect();
           pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
           pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -1537,7 +1779,8 @@
           var hits = raycaster.intersectObject(leafMesh, false);
           if (hits.length > 0) {
             var dir = hits[0].point.x >= 0 ? -1 : 1;
-            nudgeLeaf((Math.random() - 0.5) * 0.35 + 0.25, dir * (0.55 + Math.random() * 0.35));
+            nudgeLeaf(((Math.random() - 0.5) * 0.35 + 0.25) * 0.6, dir * (0.55 + Math.random() * 0.35) * 0.6);
+            if (hits[0].uv) inspectAt(hits[0].uv);
           }
         }
       }
@@ -1740,6 +1983,345 @@
       window.addEventListener('keydown', onKeyDown);
 
       // =========================================================================
+      // 13b. S3D-117 — DIÁRIO DE CAMPO, TUTORIAL, FOTO, QUALIDADE, PAUSA
+      // =========================================================================
+      var GOALS = ['backlight', 'midrib', 'lateral', 'wound', 'dew', 'photo'];
+      var goals = {};
+      if (store.goals && typeof store.goals === 'object') {
+        GOALS.forEach(function (g) { goals[g] = store.goals[g] === true; });
+      }
+      var journalEl = document.getElementById('journal');
+      var journalCount = document.getElementById('journal-count');
+      var backlightBar = document.getElementById('backlight-bar');
+      var backlightVal = document.getElementById('backlight-val');
+      function renderJournal() {
+        var n = 0;
+        GOALS.forEach(function (g) {
+          var li = journalEl.querySelector('li[data-goal="' + g + '"]');
+          if (li) li.classList.toggle('done', !!goals[g]);
+          if (goals[g]) n++;
+        });
+        journalCount.textContent = n + '/' + GOALS.length;
+      }
+      function completeGoal(g) {
+        if (goals[g] || GOALS.indexOf(g) < 0) return;
+        goals[g] = true;
+        store.goals = goals;
+        saveStore(store);
+        renderJournal();
+        var all = GOALS.every(function (k) { return goals[k]; });
+        if (all) {
+          window.setTimeout(function () {
+            showToast('<b>Diário completo.</b> Você conhece esta folha por dentro. Continue explorando no modo livre.', 5200);
+          }, 1800);
+        }
+      }
+      renderJournal();
+      var journalToggle = document.getElementById('journal-toggle');
+      function setJournalCollapsed(c) {
+        journalEl.classList.toggle('collapsed', c);
+        journalToggle.textContent = c ? '+' : '–';
+        journalToggle.setAttribute('aria-expanded', String(!c));
+        journalToggle.title = c ? 'Abrir diário' : 'Recolher diário';
+        store.journalCollapsed = c; saveStore(store);
+      }
+      journalToggle.addEventListener('click', function () { setJournalCollapsed(!journalEl.classList.contains('collapsed')); });
+      if (store.journalCollapsed === true || (store.journalCollapsed === undefined && window.innerWidth <= 600)) setJournalCollapsed(true);
+
+      var toastEl = document.getElementById('toast');
+      var toastTimer = null;
+      function showToast(html, ms) {
+        toastEl.innerHTML = html;
+        toastEl.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(function () { toastEl.classList.remove('show'); }, ms || 4200);
+      }
+
+      // Short UI sound — only when the visitor turned sound on.
+      function playTick(freq) {
+        if (!audioCtx || !state.audioActive || state.hostMuted || state.isPaused) return;
+        var now = audioCtx.currentTime;
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(freq, now);
+        o.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.08);
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.linearRampToValueAtTime(0.06, now + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        o.connect(g); g.connect(audioMasterGain);
+        o.start(now); o.stop(now + 0.18);
+      }
+
+      // ---- Tutorial (skippable, remembered) ----
+      var TUT = [
+        'Uma folha atravessada pelo sol da manhã. Arraste para orbitar ao redor dela, use o scroll (ou pinça/± no teclado) para aproximar.',
+        'Mova o <b>Ângulo do Sol</b> até ele ficar atrás da folha: as nervuras escuras se destacam contra o tecido aceso. Aumente a <b>Brisa</b> e veja as gotas escorrerem.',
+        'Toque na folha para inspecionar nervuras, mordidas e furos. Complete o <b>Diário de campo</b> no seu ritmo e tire uma foto. Não há tempo nem pontuação.'
+      ];
+      var tutEl = document.getElementById('tutorial');
+      var tutText = document.getElementById('tut-text');
+      var tutNext = document.getElementById('tut-next');
+      var tutDots = tutEl.querySelectorAll('.step-dots i');
+      var tutStep = 0;
+      function renderTut() {
+        tutText.innerHTML = TUT[tutStep];
+        tutDots.forEach(function (d, i) { d.classList.toggle('on', i === tutStep); });
+        tutNext.textContent = tutStep === TUT.length - 1 ? 'Explorar' : 'Próximo';
+      }
+      function openTutorial() { tutStep = 0; renderTut(); tutEl.hidden = false; tutNext.focus(); }
+      function closeTutorial() { tutEl.hidden = true; store.tutorialDone = true; saveStore(store); }
+      tutNext.addEventListener('click', function () {
+        if (tutStep < TUT.length - 1) { tutStep++; renderTut(); } else closeTutorial();
+      });
+      document.getElementById('tut-skip').addEventListener('click', closeTutorial);
+
+      // ---- Photo (voluntary download, nothing leaves the device) ----
+      var flashEl = document.getElementById('shutter-flash');
+      var lastPhotoCanvas = null;
+      function takePhoto() {
+        if (state.isDisposed) return;
+        // Copy synchronously right after render: without preserveDrawingBuffer the GL buffer may be cleared later.
+        renderer.render(scene, camera);
+        var src = renderer.domElement;
+        var canvas = document.createElement('canvas');
+        canvas.width = src.width; canvas.height = src.height;
+        canvas.getContext('2d').drawImage(src, 0, 0);
+        lastPhotoCanvas = canvas;
+        var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        var finish = function (url, revoke) {
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'folha-em-contraluz-' + stamp + '.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          if (revoke) window.setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        };
+        try {
+          if (canvas.toBlob) canvas.toBlob(function (b) { if (b) finish(URL.createObjectURL(b), true); }, 'image/png');
+          else finish(canvas.toDataURL('image/png'), false);
+        } catch (err) {
+          showToast('Não foi possível salvar a foto neste navegador.');
+          return;
+        }
+        flashEl.classList.add('on');
+        window.setTimeout(function () { flashEl.classList.remove('on'); }, 60);
+        playTick(1200);
+        completeGoal('photo');
+        showToast('<b>Foto salva</b> na pasta de downloads.');
+      }
+      document.getElementById('btn-photo').addEventListener('click', takePhoto);
+
+      // ---- Quality profiles LOW / BALANCED / HIGH / AUTO ----
+      var QUALITY = {
+        low:      { pr: 1.0, bokeh: 40, motes: false },
+        balanced: { pr: 1.5, bokeh: 70, motes: true },
+        high:     { pr: 2.0, bokeh: 95, motes: true }
+      };
+      var qualityMode = 'auto';
+      var qualityLevel = (window.innerWidth <= 600 || (navigator.hardwareConcurrency || 8) <= 4) ? 'balanced' : 'high';
+      var qualitySelect = document.getElementById('quality-select');
+      function applyQualityLevel(level) {
+        var q = QUALITY[level];
+        if (!q) return;
+        qualityLevel = level;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.pr));
+        renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
+        bokehInst.count = Math.min(bokehCount, q.bokeh);
+        motes.visible = q.motes;
+      }
+      function setQualityMode(mode) {
+        mode = String(mode || 'auto').toLowerCase();
+        if (mode === 'medium') mode = 'balanced';
+        if (mode !== 'auto' && !QUALITY[mode]) return;
+        qualityMode = mode;
+        qualitySelect.value = mode;
+        store.quality = mode; saveStore(store);
+        applyQualityLevel(mode === 'auto' ? qualityLevel : mode);
+      }
+      qualitySelect.addEventListener('change', function () { setQualityMode(qualitySelect.value); });
+      function onHostQuality(e) { if (e && e.detail && e.detail.quality) setQualityMode(e.detail.quality); }
+
+      // Frame-time stats (ms) for AUTO and QA.
+      var frameTimes = new Float32Array(600), frameIdx = 0, frameFilled = 0;
+      var autoWindow = [], autoCooldown = 0, autoGoodTime = 0;
+      function recordFrame(ms, dt) {
+        frameTimes[frameIdx] = ms; frameIdx = (frameIdx + 1) % frameTimes.length;
+        if (frameFilled < frameTimes.length) frameFilled++;
+        if (qualityMode !== 'auto') return;
+        autoCooldown -= dt;
+        autoWindow.push(ms);
+        if (autoWindow.length < 90) return;
+        var avg = autoWindow.reduce(function (a, b) { return a + b; }, 0) / autoWindow.length;
+        autoWindow.length = 0;
+        if (autoCooldown > 0) return;
+        if (avg > 26 && qualityLevel !== 'low') {
+          applyQualityLevel(qualityLevel === 'high' ? 'balanced' : 'low');
+          autoCooldown = 4; autoGoodTime = 0;
+        } else if (avg < 13) {
+          autoGoodTime += 1.5;
+          if (autoGoodTime > 9 && qualityLevel !== 'high') {
+            applyQualityLevel(qualityLevel === 'low' ? 'balanced' : 'high');
+            autoCooldown = 6; autoGoodTime = 0;
+          }
+        } else autoGoodTime = 0;
+      }
+      function frameStats() {
+        var arr = Array.prototype.slice.call(frameTimes, 0, frameFilled).sort(function (a, b) { return a - b; });
+        var at = function (p) { return arr.length ? +arr[Math.min(arr.length - 1, Math.floor(arr.length * p))].toFixed(2) : null; };
+        return { samples: arr.length, p50: at(0.5), p95: at(0.95), drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality: qualityMode + ':' + qualityLevel };
+      }
+
+      // ---- Backlight (contraluz) metric ----
+      // 1 when the sun sits behind the blade as seen from the camera; drives the journal goal.
+      var _sunW = new THREE.Vector3(), _leafC = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
+      var backlightHold = 0, backlight = 0;
+      // Goal counts only after the visitor moved the sun (default framing is already near-backlit).
+      var sunTouched = false;
+      sliderSun.addEventListener('input', function () { sunTouched = true; });
+      function updateBacklight(dt) {
+        _leafC.set(0, 0, 0.15); leafSurface(0, 0.55, _leafC); leafPivot.localToWorld(_leafC);
+        _sunW.copy(leafUniforms.uSunPos.value);
+        _a.copy(camera.position).sub(_leafC).normalize();
+        _b.copy(_leafC).sub(_sunW).normalize();
+        var behind = Math.max(0, _a.dot(_b));
+        // Screen-space proximity of the sun to the blade centre
+        var s = _sunW.clone().project(camera), c = _leafC.clone().project(camera);
+        var screenD = Math.hypot((s.x - c.x) * camera.aspect, s.y - c.y);
+        backlight = THREE.MathUtils.clamp(Math.pow(behind, 6) * (1.0 - THREE.MathUtils.smoothstep(screenD, 0.08, 0.55)), 0, 1);
+        var pct = Math.round(backlight * 100);
+        backlightBar.style.width = pct + '%';
+        backlightVal.textContent = pct + '%';
+        if (backlight > 0.74 && sunTouched) {
+          backlightHold += dt;
+          if (backlightHold > 1.0 && !goals.backlight) {
+            completeGoal('backlight');
+            showToast('<b>Contraluz!</b> Com o sol atrás, o tecido fino brilha e as nervuras grossas aparecem como sombras.');
+            playTick(900);
+          }
+        } else backlightHold = 0;
+      }
+
+      // ---- Dew update (fixed 1/60 s substeps, inside animate) ----
+      var DEW_STEP = 1 / 60;
+      var dewAcc = 0;
+      var prevLeafRotZ = 0, prevLeafRotX = 0;
+      function stepDew(h, t, leafAngVel) {
+        var wind = state.windStrength;
+        for (var i = 0; i < dewDrops.length; i++) {
+          var d = dewDrops[i];
+          if (d.falling) {
+            if (t >= d.respawnAt && d.respawnAt > 0) {
+              d.falling = false; d.u = d.home.u * (0.7 + Math.random() * 0.5); d.v = 0.25 + Math.random() * 0.35; d.vel = 0;
+              d.mesh.visible = true;
+              placeDrop(d);
+              continue;
+            }
+            d.fallVel.y -= 9.8 * 0.25 * h;
+            d.mesh.position.addScaledVector(d.fallVel, h);
+            if (d.mesh.position.y < -6) d.mesh.visible = false;
+            continue;
+          }
+          // Driving force: gusts + leaf angular speed; adhesion grows as drops get smaller.
+          var gust = wind * (0.55 + 0.45 * Math.sin(t * 1.7 + i * 2.1));
+          var drive = gust * 0.9 + leafAngVel * 0.55;
+          var adhesion = 0.22 + (0.03 - d.r) * 9.0;
+          if (drive > adhesion) d.vel += (drive - adhesion) * 1.4 * h;
+          d.vel *= Math.exp(-2.2 * h);
+          if (d.vel < 0.002) d.vel = 0;
+          var dv = d.vel * h;
+          d.v += dv;
+          dewStats.totalSlide += dv;
+          // funnel toward the midrib channel while sliding
+          d.u += (-d.u) * Math.min(1, d.vel * 1.8 * h);
+          var lim = uLimit(d.v);
+          if (d.u > lim) d.u = lim; else if (d.u < -lim) d.u = -lim;
+          if (d.v >= 0.975) {
+            d.falling = true; dewStats.drips++;
+            d.fallVel.set(0, -0.2, 0.05);
+            d.respawnAt = t + 4 + Math.random() * 3;
+            completeGoal('dew');
+          } else {
+            placeDrop(d);
+          }
+        }
+        if (dewStats.totalSlide > 0.12) completeGoal('dew');
+      }
+      function resetDew() {
+        dewDrops.forEach(function (d) { d.u = d.home.u; d.v = d.home.v; d.vel = 0; d.falling = false; d.mesh.visible = true; placeDrop(d); });
+        dewStats.totalSlide = 0;
+      }
+
+      // ---- Pause (user) vs host pause vs hidden tab ----
+      var pauseOverlay = document.getElementById('pause-overlay');
+      var userPaused = false, hostPaused = false, tabHidden = false;
+      function syncPause() {
+        var should = userPaused || hostPaused || tabHidden;
+        if (should && !state.isPaused) onPause();
+        else if (!should && state.isPaused) onResume();
+      }
+      function setUserPaused(p) {
+        userPaused = p;
+        pauseOverlay.hidden = !p;
+        syncPause();
+        if (p) document.getElementById('pause-resume').focus();
+      }
+      document.getElementById('btn-pause').addEventListener('click', function () { setUserPaused(true); });
+      document.getElementById('pause-resume').addEventListener('click', function () { setUserPaused(false); });
+      document.getElementById('pause-reset').addEventListener('click', function () { onReset(); setUserPaused(false); });
+      document.getElementById('pause-help').addEventListener('click', function () { setUserPaused(false); openTutorial(); });
+      function onVisibility() { tabHidden = document.hidden; syncPause(); }
+      document.addEventListener('visibilitychange', onVisibility);
+      function onHostPause() { hostPaused = true; syncPause(); }
+      function onHostResume() { hostPaused = false; syncPause(); }
+
+      // Extra keyboard alternatives to gestures
+      function onKeyExtra(e) {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+        if (!tutEl.hidden) { if (e.key === 'Escape') closeTutorial(); return; }
+        var k = e.key;
+        if (k === 'Escape') { setUserPaused(!userPaused); return; }
+        if (userPaused) return;
+        if (k === 'p' || k === 'P') takePhoto();
+        else if (k === 'ArrowLeft') { clearPresetActive(); state.camTargetYaw = THREE.MathUtils.clamp(state.camTargetYaw + 0.12, -1.15, 1.15); }
+        else if (k === 'ArrowRight') { clearPresetActive(); state.camTargetYaw = THREE.MathUtils.clamp(state.camTargetYaw - 0.12, -1.15, 1.15); }
+        else if (k === 'ArrowUp') { clearPresetActive(); state.camTargetPitch = THREE.MathUtils.clamp(state.camTargetPitch + 0.08, -0.52, 0.58); }
+        else if (k === 'ArrowDown') { clearPresetActive(); state.camTargetPitch = THREE.MathUtils.clamp(state.camTargetPitch - 0.08, -0.52, 0.58); }
+        else if (k === '+' || k === '=') { clearPresetActive(); state.camTargetDist = THREE.MathUtils.clamp(state.camTargetDist - 0.3, 3.3, 7.6); }
+        else if (k === '-' || k === '_') { clearPresetActive(); state.camTargetDist = THREE.MathUtils.clamp(state.camTargetDist + 0.3, 3.3, 7.6); }
+        else return;
+        e.preventDefault();
+      }
+      window.addEventListener('keydown', onKeyExtra);
+
+      // Two-finger pinch zoom on touch (camera only; single finger orbits / taps inspect)
+      var touches = {};
+      var pinchStart = 0, pinchDist0 = 0;
+      function touchCount() { return Object.keys(touches).length; }
+      function pinchDistance() {
+        var p = Object.keys(touches).map(function (k) { return touches[k]; });
+        return p.length >= 2 ? Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) : 0;
+      }
+      function onTouchPtrDown(e) {
+        if (e.pointerType !== 'touch') return;
+        touches[e.pointerId] = { x: e.clientX, y: e.clientY };
+        if (touchCount() === 2) { pinchDist0 = pinchDistance(); pinchStart = state.camTargetDist; isDragging = false; }
+      }
+      function onTouchPtrMove(e) {
+        if (!touches[e.pointerId]) return;
+        touches[e.pointerId] = { x: e.clientX, y: e.clientY };
+        if (touchCount() === 2 && pinchDist0 > 0) {
+          clearPresetActive();
+          state.camTargetDist = THREE.MathUtils.clamp(pinchStart * (pinchDist0 / Math.max(20, pinchDistance())), 3.3, 7.6);
+        }
+      }
+      function onTouchPtrUp(e) { delete touches[e.pointerId]; if (touchCount() < 2) pinchDist0 = 0; }
+      container.addEventListener('pointerdown', onTouchPtrDown);
+      container.addEventListener('pointermove', onTouchPtrMove);
+      container.addEventListener('pointerup', onTouchPtrUp);
+      container.addEventListener('pointercancel', onTouchPtrUp);
+      function onBlur() { isDragging = false; touches = {}; pinchDist0 = 0; }
+      window.addEventListener('blur', onBlur);
+
+      // =========================================================================
       // 14. RESIZE, LIFECYCLE BRIDGE & ANIMATION LOOP
       // =========================================================================
       function onResize() {
@@ -1762,7 +2344,9 @@
           return;
         }
         rafId = requestAnimationFrame(animate);
-        var dt = Math.min(clock.getDelta(), 0.05);
+        var rawDt = clock.getDelta();
+        recordFrame(rawDt * 1000, Math.min(rawDt, 0.25));
+        var dt = Math.min(rawDt, 0.05);
         elapsed += dt;
         var t = elapsed;
 
@@ -1795,8 +2379,11 @@
         state.leafImpulseVelZ += (-springK * state.leafAngleZ - damping * state.leafImpulseVelZ) * dt;
         state.leafAngleX += state.leafImpulseVelX * dt;
         state.leafAngleZ += state.leafImpulseVelZ * dt;
+        // Petiole joint limit: the blade bends at the petiole but never detaches or flips.
+        state.leafAngleX = THREE.MathUtils.clamp(state.leafAngleX, -0.55, 0.55);
+        state.leafAngleZ = THREE.MathUtils.clamp(state.leafAngleZ, -0.6, 0.6);
 
-        var wind = state.windStrength;
+        var wind = state.windStrength * (reducedMotion ? 0.4 : 1.0);
         var ambientSwayZ = (Math.sin(t * 1.15) * 0.045 + Math.sin(t * 2.35) * 0.018) * (0.22 + wind * 1.35);
         var ambientSwayX = (Math.cos(t * 0.92) * 0.032 + Math.sin(t * 1.85) * 0.014) * (0.22 + wind * 1.2);
         var ambientTwistY = Math.sin(t * 0.78) * 0.06 * (0.25 + wind * 1.4);
@@ -1804,6 +2391,15 @@
         leafPivot.rotation.z = ambientSwayZ + state.leafAngleZ;
         leafPivot.rotation.x = ambientSwayX + state.leafAngleX;
         leafPivot.rotation.y = ambientTwistY + state.leafAngleZ * 0.4;
+
+        // Dew drops: fixed-step integration driven by wind + leaf angular speed
+        var angVel = (Math.abs(leafPivot.rotation.z - prevLeafRotZ) + Math.abs(leafPivot.rotation.x - prevLeafRotX)) / Math.max(dt, 1e-4);
+        prevLeafRotZ = leafPivot.rotation.z; prevLeafRotX = leafPivot.rotation.x;
+        dewAcc += dt;
+        var subs = 0;
+        while (dewAcc >= DEW_STEP && subs < 4) { stepDew(DEW_STEP, t, angVel); dewAcc -= DEW_STEP; subs++; }
+        if (subs === 4) dewAcc = 0;
+        updateBacklight(dt);
 
         // 4. Keep occluded sun disc & diffraction flare aligned with sun direction
         var shimmer = 0.92 + 0.08 * Math.sin(t * 3.1 + leafPivot.rotation.z * 8.0);
@@ -1894,6 +2490,8 @@
         bgUniforms.uBokeh.value = 0.80;
         leafUniforms.uBokeh.value = 0.80;
         bokehMat.opacity = 0.44 * 0.80;
+        state.leafAngleX = state.leafAngleZ = state.leafImpulseVelX = state.leafImpulseVelZ = 0;
+        resetDew();
         applyPreset('macro');
       }
 
@@ -1916,8 +2514,17 @@
         }
         window.removeEventListener('resize', onResize);
         window.removeEventListener('keydown', onKeyDown);
-        window.removeEventListener('sangi:pause', onPause);
-        window.removeEventListener('sangi:resume', onResume);
+        window.removeEventListener('sangi:pause', onHostPause);
+        window.removeEventListener('sangi:resume', onHostResume);
+        window.removeEventListener('sangi:quality', onHostQuality);
+        window.removeEventListener('keydown', onKeyExtra);
+        window.removeEventListener('blur', onBlur);
+        document.removeEventListener('visibilitychange', onVisibility);
+        container.removeEventListener('pointerdown', onTouchPtrDown);
+        container.removeEventListener('pointermove', onTouchPtrMove);
+        container.removeEventListener('pointerup', onTouchPtrUp);
+        container.removeEventListener('pointercancel', onTouchPtrUp);
+        if (toastTimer) clearTimeout(toastTimer);
         window.removeEventListener('sangi:mute', onMute);
         window.removeEventListener('sangi:reset', onReset);
         window.removeEventListener('sangi:dispose', disposeAll);
@@ -1946,19 +2553,55 @@
         renderer.dispose();
       }
 
-      window.addEventListener('sangi:pause', onPause);
-      window.addEventListener('sangi:resume', onResume);
+      window.addEventListener('sangi:pause', onHostPause);
+      window.addEventListener('sangi:resume', onHostResume);
       window.addEventListener('sangi:mute', onMute);
       window.addEventListener('sangi:reset', onReset);
+      window.addEventListener('sangi:quality', onHostQuality);
       window.addEventListener('sangi:dispose', disposeAll);
       window.addEventListener('beforeunload', disposeAll);
 
+      // Initial quality: host value > saved choice > AUTO
+      setQualityMode(window.__SANGI_QUALITY__ || store.quality || 'auto');
+      if (window.__SANGI_MUTED__) state.hostMuted = true;
+      if (window.__SANGI_PAUSED__) hostPaused = true;
+
+      // QA hook (read-only diagnostics + acceptance checks)
+      var _p = new THREE.Vector3(), _l = new THREE.Vector3();
+      window.__S3D117__ = {
+        stats: frameStats,
+        backlight: function () { return +backlight.toFixed(3); },
+        goals: function () { return JSON.parse(JSON.stringify(goals)); },
+        dew: function () { return { drips: dewStats.drips, slide: +dewStats.totalSlide.toFixed(3) }; },
+        // World distance between petiole tip and the blade's attachment point (should stay ~constant)
+        petioleGap: function () {
+          petioleMesh.localToWorld(_p.copy(petioleCurve.getPoint(1)));
+          leafPivot.localToWorld(leafSurface(0, 0.1, _l));
+          return +_p.distanceTo(_l).toFixed(4);
+        },
+        setSun: function (v) { sliderSun.value = String(v); sliderSun.dispatchEvent(new Event('input')); },
+        setWind: function (v) { sliderWind.value = String(v); sliderWind.dispatchEvent(new Event('input')); },
+        nudge: function (x, z) { nudgeLeaf(x, z); },
+        isPaused: function () { return state.isPaused; },
+        lastPhotoMean: function () {
+          if (!lastPhotoCanvas) return null;
+          var t = document.createElement('canvas'); t.width = t.height = 32;
+          var x = t.getContext('2d'); x.drawImage(lastPhotoCanvas, 0, 0, 32, 32);
+          var d = x.getImageData(0, 0, 32, 32).data, s = 0;
+          for (var i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2];
+          return +(s / (32 * 32 * 3)).toFixed(1);
+        }
+      };
+
       // Start render loop and fade out loading veil
-      rafId = requestAnimationFrame(animate);
+      if (!hostPaused) rafId = requestAnimationFrame(animate);
+      else state.isPaused = true;
       var veilEl = document.getElementById('loading-veil');
       if (veilEl) {
+        renderer.render(scene, camera);
         window.setTimeout(function () {
           veilEl.classList.add('fade-out');
+          if (!store.tutorialDone) openTutorial();
         }, 180);
       }
     })();
