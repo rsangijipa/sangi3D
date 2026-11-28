@@ -136,8 +136,8 @@ export function createSandStation(scene: THREE.Scene): SandStationHandle {
   return {
     group,
     sandMesh,
-    cameraTarget: new THREE.Vector3(3.15, 0.85, 0.55),
-    cameraPosition: new THREE.Vector3(2.05, 2.08, 2.38),
+    cameraTarget: new THREE.Vector3(3.15, 0.84, 0.5),
+    cameraPosition: new THREE.Vector3(2.95, 2.12, 1.95),
     handlePointer(uv, prevUv, phase, toolId, participant, mirror) {
       if (phase === 'start') {
         undoStack.push(field.snapshot());

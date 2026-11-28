@@ -125,8 +125,8 @@ export function createRhythmStation(scene: THREE.Scene): RhythmStationHandle {
   return {
     group,
     hitMeshes,
-    cameraTarget: new THREE.Vector3(2.5, 1.05, -3.25),
-    cameraPosition: new THREE.Vector3(1.55, 1.85, -1.05),
+    cameraTarget: new THREE.Vector3(2.5, 1.15, -3.35),
+    cameraPosition: new THREE.Vector3(2.45, 2.05, 0.05),
     triggerMesh(mesh, audio) {
       const data = mesh.userData as RhythmHitResult | undefined;
       if (!data || !data.instrument) return null;

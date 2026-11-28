@@ -177,8 +177,8 @@ export function createClayStation(scene: THREE.Scene): ClayStationHandle {
   return {
     group,
     clayMesh,
-    cameraTarget: new THREE.Vector3(-3.15, 1.02, 0.55),
-    cameraPosition: new THREE.Vector3(-1.95, 2.05, 2.35),
+    cameraTarget: new THREE.Vector3(-3.17, 0.98, 0.5),
+    cameraPosition: new THREE.Vector3(-2.95, 1.98, 1.92),
     handlePointer(uv, prevUv, phase, toolId, participant, mirror) {
       if (phase === 'start') {
         undoStack.push(field.snapshot());

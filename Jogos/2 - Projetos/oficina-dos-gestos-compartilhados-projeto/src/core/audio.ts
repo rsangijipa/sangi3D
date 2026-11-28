@@ -199,7 +199,83 @@ export class AtelierAudioEngine {
     }
   }
 
+  private ambience: { nodes: AudioNode[]; gain: GainNode } | null = null;
+
+  /** Ambiente do ateliê: vento suave filtrado + pad quente em quinta, muito baixo. */
+  public startAmbience(): void {
+    if (!this.ctx || !this.masterGain || !this.noiseBuffer || this.ambience) return;
+    const ctx = this.ctx;
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    gain.gain.setTargetAtTime(0.16, ctx.currentTime, 2.5);
+    gain.connect(this.masterGain);
+
+    const wind = ctx.createBufferSource();
+    wind.buffer = this.noiseBuffer;
+    wind.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 420;
+    const windGain = ctx.createGain();
+    windGain.gain.value = 0.35;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.07;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 180;
+    lfo.connect(lfoGain).connect(lp.frequency);
+    wind.connect(lp).connect(windGain).connect(gain);
+
+    const nodes: AudioNode[] = [wind, lfo];
+    [110, 164.81, 220.0, 277.18].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = i % 2 ? 'triangle' : 'sine';
+      o.frequency.value = f;
+      o.detune.value = (i - 1.5) * 4;
+      const g = ctx.createGain();
+      g.gain.value = 0.05 / (i + 1);
+      o.connect(g).connect(gain);
+      o.start();
+      nodes.push(o);
+    });
+    wind.start();
+    lfo.start();
+    this.ambience = { nodes, gain };
+  }
+
+  public setAmbience(on: boolean): void {
+    if (on) {
+      if (!this.ambience) this.startAmbience();
+      else if (this.ctx) this.ambience.gain.gain.setTargetAtTime(0.16, this.ctx.currentTime, 0.6);
+    } else if (this.ambience && this.ctx) {
+      this.ambience.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.4);
+    }
+  }
+
+  /** Arpejo curto de celebração para selos conquistados. */
+  public playReward(): void {
+    if (!this.ctx || !this.masterGain) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      const t0 = now + i * 0.09;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+      o.connect(g).connect(this.masterGain!);
+      o.start(t0);
+      o.stop(t0 + 1.0);
+    });
+  }
+
   public dispose(): void {
+    this.ambience?.nodes.forEach((n) => {
+      try { (n as OscillatorNode).stop(); } catch { /* já parado */ }
+    });
+    this.ambience = null;
     if (this.ctx) {
       this.ctx.close().catch(() => {});
       this.ctx = null;
