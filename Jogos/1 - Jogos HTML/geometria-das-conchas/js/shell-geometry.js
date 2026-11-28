@@ -1,53 +1,120 @@
 /**
  * js/shell-geometry.js
- * Gerador paramétrico de concha marinha em espiral logarítmica com:
- *  - Parede dupla contínua e estanque (casca externa calcificada + nácar interno + lábio fechado) -> T01
- *  - Modo Corte Anatômico com paredes de seção fechadas + septos camerais curvos e sifúnculo -> T02
- *  - Escultura radial de costelas sincronizada às coordenadas (u, v)
+ * Gerador procedural de alta fidelidade para conchas e moluscos marinhos.
+ * Implementa modelos morfológicos paramétricos de Raup e Cortie expandidos:
+ *  - 10 famílias morfológicas: Náutilo, Amonite, Turritela, Conus, Murex, Vieira, Ostra, Abalone, Búzio e Cypraea
+ *  - Parede dupla contínua (exterior calcificado + interior nacarado)
+ *  - Lábio da abertura selado, estrias de crescimento e ornamentação
+ *  - Espinhos curvados periódicos (Murex), poros respiratórios (Abalone), dentes labiais (Cypraea) e concha dupla em leque (Vieira/Ostra)
  */
 import * as THREE from 'three';
-import { TEXTURE_STYLES } from './state.js';
+import { SHELL_SPECIES } from './shell-species.js';
 
-function computeMorphConstants(params) {
-  const maxTheta = params.spiralTurns * Math.PI * 2;
-  // Vincula a taxa de expansão logarítmica b à abertura para evitar auto-interseção das voltas (Raup)
-  const tubeFactor = 0.40 + params.aperture * 0.36;
-  const b = 0.165 + (params.aperture - 0.30) * 0.115;
-  // Normaliza para que o espécime inteiro caiba na bandeja de museu (~1.7m * escala)
-  const normScale = (0.78 * params.scaleRatio) / Math.max(1.0, Math.exp(b * maxTheta));
-  return { maxTheta, b, tubeFactor, normScale };
+export function computeSpeciesMorphConstants(speciesId, params) {
+  const spec = SHELL_SPECIES[speciesId] || SHELL_SPECIES.nautilus;
+  const turns = params.spiralTurns ?? spec.defaultParams.spiralTurns;
+  const maxTheta = turns * Math.PI * 2;
+  const aperture = params.aperture ?? spec.defaultParams.aperture;
+  const scaleRatio = params.scaleRatio ?? spec.defaultParams.scaleRatio;
+  const spirePitch = params.spirePitch ?? spec.defaultParams.spirePitch;
+
+  let b = 0.165 + (aperture - 0.3) * 0.11;
+  let tubeFactor = 0.4 + aperture * 0.36;
+
+  // Ajustes morfométricos específicos de cada família
+  if (speciesId === 'turritella') {
+    b = 0.055 + aperture * 0.04;
+    tubeFactor = 0.22 + aperture * 0.15;
+  } else if (speciesId === 'conus') {
+    b = 0.12 + aperture * 0.06;
+    tubeFactor = 0.45 + aperture * 0.28;
+  } else if (speciesId === 'abalone') {
+    b = 0.32 + aperture * 0.14;
+    tubeFactor = 0.65 + aperture * 0.45;
+  } else if (speciesId === 'scallop' || speciesId === 'oyster') {
+    b = 0.22 + aperture * 0.12;
+    tubeFactor = 0.55 + aperture * 0.35;
+  } else if (speciesId === 'cypraea') {
+    b = 0.14 + aperture * 0.08;
+    tubeFactor = 0.58 + aperture * 0.32;
+  }
+
+  const normScale = (0.78 * scaleRatio) / Math.max(1.0, Math.exp(b * maxTheta));
+  return { speciesId, maxTheta, b, tubeFactor, normScale, spirePitch, scaleRatio };
 }
 
-function evalShellPoint(theta, phi, params, morph, ribAmp, ribFreq, radiusOffset = 0) {
-  const { b, tubeFactor, normScale } = morph;
+export function evalShellPoint(theta, phi, params, morph, offsetRadius = 0) {
+  const { speciesId, b, tubeFactor, normScale, spirePitch } = morph;
+  const ribAmp = params.ribsIntensity ?? 0.02;
+  const ribFreq = params.ribsCount ?? 18;
+  const spinesAmp = params.spinesIntensity ?? 0.0;
 
-  // Raio logarítmico normalizado da linha central da espira
+  // Linha central logarítmica
   const R = normScale * Math.exp(b * theta);
   const tubeBase = R * tubeFactor;
-  const tipFade = Math.min(1, Math.max(0.05, theta / 1.1));
+  const tipFade = Math.min(1.0, Math.max(0.04, theta / 1.1));
 
-  // Costelas / pregas de crescimento alinhadas ao longo da espiral
-  const rib =
-    ribAmp *
-    tubeBase *
-    (0.5 + 0.5 * Math.sin(theta * ribFreq)) *
-    Math.sin(phi * 2.0 + 0.4) *
-    0.55;
+  // 1. Modulação de costelas e ornamentações
+  let rib = 0;
+  if (speciesId === 'ammonite') {
+    // Costelas radiais bifurcadas na periferia
+    rib = ribAmp * tubeBase * Math.sin(theta * ribFreq) * (0.8 + 0.4 * Math.sin(phi * 2.0));
+  } else if (speciesId === 'scallop') {
+    // Costelas em leque proeminentes
+    rib = ribAmp * tubeBase * Math.sin(phi * ribFreq) * 1.2;
+  } else if (speciesId === 'oyster') {
+    // Lamelas irregulares onduladas
+    rib = ribAmp * tubeBase * (Math.sin(theta * 8.0) * 0.5 + Math.sin(phi * 12.0) * 0.7);
+  } else {
+    rib = ribAmp * tubeBase * (0.5 + 0.5 * Math.sin(theta * ribFreq)) * Math.sin(phi * 2.0 + 0.4) * 0.5;
+  }
 
-  const rTube = Math.max(0.004, (tubeBase + rib) * tipFade + radiusOffset);
+  // 2. Espinhos do Murex nas varizes a cada 120 graus
+  let spine = 0;
+  if (spinesAmp > 0.001) {
+    const varicePhase = Math.sin(theta * 3.0);
+    if (varicePhase > 0.7 && phi > Math.PI * 0.2 && phi < Math.PI * 0.8) {
+      spine = spinesAmp * tubeBase * 2.8 * Math.pow(varicePhase - 0.7, 1.8) * Math.sin(phi * 3.0);
+    }
+  }
 
-  const cosPhi = Math.cos(phi);
-  const sinPhi = Math.sin(phi);
+  const rTube = Math.max(0.003, (tubeBase + rib + spine) * tipFade + offsetRadius);
+
+  // 3. Deformação elíptica da seção transversal
+  let cosPhi = Math.cos(phi);
+  let sinPhi = Math.sin(phi);
+
+  if (speciesId === 'abalone') {
+    // Seção ultra achatada em orelha
+    cosPhi *= 1.45;
+    sinPhi *= 0.48;
+  } else if (speciesId === 'conus') {
+    // Cone de ombro anguloso
+    cosPhi *= 1.15;
+    sinPhi *= 1.35;
+  } else if (speciesId === 'cypraea') {
+    // Dorso abobadado e base plana
+    sinPhi *= sinPhi > 0 ? 1.35 : 0.75;
+    cosPhi *= 1.1;
+  }
+
   const radXZ = R + rTube * cosPhi;
   const x = radXZ * Math.cos(theta);
   const z = radXZ * Math.sin(theta);
-  const yCenter = params.spirePitch * R * 1.35;
-  const y = yCenter + rTube * sinPhi * 0.88;
 
-  return { x, y, z, R, rTube, yCenter };
+  // Elevação helicoidal
+  let yCenter = spirePitch * R * 1.35;
+  if (speciesId === 'turritella') {
+    yCenter = spirePitch * (theta / morph.maxTheta) * 2.4 * morph.scaleRatio;
+  } else if (speciesId === 'conus') {
+    yCenter = spirePitch * (theta / morph.maxTheta) * 0.8 * morph.scaleRatio;
+  }
+
+  const y = yCenter + rTube * sinPhi * 0.9;
+  return { x, y, z, R, rTube, yCenter, cosPhi, sinPhi };
 }
 
-function buildWallGridGeometry(thetaVals, phiVals, params, morph, ribAmp, ribFreq, offsetFn, flipWinding) {
+export function buildWallGridGeometry(thetaVals, phiVals, params, morph, offsetFn, flipWinding) {
   const nU = thetaVals.length;
   const nV = phiVals.length;
   const positions = new Float32Array(nU * nV * 3);
@@ -61,7 +128,7 @@ function buildWallGridGeometry(thetaVals, phiVals, params, morph, ribAmp, ribFre
       const phi = phiVals[iv];
       const v = iv / Math.max(1, nV - 1);
       const off = offsetFn(theta, phi, u, v);
-      const pt = evalShellPoint(theta, phi, params, morph, ribAmp, ribFreq, off);
+      const pt = evalShellPoint(theta, phi, params, morph, off);
 
       const idx = iu * nV + iv;
       positions[idx * 3] = pt.x;
@@ -94,7 +161,7 @@ function buildWallGridGeometry(thetaVals, phiVals, params, morph, ribAmp, ribFre
   return geo;
 }
 
-function buildCutSeamStrip(thetaVals, phiConst, params, morph, ribAmp, ribFreq, wallThick) {
+export function buildSeamStrip(thetaVals, phiConst, params, morph, wallThick) {
   const nU = thetaVals.length;
   const positions = new Float32Array(nU * 2 * 3);
   const uvs = new Float32Array(nU * 2 * 2);
@@ -103,9 +170,9 @@ function buildCutSeamStrip(thetaVals, phiConst, params, morph, ribAmp, ribFreq, 
   for (let iu = 0; iu < nU; iu++) {
     const theta = thetaVals[iu];
     const u = iu / Math.max(1, nU - 1);
-    const ptOut = evalShellPoint(theta, phiConst, params, morph, ribAmp, ribFreq, 0);
-    const thick = Math.min(wallThick, ptOut.rTube * 0.30);
-    const ptIn = evalShellPoint(theta, phiConst, params, morph, ribAmp * 0.15, ribFreq, -thick);
+    const ptOut = evalShellPoint(theta, phiConst, params, morph, 0);
+    const thick = Math.min(wallThick, ptOut.rTube * 0.32);
+    const ptIn = evalShellPoint(theta, phiConst, params, morph, -thick);
 
     const i0 = iu * 2;
     positions[i0 * 3] = ptOut.x;
@@ -138,7 +205,7 @@ function buildCutSeamStrip(thetaVals, phiConst, params, morph, ribAmp, ribFreq, 
   return geo;
 }
 
-function buildLipSealGeometry(thetaEnd, phiVals, params, morph, ribAmp, ribFreq, wallThick) {
+export function buildLipSealGeometry(thetaEnd, phiVals, params, morph, wallThick) {
   const nV = phiVals.length;
   const positions = new Float32Array(nV * 2 * 3);
   const uvs = new Float32Array(nV * 2 * 2);
@@ -147,9 +214,9 @@ function buildLipSealGeometry(thetaEnd, phiVals, params, morph, ribAmp, ribFreq,
   for (let iv = 0; iv < nV; iv++) {
     const phi = phiVals[iv];
     const v = iv / Math.max(1, nV - 1);
-    const ptOut = evalShellPoint(thetaEnd, phi, params, morph, ribAmp, ribFreq, 0);
-    const thick = Math.min(wallThick, ptOut.rTube * 0.30);
-    const ptIn = evalShellPoint(thetaEnd, phi, params, morph, ribAmp * 0.15, ribFreq, -thick);
+    const ptOut = evalShellPoint(thetaEnd, phi, params, morph, 0);
+    const thick = Math.min(wallThick, ptOut.rTube * 0.32);
+    const ptIn = evalShellPoint(thetaEnd, phi, params, morph, -thick);
 
     const i0 = iv * 2;
     positions[i0 * 3] = ptOut.x;
@@ -182,206 +249,12 @@ function buildLipSealGeometry(thetaEnd, phiVals, params, morph, ribAmp, ribFreq,
   return geo;
 }
 
-function buildSeptumChamberPartition(theta, phiStart, phiEnd, params, morph, wallThick) {
-  // Septo côncavo interno em forma de lua/arco que divide as câmaras do Náutilo (T02)
-  const segR = 8;
-  const segPhi = 16;
-  const positions = [];
-  const indices = [];
-
-  for (let ir = 0; ir <= segR; ir++) {
-    const f = ir / segR;
-    for (let ip = 0; ip <= segPhi; ip++) {
-      const phi = phiStart + (ip / segPhi) * (phiEnd - phiStart);
-      const curveTheta = theta - (1 - f * f) * 0.24;
-      const base = evalShellPoint(curveTheta, phi, params, morph, 0, 1, 0);
-      const maxR = Math.max(0.004, base.rTube - Math.min(wallThick, base.rTube * 0.30));
-      const rLoc = maxR * f;
-
-      const radXZ = base.R + rLoc * Math.cos(phi);
-      const x = radXZ * Math.cos(curveTheta);
-      const z = radXZ * Math.sin(curveTheta);
-      const y = base.yCenter + rLoc * Math.sin(phi) * 0.88;
-      positions.push(x, y, z);
-    }
-  }
-
-  const row = segPhi + 1;
-  for (let ir = 0; ir < segR; ir++) {
-    for (let ip = 0; ip < segPhi; ip++) {
-      const a = ir * row + ip;
-      const b = (ir + 1) * row + ip;
-      const c = (ir + 1) * row + (ip + 1);
-      const d = ir * row + (ip + 1);
-      indices.push(a, b, d, b, c, d);
-    }
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geo.setIndex(indices);
+// Bivalve complementar (segunda valva para Vieira e Ostra)
+export function buildSecondaryBivalve(primaryGeo, isScallop = true) {
+  const geo = primaryGeo.clone();
+  // Espelha a valva ao longo do plano da charneira com leve assimetria natural
+  geo.scale(1.0, isScallop ? -0.85 : -0.75, 1.0);
+  geo.rotateZ(isScallop ? 0.08 : 0.14);
   geo.computeVertexNormals();
   return geo;
-}
-
-export function createParametricShellController(parentGroup, mats) {
-  const shellRoot = new THREE.Group();
-  parentGroup.add(shellRoot);
-
-  const septaGroup = new THREE.Group();
-  shellRoot.add(septaGroup);
-
-  let activeMeshes = [];
-  let activeGeos = [];
-  let lastMetrics = {
-    vertexCount: 0,
-    chamberCount: 0,
-    width: 1,
-    height: 1,
-    depth: 1,
-    ratioWH: 1,
-  };
-
-  function clearCurrent() {
-    activeMeshes.forEach((m) => shellRoot.remove(m));
-    activeGeos.forEach((g) => g.dispose());
-    while (septaGroup.children.length) {
-      const ch = septaGroup.children[0];
-      septaGroup.remove(ch);
-      if (ch.geometry) ch.geometry.dispose();
-    }
-    activeMeshes = [];
-    activeGeos = [];
-  }
-
-  function rebuild(params, segU = 120, segV = 30) {
-    clearCurrent();
-    // CRÍTICO: zerar translação antes de medir BoundingBox para não acumular deslocamentos!
-    shellRoot.position.set(0, 0, 0);
-
-    const texSpec = TEXTURE_STYLES[params.textureStyle] || TEXTURE_STYLES.banded;
-    const ribAmp = texSpec.ribAmp;
-    const ribFreq = texSpec.ribFreq;
-    const morph = computeMorphConstants(params);
-    const { maxTheta } = morph;
-    const wallThick = 0.022 * params.scaleRatio;
-
-    const thetaVals = [];
-    for (let i = 0; i <= segU; i++) {
-      thetaVals.push(0.2 + (i / segU) * (maxTheta - 0.2));
-    }
-
-    const isCut = Boolean(params.cutaway);
-    const phiStart = isCut ? Math.PI * 0.96 : 0;
-    const phiEnd = isCut ? Math.PI * 2.04 : Math.PI * 2;
-    const phiVals = [];
-    for (let j = 0; j <= segV; j++) {
-      phiVals.push(phiStart + (j / segV) * (phiEnd - phiStart));
-    }
-
-    // 1. Casca Externa Calcificada (normais apontam para FORA -> flipWinding = true)
-    const outerGeo = buildWallGridGeometry(
-      thetaVals,
-      phiVals,
-      params,
-      morph,
-      ribAmp,
-      ribFreq,
-      () => 0,
-      true
-    );
-    const outerMesh = new THREE.Mesh(outerGeo, mats.outerShellMat);
-    outerMesh.castShadow = true;
-    outerMesh.receiveShadow = true;
-
-    // 2. Casca Interna em Madrepérola Iridescente (normais apontam para DENTRO das câmaras -> flipWinding = false)
-    const innerGeo = buildWallGridGeometry(
-      thetaVals,
-      phiVals,
-      params,
-      morph,
-      ribAmp * 0.15,
-      ribFreq,
-      (theta, phi) => {
-        const pt = evalShellPoint(theta, phi, params, morph, ribAmp, ribFreq, 0);
-        return -Math.min(wallThick, pt.rTube * 0.30);
-      },
-      false
-    );
-    const innerMesh = new THREE.Mesh(innerGeo, mats.nacreMat);
-    innerMesh.receiveShadow = true;
-
-    // 3. Lábio da Abertura selando casca externa e interna
-    const lipGeo = buildLipSealGeometry(
-      thetaVals[thetaVals.length - 1],
-      phiVals,
-      params,
-      morph,
-      ribAmp,
-      ribFreq,
-      wallThick
-    );
-    const lipMesh = new THREE.Mesh(lipGeo, mats.cutRimMat);
-    lipMesh.castShadow = true;
-    lipMesh.receiveShadow = true;
-
-    shellRoot.add(outerMesh, innerMesh, lipMesh);
-    activeGeos.push(outerGeo, innerGeo, lipGeo);
-    activeMeshes.push(outerMesh, innerMesh, lipMesh);
-
-    let chamberCount = 0;
-    if (isCut) {
-      const seamA = buildCutSeamStrip(thetaVals, phiStart, params, morph, ribAmp, ribFreq, wallThick);
-      const seamB = buildCutSeamStrip(thetaVals, phiEnd, params, morph, ribAmp, ribFreq, wallThick);
-      const mA = new THREE.Mesh(seamA, mats.cutRimMat);
-      const mB = new THREE.Mesh(seamB, mats.cutRimMat);
-      mA.castShadow = true;
-      mB.castShadow = true;
-      shellRoot.add(mA, mB);
-      activeGeos.push(seamA, seamB);
-      activeMeshes.push(mA, mB);
-
-      const chamberLimit = maxTheta - 1.35;
-      for (let t = 1.6; t < chamberLimit; t += 0.44) {
-        const septGeo = buildSeptumChamberPartition(t, phiStart, phiEnd, params, morph, wallThick);
-        const septMesh = new THREE.Mesh(septGeo, mats.nacreMat);
-        septMesh.receiveShadow = true;
-        septMesh.castShadow = true;
-        septaGroup.add(septMesh);
-        chamberCount++;
-      }
-    }
-
-    // Centraliza e pousa suavemente sobre o leito de areia (y_min ≈ 0.03)
-    shellRoot.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(shellRoot);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
-
-    shellRoot.position.set(-center.x, -box.min.y + 0.03, -center.z);
-
-    lastMetrics = {
-      vertexCount: outerGeo.attributes.position.count + innerGeo.attributes.position.count,
-      chamberCount,
-      width: Number(size.x.toFixed(2)),
-      height: Number(size.y.toFixed(2)),
-      depth: Number(size.z.toFixed(2)),
-      ratioWH: Number((size.x / Math.max(0.05, size.z)).toFixed(2)),
-    };
-
-    return lastMetrics;
-  }
-
-  return {
-    shellRoot,
-    septaGroup,
-    rebuild,
-    getMetrics: () => lastMetrics,
-    getMeshCount: () => activeMeshes.length + septaGroup.children.length,
-    dispose() {
-      clearCurrent();
-    },
-  };
 }

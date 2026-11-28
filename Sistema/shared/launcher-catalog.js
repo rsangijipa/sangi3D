@@ -10,6 +10,7 @@
       'bancada-do-florista', 'colmeia-transparente', 'estufa-das-borboletas', 'jardim-dos-fungos',
       'lago-3d-interativo', 'oficina-de-bonsais', 'terrario-de-vidro',
       'floresta-bioluminescente', 'escultor-de-planetas', 'universo-de-uma-gota', 'bougainvillea',
+      'arquitetura-de-uma-pena', 'hibiscus-rosa-sinensis', 'ipe-rosa',
       'cosmos-e-hesperiidae', 'passarela-na-mata-tropical', 'poca-pos-chuva-e-espirradeiras',
     ] },
     { id: 'oficinas', label: 'Arte e artesanato', hue: 36, entries: [
