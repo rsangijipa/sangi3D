@@ -1,12 +1,13 @@
+# Cópia para publicar online (gerada por Sistema/scripts/prepare-online-build.mjs)
+Publicacao_Online/
+
 # Dependências e pacotes
 node_modules/
 **/node_modules/
 
-# Builds compilados pelo launcher
+# Builds compilados pelo launcher (gerados de novo ao abrir o launcher)
 dist/
 **/dist/
-!launcher/**/dist/
-!launcher/**/dist/**
 .dist-launcher-backup/
 **/.dist-launcher-backup/
 .launcher-build

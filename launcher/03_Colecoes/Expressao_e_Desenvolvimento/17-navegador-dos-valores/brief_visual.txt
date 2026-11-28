@@ -1,4 +1,0 @@
-17 — Navegador dos Valores
-Veleiro artesanal em mar aberto com ilhas ao horizonte, bússola de latão, velas de linho e convés de madeira; nascer do sol refletido na água, vento moderado
-terceira pessoa próxima à popa, vela, bússola e destino visíveis; modo diorama reduz movimento
-HUD: Rumo / Ajustar vela / Leme / Ancorar / Meu destino
