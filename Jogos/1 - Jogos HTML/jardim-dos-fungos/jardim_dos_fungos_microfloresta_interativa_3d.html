@@ -373,6 +373,19 @@
       pointer-events: none;
     }
 
+    .goals-card { padding: 10px 12px; }
+    .goals-head { all: unset; cursor: pointer; display: flex; width: 100%; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--text, #e8f3ec); }
+    .goals-head:focus-visible { outline: 2px solid #7fd8b0; outline-offset: 3px; border-radius: 6px; }
+    .goals-count { font-variant-numeric: tabular-nums; color: #9fe3c4; font-size: 11px; }
+    .goals-bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.08); margin: 8px 0 6px; overflow: hidden; }
+    .goals-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#4fbf8f,#d9c46a); transition: width .6s ease; }
+    .goals-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    .goals-list li { display: flex; gap: 8px; align-items: center; font-size: 11.5px; color: rgba(232,243,236,.72); line-height: 1.3; }
+    .goals-list li::before { content: ''; flex: 0 0 10px; height: 10px; border-radius: 50%; border: 1.5px solid rgba(159,227,196,.55); }
+    .goals-list li.done { color: #bdebd5; }
+    .goals-list li.done::before { background: #4fbf8f; border-color: #4fbf8f; box-shadow: 0 0 8px rgba(79,191,143,.7); }
+    .goals-card.collapsed .goals-list, .goals-card.collapsed .goals-bar { display: none; }
+    @media (max-width: 640px) { .goals-card { padding: 8px 10px; } .goals-list li { font-size: 11px; } }
     .hud-card {
       background: var(--bg-panel);
       backdrop-filter: blur(12px);
@@ -1029,6 +1042,13 @@
       .brand-title {
         font-size: 0.85rem;
       }
+      /* Celular: barras roláveis horizontalmente, sem sobreposição de rótulos */
+      .topbar { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; justify-content: flex-start; }
+      .topbar::-webkit-scrollbar, .dock::-webkit-scrollbar { display: none; }
+      .topbar-group { flex: 0 0 auto; }
+      .brand-sub, .brand-subtitle { display: none; }
+      .dock { max-width: calc(100vw - 16px); overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; justify-content: flex-start; }
+      .dock-btn { flex: 0 0 auto; white-space: nowrap; min-height: 44px; padding-left: 12px; padding-right: 12px; }
     }
   </style>
 </head>
@@ -1118,6 +1138,14 @@
           <span id="hud-fps" style="color:var(--text-muted);font-variant-numeric:tabular-nums;">-- fps</span>
         </span>
       </div>
+    </section>
+
+    <section id="goals-panel" class="hud-card goals-card" aria-label="Metas do ateliê">
+      <button type="button" id="goals-toggle" class="goals-head" aria-expanded="true">
+        <span>Metas do ateliê</span><span id="goals-count" class="goals-count">0/6</span>
+      </button>
+      <div class="goals-bar"><i id="goals-fill"></i></div>
+      <ul id="goals-list" class="goals-list"></ul>
     </section>
 
     <section id="guide-panel" class="hud-card guide-card" style="display:none;" aria-live="polite">
@@ -2278,6 +2306,7 @@
     let RenderPass = null;
     let UnrealBloomPass = null;
     let OutputPass = null;
+    let ShaderPass = null;
 
     const sceneCtx = {
       renderer: null,
@@ -2398,8 +2427,15 @@
               0.35 * valueNoise2D(u * 28, v * 28, 28, seed + 11) +
               0.25 * valueNoise2D(u * 64, v * 64, 64, seed + 23);
           } else if (mode === 'wood_table') {
-            const grain = Math.sin((v * 24 + valueNoise2D(u * 4, v * 12, 12, seed) * 2.5) * Math.PI);
-            h = 0.5 + 0.25 * grain + 0.25 * valueNoise2D(u * 16, v * 48, 48, seed + 9);
+            // Pranchas retas com veio longitudinal e juntas escuras (evita leitura de "água")
+            const plank = Math.floor(u * 6);
+            const pu = u * 6 - plank;
+            const warp = valueNoise2D(u * 6, v * 2, 2, seed + plank * 7) * 0.9;
+            const grain = Math.sin((pu * 5.0 + warp + plank * 0.37) * Math.PI * 2.0);
+            const fine = valueNoise2D(u * 96, v * 8, 8, seed + 9);
+            const tint = valueNoise2D(plank + 0.5, 0.5, 64, seed + 3) * 0.18;
+            h = 0.46 + 0.10 * grain + 0.20 * fine + tint;
+            if (pu < 0.025 || pu > 0.975) h = 0.06;
           } else {
             h =
               0.44 * valueNoise2D(u * 10, v * 10, 10, seed) +
@@ -2857,7 +2893,7 @@
         sceneCtx.envRT = envRT;
       }
 
-      const camera = new THREE.PerspectiveCamera(36, w / h, 0.02, 14);
+      const camera = new THREE.PerspectiveCamera(36 * Math.min(1.85, Math.pow(Math.max(1, h / Math.max(1, w)), 0.75)), w / h, 0.02, 14);
       camera.position.set(0.68, 0.50, 0.80);
       sceneCtx.camera = camera;
 
@@ -2958,9 +2994,10 @@
         roughness: 0.78,
         metalness: 0.04
       });
-      sceneCtx.textures.table.map.repeat.set(5, 5);
-      sceneCtx.textures.table.normalMap.repeat.set(5, 5);
-      sceneCtx.textures.table.roughnessMap.repeat.set(5, 5);
+      sceneCtx.textures.table.map.repeat.set(2.2, 2.2);
+      sceneCtx.textures.table.normalMap.repeat.set(2.2, 2.2);
+      sceneCtx.textures.table.roughnessMap.repeat.set(2.2, 2.2);
+      tableMat.normalScale.set(0.45, 0.45);
       const table = new THREE.Mesh(tableGeo, tableMat);
       table.rotation.x = -Math.PI / 2;
       table.receiveShadow = true;
@@ -3613,15 +3650,44 @@
       condFront.renderOrder = 5;
       scene.add(condFront);
       sceneCtx.meshes.condensationOverlay = condMat;
+      sceneCtx.glassMat = glassMat;
 
       // Cinema Bloom Composer
       if (EffectComposer && RenderPass && UnrealBloomPass && OutputPass) {
         try {
           const composer = new EffectComposer(renderer);
+          try {
+            composer.renderTarget1.samples = 4;
+            composer.renderTarget2.samples = 4;
+          } catch { /* MSAA opcional */ }
           composer.addPass(new RenderPass(scene, camera));
           const bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.26, 0.48, 0.74);
           composer.addPass(bloom);
           composer.addPass(new OutputPass());
+          if (ShaderPass) {
+            // Grade final: saneia NaN/Inf (amostras MSAA de borda), vinheta suave, grão fino e tom quente-musgo
+            const grade = new ShaderPass({
+              uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uVig: { value: 0.32 } },
+              vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+              fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uVig; varying vec2 vUv;
+                float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)) + uTime) * 43758.5453); }
+                void main(){
+                  vec4 c = texture2D(tDiffuse, vUv);
+                  if (any(notEqual(c, c)) || any(greaterThan(abs(c.rgb), vec3(65000.0)))) c = vec4(0.0,0.0,0.0,1.0);
+                  vec3 col = clamp(c.rgb, 0.0, 1.0);
+                  float l = dot(col, vec3(0.2126,0.7152,0.0722));
+                  col = mix(col, col * vec3(1.03,1.01,0.96), smoothstep(0.35,0.9,l));
+                  col = mix(col, col * vec3(0.94,1.02,1.04), 1.0 - smoothstep(0.0,0.35,l));
+                  vec2 d = vUv - 0.5;
+                  float vig = 1.0 - uVig * smoothstep(0.25, 0.85, clamp(dot(d,d) * 2.2, 0.0, 1.0));
+                  col *= vig;
+                  col += (h(vUv * 913.0) - 0.5) * 0.018;
+                  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+                }`
+            });
+            composer.addPass(grade);
+            sceneCtx.gradePass = grade;
+          }
           sceneCtx.composer = composer;
           sceneCtx.bloomPass = bloom;
         } catch {
@@ -3911,7 +3977,7 @@
       }
       if (sceneCtx.meshes.condensationOverlay) {
         const rainBoost = state.lightPreset === 'chuva' ? 0.16 : 0;
-        sceneCtx.meshes.condensationOverlay.opacity = clamp((hum - 44) / 108 + rainBoost, 0.03, 0.58);
+        sceneCtx.meshes.condensationOverlay.opacity = clamp((hum - 44) / 108 + rainBoost, 0.03, 0.58) * (sceneCtx.postActive ? 0.55 : 1.0);
       }
       if (sceneCtx.meshes.hygroNeedle) {
         sceneCtx.meshes.hygroNeedle.rotation.z = 1.15 - humNorm * 2.3;
@@ -4188,6 +4254,50 @@
     // 8. AÇÕES DO USUÁRIO (actions)
     // =========================================================================
     let toastTimer = null;
+    const GOALS = [
+      { id: 'broto', txt: 'Veja o primeiro fungo brotar', ok: (m) => m.mushroomCount >= 1 },
+      { id: 'rede', txt: 'Expanda a rede de micélio a 40 nós', ok: (m) => m.nodeCount >= 40 },
+      { id: 'maduras', txt: 'Amadureça 3 espécies diferentes', ok: (m) => m.matureSpeciesCount >= 3 },
+      { id: 'simbiose', txt: 'Forme 2 simbioses com raízes', ok: (m) => m.symbiosisLinks >= 2 },
+      { id: 'esporos', txt: 'Colete 5 esporos com a lupa', ok: (m) => m.sporesHarvested >= 5 },
+      { id: 'raro', txt: 'Descubra um fungo raro', ok: (m) => m.rareCount >= 1 || (state.discoveredRare || []).length >= 1 }
+    ];
+    let goalsDone = new Set();
+    try { goalsDone = new Set(JSON.parse(localStorage.getItem('jdf-metas') || '[]')); } catch { goalsDone = new Set(); }
+    let goalsBuilt = false;
+    function updateGoals(m) {
+      const list = document.getElementById('goals-list');
+      if (!list) return;
+      if (!goalsBuilt) {
+        goalsBuilt = true;
+        list.innerHTML = GOALS.map((g) => `<li data-goal="${g.id}">${g.txt}</li>`).join('');
+        const card = document.getElementById('goals-panel');
+        const btn = document.getElementById('goals-toggle');
+        if (window.matchMedia('(max-width: 640px)').matches) { card.classList.add('collapsed'); btn.setAttribute('aria-expanded', 'false'); }
+        btn.addEventListener('click', () => {
+          const c = card.classList.toggle('collapsed');
+          btn.setAttribute('aria-expanded', String(!c));
+        });
+      }
+      let changed = false;
+      for (const g of GOALS) {
+        if (!goalsDone.has(g.id) && g.ok(m)) {
+          goalsDone.add(g.id);
+          changed = true;
+          showToast(`Meta cumprida: ${g.txt} ✦`);
+          try { audio.playSymbiosis(); } catch { /* áudio opcional */ }
+        }
+      }
+      for (const li of list.children) li.classList.toggle('done', goalsDone.has(li.dataset.goal));
+      const n = goalsDone.size;
+      document.getElementById('goals-count').textContent = `${n}/${GOALS.length}`;
+      document.getElementById('goals-fill').style.width = `${(n / GOALS.length) * 100}%`;
+      if (changed) {
+        try { localStorage.setItem('jdf-metas', JSON.stringify([...goalsDone])); } catch { /* sem storage */ }
+        if (n === GOALS.length) setTimeout(() => showToast('Microfloresta completa! Todas as metas do ateliê cumpridas.'), 3000);
+      }
+    }
+
     function showToast(msg) {
       const el = document.getElementById('toast');
       if (!el) return;
@@ -5028,7 +5138,14 @@
 
       sceneCtx.controls.update();
 
-      if (state.qualityMode === 'cinema' && sceneCtx.composer) {
+      const usePost = sceneCtx.composer && (state.qualityMode === 'cinema' || (state.qualityMode === 'equilibrado' && !window.matchMedia('(pointer: coarse)').matches));
+      if (sceneCtx.postActive !== !!usePost) {
+        sceneCtx.postActive = !!usePost;
+        // Com RT linear o vidro fica leitoso: reduz opacidade quando o pós está ativo
+        if (sceneCtx.glassMat) sceneCtx.glassMat.opacity = usePost ? 0.05 : 0.12;
+      }
+      if (usePost) {
+        if (sceneCtx.gradePass) sceneCtx.gradePass.uniforms.uTime.value = (performance.now() * 0.001) % 100.0;
         sceneCtx.composer.render();
       } else {
         sceneCtx.renderer.render(sceneCtx.scene, sceneCtx.camera);
@@ -5045,6 +5162,7 @@
         document.getElementById('m-mushrooms').textContent = String(m.mushroomCount);
         document.getElementById('hud-spores').textContent = `✦ ${m.sporesHarvested} esp.`;
         document.getElementById('hud-fps').textContent = `${sceneCtx.currentFps} fps`;
+        updateGoals(m);
       }
     }
 
@@ -5291,6 +5409,8 @@
         const w = container.clientWidth || window.innerWidth;
         const h = container.clientHeight || window.innerHeight;
         sceneCtx.camera.aspect = w / h;
+        // Retrato (celular): abre o FOV para o terrário caber na tela
+        sceneCtx.camera.fov = 36 * Math.min(1.85, Math.pow(Math.max(1, h / Math.max(1, w)), 0.75));
         sceneCtx.camera.updateProjectionMatrix();
         sceneCtx.renderer.setSize(w, h);
         if (sceneCtx.composer) sceneCtx.composer.setSize(w, h);
@@ -5340,6 +5460,9 @@
           const rpMod = await import('three/addons/postprocessing/RenderPass.js');
           const bloomMod = await import('three/addons/postprocessing/UnrealBloomPass.js');
           const outMod = await import('three/addons/postprocessing/OutputPass.js');
+          try {
+            ShaderPass = (await import('three/addons/postprocessing/ShaderPass.js')).ShaderPass;
+          } catch { ShaderPass = null; }
           EffectComposer = compMod.EffectComposer;
           RenderPass = rpMod.RenderPass;
           UnrealBloomPass = bloomMod.UnrealBloomPass;
