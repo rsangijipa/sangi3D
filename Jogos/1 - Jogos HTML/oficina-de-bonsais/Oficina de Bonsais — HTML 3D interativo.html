@@ -228,6 +228,11 @@
       transition: width 0.35s ease;
     }
 
+    .meter-fill.harmony { background: linear-gradient(90deg, #a77d3c, #d8b25a); }
+    .harmony-hint { margin-top: 5px; font-size: 11px; line-height: 1.35; color: var(--muted); max-width: 260px; }
+    .harmony-hint b { font-weight: 650; }
+    @media (max-width: 520px) { .harmony-hint { display: none; } }
+
     /* Painel Lateral de Ferramentas */
     .panel {
       position: absolute;
@@ -541,6 +546,12 @@
       <div class="meter-track"><div class="meter-fill" id="moistureBar" style="width: 62%;"></div></div>
       <span id="moisturePct">62%</span>
     </div>
+    <div class="meter-wrap" title="Harmonia da silhueta: equilíbrio, proporção e densidade">
+      <span>☯ Harmonia</span>
+      <div class="meter-track"><div class="meter-fill harmony" id="harmonyBar" style="width: 50%;"></div></div>
+      <span id="harmonyPct">50</span>
+    </div>
+    <div class="harmony-hint" id="harmonyHint" aria-live="polite"></div>
   </aside>
 
   <!-- Guia Passo a Passo -->
@@ -799,6 +810,7 @@
         }
         if (this.ctx.state === 'suspended') this.ctx.resume();
         if (!this.ambientStarted) this.startAmbient();
+        this.startMusic();
       }
       startAmbient() {
         if (!this.ctx || this.ambientStarted) return;
@@ -848,6 +860,45 @@
         const rainLevel = envState.weather === 2 ? 0.14 : 0.0;
         this.windGain.gain.setTargetAtTime(windLevel, now, 0.35);
         this.rainGain.gain.setTargetAtTime(rainLevel, now, 0.35);
+      }
+      playChime(rank = 1) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const scale = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+        for (let i = 0; i <= rank; i++) this.bell(scale[(i * 2) % scale.length], now + i * 0.16, 0.12);
+      }
+      bell(freq, when, vol = 0.06) {
+        const o = this.ctx.createOscillator(), o2 = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = 'sine'; o2.type = 'sine';
+        o.frequency.value = freq; o2.frequency.value = freq * 2.76;
+        const g2 = this.ctx.createGain(); g2.gain.value = 0.25;
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.exponentialRampToValueAtTime(vol, when + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 2.6);
+        o.connect(g); o2.connect(g2).connect(g); g.connect(this.master);
+        o.start(when); o2.start(when); o.stop(when + 2.7); o2.stop(when + 2.7);
+      }
+      knock(when) {
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(320, when);
+        o.frequency.exponentialRampToValueAtTime(140, when + 0.12);
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.exponentialRampToValueAtTime(0.18, when + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 0.35);
+        o.connect(g).connect(this.master); o.start(when); o.stop(when + 0.4);
+      }
+      startMusic() {
+        if (this.musicTimer || !this.ctx) return;
+        const penta = [392.0, 440.0, 523.25, 587.33, 659.25, 783.99];
+        let beat = 0;
+        this.musicTimer = setInterval(() => {
+          if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+          const now = this.ctx.currentTime;
+          beat++;
+          if (Math.random() < 0.55) this.bell(penta[Math.floor(Math.random() * penta.length)] * (Math.random() < 0.3 ? 0.5 : 1), now + Math.random() * 0.4, 0.035);
+          if (beat % 9 === 0) { this.knock(now + 0.1); this.knock(now + 0.32); }
+        }, 2600);
       }
       setMuted(m) {
         this.muted = m;
@@ -1294,7 +1345,53 @@
       $('closeJournalBtn').focus();
     }
 
+    let lastHarmonyRank = -1;
+    function harmonyScore(s) {
+      const g = graph(s);
+      if (g.size < 2) return { score: 0, hint: 'Deixe a muda crescer para formar uma silhueta.' };
+      let cx = 0, cz = 0, cnt = 0, minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, top = 0;
+      const childCount = new Map();
+      for (const v of g.values()) if (v.n.parent != null) childCount.set(v.n.parent, (childCount.get(v.n.parent) || 0) + 1);
+      for (const v of g.values()) {
+        const [x, y, z] = v.end;
+        if (!Number.isFinite(x + y + z)) continue;
+        if (!childCount.has(v.n.id)) { cx += x; cz += z; cnt++; }
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x); minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+        top = Math.max(top, y - config.baseY);
+      }
+      cnt = Math.max(cnt, 1); cx /= cnt; cz /= cnt;
+      const width = Math.max(0.05, Math.max(maxX - minX, maxZ - minZ));
+      const balance = clamp(1 - Math.hypot(cx, cz) / (width * 0.5), 0, 1);
+      const ratio = top / width;
+      const proportion = clamp(1 - Math.abs(ratio - 1.1) / 1.1, 0, 1);
+      const n = s.nodes.length;
+      const density = n < 30 ? n / 30 : n > 150 ? clamp(1 - (n - 150) / 60, 0, 1) : 1;
+      const care = clamp(0.6 + Math.min(s.nodes.filter(x => x.wire).length, 6) * 0.05 - Math.abs((s.moisture ?? 0.6) - 0.6) * 0.6, 0, 1);
+      const score = Math.round(100 * Math.pow(clamp(balance * 0.35 + proportion * 0.25 + density * 0.25 + care * 0.15, 0, 1), 2.2));
+      const weakest = [
+        [balance, 'Copa pende para um lado — pode os ramos do lado mais pesado.'],
+        [proportion, ratio > 1.1 ? 'Copa alta demais — encurte o ápice com a tesoura.' : 'Copa larga demais — arame ramos para cima e afine a silhueta.'],
+        [density, n < 30 ? 'Pouca ramificação — avance as estações para brotar.' : 'Copa densa demais — abra espaços para a luz.'],
+        [care, 'Cuide do substrato: rega na medida e alguns arames de formação.']
+      ].sort((a, b) => a[0] - b[0])[0];
+      const hint = score >= 85 ? 'Silhueta serena. O mestre aprova.' : weakest[1];
+      return { score, hint };
+    }
+    function updateHarmonyUI() {
+      const bar = $('harmonyBar'); if (!bar) return;
+      const { score, hint } = harmonyScore(state);
+      bar.style.width = `${score}%`;
+      $('harmonyPct').textContent = String(score);
+      const rank = score >= 85 ? 3 : score >= 70 ? 2 : score >= 50 ? 1 : 0;
+      const label = ['Rascunho', 'Em formação', 'Harmonioso', 'Obra-prima'][rank];
+      const b = document.createElement('b'); b.textContent = label + ' · ';
+      $('harmonyHint').replaceChildren(b, document.createTextNode(hint));
+      if (lastHarmonyRank >= 0 && rank > lastHarmonyRank) { notify(`Harmonia alcançou: ${label}`); audio?.playChime?.(rank); }
+      lastHarmonyRank = rank;
+    }
+
     function updateMoistureUI() {
+      updateHarmonyUI();
       const pct = Math.round((state.moisture ?? 0.6) * 100);
       $('moistureBar').style.width = `${pct}%`;
       $('moisturePct').textContent = `${pct}%`;
@@ -1918,12 +2015,22 @@
     async function make3D() {
       THREE = await import('three');
       ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+      let EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass;
+      try {
+        [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { ShaderPass }, { OutputPass }] = await Promise.all([
+          import('three/addons/postprocessing/EffectComposer.js'),
+          import('three/addons/postprocessing/RenderPass.js'),
+          import('three/addons/postprocessing/UnrealBloomPass.js'),
+          import('three/addons/postprocessing/ShaderPass.js'),
+          import('three/addons/postprocessing/OutputPass.js')
+        ]);
+      } catch (err) { console.warn('Pós-processamento indisponível', err); }
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.02;
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
 
       $('world').replaceChildren(renderer.domElement);
 
@@ -1942,6 +2049,41 @@
       controls.minPolarAngle = 0.25;
       controls.maxPolarAngle = 1.54;
       controls.enablePan = false;
+
+      // Pós-processamento cinematográfico (bloom suave + grade, vinheta e grão — com clamp contra NaN)
+      let composer = null, bloomPass = null, gradePass = null;
+      if (EffectComposer) {
+        const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 });
+        composer = new EffectComposer(renderer, rt);
+        composer.addPass(new RenderPass(scene, camera));
+        bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.55, 0.9);
+        composer.addPass(bloomPass);
+        gradePass = new ShaderPass({
+          uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uVignette: { value: 0.32 }, uWarm: { value: 0.03 } },
+          vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+          fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uVignette; uniform float uWarm; varying vec2 vUv;
+            float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+            void main(){
+              vec4 c = texture2D(tDiffuse, vUv);
+              vec3 col = clamp(c.rgb, vec3(0.0), vec3(64.0));
+              col *= vec3(1.0 + uWarm, 1.0, 1.0 - uWarm);
+              float l = clamp(dot(col, vec3(0.2126, 0.7152, 0.0722)), 0.0, 64.0);
+              col = max(mix(vec3(l), col, 1.08), vec3(0.0));
+              vec2 d = vUv - 0.5;
+              float v = clamp(1.0 - dot(d, d) * uVignette * 2.2, 0.0, 1.0);
+              col *= mix(0.74, 1.0, v);
+              col += (h(vUv * 913.0 + uTime) - 0.5) * 0.012 * clamp(l, 0.0, 1.0);
+              gl_FragColor = vec4(max(col, vec3(0.0)), c.a);
+            }`
+        });
+        composer.addPass(gradePass);
+        composer.addPass(new OutputPass());
+      }
+      const usePost = () => composer && quality !== 'Leve';
+      function renderFrame(t = 0) {
+        if (usePost()) { gradePass.uniforms.uTime.value = t % 100; composer.render(); }
+        else renderer.render(scene, camera);
+      }
 
       // Transição suave de câmera
       const camAnim = {
@@ -2656,6 +2798,7 @@
         const w = $('world').clientWidth || window.innerWidth;
         const h = $('world').clientHeight || window.innerHeight;
         renderer.setSize(w, h, false);
+        if (composer) { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h); }
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
       }
@@ -2758,7 +2901,7 @@
         hideUI = true;
         for (const id of ['dock', 'info', 'hint', 'header', 'panel']) $(id)?.classList.add('hidden');
         await new Promise(r => requestAnimationFrame(r));
-        renderer.render(scene, camera);
+        renderFrame(performance.now() / 1000);
 
         const expCanvas = document.createElement('canvas');
         expCanvas.width = canvas.width;
@@ -2990,7 +3133,8 @@
           }
         }
 
-        renderer.render(scene, camera);
+        if (bloomPass) bloomPass.strength = (envState.timeOfDay ?? 0) >= 2 ? 0.55 : 0.28;
+        renderFrame(time / 1000);
       }
 
       window.addEventListener('resize', resize);
