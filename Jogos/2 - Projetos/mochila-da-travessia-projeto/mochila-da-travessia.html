@@ -752,6 +752,20 @@
       .bottom-tools { width: 100%; justify-content: space-between; }
       .mode-grid { grid-template-columns: 1fr; }
     }
+
+    /* Telefones: libera mais área para a cena 3D */
+    @media (max-width: 600px) {
+      .top-bar .icon-btn, .top-actions .icon-btn { padding: 4px 7px; font-size: 0.72rem; min-height: 34px; }
+      .left-dock { max-height: 31dvh; }
+      .dock-grid { padding: 6px; gap: 4px; }
+      .item-card { min-height: 56px; }
+      .dock-actions .btn-primary, .dock-actions .btn-secondary { min-height: 36px; padding: 6px 8px; font-size: 0.76rem; }
+      .telemetry-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 6px; padding: 6px 8px; font-size: 0.68rem; }
+      .telemetry-strip .metric-val { font-size: 0.78rem; }
+      .bottom-tools { flex-wrap: nowrap; gap: 4px; padding: 4px 6px; }
+      .bottom-tools .icon-btn { padding: 4px 6px; font-size: 0.7rem; min-height: 34px; white-space: nowrap; }
+      .bottom-tools .select-styled { max-width: 42vw; font-size: 0.74rem; }
+    }
   </style>
 </head>
 <body>
@@ -1357,8 +1371,62 @@
         src.start();
       }
 
+      // Ambient bed: wind through the cabin + crackling lantern/fire (procedural, low level)
+      let amb = null;
+      let moodId = 'trilha_manha';
+      const MOOD_AUDIO = { trilha_manha: { wind: 0.05, crackle: 0.25, birds: true }, travessia_montanha: { wind: 0.09, crackle: 0.2, birds: false }, rotina_cuidado: { wind: 0.04, crackle: 0.3, birds: true }, cabana_silencio: { wind: 0.06, crackle: 0.55, birds: false } };
+      function startAmbience() {
+        if (!ctx || amb) return;
+        const len = ctx.sampleRate * 3;
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < len; i++) { last = last * 0.985 + (Math.random() * 2 - 1) * 0.015; d[i] = last * 6; }
+        const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+        const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.6;
+        const wg = ctx.createGain(); wg.gain.value = 0;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07;
+        const lfoG = ctx.createGain(); lfoG.gain.value = 180;
+        lfo.connect(lfoG); lfoG.connect(bp.frequency);
+        src.connect(bp); bp.connect(wg); wg.connect(masterGain);
+        src.start(); lfo.start();
+        amb = { src, lfo, wg, timer: null, birdTimer: null };
+        const crackle = () => {
+          if (!amb || !ctx) return;
+          const cfg = MOOD_AUDIO[moodId] || MOOD_AUDIO.trilha_manha;
+          if (state.settings.audioEnabled && !state.paused && Math.random() < cfg.crackle) {
+            const n = ctx.createBufferSource(); n.buffer = buf;
+            const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800 + Math.random() * 2400;
+            const g = ctx.createGain(); const t0 = ctx.currentTime;
+            g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.05, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+            n.connect(hp); hp.connect(g); g.connect(masterGain);
+            n.start(t0, Math.random() * 2, 0.06);
+          }
+          amb.timer = setTimeout(crackle, 90 + Math.random() * 420);
+        };
+        const bird = () => {
+          if (!amb || !ctx) return;
+          const cfg = MOOD_AUDIO[moodId] || MOOD_AUDIO.trilha_manha;
+          if (cfg.birds && state.settings.audioEnabled && !state.paused) {
+            const base = 2200 + Math.random() * 900;
+            for (let k = 0; k < 2 + Math.floor(Math.random() * 3); k++) setTimeout(() => playTone(base + k * 120, 0.07, 'sine', 0.035, base * 1.25), k * 110);
+          }
+          amb.birdTimer = setTimeout(bird, 4000 + Math.random() * 7000);
+        };
+        crackle(); bird();
+        applyAmbLevel();
+      }
+      function applyAmbLevel() {
+        if (!amb || !ctx) return;
+        const cfg = MOOD_AUDIO[moodId] || MOOD_AUDIO.trilha_manha;
+        const target = state.settings.audioEnabled && !state.paused ? cfg.wind : 0;
+        amb.wg.gain.setTargetAtTime(target, ctx.currentTime, 0.8);
+      }
       return {
-        enable() { ensureContext(); },
+        enable() { ensureContext(); startAmbience(); applyAmbLevel(); },
+        setMood(id) { moodId = id; applyAmbLevel(); },
+        refresh() { applyAmbLevel(); },
+        ready() { playTone(523, 0.14, 'sine', 0.12); setTimeout(() => playTone(659, 0.14, 'sine', 0.12), 120); setTimeout(() => playTone(784, 0.28, 'triangle', 0.12), 240); },
         pack() { playNoise(0.14, 720, 0.22); playTone(220, 0.12, 'triangle', 0.18, 290); },
         table() { playTone(150, 0.10, 'triangle', 0.20, 105); playNoise(0.07, 420, 0.14); },
         rotate() { playNoise(0.08, 1200, 0.12); playTone(380, 0.08, 'sine', 0.12, 460); },
@@ -1366,6 +1434,7 @@
         click() { playTone(440, 0.05, 'sine', 0.10, 520); },
         invalid() { playTone(190, 0.14, 'sine', 0.14, 150); },
         dispose() {
+          if (amb) { clearTimeout(amb.timer); clearTimeout(amb.birdTimer); try { amb.src.stop(); amb.lfo.stop(); } catch (_) {} amb = null; }
           if (ctx) {
             const c = ctx;
             ctx = null;
@@ -1679,6 +1748,101 @@
     rimWarm.position.set(1.6, 1.1, 1.4);
     scene.add(rimWarm);
 
+    // --- Procedural image-based lighting (PMREM of a tiny "cabin" scene: cool window + warm lantern) ---
+    (function buildEnvironment() {
+      try {
+        const envScene = new THREE.Scene();
+        envScene.background = new THREE.Color('#2A231C');
+        envScene.add(new THREE.Mesh(new THREE.BoxGeometry(10, 6, 10), new THREE.MeshBasicMaterial({ color: '#3A2C20', side: THREE.BackSide })));
+        const win = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 3.0, 3.4) }));
+        win.position.set(-2, 1, -4.9); envScene.add(win);
+        const warm = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(4.0, 2.2, 0.8) }));
+        warm.position.set(-2.5, 0.2, -1); envScene.add(warm);
+        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: '#6A5848', side: THREE.DoubleSide }));
+        ceil.rotation.x = Math.PI / 2; ceil.position.y = 2.9; envScene.add(ceil);
+        const pm = new THREE.PMREMGenerator(renderer);
+        const rt = pm.fromScene(envScene, 0.04);
+        scene.environment = rt.texture;
+        pm.dispose();
+      } catch (e) { console.warn('Env map indisponível', e); }
+    })();
+
+    // --- Stable HDR post-processing (MSAA RT + bloom leve + grade + vinheta + grão, sem NaN) ---
+    const Post = (() => {
+      const isGL2 = renderer.capabilities.isWebGL2;
+      const hdrType = isGL2 ? THREE.HalfFloatType : THREE.UnsignedByteType;
+      const opts = { type: hdrType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true };
+      const rtScene = (isGL2 && THREE.WebGLMultisampleRenderTarget) ? new THREE.WebGLMultisampleRenderTarget(4, 4, opts) : new THREE.WebGLRenderTarget(4, 4, opts);
+      if (rtScene.samples !== undefined) rtScene.samples = 4;
+      const smallOpts = { type: hdrType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
+      const rtA = new THREE.WebGLRenderTarget(4, 4, smallOpts);
+      const rtB = new THREE.WebGLRenderTarget(4, 4, smallOpts);
+      const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const quadScene = new THREE.Scene();
+      const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+      quad.frustumCulled = false;
+      quadScene.add(quad);
+      const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+      const SAFE = 'vec3 safe(vec3 c){ if (c.r != c.r || c.g != c.g || c.b != c.b) return vec3(0.0); return clamp(c, 0.0, 64.0); }';
+      const matBright = new THREE.ShaderMaterial({
+        uniforms: { tDiffuse: { value: null }, uThreshold: { value: 1.0 } }, vertexShader: vs, depthTest: false, depthWrite: false,
+        fragmentShader: `uniform sampler2D tDiffuse; uniform float uThreshold; varying vec2 vUv; ${SAFE}
+          void main(){ vec3 c = safe(texture2D(tDiffuse, vUv).rgb); float l = dot(c, vec3(0.2126,0.7152,0.0722));
+            float k = clamp((l - uThreshold) / max(l, 1e-3), 0.0, 1.0); gl_FragColor = vec4(min(c * k, vec3(8.0)), 1.0); }`
+      });
+      const matBlur = new THREE.ShaderMaterial({
+        uniforms: { tDiffuse: { value: null }, uDir: { value: new THREE.Vector2(1, 0) } }, vertexShader: vs, depthTest: false, depthWrite: false,
+        fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 uDir; varying vec2 vUv; ${SAFE}
+          void main(){ vec3 c = safe(texture2D(tDiffuse, vUv).rgb) * 0.227027;
+            c += safe(texture2D(tDiffuse, vUv + uDir * 1.3846).rgb) * 0.316216; c += safe(texture2D(tDiffuse, vUv - uDir * 1.3846).rgb) * 0.316216;
+            c += safe(texture2D(tDiffuse, vUv + uDir * 3.2307).rgb) * 0.070270; c += safe(texture2D(tDiffuse, vUv - uDir * 3.2307).rgb) * 0.070270;
+            gl_FragColor = vec4(c, 1.0); }`
+      });
+      const matFinal = new THREE.ShaderMaterial({
+        uniforms: { tScene: { value: null }, tBloom: { value: null }, uExposure: { value: 1.08 }, uBloom: { value: 0.32 }, uTime: { value: 0 }, uTint: { value: new THREE.Vector3(1, 1, 1) }, uVignette: { value: 0.32 } },
+        vertexShader: vs, depthTest: false, depthWrite: false,
+        fragmentShader: `uniform sampler2D tScene; uniform sampler2D tBloom; uniform float uExposure; uniform float uBloom; uniform float uTime; uniform vec3 uTint; uniform float uVignette; varying vec2 vUv; ${SAFE}
+          vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }
+          void main(){
+            vec3 c = safe(texture2D(tScene, vUv).rgb);
+            c += safe(texture2D(tBloom, vUv).rgb) * uBloom;
+            c = aces(c * uExposure * uTint);
+            float l = dot(c, vec3(0.2126,0.7152,0.0722));
+            c = clamp(mix(vec3(l), c, 1.06), 0.0, 1.0);
+            vec2 d = vUv - 0.5; c *= 1.0 - uVignette * smoothstep(0.25, 0.85, dot(d, d) * 2.2);
+            c = pow(clamp(c, 0.0, 1.0), vec3(1.0/2.2));
+            float gr = fract(sin(dot(vUv * 913.7 + uTime, vec2(12.9898,78.233))) * 43758.5453) - 0.5;
+            c += gr * 0.016;
+            gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+          }`
+      });
+      let enabled = true;
+      function pass(mat, target) { quad.material = mat; renderer.setRenderTarget(target); renderer.render(quadScene, quadCam); }
+      return {
+        get enabled() { return enabled; },
+        matFinal,
+        setEnabled(v) { enabled = !!v; renderer.toneMapping = enabled ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping; },
+        setSize(w, h, dpr) {
+          const W = Math.max(1, Math.floor(w * dpr)), H = Math.max(1, Math.floor(h * dpr));
+          rtScene.setSize(W, H);
+          rtA.setSize(Math.max(1, W >> 2), Math.max(1, H >> 2));
+          rtB.setSize(Math.max(1, W >> 2), Math.max(1, H >> 2));
+        },
+        render(sc, cam, t) {
+          if (!enabled) { renderer.setRenderTarget(null); renderer.render(sc, cam); return; }
+          renderer.setRenderTarget(rtScene); renderer.render(sc, cam);
+          matBright.uniforms.tDiffuse.value = rtScene.texture; pass(matBright, rtA);
+          for (let i = 0; i < 2; i++) {
+            matBlur.uniforms.tDiffuse.value = rtA.texture; matBlur.uniforms.uDir.value.set(1 / rtA.width, 0); pass(matBlur, rtB);
+            matBlur.uniforms.tDiffuse.value = rtB.texture; matBlur.uniforms.uDir.value.set(0, 1 / rtA.height); pass(matBlur, rtA);
+          }
+          matFinal.uniforms.tScene.value = rtScene.texture; matFinal.uniforms.tBloom.value = rtA.texture; matFinal.uniforms.uTime.value = t % 100;
+          pass(matFinal, null);
+        },
+        dispose() { [rtScene, rtA, rtB].forEach((r) => r.dispose()); [matBright, matBlur, matFinal].forEach((m) => m.dispose()); quad.geometry.dispose(); }
+      };
+    })();
+
     // Shared PBR Materials
     const matCanvas = new THREE.MeshStandardMaterial({ map: texCanvasGreen, bumpMap: texCanvasBump, bumpScale: 0.006, roughness: 0.88, metalness: 0.04 });
     const matLeather = new THREE.MeshStandardMaterial({ map: texLeather, roughness: 0.56, metalness: 0.08 });
@@ -1697,7 +1861,20 @@
     envGroup.add(tableMesh);
 
     // Cabin back log wall (split around window opening)
-    const matLog = new THREE.MeshStandardMaterial({ color: '#4B301E', roughness: 0.85, metalness: 0.04 });
+    const texBark = makeCanvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#4B301E'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 180; i++) {
+        const x = Math.random() * w;
+        g.strokeStyle = i % 2 ? 'rgba(25,14,8,0.42)' : 'rgba(120,84,52,0.30)';
+        g.lineWidth = 1 + Math.random() * 3;
+        g.beginPath(); g.moveTo(x, 0);
+        for (let y = 0; y <= h; y += 16) g.lineTo(x + Math.sin(y * 0.05 + i) * 4, y);
+        g.stroke();
+      }
+      for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(20,12,6,0.45)'; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 6, 10, 0, 0, Math.PI * 2); g.fill(); }
+    });
+    texBark.repeat.set(1, 3);
+    const matLog = new THREE.MeshStandardMaterial({ color: '#8C7360', map: texBark, bumpMap: texBark, bumpScale: 0.012, roughness: 0.88, metalness: 0.02 });
     for (let i = 0; i < 9; i++) {
       const y = -0.1 + i * 0.22;
       // Right wall logs
@@ -1730,7 +1907,26 @@
     // 3D Snowy Alpine Mountain Backdrop outside the window
     const skyBackdrop = new THREE.Mesh(
       new THREE.PlaneGeometry(6.5, 4.0),
-      new THREE.MeshBasicMaterial({ color: '#8BB4D9' })
+      new THREE.ShaderMaterial({
+        uniforms: { uTop: { value: new THREE.Color('#5F92C8') }, uBot: { value: new THREE.Color('#D9E8F2') }, uSun: { value: new THREE.Color('#FFF1D6') }, uSunPos: { value: new THREE.Vector2(0.28, 0.72) }, uTime: { value: 0 }, uLinear: { value: 0 } },
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+        fragmentShader: `uniform vec3 uTop; uniform vec3 uBot; uniform vec3 uSun; uniform vec2 uSunPos; uniform float uTime; uniform float uLinear; varying vec2 vUv;
+          float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+          float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
+          void main(){
+            float y = clamp(vUv.y, 0.0, 1.0);
+            vec3 c = mix(uBot, uTop, smoothstep(0.15, 1.0, y));
+            float d = length((vUv - uSunPos) * vec2(1.6, 1.0));
+            c += uSun * (exp(-d * 9.0) * 0.9 + exp(-d * 2.6) * 0.22);
+            vec2 q = vUv * vec2(3.0, 6.0) + vec2(uTime * 0.012, 0.0);
+            float cl = n(q) * 0.6 + n(q * 2.1) * 0.3 + n(q * 4.3) * 0.1;
+            cl = smoothstep(0.52, 0.82, cl) * smoothstep(0.35, 0.75, y);
+            c = mix(c, mix(uBot, vec3(1.0), 0.55), cl * 0.55);
+            c = clamp(c, 0.0, 4.0);
+            gl_FragColor = vec4(mix(c, pow(c, vec3(2.2)) * 0.85, uLinear), 1.0);
+          }`,
+        depthWrite: false
+      })
     );
     skyBackdrop.position.set(-0.8, 1.1, -3.6);
     envGroup.add(skyBackdrop);
@@ -1794,6 +1990,58 @@
       sp.userData = { phase: i * 1.1 };
       envGroup.add(sp);
       steamParticles.push(sp);
+    }
+
+    // Dust motes drifting in the window light beam + soft volumetric shaft
+    const dustCount = 140;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(dustCount * 3);
+    const dustSeed = new Float32Array(dustCount);
+    for (let i = 0; i < dustCount; i++) {
+      dustPos[i * 3] = -1.2 + Math.random() * 1.6; dustPos[i * 3 + 1] = 0.05 + Math.random() * 1.2; dustPos[i * 3 + 2] = -0.85 + Math.random() * 1.3;
+      dustSeed[i] = Math.random() * 100;
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dustTex = makeCanvasTex(32, 32, (g, w, h) => { const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    const dustMat = new THREE.PointsMaterial({ size: 0.012, map: dustTex, color: '#FFF0D8', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+    const dust = new THREE.Points(dustGeo, dustMat);
+    dust.frustumCulled = false;
+    envGroup.add(dust);
+
+    const beamMat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color('#FFF3DC') }, uStrength: { value: 0.045 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: 'uniform vec3 uColor; uniform float uStrength; varying vec2 vUv; void main(){ float a = smoothstep(0.0, 0.35, vUv.x) * smoothstep(1.0, 0.65, vUv.x) * smoothstep(0.0, 0.5, vUv.y) * smoothstep(1.0, 0.75, vUv.y); gl_FragColor = vec4(uColor * a * uStrength, 1.0); }',
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+    });
+    const beam = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.2), beamMat);
+    beam.position.set(-0.55, 0.55, -0.35);
+    beam.rotation.set(-0.95, 0.35, 0.15);
+    envGroup.add(beam);
+
+    // Journey mood: time-of-day lighting per travessia
+    const MOODS = {
+      trilha_manha: { skyTop: '#5F92C8', skyBot: '#E6EEF2', sun: '#FFF1D6', key: '#E5F0FF', keyI: 1.45, hemi: 0.72, lantern: 1.4, bg: '#212D2B', tint: [1.0, 1.0, 1.0], exp: 1.08 },
+      travessia_montanha: { skyTop: '#3E74B4', skyBot: '#C9DDEB', sun: '#FFFFFF', key: '#DDEBFF', keyI: 1.6, hemi: 0.78, lantern: 1.2, bg: '#1E2A30', tint: [0.97, 1.0, 1.04], exp: 1.05 },
+      rotina_cuidado: { skyTop: '#7C9AB8', skyBot: '#E8DCCB', sun: '#FFE7C4', key: '#F4EBDD', keyI: 1.2, hemi: 0.70, lantern: 1.8, bg: '#262722', tint: [1.03, 1.0, 0.96], exp: 1.06 },
+      cabana_silencio: { skyTop: '#2B3560', skyBot: '#E79A6A', sun: '#FFB070', key: '#FFC9A0', keyI: 0.75, hemi: 0.45, lantern: 2.6, bg: '#1A1714', tint: [1.07, 0.98, 0.9], exp: 1.12 }
+    };
+    let currentMoodId = null;
+    let lanternBase = 1.88;
+    function applyJourneyMood(jId) {
+      if (jId === currentMoodId) return;
+      currentMoodId = jId;
+      const md = MOODS[jId] || MOODS.trilha_manha;
+      const u = skyBackdrop.material.uniforms;
+      u.uTop.value.set(md.skyTop); u.uBot.value.set(md.skyBot); u.uSun.value.set(md.sun);
+      windowKey.color.set(md.key); windowKey.intensity = md.keyI;
+      hemiLight.intensity = md.hemi;
+      lanternBase = md.lantern;
+      scene.background.set(md.bg);
+      beamMat.uniforms.uColor.value.set(md.key);
+      Post.matFinal.uniforms.uTint.value.set(md.tint[0], md.tint[1], md.tint[2]);
+      Post.matFinal.uniforms.uExposure.value = md.exp;
+      AudioEngine.setMood(jId);
     }
 
     // Decorative: Carved Wooden Owl on Log Slice (right background)
@@ -2588,7 +2836,7 @@
             setPhase('organizar');
           } else {
             setPhase('seguir');
-            AudioEngine.buckle();
+            AudioEngine.buckle(); setTimeout(() => AudioEngine.ready(), 260);
             emitIntegrationEvent('complete', { phase: 'seguir', packedCount: packed.length });
           }
         });
@@ -2676,6 +2924,8 @@
       const m = computeMetrics(state);
       const modeObj = MODES.find((x) => x.id === state.mode) || MODES[0];
       const jObj = JOURNEYS[state.journeyId] || JOURNEYS.trilha_manha;
+      applyJourneyMood(jObj.id);
+      AudioEngine.refresh();
 
       document.getElementById('mode-badge').textContent = `${modeObj.label} · ${jObj.name}`;
       document.getElementById('audio-label').textContent = state.settings.audioEnabled ? 'Som: On' : 'Som: Off';
@@ -2817,6 +3067,11 @@
       renderer.setPixelRatio(dpr);
       renderer.shadowMap.enabled = q !== 'leve';
       steamParticles.forEach((sp) => { sp.visible = q !== 'leve'; });
+      dust.visible = q !== 'leve';
+      beam.visible = q !== 'leve';
+      Post.setEnabled(q !== 'leve');
+      skyBackdrop.material.uniforms.uLinear.value = q !== 'leve' ? 1 : 0;
+      Post.setSize(window.innerWidth, window.innerHeight, dpr);
       try { localStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify({ quality: q })); } catch (_) {}
       renderUI();
     }
@@ -2868,6 +3123,7 @@
         AudioEngine.enable();
         AudioEngine.click();
       }
+      AudioEngine.refresh();
       renderUI();
       showToast(state.settings.audioEnabled ? 'Áudio suave ativado.' : 'Áudio silenciado.');
     });
@@ -2989,6 +3245,7 @@
       camera.aspect = w / Math.max(1, h);
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      Post.setSize(w, h, renderer.getPixelRatio());
       syncSceneTargets();
     }
     window.addEventListener('resize', onResize);
@@ -3022,7 +3279,18 @@
       const t = now * 0.001;
 
       // Subtle lantern flame flicker (warm cozy cabin feel, zero harsh flashes)
-      lanternLight.intensity = 1.88 + Math.sin(t * 5.2) * 0.08 + Math.sin(t * 11.7) * 0.04;
+      lanternLight.intensity = lanternBase + Math.sin(t * 5.2) * 0.08 + Math.sin(t * 11.7) * 0.04 + Math.sin(t * 23.1) * 0.02;
+      skyBackdrop.material.uniforms.uTime.value = t % 1000;
+      if (dust.visible) {
+        const arr = dustGeo.attributes.position.array;
+        for (let i = 0; i < dustCount; i++) {
+          arr[i * 3 + 1] += (Math.sin(t * 0.3 + dustSeed[i]) * 0.012 + 0.004) * dt;
+          arr[i * 3] += Math.cos(t * 0.21 + dustSeed[i]) * 0.01 * dt;
+          if (arr[i * 3 + 1] > 1.3) arr[i * 3 + 1] = 0.05;
+        }
+        dustGeo.attributes.position.needsUpdate = true;
+        dustMat.opacity = 0.4 + Math.sin(t * 0.7) * 0.1;
+      }
       lFlame.scale.y = 0.94 + Math.sin(t * 7.5) * 0.08;
 
       // Rising steam wisps from camp mug
@@ -3082,10 +3350,11 @@
       camera.position.copy(camCurrentPos);
       camera.lookAt(lookCurrent);
 
-      renderer.render(scene, camera);
+      Post.render(scene, camera, t);
     }
 
     // Boot
+    scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach((m) => { if (m && m.isMeshStandardMaterial) m.envMapIntensity = 0.5; }); });
     applyQuality(state.settings.quality);
     onResize();
     syncSceneTargets();
@@ -3098,6 +3367,7 @@
       isDisposed = true;
       state.paused = true;
       if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      Post.dispose();
       renderer.dispose();
       AudioEngine.dispose();
     }
@@ -3108,7 +3378,9 @@
           calls: renderer?.info?.render?.calls ?? 0,
           triangles: renderer?.info?.render?.triangles ?? 0,
           paused: !!state.paused,
-          disposed: isDisposed
+          disposed: isDisposed,
+          mood: currentMoodId,
+          post: Post.enabled
         };
       }
     };
@@ -3125,10 +3397,11 @@
     });
     window.addEventListener('sangi:mute', (e) => {
       state.settings.audioEnabled = !e?.detail?.muted;
+      AudioEngine.refresh();
     });
     window.addEventListener('sangi:quality', (e) => {
       const q = String(e?.detail?.quality || '').toUpperCase();
-      applyQuality(q === 'LOW' ? 'leve' : q === 'BALANCED' ? 'equilibrada' : 'alta');
+      applyQuality(q === 'LOW' ? 'leve' : q === 'BALANCED' ? 'equilibrada' : 'cinema');
     });
     window.addEventListener('sangi:dispose', disposeAll);
     window.addEventListener('beforeunload', disposeAll);

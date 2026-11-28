@@ -19,3 +19,10 @@ Aplicação 3D interativa em WebGL (Three.js r128) ambientada em uma cabana de m
 - `tests/run_tests.mjs` — Testes automatizados de aceite.
 - `credits.md` — Proveniência e licenças.
 - `QA_REPORT.md` — Relatório real de verificação e matriz de evidências.
+
+## Upgrade premium (v2.1)
+- Pós-processamento HDR estável (RT MSAA HalfFloat, bloom leve, ACES, vinheta, grão) com saneamento de NaN; desligado em "Leve".
+- Iluminação baseada em imagem procedural (PMREM), céu com nuvens em shader, poeira no feixe de luz da janela, troncos com casca procedural.
+- Clima por viagem (manhã, montanha, rotina, entardecer de inverno) afeta luz, céu, lanterna e áudio.
+- Ambiência sonora procedural (vento, estalos da lanterna, pássaros) e acorde ao fechar as fivelas.
+- Layout de telefone mais compacto; correção do mapeamento de qualidade vindo do launcher (`HIGH` → Cinema).
