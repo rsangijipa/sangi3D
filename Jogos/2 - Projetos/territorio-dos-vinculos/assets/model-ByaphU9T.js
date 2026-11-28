@@ -56,7 +56,7 @@ import{$ as e,B as t,D as n,H as r,L as i,N as a,O as o,P as s,R as c,U as l,W a
       ${G}
       void main(){
         float along = vUv.y;
-        float fade = pow(1.0 - along, 1.6) * smoothstep(0.0, 0.08, along);
+        float fade = pow(clamp(1.0 - along, 0.0, 1.0), 1.6) * smoothstep(0.0, 0.08, along);
         float edge = pow(abs(dot(normalize(vN), normalize(vView))), 1.4);
         float side = fract(vUv.x);
         float soft = smoothstep(0.0, 0.18, side) * smoothstep(1.0, 0.82, side);
@@ -114,7 +114,7 @@ import{$ as e,B as t,D as n,H as r,L as i,N as a,O as o,P as s,R as c,U as l,W a
         off.z += (fract(aSeed.z * 7.13) - 0.5) * spread;
         vec4 mv = modelViewMatrix * vec4(uOrigin + off, 1.0);
         gl_PointSize = (0.012 + life * life * 0.32) * 260.0 * uPR / max(0.05, -mv.z);
-        vA = smoothstep(0.0, 0.05, life) * pow(1.0 - life, 1.8) * uOn;
+        vA = smoothstep(0.0, 0.05, life) * pow(clamp(1.0 - life, 0.0, 1.0), 1.8) * uOn;
         vSeed = aSeed.x; vLife = life;
         gl_Position = projectionMatrix * mv;
       }
@@ -183,8 +183,8 @@ import{$ as e,B as t,D as n,H as r,L as i,N as a,O as o,P as s,R as c,U as l,W a
       void main(){
         vec3 d = normalize(vDir);
         float y = d.y;
-        vec3 col = y > 0.0 ? mix(uHorizon, uTop, pow(y, 0.8)) : mix(uHorizon, uBottom, pow(-y, 0.4));
-        col += uSunColor * pow(1.0 - abs(y), 10.0) * 0.18;
+        vec3 col = y > 0.0 ? mix(uHorizon, uTop, pow(max(y, 0.0), 0.8)) : mix(uHorizon, uBottom, pow(max(-y, 0.0), 0.4));
+        col += uSunColor * pow(clamp(1.0 - abs(y), 0.0, 1.0), 10.0) * 0.18;
         float sd = dot(d, normalize(uSunDir));
         float disc = smoothstep(cos(uSunSize), cos(uSunSize * 0.7), sd);
         float glow = pow(max(sd, 0.0), 6.0) * 0.45 + pow(max(sd, 0.0), 64.0) * 0.8;

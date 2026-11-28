@@ -4799,12 +4799,16 @@ void main() {
           #else
             vec3 hdr = texture2D(tDiffuse, vUv).rgb;
           #endif
+          hdr = vec3(hdr.r >= 0.0 ? min(hdr.r, 64.0) : 0.0, hdr.g >= 0.0 ? min(hdr.g, 64.0) : 0.0, hdr.b >= 0.0 ? min(hdr.b, 64.0) : 0.0);
           vec3 col = ACESFilmicToneMapping(hdr);
           col = sRGBTransferOETF(vec4(col, 1.0)).rgb;
           float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
           col = mix(vec3(l), col, uSat);
           col = (col - 0.5) * uContrast + 0.5;
+          col = clamp(col, 0.0, 1.0);
           col = col * uGain + uLift * (1.0 - col);
+          float lum2 = dot(col, vec3(0.2126, 0.7152, 0.0722));
+          col += (vec3(1.0, 0.86, 0.68) - 0.82) * 0.06 * smoothstep(0.55, 1.0, lum2) + (vec3(0.62, 0.74, 0.92) - 0.76) * 0.05 * (1.0 - smoothstep(0.0, 0.35, lum2));
           float vig = smoothstep(0.95, 0.25, length(d * vec2(1.0, 0.85)) * 1.25);
           col *= mix(1.0, vig, uVignette);
           float g = rand(vUv * uRes + fract(uTime * 7.31) * 91.7) - 0.5;
