@@ -124,3 +124,8 @@ dialog textarea{min-height:75px}
 }
 @media(max-height:610px) and (min-width:760px){.panel{max-height:calc(100% - 98px);top:54%}.swatch{max-width:28px}.work-tab{min-height:34px}.brand{padding-block:4px}.brand h1{font-size:clamp(22px,3vw,40px)}.bottom{bottom:10px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+.expressions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.expressions .chip{min-height:32px;padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(214,174,112,.45);background:rgba(40,28,18,.55);color:#f3e2c4;cursor:pointer;transition:background .15s,transform .15s}
+.expressions .chip:hover,.expressions .chip:focus-visible{background:rgba(160,112,52,.45);transform:translateY(-1px)}
+@media (max-width:759px){.expressions .chip{min-height:38px}}

@@ -35,3 +35,10 @@ O aplicativo funciona sem serviços remotos. Nome, descrição e criações só 
 `public/atelier.webp` foi gerado com a ferramenta integrada ImageGen a partir da referência do projeto, com este prompt.
 
 > Create a new photorealistic wide 16:9 cinematic environment plate for a web 3D experience, based on the attached design solely as reference for scenery, palette and camera. No UI, text, symbols, borders, central mask or central pedestal anywhere in image. A dark antique Venetian mask maker's workshop in warm window light. Preserve layout: tall leaded sunlit window left with a few falling ivy leaves, ornate oval bronze mirror on the left third reflecting a soft window and antique objects, burgundy curtains, moody petrol blue-green wall in the exact center with just warm ambience. On right back shelves with smaller antique theatrical masks, glass lantern, plants and small ceramic pots. Foreground full width richly textured dark walnut workbench starts about 69% down frame, large central clear area of tabletop from x32% to x66% for a virtual brass pedestal; at far left cloth, little pottery with paintbrushes and hand tools, at far right pigment pots, paint palette and little bronze bowl. Warm romantic side light from upper left, physically realistic surfaces and wear, lovely depth of field but background still readable, a photographic dark amber antique painter's studio. Camera slightly above bench, straight on. Full bleed. Wide 16:9.
+
+## Upgrade premium (2026-11)
+- Sombras suaves (PCF) da máscara, adornos e personagem; resolução da sombra segue a qualidade escolhida.
+- Luz de vela com cintilação e poeira dourada no ar (respeita `prefers-reduced-motion`).
+- Adornos com material físico: verniz em cerâmica/pedra, brilho de tecido em fita/tecido/pena.
+- Expressões prontas (Neutra, Alegria, Tristeza, Raiva, Surpresa, Serenidade) com transição suave e desfazer.
+- Trilha ambiente do ateliê (ar + pad em quintas) e sino ao encaixar adornos/expressões quando o som está ligado.

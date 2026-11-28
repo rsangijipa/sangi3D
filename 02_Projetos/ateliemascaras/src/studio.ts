@@ -87,7 +87,15 @@ function contactShadow() {
 }
 
 function ornamentMesh(item: Ornament) {
-  const m = new T.MeshStandardMaterial({ color: item.color, metalness: item.kind === 'Linha' ? .65 : .1, roughness: .43, side: T.DoubleSide });
+  const glossy = item.kind === 'Cerâmica' || item.kind === 'Pedra' || item.kind === 'Abstrata';
+  const soft = item.kind === 'Tecido' || item.kind === 'Fita' || item.kind === 'Pena';
+  const m = new T.MeshPhysicalMaterial({
+    color: item.color, metalness: item.kind === 'Linha' ? .65 : .08,
+    roughness: glossy ? .28 : soft ? .78 : .5,
+    clearcoat: glossy ? .85 : 0, clearcoatRoughness: .18,
+    sheen: soft ? .8 : 0, sheenColor: new T.Color(item.color).lerp(new T.Color('#ffffff'),.4), sheenRoughness: .5,
+    side: T.DoubleSide,
+  });
   const group = new T.Group();
   if (item.kind === 'Flor') {
     for (let i=0;i<8;i++) {
@@ -129,6 +137,21 @@ function ornamentMesh(item: Ornament) {
   }
   group.scale.setScalar(item.size);
   return group;
+}
+
+function dust() {
+  const rng = random(4242);
+  const count = 140;
+  const pos = new Float32Array(count*3);
+  for (let i=0;i<count;i++) pos.set([(rng()-.5)*5.2,(rng()-.25)*3.6,(rng()-.5)*2.4+.6],i*3);
+  const geo = new T.BufferGeometry();
+  geo.setAttribute('position',new T.BufferAttribute(pos,3));
+  geo.setAttribute('uv',new T.BufferAttribute(new Float32Array(count*2),2));
+  const points = new T.Points(geo,new T.PointsMaterial({
+    color: 0xffe2aa, size: .022, transparent: true, opacity: .5, depthWrite: false, blending: T.AdditiveBlending, sizeAttenuation: true,
+  }));
+  points.renderOrder = 2;
+  return points;
 }
 
 function puppet() {
@@ -173,6 +196,8 @@ export class Studio {
   private sun = new T.DirectionalLight(0xffdbb6,2.58);
   private fill = new T.DirectionalLight(0xccd9e4,.82);
   private rimLight = new T.DirectionalLight(0xffae63,1.55);
+  private candle = new T.PointLight(0xff9a4a,1.1,9,1.6);
+  private motes: T.Points;
   private ray = new T.Raycaster();
   private warm = new T.Color();
   private dirty = true;
@@ -186,6 +211,8 @@ export class Studio {
   private automatic = true;
   private adaptiveAt = 0;
   private backdropImage = new Image();
+  private ambientAt = 0;
+  private candleBase = 1.1;
   targetRotation = 0;
   theater = false;
   movement = 'Balanço';
@@ -199,6 +226,17 @@ export class Studio {
     this.scene.environmentIntensity = .82;
     this.scene.add(new T.HemisphereLight(0xd8e1de,0x7a4e35,.41));
     this.sun.position.set(-3.8,4.5,5);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(1024,1024);
+    this.sun.shadow.bias = -.0006;
+    this.sun.shadow.normalBias = .02;
+    this.sun.shadow.radius = 4;
+    Object.assign(this.sun.shadow.camera,{left:-2.2,right:2.2,top:2.4,bottom:-2.2,near:.5,far:16});
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+    this.candle.position.set(-2.4,.4,2.2);
+    this.motes = dust();
+    this.scene.add(this.candle,this.motes);
     this.fill.position.set(4,1,4);
     this.rimLight.position.set(1.9,2,-3);
     this.scene.add(this.sun,this.fill,this.rimLight,this.stage,this.mirror);
@@ -206,6 +244,9 @@ export class Studio {
     this.turntable.add(this.stand,this.mask,this.body);
     this.mask.position.set(0,.232,-.15);
     this.mask.add(...this.faces,this.edge,this.ornaments);
+    for (const m of [...this.faces,this.edge]) { m.castShadow = true; m.receiveShadow = true; }
+    this.stand.traverse(o=>{ if (o instanceof T.Mesh) o.receiveShadow = true; });
+    this.body.traverse(o=>{ if (o instanceof T.Mesh) { o.castShadow = true; o.receiveShadow = true; } });
     this.mirrorMask = new T.Mesh(this.geos.outer, new T.MeshStandardMaterial({
       color: 0xc1a58c, map: this.surfaces[0].material.map, roughness: .85, transparent: true, opacity: .66,
     }));
@@ -255,6 +296,12 @@ export class Studio {
     this.automatic = value === 'auto';
     const cap = value === 'low' ? .78 : value === 'high' ? 2 : 1.45;
     this.deviceScale = Math.min(devicePixelRatio,cap);
+    const shadowSize = value === 'low' ? 512 : value === 'high' ? 2048 : 1024;
+    if (this.sun.shadow.mapSize.x !== shadowSize) {
+      this.sun.shadow.mapSize.set(shadowSize,shadowSize);
+      this.sun.shadow.map?.dispose();
+      this.sun.shadow.map = null;
+    }
     this.resize();
   }
   toggleZoom() { this.zoom = this.zoom === 1 ? 1.22 : 1; this.resize(); return this.zoom > 1; }
@@ -263,6 +310,7 @@ export class Studio {
     this.sun.color.copy(this.warm);
     this.sun.intensity = intensity * 2.8;
     this.rimLight.intensity = intensity * 1.42;
+    this.candleBase = intensity * 1.1;
     this.dirty = true;
   }
   setState(state: MaskState) {
@@ -272,7 +320,11 @@ export class Studio {
       group.traverse(o=>{ if (o instanceof T.Mesh) { o.geometry.dispose(); if (o.material !== gold) o.material.dispose(); } });
       group.removeFromParent();
     }
-    for (const item of state.ornaments) this.ornaments.add(ornamentMesh(item));
+    for (const item of state.ornaments) {
+      const mesh = ornamentMesh(item);
+      mesh.traverse(o=>{ if (o instanceof T.Mesh) o.castShadow = true; });
+      this.ornaments.add(mesh);
+    }
     this.positionOrnaments(state);
     this.dirty = true;
   }
@@ -313,7 +365,14 @@ export class Studio {
     const anim = Math.abs(this.rotation-this.targetRotation) > .0005;
     const cloth = this.ornaments.children.some(g=>g.children.some(o=>o.userData.fabric));
     const motion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!this.dirty && !anim && !(motion && (this.theater || cloth))) return;
+    if (!this.dirty && !anim && !motion && !this.theater && !cloth) return;
+    if (!this.dirty && !anim && !this.theater && !cloth && now-this.ambientAt < 66) return;
+    this.ambientAt = now;
+    if (motion) {
+      this.candle.intensity = this.candleBase*(.86 + Math.sin(t*7.3)*.06 + Math.sin(t*13.1+1.7)*.05 + Math.sin(t*2.1)*.04);
+      this.motes.rotation.y = t*.018;
+      this.motes.position.y = Math.sin(t*.21)*.05;
+    }
     this.rotation = T.MathUtils.damp(this.rotation,this.targetRotation,10,dt*.001);
     this.turntable.rotation.y = this.rotation;
     this.mirror.rotation.y = Math.PI*.19 - this.rotation*.72;

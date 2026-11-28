@@ -142,6 +142,7 @@ export function createGeometry() {
   inner.setIndex(indices.map((_,i) => indices[i-i%3 + (2-i%3)]));
   rim.setAttribute('position', new T.BufferAttribute(new Float32Array(vertexCount*6),3).setUsage(T.DynamicDrawUsage));
   rim.setIndex(shellIndices);
+  rim.setAttribute('uv', new T.BufferAttribute(new Float32Array(vertexCount*4),2));
   return { outer, inner, rim };
 }
 
