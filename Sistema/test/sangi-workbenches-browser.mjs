@@ -167,8 +167,28 @@ async function verifyEmbedded(app) {
   }
 }
 
+async function verifyReleaseCards(apps) {
+  const page = await browser.newPage({ viewport: dimensions.desktop });
+  try {
+    await page.goto(base + '/');
+    await page.getByRole('button', { name: 'Lançamentos', exact: true }).click();
+    for (const filter of ['Todos', 'Novos']) {
+      await page.locator('#releaseFilters').getByRole('button', { name: filter, exact: true }).click();
+      for (const slug of Object.keys(games)) {
+        const app = apps.find(({ id }) => id.endsWith(`-${slug}-index-html`));
+        assert.ok(app, `Entrada ausente para ${slug}`);
+        await page.locator('#list').getByRole('heading', { name: app.name, exact: true }).waitFor({ timeout: 5000 });
+      }
+    }
+    console.log('OK Lançamentos · os três jogos em Todos e Novos');
+  } finally {
+    await page.close();
+  }
+}
+
 try {
   const apps = await prepare();
+  if (!selected) await verifyReleaseCards(apps);
   for (const [slug, play] of Object.entries(games)) {
     if (selected && selected !== slug) continue;
     const app = apps.find(({ id }) => id.endsWith(`-${slug}-index-html`));
