@@ -323,7 +323,7 @@
       if (tg === 'INPUT' || tg === 'SELECT' || tg === 'TEXTAREA') return;
       if (!tut.hidden) { if (e.key === 'Escape') { closeTutorial(); e.preventDefault(); } return; }
       if (e.key === 'Escape') { setUserPaused(!userPaused); e.preventDefault(); }
-      else if ((e.key === 'p' || e.key === 'P') && !userPaused) { photo(); e.preventDefault(); }
+      else if ((e.key === 'p' || e.key === 'P') && !userPaused && !cfg.noPhoto) { photo(); e.preventDefault(); }
     });
 
     // ---------- Context loss ----------

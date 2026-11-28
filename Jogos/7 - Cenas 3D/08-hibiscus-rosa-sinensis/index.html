@@ -679,6 +679,8 @@
       *, *::before, *::after { transition-duration: 0.01ms !important; }
     }
   </style>
+<link rel="stylesheet" href="../_kit/s3d-kit.css" />
+<script src="../_kit/s3d-kit.js"></script>
 </head>
 <body>
   <div id="viewport">
@@ -820,6 +822,9 @@
       <button class="dock-btn" data-cam="rear">Cálice (Inferido)</button>
       <div class="dock-sep"></div>
       <button class="dock-btn" id="btn-gust" title="Aplicar brisa na flor (Espaço)">Soprar Brisa</button>
+      <div class="dock-sep"></div>
+      <label class="dock-btn" for="slider-stage" style="gap:8px;display:inline-flex;align-items:center">Abertura <input type="range" id="slider-stage" min="0" max="100" value="100" style="width:110px" aria-label="Estágio de abertura da flor" /></label>
+      <button class="dock-btn" id="btn-pollinate" title="Ilustração de polinização">Polinização</button>
     </div>
   </div>
 
@@ -2277,7 +2282,7 @@
             p.springVel += acc * clampedDt;
             p.springPos += p.springVel * clampedDt;
 
-            p.mesh.rotation.x = p.baseRotX + p.springPos * 0.24;
+            p.mesh.rotation.x = p.baseRotX + StageSystem.closeOffset(p) + p.springPos * 0.24 * StageSystem.stage;
             p.pivot.rotation.z = p.baseRotZ + p.springPos * 0.035;
           }
 
@@ -2477,6 +2482,77 @@
         }
       };
 
+      /* S3D-124: estágios de abertura (morph por pivô) + polinização ilustrativa */
+      const StageSystem = {
+        stage: 1, // 0 = botão fechado, 1 = flor aberta
+        MAX_CLOSE: 1.18, // rad — mantém a ponta da pétala < 90° do eixo (sem atravessar a coluna)
+        closeOffset(p) { const c = 1 - this.stage; return c * c * (3 - 2 * c) * this.MAX_CLOSE * (0.92 + 0.08 * Math.sin(p.phase)); },
+        apply() {
+          const s = this.stage;
+          for (const p of AssetManager.petals) {
+            p.mesh.rotation.x = p.baseRotX + this.closeOffset(p) + p.springPos * 0.24 * s;
+            const k = 0.72 + 0.28 * s;
+            p.mesh.scale.set(k, k, k);
+          }
+          if (AssetManager.stamenPivot) {
+            const k = 0.42 + 0.58 * s;
+            AssetManager.stamenPivot.scale.set(k, k, k);
+          }
+        },
+        set(v) { this.stage = Math.max(0, Math.min(1, v)); this.apply(); },
+        // Verificação de inversão: ângulo da ponta de cada pétala em relação ao eixo da flor (+Z) deve ficar < 90°
+        check() {
+          const out = [], v = new THREE.Vector3(), base = new THREE.Vector3();
+          const save = this.stage;
+          for (const st of [0, 0.25, 0.5, 0.75, 1]) {
+            this.set(st);
+            AssetManager.flowerRoot.updateMatrixWorld(true);
+            let maxTip = 0, minScale = 1;
+            for (const p of AssetManager.petals) {
+              p.mesh.geometry.computeBoundingBox();
+              const bb = p.mesh.geometry.boundingBox;
+              v.set(0, bb.max.y, 0); p.mesh.localToWorld(v);
+              base.set(0, 0, 0); p.pivot.localToWorld(base);
+              AssetManager.flowerRoot.worldToLocal(v); AssetManager.flowerRoot.worldToLocal(base);
+              const dir = v.sub(base).normalize();
+              const ang = Math.acos(Math.max(-1, Math.min(1, dir.z))) * 180 / Math.PI;
+              maxTip = Math.max(maxTip, 90 - ang); // >0 => ponta passou para frente do plano
+              minScale = Math.min(minScale, p.mesh.scale.x);
+            }
+            out.push({ stage: st, tipForwardDeg: +maxTip.toFixed(1), minScale: +minScale.toFixed(2), det: +AssetManager.petals[0].mesh.matrixWorld.determinant().toFixed(4) });
+          }
+          this.set(save);
+          return out;
+        }
+      };
+
+      const PollinationFX = {
+        group: null, beads: [], t: -1,
+        init(scene) {
+          this.group = new THREE.Group();
+          const g = new THREE.SphereGeometry(0.035, 8, 6);
+          const m = new THREE.MeshBasicMaterial({ color: 0xffd25a });
+          for (let i = 0; i < 14; i++) { const b = new THREE.Mesh(g, m); b.visible = false; this.group.add(b); this.beads.push(b); }
+          AssetManager.stamenPivot.add(this.group);
+          AssetManager.geometries.push(g);
+        },
+        start() { this.t = 0; },
+        update(dt) {
+          if (this.t < 0) return;
+          this.t += dt;
+          // Ilustrativo: grãos saem das anteras (meio da coluna) e chegam ao estigma (ponta)
+          const A = new THREE.Vector3(-0.7, -0.95, 1.8), B = new THREE.Vector3(-1.32, -2.08, 2.66);
+          this.beads.forEach((b, i) => {
+            const u = Math.max(0, Math.min(1, (this.t - i * 0.09) / 1.6));
+            b.visible = u > 0 && u < 1;
+            b.position.lerpVectors(A, B, u);
+            b.position.z += Math.sin(u * Math.PI) * 0.5;
+            b.position.x += Math.sin(u * Math.PI) * 0.25 * ((i % 2) ? 1 : -1);
+          });
+          if (this.t > 3.0) { this.t = -1; this.beads.forEach(b => b.visible = false); }
+        }
+      };
+
       const InteractionSystem = {
         raycaster: new THREE.Raycaster(),
         ndc: new THREE.Vector2(),
@@ -2501,6 +2577,10 @@
             }
             if (data.title) {
               this.showTooltip(data.title, data.desc);
+            }
+            if (window.__s3dKit) {
+              const map = { petal: 'petal', stamen: 'column', anthers: 'anthers', stigma: 'stigma', calyx: 'calyx', throat: 'throat' };
+              if (map[data.part]) window.__s3dKit.goal(map[data.part]);
             }
           }
         },
@@ -2592,7 +2672,7 @@
 
         sync() {
           if (!this.ctx || this.ctx.state === 'closed' || !this.masterGain) return;
-          const audible = this.active && !document.hidden && !window.__SANGI_MUTED__ && !window.__SANGI_PAUSED__;
+          const audible = this.active && !document.hidden && !window.__SANGI_MUTED__ && !window.__SANGI_PAUSED__ && !(typeof AnimationSystem !== 'undefined' && AnimationSystem.paused);
           this.masterGain.gain.setTargetAtTime(audible ? this.volume * 0.5 : 0.0001, this.ctx.currentTime, 0.18);
         },
 
@@ -2951,7 +3031,9 @@
             if (this.paused || document.hidden || window.__SANGI_PAUSED__) return;
             this.elapsed += dt;
 
+            if (window.__s3dKit) window.__s3dKit.frame();
             PhysicsSystem.step(dt, this.elapsed);
+            PollinationFX.update(dt);
             ParticleSystem.update(this.elapsed, PhysicsSystem.windStrength + PhysicsSystem.gustEnergy);
             CameraManager.update(dt);
             AudioSystem.update(PhysicsSystem.windStrength + PhysicsSystem.gustEnergy);
@@ -3026,6 +3108,50 @@
           for (const event of ['pause', 'resume', 'mute']) {
             window.addEventListener('sangi:' + event, () => AudioSystem.sync());
           }
+          // S3D-124: estágio, polinização e kit comum (diário, pausa do usuário, QA)
+          PollinationFX.init(this.scene);
+          const stageEl = document.getElementById('slider-stage');
+          let stageMin = 1;
+          stageEl.addEventListener('input', () => {
+            StageSystem.set(+stageEl.value / 100);
+            stageMin = Math.min(stageMin, StageSystem.stage);
+            if (stageMin <= 0.05 && StageSystem.stage >= 0.95 && window.__s3dKit) window.__s3dKit.goal('stages', '<b>Do botão à flor.</b> As pétalas se dobram sobre a coluna no botão e se abrem sem se cruzar.');
+          });
+          document.getElementById('btn-pollinate').addEventListener('click', () => {
+            PollinationFX.start();
+            if (window.__s3dKit) window.__s3dKit.goal('pollination', '<b>Polinização (ilustrativa).</b> Pólen das anteras chega aos 5 lobos do estigma na ponta da coluna — no jardim, por abelhas e beija-flores.');
+          });
+          document.getElementById('btn-capture').addEventListener('click', () => { if (window.__s3dKit) window.__s3dKit.goal('photo'); });
+          window.__s3dKit = S3DKit.create({
+            id: 's3d124', title: 'Hibisco (Hibiscus rosa-sinensis)', photoName: 'hibisco',
+            noQuality: true, noPhoto: true, side: 'left', top: 'calc(max(12px, env(safe-area-inset-top)) + 64px)',
+            tutorial: [
+              'Um hibisco em macro. Arraste para girar; pinça ou scroll para aproximar. Toque nas partes para ver o nome.',
+              'Use <b>Abertura</b> para ir do botão à flor aberta e <b>Polinização</b> para ver o caminho do pólen (ilustrativo).',
+              'Complete o <b>Diário de campo</b> identificando as estruturas. Sem tempo, sem pontuação.'
+            ],
+            goals: [
+              { id: 'petal', label: 'Toque numa pétala' },
+              { id: 'column', label: 'Identifique a coluna estaminal' },
+              { id: 'anthers', label: 'Encontre as anteras com pólen' },
+              { id: 'calyx', label: 'Veja o cálice (vista traseira)' },
+              { id: 'stages', label: 'Feche e reabra a flor' },
+              { id: 'pollination', label: 'Veja a polinização ilustrativa' },
+              { id: 'photo', label: 'Capture uma imagem' }
+            ],
+            canvas: () => this.renderer.domElement,
+            render: () => this.renderOnce(),
+            rendererInfo: () => this.renderer.info,
+            setPaused: (pp) => { AnimationSystem.paused = pp; AnimationSystem.lastTime = performance.now(); AudioSystem.sync(); },
+            applyQuality: (lvl) => QualityManager.apply(lvl === 'balanced' ? 'medium' : lvl, this.renderer),
+            onReset: () => { document.getElementById('btn-reset-cam').click(); stageEl.value = 100; StageSystem.set(1); },
+            qa: {
+              setStage: (v) => StageSystem.set(v),
+              stageCheck: () => StageSystem.check(),
+              parts: () => [...new Set(AssetManager.interactiveMeshes.map(m => m.userData.part))],
+              titles: () => [...new Set(AssetManager.interactiveMeshes.map(m => m.userData.title).filter(Boolean))]
+            }
+          });
           window.addEventListener('sangi:reset', () => document.getElementById('btn-reset-cam').click());
           window.addEventListener('sangi:quality', event => {
             const quality = event.detail?.quality;
