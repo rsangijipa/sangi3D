@@ -549,7 +549,7 @@
           <path d="M21.5 21.5c2.4-2.2 4.8-3.8 7.5-5.2" stroke="#8ae5d5" stroke-width="1.3" />
         </svg>
       </div>
-      <div class="leading-tight">
+      <div class="leading-tight brand-text">
         <div class="font-serif-display text-base sm:text-[21px] font-semibold text-[#faf7ef] tracking-wide">Escada da Coragem</div>
         <div class="text-[9px] sm:text-[10.5px] uppercase tracking-[0.18em] text-[#c5e2db]/85 font-medium mt-0.5">Jardins da TCC · Experiência 3D</div>
       </div>
@@ -1464,6 +1464,21 @@
         overtone.stop(now + 1.0);
       }
 
+      playAchievement() {
+        if (!this.ctx || !this.enabled) return;
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+          o.type = i % 2 ? 'triangle' : 'sine';
+          o.frequency.setValueAtTime(f, now + i * 0.11);
+          g.gain.setValueAtTime(0.0001, now + i * 0.11);
+          g.gain.linearRampToValueAtTime(0.06, now + i * 0.11 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.11 + 1.1);
+          o.connect(g); g.connect(this.masterGain);
+          o.start(now + i * 0.11); o.stop(now + i * 0.11 + 1.2);
+        });
+      }
+
       setMuted(muted) {
         if (muted && this.enabled) {
           this.toggle();
@@ -1492,6 +1507,123 @@
     /* =========================================================================
        5. CENA 3D THREE.JS — JARDIM TERAPÊUTICO AO AMANHECER
        ========================================================================= */
+
+    /* =========================================================================
+       PÓS-PROCESSAMENTO ESTÁVEL — HDR MSAA + bloom suave + grade + vinheta
+       (saneia NaN de amostras MSAA de borda e faz clamp antes do tonemapping)
+       ========================================================================= */
+    class GardenPostFX {
+      constructor(renderer) {
+        this.renderer = renderer;
+        this.enabled = true;
+        this.samples = 4;
+        this.sceneRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, depthBuffer: true, samples: 4 });
+        this.brightRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, depthBuffer: false });
+        this.blurRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, depthBuffer: false });
+        this.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+        this.quad.frustumCulled = false;
+        this.fsScene = new THREE.Scene();
+        this.fsScene.add(this.quad);
+        const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+        const safe = 'vec3 safe3(vec3 c){ c = mix(c, vec3(0.0), vec3(notEqual(c, c))); return clamp(c, 0.0, 64.0); }';
+        this.brightMat = new THREE.ShaderMaterial({
+          uniforms: { tSrc: { value: null }, uThreshold: { value: 0.82 } },
+          vertexShader: vs, depthTest: false, depthWrite: false,
+          fragmentShader: `uniform sampler2D tSrc; uniform float uThreshold; varying vec2 vUv; ${safe}
+            void main(){ vec3 c = safe3(texture2D(tSrc, vUv).rgb);
+              float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+              float k = clamp((l - uThreshold) / max(l, 1e-3), 0.0, 1.0);
+              gl_FragColor = vec4(min(c * k, vec3(6.0)), 1.0); }`
+        });
+        this.blurMat = new THREE.ShaderMaterial({
+          uniforms: { tSrc: { value: null }, uDir: { value: new THREE.Vector2() } },
+          vertexShader: vs, depthTest: false, depthWrite: false,
+          fragmentShader: `uniform sampler2D tSrc; uniform vec2 uDir; varying vec2 vUv; ${safe}
+            void main(){ vec3 c = safe3(texture2D(tSrc, vUv).rgb) * 0.227;
+              c += safe3(texture2D(tSrc, vUv + uDir * 1.385).rgb) * 0.316;
+              c += safe3(texture2D(tSrc, vUv - uDir * 1.385).rgb) * 0.316;
+              c += safe3(texture2D(tSrc, vUv + uDir * 3.23).rgb) * 0.070;
+              c += safe3(texture2D(tSrc, vUv - uDir * 3.23).rgb) * 0.070;
+              gl_FragColor = vec4(c, 1.0); }`
+        });
+        this.compMat = new THREE.ShaderMaterial({
+          uniforms: {
+            tScene: { value: null }, tBloom: { value: null },
+            uExposure: { value: 1.06 }, uBloom: { value: 0.55 }, uTime: { value: 0 }, uGrain: { value: 0.025 }
+          },
+          vertexShader: vs, depthTest: false, depthWrite: false,
+          fragmentShader: `uniform sampler2D tScene; uniform sampler2D tBloom; uniform float uExposure; uniform float uBloom;
+            uniform float uTime; uniform float uGrain; varying vec2 vUv; ${safe}
+            vec3 gardenRRTFit(vec3 v){ vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081; return a / b; }
+            vec3 gardenAces(vec3 c){
+              const mat3 IN = mat3(0.59719,0.07600,0.02840, 0.35458,0.90834,0.13383, 0.04823,0.01566,0.83777);
+              const mat3 OUT = mat3(1.60475,-0.10208,-0.00327, -0.53108,1.10813,-0.07276, -0.07367,-0.00605,1.07602);
+              c *= uExposure / 0.6; c = IN * c; c = gardenRRTFit(c); c = OUT * c; return clamp(c, 0.0, 1.0); }
+            vec3 toSRGB(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c * 12.92, 1.055 * pow(max(c, vec3(0.0031308)), vec3(1.0/2.4)) - 0.055, step(vec3(0.0031308), c)); }
+            float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+            void main(){
+              vec3 c = safe3(texture2D(tScene, vUv).rgb);
+              c += safe3(texture2D(tBloom, vUv).rgb) * uBloom;
+              c = gardenAces(c);
+              float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+              c = max(mix(vec3(l), c, 1.07), 0.0);
+              c *= mix(vec3(0.96, 0.98, 1.03), vec3(1.04, 1.0, 0.94), smoothstep(0.15, 0.8, l));
+              vec2 d = vUv - 0.5; c *= mix(1.0, 0.78, smoothstep(0.32, 0.86, dot(d, d) * 2.2));
+              c = toSRGB(clamp(c, 0.0, 1.0));
+              c += (hash(vUv * 917.0 + fract(uTime) * 61.0) - 0.5) * uGrain;
+              gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0); }`
+        });
+      }
+      setQuality(level) {
+        this.enabled = level !== 'eco';
+        const s = level === 'high' ? 4 : 2;
+        if (s !== this.samples) { this.samples = s; this.sceneRT.samples = s; this.sceneRT.dispose(); }
+        this.resize();
+      }
+      resize() {
+        const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+        const w = Math.max(2, size.x), h = Math.max(2, size.y);
+        this.sceneRT.setSize(w, h);
+        const bw = Math.max(2, Math.floor(w / 4)), bh = Math.max(2, Math.floor(h / 4));
+        this.brightRT.setSize(bw, bh);
+        this.blurRT.setSize(bw, bh);
+        this.texel = new THREE.Vector2(1 / bw, 1 / bh);
+      }
+      pass(mat, target) {
+        this.quad.material = mat;
+        this.renderer.setRenderTarget(target);
+        this.renderer.render(this.fsScene, this.cam);
+      }
+      render(scene, camera, t) {
+        const r = this.renderer;
+        if (!this.enabled) { r.setRenderTarget(null); r.render(scene, camera); return; }
+        if (!this.texel) this.resize();
+        r.setRenderTarget(this.sceneRT);
+        r.render(scene, camera);
+        this.brightMat.uniforms.tSrc.value = this.sceneRT.texture;
+        this.pass(this.brightMat, this.brightRT);
+        for (let i = 0; i < 2; i++) {
+          this.blurMat.uniforms.tSrc.value = this.brightRT.texture;
+          this.blurMat.uniforms.uDir.value.set(this.texel.x * (1 + i), 0);
+          this.pass(this.blurMat, this.blurRT);
+          this.blurMat.uniforms.tSrc.value = this.blurRT.texture;
+          this.blurMat.uniforms.uDir.value.set(0, this.texel.y * (1 + i));
+          this.pass(this.blurMat, this.brightRT);
+        }
+        this.compMat.uniforms.tScene.value = this.sceneRT.texture;
+        this.compMat.uniforms.tBloom.value = this.brightRT.texture;
+        this.compMat.uniforms.uTime.value = t;
+        this.compMat.uniforms.uExposure.value = r.toneMappingExposure;
+        this.pass(this.compMat, null);
+      }
+      dispose() {
+        [this.sceneRT, this.brightRT, this.blurRT].forEach(rt => rt.dispose());
+        [this.brightMat, this.blurMat, this.compMat].forEach(m => m.dispose());
+        this.quad.geometry.dispose();
+      }
+    }
+
     class CourageGardenScene {
       constructor(container) {
         this.container = container;
@@ -1516,6 +1648,8 @@
 
         this.initRendererAndScene();
         this.buildSkyAndLighting();
+        this.buildFireflies();
+        this.bursts = [];
         this.buildTerrainAndCobblestones();
         this.buildSevenStoneSteps();
         this.buildPergolaAndBench();
@@ -1546,11 +1680,12 @@
         });
         this.renderer.setSize(w, h);
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.type = THREE.PCFShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.06;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.container.appendChild(this.renderer.domElement);
+        this.postfx = new GardenPostFX(this.renderer);
 
         // Tratamento de perda e recuperação de contexto WebGL
         this.renderer.domElement.addEventListener('webglcontextlost', (e) => {
@@ -2503,6 +2638,64 @@
         this.scene.add(this.pollenPoints);
       }
 
+      // Vaga-lumes dourados: pequenas luzes de coragem ao redor da escada
+      buildFireflies() {
+        const count = 70;
+        const pos = new Float32Array(count * 3);
+        const phase = new Float32Array(count);
+        const rnd = mulberry32(7171);
+        for (let i = 0; i < count; i++) {
+          pos[i * 3] = (rnd() - 0.5) * 14;
+          pos[i * 3 + 1] = 0.5 + rnd() * 4.5;
+          pos[i * 3 + 2] = (rnd() - 0.5) * 10;
+          phase[i] = rnd() * 6.283;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+        this.fireflyMat = new THREE.ShaderMaterial({
+          transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+          uniforms: { uTime: { value: 0 }, uPx: { value: Math.min(window.devicePixelRatio || 1, 2) } },
+          vertexShader: `attribute float aPhase; uniform float uTime; uniform float uPx; varying float vA;
+            void main(){ vec3 p = position;
+              p.x += sin(uTime * 0.35 + aPhase) * 0.6; p.y += sin(uTime * 0.6 + aPhase * 1.7) * 0.35; p.z += cos(uTime * 0.3 + aPhase) * 0.6;
+              vec4 mv = modelViewMatrix * vec4(p, 1.0);
+              vA = clamp(0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * 1.8 + aPhase * 3.0)), 0.0, 1.0);
+              gl_PointSize = clamp(uPx * 46.0 / max(-mv.z, 0.5), 1.0, 40.0);
+              gl_Position = projectionMatrix * mv; }`,
+          fragmentShader: `varying float vA;
+            void main(){ vec2 d = gl_PointCoord - 0.5; float r = clamp(1.0 - length(d) * 2.0, 0.0, 1.0);
+              float a = r * r * vA; gl_FragColor = vec4(vec3(1.0, 0.78, 0.38) * a * 1.6, a); }`
+        });
+        this.fireflies = new THREE.Points(geo, this.fireflyMat);
+        this.fireflies.frustumCulled = false;
+        this.scene.add(this.fireflies);
+      }
+
+      // Explosão de faíscas douradas ao registrar uma conquista
+      triggerCelebrationBurst(stepIdx) {
+        const stepObj = this.stepGroups[stepIdx];
+        if (!stepObj || appState.reducedMotion) return;
+        const n = 48;
+        const pos = new Float32Array(n * 3);
+        const vel = [];
+        for (let i = 0; i < n; i++) {
+          pos[i * 3] = stepObj.worldCenter.x; pos[i * 3 + 1] = stepObj.worldCenter.y + 0.1; pos[i * 3 + 2] = stepObj.worldCenter.z;
+          const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.4;
+          vel.push(new THREE.Vector3(Math.cos(a) * sp * 0.6, 1.6 + Math.random() * 1.8, Math.sin(a) * sp * 0.6));
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const mat = new THREE.PointsMaterial({
+          map: this.glowTexture, color: 0xffd27a, size: 0.22, transparent: true, opacity: 1,
+          depthWrite: false, blending: THREE.AdditiveBlending
+        });
+        const pts = new THREE.Points(geo, mat);
+        pts.frustumCulled = false;
+        this.scene.add(pts);
+        this.bursts.push({ pts, vel, age: 0, maxAge: 1.6 });
+      }
+
       // Ondulação luminosa turquesa sobre o degrau ao salvar uma reflexão
       triggerReflectionRipple(stepIdx) {
         const stepObj = this.stepGroups[stepIdx];
@@ -2640,11 +2833,13 @@
           this.lanternLights.forEach((l, i) => l.light.visible = i < 2);
         }
         this.renderer.shadowMap.needsUpdate = true;
+        this.postfx?.setQuality(level);
+        if (this.fireflies) this.fireflies.visible = level !== 'eco';
       }
 
       // Captura imagem limpa do jardim (sem informações pessoais)
       captureGardenPhoto() {
-        this.renderer.render(this.scene, this.camera);
+        this.postfx.render(this.scene, this.camera, this.clock.elapsedTime);
         return this.renderer.domElement.toDataURL('image/png');
       }
 
@@ -2717,6 +2912,7 @@
           this.camera.aspect = w / h;
           this.camera.updateProjectionMatrix();
           this.renderer.setSize(w, h);
+          this.postfx?.resize();
         };
         window.addEventListener('resize', this._onResize);
       }
@@ -2747,6 +2943,7 @@
         if (this._onResize) window.removeEventListener('resize', this._onResize);
         this.walk?.dispose?.();
         this.controls?.dispose();
+        this.postfx?.dispose();
         this.renderer?.dispose();
         soundscape.dispose();
       }
@@ -2833,7 +3030,23 @@
           }
         }
 
-        this.renderer.render(this.scene, this.camera);
+        if (this.fireflyMat) this.fireflyMat.uniforms.uTime.value = reduced ? 0 : t;
+        for (let i = this.bursts.length - 1; i >= 0; i--) {
+          const b = this.bursts[i];
+          b.age += dt;
+          const attr = b.pts.geometry.attributes.position;
+          if (b.age >= b.maxAge) {
+            this.scene.remove(b.pts); b.pts.geometry.dispose(); b.pts.material.dispose(); this.bursts.splice(i, 1); continue;
+          }
+          for (let j = 0; j < attr.count; j++) {
+            const v = b.vel[j]; v.y -= 2.6 * dt; v.multiplyScalar(1 - dt * 0.8);
+            attr.setXYZ(j, attr.getX(j) + v.x * dt, attr.getY(j) + v.y * dt, attr.getZ(j) + v.z * dt);
+          }
+          attr.needsUpdate = true;
+          b.pts.material.opacity = 1 - b.age / b.maxAge;
+        }
+
+        this.postfx.render(this.scene, this.camera, t);
       }
     }
 
@@ -3104,6 +3317,8 @@
         rippleDebounce = setTimeout(() => {
           if (e.target.value.trim().length > 0 && gardenScene) {
             gardenScene.triggerReflectionRipple(appState.activeStep);
+            gardenScene.triggerCelebrationBurst(appState.activeStep);
+            soundscape.playAchievement();
           }
         }, 700);
       });
