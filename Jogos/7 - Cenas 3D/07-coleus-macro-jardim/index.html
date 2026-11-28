@@ -51,6 +51,8 @@
   @media(max-height:480px) and (orientation:landscape) { .badge p { display: none; } .panel { max-height: 65dvh; width: 250px; left: auto; } .hint { display: none; } }
   @media(prefers-reduced-motion:reduce) { *{ transition: none!important; } }
 </style>
+<link rel="stylesheet" href="../_kit/s3d-kit.css" />
+<script src="../_kit/s3d-kit.js"></script>
 </head>
 <body>
 <div id="canvas-wrap" tabindex="0" aria-label="Cena 3D de Cóleus em jardim macro"></div>
@@ -71,6 +73,10 @@
 <div class="hint">Arraste para orbitar · Roda/Pinça para zoom · Botão direito para mover</div>
 
 <div class="panel" id="panel">
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Cultivar</span><strong id="cultivar-label">Veludo</strong></div>
+    <select id="cultivar" aria-label="Cultivar de cóleus"><option value="velvet">Veludo (rosa e vinho)</option><option value="kong">Kong Lima</option><option value="dragon">Dragão Negro</option><option value="pineapple">Abacaxi</option></select>
+  </div>
   <div class="ctrl">
     <div class="ctrl-head"><span>Brisa nas folhas</span><strong id="val-wind">45%</strong></div>
     <input type="range" id="rng-wind" aria-label="Intensidade da brisa" min="0" max="100" value="45" />
@@ -113,6 +119,7 @@
     const smooth = (a, b, x) => { const q = clamp((x - a) / (b - a)); return q * q * (3 - 2 * q); };
     const mix = (a, b, t) => a + (b - a) * t;
 
+    if (!S3DKit.webglAvailable()) { S3DKit.fatal('Seu navegador não conseguiu iniciar o WebGL. Ative a aceleração de hardware ou tente outro navegador.'); return; }
     const wrap = document.getElementById('canvas-wrap');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1b2b1f);
@@ -181,7 +188,14 @@
     const env = new THREE.CanvasTexture(ec); env.mapping = THREE.EquirectangularReflectionMapping; env.encoding = THREE.sRGBEncoding;
     const pmrem = new THREE.PMREMGenerator(renderer); const envRT = pmrem.fromEquirectangular(env); scene.environment = envRT.texture; pmrem.dispose(); env.dispose();
 
-    function leafTextures(phase, green = false) {
+    // Paletas de cultivar: base (lâmina), centro (pigmento ao longo da nervura) e margem.
+    const CULTIVARS = {
+      velvet:    { name: 'Veludo',       base: [46, 20, 45],   center: [184, 38, 92],  edge: [154, 186, 54] },
+      kong:      { name: 'Kong Lima',    base: [118, 168, 52], center: [205, 62, 112], edge: [176, 210, 86] },
+      dragon:    { name: 'Dragão Negro', base: [34, 8, 22],    center: [128, 18, 40],  edge: [72, 18, 38] },
+      pineapple: { name: 'Abacaxi',      base: [150, 168, 40], center: [196, 140, 36], edge: [206, 214, 96] }
+    };
+    function leafTextures(phase, green = false, pal = CULTIVARS.velvet) {
       const N = mobile ? 384 : 768;
       const cs = [0, 1, 2].map(() => { let c = document.createElement('canvas'); c.width = c.height = N; return c; });
       const cx = cs.map(c => c.getContext('2d')), im = cx.map(c => c.createImageData(N, N));
@@ -197,8 +211,8 @@
           const retic = Math.pow(Math.max(0, Math.cos(u * 105 + v * 44 + Math.sin(v * 28)) * Math.cos(u * 85 - v * 55)), 9);
           const edge = smooth(0.72 + 0.055 * cloud, 0.97, a);
           const pink = clamp(Math.exp(-Math.pow(v / (0.21 + 0.14 * Math.sin(u * 4 + phase)), 2)) * (0.74 + 0.23 * cloud) * (1 - 0.45 * u) + mid * 0.8 + veins * 0.18);
-          let r = green ? 44 : mix(46, 184, pink), g = green ? 82 : mix(20, 38, pink), b = green ? 30 : mix(45, 92, pink);
-          r = mix(r, green ? 130 : 154, edge); g = mix(g, green ? 157 : 186, edge); b = mix(b, green ? 65 : 54, edge);
+          let r = green ? 44 : mix(pal.base[0], pal.center[0], pink), g = green ? 82 : mix(pal.base[1], pal.center[1], pink), b = green ? 30 : mix(pal.base[2], pal.center[2], pink);
+          r = mix(r, green ? 130 : pal.edge[0], edge); g = mix(g, green ? 157 : pal.edge[1], edge); b = mix(b, green ? 65 : pal.edge[2], edge);
           let m = noise * 5 + fine * 10 + cloud * 6;
           im[0].data[i] = clamp(r + m + mid * 12, 0, 255); im[0].data[i + 1] = clamp(g + m * 0.65 + veins * 8, 0, 255); im[0].data[i + 2] = clamp(b + m * 0.7, 0, 255); im[0].data[i + 3] = 255;
           let h = 115 + mid * 60 + veins * 38 + retic * 12 + noise * 7 + fine * 13 + cloud * 6;
@@ -399,6 +413,7 @@
     const btnUv = document.getElementById('btn-uv');
     btnUv.addEventListener('click', () => {
       uvMode = !uvMode; btnUv.classList.toggle('active', uvMode);
+      if (uvMode && typeof kit !== 'undefined') kit.goal('uv', '<b>Luz violeta.</b> Antocianinas (o vinho/rosa) absorvem e reemitem de outro jeito: o padrão salta aos olhos.');
       if (uvMode) {
         scene.background.setHex(0x050212); scene.fog.color.setHex(0x050212);
         keyLight.color.setHex(0x7c4dff); rimLight.color.setHex(0x39ff14); rimLight.intensity = 2.6; magentaFill.intensity = 2.4; pMat.color.setHex(0xff3ec8);
@@ -407,6 +422,27 @@
         keyLight.color.setHex(0xffedce); rimLight.color.setHex(0xe5ffc6); rimLight.intensity = 0.72; magentaFill.intensity = 0.25; pMat.color.setHex(0xeee5b5);
       }
     });
+
+    // Cultivares: regenera só o mapa de cor (relevo/rugosidade mantidos); cache por cultivar.
+    const cultivarCache = { velvet: [mats[0].map, mats[1].map] };
+    const seenCultivars = new Set(['velvet']);
+    let cultivar = 'velvet';
+    function setCultivar(key) {
+      if (!CULTIVARS[key]) return;
+      cultivar = key;
+      if (!cultivarCache[key]) {
+        cultivarCache[key] = [0, 1.8].map((ph) => { const t = leafTextures(ph, false, CULTIVARS[key]); t[1].dispose(); t[2].dispose(); return t[0]; });
+      }
+      mats[0].map = cultivarCache[key][0]; mats[1].map = cultivarCache[key][1];
+      mats[0].needsUpdate = mats[1].needsUpdate = true;
+      document.getElementById('cultivar-label').textContent = CULTIVARS[key].name;
+      document.getElementById('cultivar').value = key;
+      seenCultivars.add(key);
+      if (typeof kit !== 'undefined') {
+        kit.goal('c_' + key, '<b>' + CULTIVARS[key].name + '</b> entrou na coleção. O pigmento segue as mesmas nervuras: muda a cor, não o desenho.');
+      }
+    }
+    document.getElementById('cultivar').addEventListener('change', (e) => setCultivar(e.target.value));
 
     const btnPanel = document.getElementById('btn-panel'), panel = document.getElementById('panel');
     btnPanel.addEventListener('click', () => { const collapsed = panel.classList.toggle('collapsed'); btnPanel.classList.toggle('active', !collapsed); });
@@ -434,6 +470,7 @@
       const p = camPresets[b.dataset.cam];
       camState.targetTheta = p.theta; camState.targetPhi = p.phi; camState.targetRadius = p.radius * (mobile && b.dataset.cam !== 'bud' ? 1.32 : 1);
       camState.desiredTarget.set(p.target[0], p.target[1], p.target[2]); camState.autoOrbit = p.auto;
+      if (b.dataset.cam === 'bud' && typeof kit !== 'undefined') kit.goal('zoom', '<b>Macro.</b> Pelos finos e o reticulado das nervuras continuam nítidos de perto.');
     }));
 
     const onResize = () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); };
@@ -469,6 +506,7 @@
       }
       if (uvMode) btnUv.click();
       document.querySelector('[data-cam="photo"]').click();
+      setCultivar('velvet');
     }
     document.getElementById('btn-reset').onclick = resetAll;
     if (mobile) btnPanel.click();
@@ -485,6 +523,11 @@
       rafId = requestAnimationFrame(animate);
       const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05);
       if (sangiPaused || document.hidden) return;
+      kit.frame();
+      // Detalhe em zoom: pelos finos aparecem de perto mesmo no perfil leve
+      const wantHairs = effective === 'high' || camState.radius < 2.4;
+      if (hairMeshes[0] && hairMeshes[0].visible !== wantHairs) hairMeshes.forEach(h => h.visible = wantHairs);
+      if (camState.radius < 1.4) kit.goal('zoom', '<b>Macro.</b> Pelos finos e o reticulado das nervuras continuam nítidos de perto.');
       t += dt; frames++; elapsed += rawDt;
       if (elapsed > 4) { if (quality === 'auto' && effective === 'high' && frames / elapsed < 27) applyQuality('low'); frames = 0; elapsed = 0; }
       const damping = 1 - Math.exp(-dt * 5);
@@ -515,6 +558,49 @@
       pollen.geometry.attributes.position.needsUpdate = true;
       renderer.render(scene, camera);
     }
+    let hostMuted = !!window.__SANGI_MUTED__;
+    const kit = S3DKit.create({
+      id: 's3d123', title: 'Cóleus · Jardim em detalhe', photoName: 'coleus',
+      noQuality: true,
+      tutorial: [
+        'Um cóleus visto de perto. Arraste para orbitar; roda, pinça ou setas para aproximar; botão direito move o alvo.',
+        'Troque o <b>Cultivar</b> no painel e compare os padrões de pigmento. A <b>Luz violeta</b> destaca as antocianinas.',
+        'Monte sua <b>coleção</b> no Diário de campo e fotografe a favorita. Sem tempo, sem pontuação.'
+      ],
+      goals: [
+        { id: 'c_velvet', label: 'Coleção: Veludo' },
+        { id: 'c_kong', label: 'Coleção: Kong Lima' },
+        { id: 'c_dragon', label: 'Coleção: Dragão Negro' },
+        { id: 'c_pineapple', label: 'Coleção: Abacaxi' },
+        { id: 'zoom', label: 'Aproxime até os pelos da folha' },
+        { id: 'uv', label: 'Veja sob luz violeta' },
+        { id: 'photo', label: 'Fotografe sua favorita' }
+      ],
+      canvas: () => renderer.domElement,
+      render: () => renderer.render(scene, camera),
+      rendererInfo: () => renderer.info,
+      setPaused: (pp) => {
+        sangiPaused = pp; if (pp) clock.stop(); else clock.start();
+        if (!audioCtx) return;
+        if (pp) audioCtx.suspend().catch(() => {}); else if (audioOn && !hostMuted) audioCtx.resume().catch(() => {});
+      },
+      applyQuality: (lvl) => { const v = lvl === 'low' ? 'low' : lvl === 'high' ? 'high' : 'auto'; const el = document.getElementById('quality'); el.value = v; el.dispatchEvent(new Event('change')); },
+      onReset: () => resetAll(),
+      qa: {
+        setCultivar: (k) => setCultivar(k),
+        // Pigmento segue o UV: amostra o mapa de cor no eixo central (v=0) e na margem (|v|≈0.95) da folha
+        pigmentAlongUV: () => {
+          const img = mats[0].map.image, c = img.getContext('2d'), N = img.width;
+          const px = (u, v) => { const d = c.getImageData(Math.round((v * 0.5 + 0.5) * (N - 1)), Math.round((1 - u) * (N - 1)), 1, 1).data; return [d[0], d[1], d[2]]; };
+          return { cultivar, size: N, center: px(0.4, 0), edge: px(0.4, 0.95), base: px(0.4, 0.55) };
+        },
+        // Detalhe em zoom: resolução/anisotropia do mapa e distância mínima da câmera
+        zoomDetail: () => ({ texSize: mats[0].map.image.width, anisotropy: mats[0].map.anisotropy, minRadius: 0.85, hairsVisible: hairMeshes.some((h) => h.visible) }),
+        setRadius: (r) => { camState.targetRadius = r; }
+      }
+    });
+
+    kit.goal('c_velvet');
     rafId = requestAnimationFrame(animate);
 
     function cleanup() {
@@ -536,9 +622,12 @@
       if (scene.environment) scene.environment.dispose();
       renderer.dispose();
     }
-    window.addEventListener('sangi:pause', () => { sangiPaused = true; clock.stop(); if (audioCtx && audioOn) audioCtx.suspend().catch(() => {}); });
-    window.addEventListener('sangi:resume', () => { sangiPaused = false; clock.start(); if (audioCtx && audioOn) audioCtx.resume().catch(() => {}); });
-    window.addEventListener('sangi:mute', () => { if (audioOn) toggleAudio(); });
+    // Pausa (usuário × host × aba) via S3DKit; mute do host não troca a preferência de som.
+    window.addEventListener('sangi:mute', (e) => {
+      hostMuted = e && e.detail ? !!e.detail.muted : true;
+      if (!audioCtx) return;
+      if (hostMuted) audioCtx.suspend().catch(() => {}); else if (audioOn && !sangiPaused) audioCtx.resume().catch(() => {});
+    });
     window.addEventListener('sangi:reset', resetAll);
     window.addEventListener('sangi:dispose', cleanup);
     window.addEventListener('pagehide', cleanup);
