@@ -10,6 +10,7 @@
       'bancada-do-florista', 'colmeia-transparente', 'estufa-das-borboletas', 'jardim-dos-fungos',
       'lago-3d-interativo', 'oficina-de-bonsais', 'terrario-de-vidro',
       'floresta-bioluminescente', 'escultor-de-planetas', 'universo-de-uma-gota', 'bougainvillea',
+      'cosmos-e-hesperiidae', 'passarela-na-mata-tropical', 'poca-pos-chuva-e-espirradeiras',
     ] },
     { id: 'oficinas', label: 'Arte e artesanato', hue: 36, entries: [
       'atelie-das-reconstrucoes-kintsugi', 'oficina-das-velas-artesanais', 'oficina-de-estofados',
@@ -56,6 +57,7 @@
   const publications = [
     { date: '2026-11-28', type: 'new', entries: [
       'oficina-das-bolhas', 'universo-de-uma-gota', 'oficina-de-mosaicos',
+      'cosmos-e-hesperiidae', 'passarela-na-mata-tropical', 'poca-pos-chuva-e-espirradeiras',
     ] },
     { date: '2026-11-24', type: 'new', entries: [
       'cidade-submersa', 'arquipelago-celestial', 'biblioteca-infinita', 'trem-sem-destino',

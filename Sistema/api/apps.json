@@ -421,6 +421,23 @@
     "contentHash": "05daae1fb2f1dc88"
   },
   {
+    "name": "Bougainvillea",
+    "subtitle": "Quintal em Flor",
+    "fullTitle": "Bougainvillea 3D — Quintal em Flor",
+    "description": "Explore uma bougainvillea em um quintal brasileiro. Aproxime-se das brácteas, mude a luz e compare a cena 3D com a fotografia de referência.",
+    "url": "/Jogos/7%20-%20Cenas%203D/11-bougainvillea/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/11-bougainvillea/miniatura.png",
+    "order": 11,
+    "path": "Jogos\\7 - Cenas 3D\\11-bougainvillea",
+    "mtime": 1795843315424.671,
+    "versions": [],
+    "id": "7-cenas-3d-11-bougainvillea",
+    "contentHash": "86efd1856481174c"
+  },
+  {
     "name": "Escada da Coragem",
     "subtitle": "Jardins da TCC · Experiência 3D",
     "fullTitle": "Escada da Coragem — Jardins da TCC · Experiência 3D",

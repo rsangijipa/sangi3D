@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title># 025 — Geometria das Conchas</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/Sistema/shared/vendor/three.module.js",
+      "three/addons/": "/Sistema/shared/vendor/addons/"
+    }
+  }
+  </script>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+  <style>
+    :root {
+      --bg-glass: rgba(16, 19, 25, 0.76);
+      --bg-glass-strong: rgba(14, 17, 23, 0.92);
+      --border-soft: rgba(214, 194, 152, 0.22);
+      --text-main: #f2eee6;
+      --text-muted: #b8b2a4;
+      --accent: #d9b87c;
+      --accent-ink: #1a1610;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0c1016;
+      font-family: "Segoe UI", "Noto Sans", system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+    }
+
+    #stage-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    #stage-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* TOP BAR */
+    #top-header {
+      position: fixed;
+      top: calc(12px + var(--safe-top));
+      left: calc(14px + var(--safe-left));
+      right: calc(14px + var(--safe-right));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 20;
+      transition: opacity 0.25s ease;
+    }
+
+    .title-pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
+    }
+
+    .shell-glyph {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: radial-gradient(circle at 35% 35%, #f7e6d4, #a08354);
+      flex-shrink: 0;
+    }
+
+    .title-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .title-text strong {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #status-line {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: var(--bg-glass);
+      backdrop-filter: blur(10px);
+      color: var(--text-main);
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-glass-strong);
+      border-color: rgba(217, 184, 124, 0.55);
+    }
+
+    #lbl-catalog-count {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* BOTTOM DOCK: ESPIRAL, ABERTURA, ESCALA, TEXTURA + CORTE / CATALOGAR / FOTOGRAFIA */
+    #bottom-dock {
+      position: fixed;
+      bottom: calc(14px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px;
+      border-radius: 999px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+      z-index: 25;
+      max-width: calc(100vw - 16px - var(--safe-left) - var(--safe-right));
+      transition: opacity 0.25s ease;
+    }
+
+    .dock-sep {
+      width: 1px;
+      height: 24px;
+      background: var(--border-soft);
+      flex-shrink: 0;
+    }
+
+    .dock-item-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .dock-btn {
+      min-height: 44px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+
+    .dock-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .dock-btn.active {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 600;
+    }
+
+    .dock-sub {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 400;
+    }
+
+    .dock-btn.active .dock-sub {
+      color: var(--accent-ink);
+    }
+
+    /* POPOVERS */
+    .popover {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 210px;
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.50);
+      z-index: 30;
+    }
+
+    .popover[hidden] {
+      display: none !important;
+    }
+
+    .pop-btn {
+      min-height: 44px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pop-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .pop-btn.active {
+      background: rgba(217, 184, 124, 0.20);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .pop-range-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* SUB-BARRA DO MODO FOTOGRAFIA MACRO */
+    #photo-bar {
+      position: fixed;
+      bottom: calc(74px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.48);
+      max-width: calc(100vw - 20px);
+      z-index: 26;
+    }
+
+    #photo-bar[hidden] {
+      display: none !important;
+    }
+
+    .photo-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .photo-ctrl input[type="range"] {
+      width: 78px;
+    }
+
+    .chip-btn {
+      min-height: 40px;
+      padding: 0 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .chip-btn.active {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 600;
+    }
+
+    /* CONTEMPLAÇÃO */
+    body.contemplative #top-header,
+    body.contemplative #bottom-dock,
+    body.contemplative #photo-bar {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #btn-restore-ui {
+      position: fixed;
+      bottom: calc(18px + var(--safe-bottom));
+      right: calc(18px + var(--safe-right));
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: var(--bg-glass);
+      color: var(--text-main);
+      font-size: 13px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    body.contemplative #btn-restore-ui {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #shutter-flash {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 248, 236, 0.65);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 45;
+    }
+
+    #shutter-flash.active {
+      animation: shutterFade 0.25s ease-out forwards;
+    }
+
+    @keyframes shutterFade {
+      0% { opacity: 0.7; }
+      100% { opacity: 0; }
+    }
+
+    #feedback-pill {
+      position: fixed;
+      top: calc(68px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--bg-glass-strong);
+      border: 1px solid var(--border-soft);
+      color: var(--text-main);
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 28;
+      white-space: nowrap;
+    }
+
+    #feedback-pill.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* PAINEL SECUNDÁRIO FECHADO POR PADRÃO */
+    #settings-drawer {
+      position: fixed;
+      top: calc(14px + var(--safe-top));
+      right: calc(14px + var(--safe-right));
+      width: min(320px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px - var(--safe-top) - var(--safe-bottom));
+      overflow-y: auto;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    #settings-drawer[hidden] {
+      display: none !important;
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-soft);
+      padding-bottom: 10px;
+    }
+
+    .drawer-head h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      min-height: 40px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    select option {
+      background: #14171d;
+      color: var(--text-main);
+    }
+
+    .secondary-btn, .primary-btn {
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .secondary-btn {
+      border: 1px solid var(--border-soft);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    .primary-btn {
+      border: none;
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    #diag-line {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* MODAIS DE COMPARAÇÃO (3 FORMAS), PAUSA & WEBGL */
+    #compare-modal, #pause-modal, #webgl-status {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 14, 0.72);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 50;
+    }
+
+    #compare-modal[hidden], #pause-modal[hidden], #webgl-status[hidden] {
+      display: none !important;
+    }
+
+    .modal-card {
+      width: min(360px, 100%);
+      padding: 22px;
+      border-radius: 20px;
+      background: var(--bg-glass-strong);
+      border: 1px solid var(--border-soft);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .compare-wrap {
+      width: min(820px, 100%);
+      max-height: 86vh;
+      text-align: left;
+    }
+
+    #compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+
+    .compare-card {
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .compare-card img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .compare-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .compare-meta strong {
+      color: var(--text-main);
+      font-size: 13px;
+    }
+
+    .compare-empty {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* PAD DE CÂMERA MOBILE */
+    #mobile-cam-pad {
+      position: fixed;
+      right: calc(12px + var(--safe-right));
+      bottom: calc(74px + var(--safe-bottom));
+      display: none;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(2, 44px);
+      gap: 4px;
+      z-index: 22;
+    }
+
+    #mobile-cam-pad.visible {
+      display: grid;
+    }
+
+    #mobile-cam-pad button {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: var(--bg-glass);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    @media (max-width: 780px) {
+      #top-header {
+        top: calc(8px + var(--safe-top));
+        left: calc(8px + var(--safe-left));
+        right: calc(8px + var(--safe-right));
+        gap: 6px;
+      }
+      .title-pill {
+        padding: 4px 10px;
+        min-width: 0;
+        flex: 0 1 auto;
+      }
+      .shell-glyph {
+        display: none;
+      }
+      .title-text strong {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 96px;
+      }
+      .top-actions {
+        gap: 4px;
+      }
+      .icon-btn {
+        padding: 0 6px;
+      }
+      #status-line {
+        display: none;
+      }
+      #bottom-dock {
+        bottom: calc(10px + var(--safe-bottom));
+        padding: 4px;
+        gap: 2px;
+        overflow-x: auto;
+      }
+      .dock-btn {
+        padding: 0 9px;
+        font-size: 12px;
+      }
+      .dock-sub {
+        display: none;
+      }
+    }
+
+    @media (max-height: 460px) and (orientation: landscape) {
+      #top-header { top: calc(6px + var(--safe-top)); }
+      #bottom-dock { bottom: calc(6px + var(--safe-bottom)); }
+      #mobile-cam-pad { bottom: calc(58px + var(--safe-bottom)); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage-canvas" aria-label="Geometria das Conchas 3D"></canvas>
+  <div id="shutter-flash" aria-hidden="true"></div>
+
+  <header id="top-header">
+    <div class="title-pill">
+      <span class="shell-glyph" aria-hidden="true"></span>
+      <div class="title-text">
+        <strong>Geometria das Conchas</strong>
+        <span id="status-line">Náutilo · Corte · 9 câmaras</span>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btn-compare" class="icon-btn" type="button" aria-label="Comparar proporções" title="Comparar 3 formas">
+        ⚖ <span id="lbl-catalog-count">0/3</span>
+      </button>
+      <button id="btn-contemplate" class="icon-btn" type="button" aria-label="Modo contemplação" title="Contemplação (H)">◉</button>
+      <button id="btn-settings" class="icon-btn" type="button" aria-label="Ajustes" aria-expanded="false" title="Ajustes">⚙</button>
+      <button id="btn-pause" class="icon-btn" type="button" aria-label="Pausar" title="Pausar (P)">⏸</button>
+      <button id="btn-exit" class="icon-btn" type="button" aria-label="Sair" title="Voltar">✕</button>
+    </div>
+  </header>
+
+  <div id="feedback-pill" role="status" aria-live="polite"></div>
+
+  <div id="photo-bar" hidden aria-label="Controles de fotografia macro">
+    <div class="photo-ctrl">
+      <span>Foco</span>
+      <input id="photo-focus-range" type="range" min="0" max="100" value="45" aria-label="Foco macro" />
+    </div>
+    <div class="photo-ctrl">
+      <span>Exposição</span>
+      <input id="photo-exp-range" type="range" min="70" max="160" value="112" aria-label="Exposição" />
+    </div>
+    <label class="photo-ctrl">
+      <input id="photo-dof-check" type="checkbox" checked />
+      <span>Desfoque DoF</span>
+    </label>
+    <div class="photo-ctrl">
+      <button class="chip-btn active" type="button" data-framing-btn="table">Bancada</button>
+      <button class="chip-btn" type="button" data-framing-btn="cut">Corte</button>
+      <button class="chip-btn" type="button" data-framing-btn="macro">Macro</button>
+    </div>
+    <button id="btn-capture-png" class="primary-btn" type="button" title="Capturar PNG (F)">Capturar PNG</button>
+    <button id="btn-close-photo" class="chip-btn" type="button" aria-label="Fechar barra fotográfica">✕</button>
+  </div>
+
+  <nav id="bottom-dock" aria-label="Ferramentas da bancada">
+    <div class="dock-item-wrap">
+      <button id="btn-spiral" class="dock-btn" type="button" aria-expanded="false">
+        Espiral <span id="lbl-spiral-val" class="dock-sub">3.2v</span>
+      </button>
+      <div id="spiral-popover" class="popover" hidden>
+        <div class="pop-range-row"><span>Voltas</span><strong id="pop-spiral-readout">3.15 voltas</strong></div>
+        <input id="pop-spiral-range" type="range" min="180" max="460" value="315" aria-label="Voltas da espiral" />
+        <div class="pop-range-row"><span>Elevação</span><strong id="pop-pitch-readout">Espira 0.22</strong></div>
+        <input id="pop-pitch-range" type="range" min="0" max="65" value="22" aria-label="Elevação helicoidal" />
+      </div>
+    </div>
+
+    <div class="dock-item-wrap">
+      <button id="btn-aperture" class="dock-btn" type="button" aria-expanded="false">
+        Abertura <span id="lbl-aperture-val" class="dock-sub">62%</span>
+      </button>
+      <div id="aperture-popover" class="popover" hidden>
+        <div class="pop-range-row"><span>Expansão do tubo</span><strong id="pop-aperture-readout">62%</strong></div>
+        <input id="pop-aperture-range" type="range" min="30" max="95" value="62" aria-label="Abertura da concha" />
+      </div>
+    </div>
+
+    <div class="dock-item-wrap">
+      <button id="btn-scale" class="dock-btn" type="button" aria-expanded="false">
+        Escala <span id="lbl-scale-val" class="dock-sub">1.00x</span>
+      </button>
+      <div id="scale-popover" class="popover" hidden>
+        <div class="pop-range-row"><span>Proporção geral</span><strong id="pop-scale-readout">1.00x</strong></div>
+        <input id="pop-scale-range" type="range" min="68" max="138" value="100" aria-label="Escala da concha" />
+      </div>
+    </div>
+
+    <div class="dock-item-wrap">
+      <button id="btn-texture" class="dock-btn" type="button" aria-expanded="false">
+        Textura <span id="lbl-texture-val" class="dock-sub">Náutilo</span>
+      </button>
+      <div id="texture-popover" class="popover" hidden>
+        <button class="pop-btn active" type="button" data-texture-btn="banded" aria-pressed="true"><span>Listras Náutilo</span></button>
+        <button class="pop-btn" type="button" data-texture-btn="ribbed" aria-pressed="false"><span>Costelas Radiais</span></button>
+        <button class="pop-btn" type="button" data-texture-btn="nacre" aria-pressed="false"><span>Nacarado Liso</span></button>
+      </div>
+    </div>
+
+    <span class="dock-sep" aria-hidden="true"></span>
+
+    <button id="btn-cutaway" class="dock-btn active" type="button" aria-pressed="true" title="Alternar inteira e corte (C)">Corte</button>
+    <button id="btn-catalog" class="dock-btn" type="button" title="Salvar forma no comparador">+ Catalogar</button>
+    <button id="btn-photo-mode" class="dock-btn" type="button" aria-pressed="false">Fotografia</button>
+  </nav>
+
+  <div id="mobile-cam-pad" aria-label="Órbita da bancada">
+    <span></span>
+    <button type="button" data-cam-nudge="up" aria-label="Elevar câmera">▲</button>
+    <span></span>
+    <button type="button" data-cam-nudge="left" aria-label="Girar à esquerda">◀</button>
+    <button type="button" data-cam-nudge="down" aria-label="Abaixar câmera">▼</button>
+    <button type="button" data-cam-nudge="right" aria-label="Girar à direita">▶</button>
+  </div>
+
+  <button id="btn-restore-ui" type="button">Mostrar ferramentas</button>
+
+  <aside id="settings-drawer" hidden aria-label="Ajustes da Bancada">
+    <div class="drawer-head">
+      <h2>Ajustes do Museu</h2>
+      <button id="btn-close-drawer" class="icon-btn" type="button" aria-label="Fechar ajustes">✕</button>
+    </div>
+
+    <div class="ctrl-group">
+      <label class="ctrl-row">
+        <span>Mar distante</span>
+        <input id="ctrl-sound" type="checkbox" />
+      </label>
+      <div class="ctrl-row"><span>Volume</span><small id="ctrl-volume-val">48%</small></div>
+      <input id="ctrl-volume" type="range" min="0" max="100" value="48" />
+    </div>
+
+    <label class="ctrl-row" style="font-size:13px;">
+      <span>Profundidade de campo (DoF)</span>
+      <input id="ctrl-dof-acc" type="checkbox" checked />
+    </label>
+
+    <label class="ctrl-row" style="font-size:13px;">
+      <span>Movimento reduzido</span>
+      <input id="ctrl-reduced" type="checkbox" />
+    </label>
+
+    <div class="ctrl-group">
+      <span>Qualidade gráfica</span>
+      <select id="ctrl-quality">
+        <option value="auto">Automática</option>
+        <option value="high">Alta</option>
+        <option value="medium">Média</option>
+        <option value="low">Leve</option>
+      </select>
+    </div>
+
+    <button id="btn-reset-drawer" class="secondary-btn" type="button">Restaurar espécime</button>
+    <div id="diag-line">60 FPS · 0 draws · 0 tris</div>
+  </aside>
+
+  <div id="compare-modal" hidden role="dialog" aria-modal="true" aria-labelledby="compare-title">
+    <div class="modal-card compare-wrap">
+      <div class="drawer-head">
+        <h2 id="compare-title">Comparar Proporções (3 Formas)</h2>
+        <div style="display:flex;gap:6px;">
+          <button id="btn-clear-catalog" class="secondary-btn" type="button">Limpar</button>
+          <button id="btn-close-compare" class="icon-btn" type="button" aria-label="Fechar comparação">✕</button>
+        </div>
+      </div>
+      <div id="compare-grid"></div>
+    </div>
+  </div>
+
+  <div id="pause-modal" hidden role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <div class="modal-card">
+      <h2 id="pause-title">Bancada em Pausa</h2>
+      <p style="color:var(--text-muted);font-size:13px;margin:0;line-height:1.45;">
+        Os parâmetros de espiral e suas formas catalogadas permanecem preservados.
+      </p>
+      <button id="btn-resume-modal" class="primary-btn" type="button">Retomar análise</button>
+      <button id="btn-reset-modal" class="secondary-btn" type="button">Reiniciar concha</button>
+    </div>
+  </div>
+
+  <div id="webgl-status" hidden role="alertdialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>Contexto 3D interrompido</h2>
+      <p class="webgl-msg" style="color:var(--text-muted);font-size:13px;margin:0;">
+        A renderização WebGL foi pausada pelo navegador. Recarregue para retomar a bancada.
+      </p>
+      <button class="primary-btn" type="button" onclick="window.location.reload()">Recarregar</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

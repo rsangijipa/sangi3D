@@ -1,0 +1,30 @@
+{
+  "runtime": [
+    {
+      "resource": "Three.js r187",
+      "path": "../../../Sistema/shared/vendor/three.module.js",
+      "license": "MIT",
+      "license_file": "../../../Sistema/shared/vendor/LICENSE"
+    },
+    {
+      "resource": "Ponte de ciclo de vida Sangi3D",
+      "path": "../../../Sistema/shared/sangi-bridge.js",
+      "origin": "Código compartilhado do projeto"
+    },
+    {
+      "resource": "Pena, bancada, instrumento, texturas, luzes e ruídos",
+      "path": ["lab-view.mjs", "lab.mjs"],
+      "origin": "Geometria, texturas e áudio procedurais criados para este protótipo. Sem modelos, fotos ou gravações de terceiros no runtime."
+    }
+  ],
+  "deliverables": [
+    {
+      "path": ["mockups/desktop.png", "mockups/mobile.png"],
+      "origin": "Dois mockups independentes gerados com OpenAI ImageGen e adaptados às dimensões do brief."
+    },
+    {
+      "path": ["miniatura.png", "capturas/desktop.png", "capturas/mobile.png", "capturas/mobile-paisagem.png", "capturas/microscopio.png"],
+      "origin": "Capturas do protótipo executado em Chrome."
+    }
+  ]
+}

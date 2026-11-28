@@ -318,24 +318,23 @@ class TextureGenerator {
     c.width = c.height = size;
     const ctx = c.getContext("2d");
 
-    ctx.fillStyle = "#7a7364";
-    ctx.fillRect(0, 0, size, size);
-
-    // Weathered vertical rain stains & concrete mottling (matching background wall)
-    for (let i = 0; i < 160; i++) {
-      const x = rand(0, size);
-      const w = rand(6, 34);
-      const grad = ctx.createLinearGradient(0, 0, 0, size);
-      grad.addColorStop(0, "rgba(48, 44, 36, 0.28)");
-      grad.addColorStop(0.5, "rgba(62, 58, 48, 0.14)");
-      grad.addColorStop(1, "rgba(42, 46, 32, 0.26)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(x, 0, w, size);
+    const image = ctx.createImageData(size, size);
+    for (let y = 0; y < size; y++) {
+      const height = y / size;
+      for (let x = 0; x < size; x++) {
+        const offset = (y * size + x) * 4;
+        const plaster = fbm2D(x * 0.019, y * 0.019, 4);
+        const run = fbm2D(x * 0.081, y * 0.004, 3);
+        const grit = hash2(x, y) - 0.5;
+        const damp = THREE.MathUtils.smoothstep(height + (plaster - 0.5) * 0.34, 0.65, 1);
+        const shade = 135 + plaster * 48 + grit * 22 - run * 26 - damp * 39;
+        image.data[offset] = shade * (1.04 - damp * 0.13);
+        image.data[offset + 1] = shade * (0.97 + damp * 0.02);
+        image.data[offset + 2] = shade * (0.85 - damp * 0.06);
+        image.data[offset + 3] = 255;
+      }
     }
-    for (let i = 0; i < 300; i++) {
-      ctx.fillStyle = rng() > 0.5 ? "rgba(160,152,138,0.12)" : "rgba(55,50,42,0.12)";
-      ctx.fillRect(rand(0, size), rand(0, size), rand(6, 26), rand(6, 22));
-    }
+    ctx.putImageData(image, 0, 0);
 
     const tex = this.assets.trackTexture(new THREE.CanvasTexture(c));
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -1183,6 +1182,7 @@ class SceneManager {
     ], 0.034, 0.025, 18, 8, this.mats.barkMat);
     bushRoot.add(diagonalRoot.mesh);
     foliageCurves.push(diagonalRoot.curve);
+    diagRes.mesh.userData.springIndex = this.springNodes.length;
     this.registerSpringNode(diagBranchGroup, 26, 4.4, 0.65, 0.4);
 
     // 2. Central vertical gnarled woody stem with pruned tip (left-center foreground)
@@ -1196,6 +1196,16 @@ class SceneManager {
     const mainStem = this.geo.createTaperedBranch(mainStemPts, 0.036, 0.017, 24, 8, this.mats.darkBarkMat);
     bushRoot.add(mainStem.mesh);
     foliageCurves.push(mainStem.curve);
+    const cutFace = new THREE.Mesh(
+      this.assets.trackGeometry(new THREE.CircleGeometry(0.018, 11)),
+      this.assets.trackMaterial(new THREE.MeshStandardMaterial({
+        color: 0xb8a176, roughness: 0.87, side: THREE.DoubleSide
+      }))
+    );
+    cutFace.position.copy(mainStemPts.at(-1));
+    cutFace.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), mainStem.curve.getTangent(1));
+    cutFace.receiveShadow = true;
+    bushRoot.add(cutFace);
 
     // Lateral shoots off the central stem
     const shootConfigs = [
@@ -2363,7 +2373,8 @@ class BougainvilleaApp {
     const desiredFocus = preset === "reference" ?
       -this.focusPoint.set(0.24, -0.18, 0.64).applyMatrix4(this.camera.matrixWorldInverse).z :
       this.camera.position.distanceTo(target) - (preset.startsWith("macro") ? 0.045 : 0);
-    this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, desiredFocus, dt ? 1 - Math.exp(-8 * dt) : 1);
+    const focus = desiredFocus > 0.25 ? desiredFocus : spherical.radius;
+    this.focusDistance = THREE.MathUtils.lerp(this.focusDistance, focus, dt ? 1 - Math.exp(-8 * dt) : 1);
     if (this.lensEnabled && this.qualityMgr.currentTier !== "low") {
       const aperture = preset === "garden" || spherical.radius > 3.4 ? 0.0055 : 0.023;
       this.lens.render(this.scene, Math.max(0.25, this.focusDistance), aperture);

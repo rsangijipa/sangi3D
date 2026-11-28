@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Observe a raque e as bárbulas de uma pena iridescente, flexione a haste e recomponha suas fibras em uma bancada interativa.">
+  <meta name="theme-color" content="#171c18">
+  <title>Arquitetura de uma Pena — Galeria Macro</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./lab.css">
+  <script src="../../../Sistema/shared/sangi-bridge.js"></script>
+  <script type="module" src="./lab.mjs"></script>
+</head>
+<body>
+  <main id="lab" aria-labelledby="title">
+    <canvas id="workbench" tabindex="0" aria-label="Pena 3D interativa" aria-describedby="guidance"></canvas>
+    <img id="photo-reference" alt="Referência fixada na sessão" hidden>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="mast">
+      <div>
+        <p class="collection">Sangi3D <span aria-hidden="true">/</span> Galeria macro</p>
+        <h1 id="title">Arquitetura de uma Pena</h1>
+      </div>
+      <nav class="utilities" aria-label="Sessão">
+        <button id="photo" type="button" aria-pressed="false">Foto</button>
+        <button id="settings" type="button" aria-expanded="false" aria-controls="panel">Ajustes</button>
+        <button id="pause" type="button">Pausa</button>
+      </nav>
+    </header>
+
+    <div class="view-rail" role="group" aria-label="Enquadramento">
+      <button id="macro" type="button" aria-pressed="true">Macro lateral</button>
+      <button id="micro" type="button" aria-pressed="false">Microscópio</button>
+    </div>
+
+    <footer class="dock">
+      <p id="guidance">Arraste a pena para flexionar. Solte para observar o retorno.</p>
+      <p id="live" aria-live="polite" role="status">Preparando a bancada…</p>
+      <div class="mode-row" role="group" aria-label="Modo">
+        <button id="explore" type="button" aria-pressed="true">Explorar camadas</button>
+        <button id="recover" type="button" aria-pressed="false">Recuperar forma</button>
+      </div>
+      <div class="tools" role="group" aria-label="Ferramentas">
+        <button id="flex" type="button" aria-pressed="true">Flexão</button>
+        <button id="split" type="button" aria-pressed="false">Separar</button>
+        <button id="light" type="button" aria-expanded="false" aria-controls="panel">Luz</button>
+        <button id="zoom" type="button" aria-expanded="false" aria-controls="panel">Zoom</button>
+        <button id="repair" type="button">Recompor</button>
+      </div>
+    </footer>
+
+    <section id="panel" class="panel" aria-label="Controles" hidden>
+      <header><h2 id="panel-title">Ajustes</h2><button id="panel-close" type="button" aria-label="Fechar controles">Fechar</button></header>
+      <div id="light-controls" class="panel-group" hidden>
+        <label for="light-angle">Ângulo da luz <output id="light-value" for="light-angle">38°</output></label>
+        <input id="light-angle" type="range" min="0" max="359" value="38">
+      </div>
+      <div id="zoom-controls" class="panel-group" hidden>
+        <label for="zoom-factor">Ampliação <output id="zoom-value" for="zoom-factor">1,0×</output></label>
+        <input id="zoom-factor" type="range" min="1" max="4.8" step="0.05" value="1">
+        <label for="frame">Posição ao longo da raque</label>
+        <input id="frame" type="range" min="18" max="98" value="52">
+      </div>
+      <div id="settings-controls" class="panel-group" hidden>
+        <label for="quality">Qualidade gráfica<select id="quality">
+          <option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option>
+        </select></label>
+        <label for="volume">Volume <output id="volume-value" for="volume">35%</output></label>
+        <input id="volume" type="range" min="0" max="100" value="35">
+        <label class="check"><input id="mute" type="checkbox" checked> Silenciar</label>
+        <label class="check"><input id="less-motion" type="checkbox"> Reduzir movimento</label>
+        <label class="check"><input id="dof" type="checkbox" checked> Desfoque de lente</label>
+        <button id="open-help" type="button">Como explorar</button>
+        <p id="metrics" class="metrics"></p>
+      </div>
+      <div id="photo-controls" class="panel-group" hidden>
+        <label for="focus">Foco <output id="focus-value" for="focus">Centro</output></label>
+        <input id="focus" type="range" min="0.78" max="1.22" step="0.01" value="1">
+        <label for="exposure">Exposição <output id="exposure-value" for="exposure">1,00×</output></label>
+        <input id="exposure" type="range" min="0.65" max="1.65" step="0.01" value="1">
+        <label class="check"><input id="photo-dof" type="checkbox" checked> Desfoque de lente</label>
+        <div class="photo-actions">
+          <button id="pin-reference" type="button">Fixar referência</button>
+          <button id="compare" type="button" disabled aria-pressed="false">Comparar</button>
+        </div>
+        <div id="compare-controls" hidden>
+          <label for="compare-split">Cena atual / referência</label>
+          <input id="compare-split" type="range" min="0" max="100" value="50">
+        </div>
+        <button class="primary" id="capture" type="button">Capturar PNG</button>
+      </div>
+    </section>
+
+    <dialog id="pause-dialog" aria-labelledby="pause-title">
+      <h2 id="pause-title">Sessão pausada</h2>
+      <div class="dialog-actions">
+        <button id="resume" class="primary" type="button">Retomar</button>
+        <button id="restart" type="button">Reiniciar</button>
+        <a class="button" href="/">Sair para o catálogo</a>
+      </div>
+    </dialog>
+
+    <dialog id="help-dialog" aria-labelledby="help-title">
+      <h2 id="help-title">Como explorar</h2>
+      <p>Arraste sobre a pena para flexionar. Em Separar, use a ponta da ferramenta na borda da pena. Em Recuperar forma, passe pela abertura ou use Recompor.</p>
+      <p>Use a roda ou faça uma pinça para aproximar. Arraste a bancada vazia ou use o botão direito do mouse para mudar o ângulo.</p>
+      <p>Com foco na cena, as setas percorrem a raque e alternam o lado. Espaço aplica a ferramenta. Use as teclas + e − para ampliar ou afastar.</p>
+      <button id="help-close" class="primary" type="button">Voltar à bancada</button>
+    </dialog>
+
+    <aside id="failure" class="failure" role="alert" hidden>
+      <h2 id="failure-title">A bancada 3D está indisponível</h2>
+      <p id="failure-detail">Verifique se o navegador tem WebGL 2 disponível.</p>
+      <a class="button" href="/">Voltar ao catálogo</a>
+    </aside>
+  </main>
+</body>
+</html>
