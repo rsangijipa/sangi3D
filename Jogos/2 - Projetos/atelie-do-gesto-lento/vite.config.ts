@@ -1,25 +1,14 @@
 import { defineConfig } from 'vite';
-import path from 'path';
 
+// Build estática com caminhos relativos: o launcher abre dist/index.html.
 export default defineConfig({
-  root: '.',
-  publicDir: 'assets',
-  server: {
-    port: 5173,
-    open: false,
-    fs: {
-      allow: ['.']
-    }
-  },
+  base: './',
+  publicDir: 'public',
+  server: { port: 5173, open: false },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    target: 'es2022'
+    target: 'es2022',
+    chunkSizeWarningLimit: 1200,
   },
-  resolve: {
-    alias: {
-      '/assets': path.resolve(__dirname, 'assets'),
-      'assets': path.resolve(__dirname, 'assets')
-    }
-  }
 });

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelie-gesto-lento-v1';
+const CACHE_NAME = 'atelie-gesto-lento-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {
