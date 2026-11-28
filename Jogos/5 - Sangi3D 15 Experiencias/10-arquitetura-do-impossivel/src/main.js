@@ -21,6 +21,8 @@ import {
   const fadeEl = $('transitionFade');
   const statusEl = $('status');
   const bridgeReadout = $('bridgeReadout');
+  const bridgeGuide = $('bridgeGuide');
+  const bridgeSteps = [...document.querySelectorAll('#bridgeSteps li')];
   const progressReadout = $('progressReadout');
   const backendEl = $('backend');
   const hudRoom = $('hudRoom');
@@ -288,7 +290,7 @@ import {
   }
 
   on(window, 'keydown', e => {
-    if (e.altKey || e.ctrlKey || e.metaKey || e.target?.closest?.('input,select,textarea,button,dialog')) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target?.closest?.('input,select,textarea,button,summary,dialog')) return;
     const k = e.key.toLowerCase();
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
     keys.add(k);
@@ -514,10 +516,17 @@ import {
     if (gravZone) hudGravity.innerHTML = `Gravidade: <strong>${gravZone.label.split(' ')[1] || 'Normal'}</strong>`;
 
     // Update stepper: Observar (0) -> Alinhar (1) -> Atravessar (2)
-    const stepNodes = document.querySelectorAll('#bridgeSteps li');
     const nearObs = Math.hypot(st.pos.x - CONFIG.observationPoint.x, st.pos.z - CONFIG.observationPoint.z) < 1.3;
     const activeIdx = st.bridgeCrossed ? 3 : st.bridgeAligned ? 2 : nearObs ? 1 : 0;
-    stepNodes.forEach((li, i) => {
+    const directions = [
+      'Siga até a marca Ponto de Observação.',
+      st.bridgePosition % 2 ? 'Gire 90° pelo menu Controles ou interaja com o mecanismo.' : 'Escolha Alinhar plataformas em Controles.',
+      'Caminhe em frente pela ponte alinhada.',
+      'Travessia concluída. Explore a galeria adiante.',
+    ];
+    if (bridgeGuide.textContent !== directions[activeIdx]) bridgeGuide.textContent = directions[activeIdx];
+    bridgeGuide.parentElement.hidden = st.roomId !== 'hub';
+    bridgeSteps.forEach((li, i) => {
       li.classList.toggle('done', i < activeIdx);
       if (i === activeIdx) li.setAttribute('aria-current', 'step');
       else li.removeAttribute('aria-current');

@@ -231,6 +231,11 @@ h2 {
   margin: 0 0 6px;
 }
 
+.bridge-guide {
+  margin: 6px 0 0;
+  line-height: 1.35;
+}
+
 .steps-list {
   display: flex;
   gap: 5px;

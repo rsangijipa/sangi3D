@@ -52,12 +52,15 @@ export function ceramics(ctx) {
   fired=loaded?.fired===true;
   const pot=mesh(scene,new THREE.LatheGeometry(profileShape(profile),80),bare,[0,.29,0]);
   const camera=orbit(ctx,5.65,[0,1.40,0],.34,.33);
-  const projection=new THREE.Plane(new THREE.Vector3(0,0,1),0);
-  const paintPoint=new THREE.Vector3();
+  const ray=new THREE.Raycaster(),cursor=new THREE.Vector2();
+  const pressureRing=mesh(scene,new THREE.TorusGeometry(1,.012,6,72),new THREE.MeshBasicMaterial({color:0xffdaab}));
+  pressureRing.rotation.x=Math.PI/2;
+  pressureRing.visible=false;
   const history=[],redo=[];
   const finishes=[0xb67655,0x568987,0xa55649,0xd9d0b5];
   const gauge=ctx.reading();
   function refreshMesh(){
+    pressureRing.visible=false;
     pot.geometry.dispose();
     pot.geometry=new THREE.LatheGeometry(profileShape(profile),80);
     pot.material=finish?glaze:bare;
@@ -83,22 +86,26 @@ export function ceramics(ctx) {
       profile[i]=clamp(previous[i]+delta,.28,1.25);
     }
     refreshMesh();
+    pressureRing.position.set(0,pot.position.y+HEIGHT*at/(PROFILE_SIZE-1),0);
+    const ringRadius=profile[Math.round(at)]+.022;
+    pressureRing.scale.set(ringRadius,ringRadius,1);
+    pressureRing.visible=true;
   }
-  function drawAt(p,strength){
-    projection.normal.copy(ctx.camera.position).sub(new THREE.Vector3(0,1.4,0));
-    projection.normal.y=0;
-    projection.normal.normalize();
-    if(ctx.project(p,projection,paintPoint)&&paintPoint.y>=.22&&paintPoint.y<=2.65&&Math.hypot(paintPoint.x,paintPoint.z)<1.45){
-      shape((paintPoint.y-.29)/HEIGHT,strength);
-      return true;
-    }
-    return false;
+  function drawAt(p,strength,initial=false){
+    cursor.set(p.x*2-1,1-p.y*2);
+    ray.setFromCamera(cursor,ctx.camera);
+    const hit=ray.intersectObject(pot,false)[0];
+    pressureRing.visible=false;
+    if(!hit)return false;
+    if(initial)remember();
+    shape((hit.point.y-pot.position.y)/HEIGHT,strength);
+    return true;
   }
   let brushing=false;
   ctx.paint((p,phase)=>{
-    if(phase==='end'||phase==='cancel'){brushing=false;return;}
+    if(phase==='end'||phase==='cancel'){brushing=false;pressureRing.visible=false;return;}
     if(tool===3||p.alternate){if(phase==='move')camera.drag(p);return;}
-    if(phase==='start'){remember();brushing=drawAt(p,1);}
+    if(phase==='start')brushing=drawAt(p,1,true);
     else if(brushing)drawAt(p,clamp(Math.hypot(p.dx,p.dy)/12,.16,1.2));
   });
   ctx.button('Modelar região central',()=>{if(tool===3)return;remember();shape(.56,2.5);ctx.say('Perfil central modelado.');},toolButtons,true);
@@ -164,7 +171,7 @@ export function planet(ctx) {
   const original=new Float32Array(positions.array);
   const colors=new THREE.BufferAttribute(new Float32Array(positions.count*3),3);
   geo.setAttribute('color',colors);
-  const earth=mesh(scene,geo,mat(0xffffff,{vertexColors:true,roughness:.87}));
+  const earth=mesh(scene,geo,mat(0xffffff,{vertexColors:true,roughness:.81}));
   const water=orb(scene,mat(0x2c7190,{roughness:.28,metalness:.12}),0,0,0,2);
   const air=mesh(scene,new THREE.SphereGeometry(2.07,56,34),new THREE.ShaderMaterial({
     transparent:true,side:THREE.BackSide,depthWrite:false,blending:THREE.AdditiveBlending,
@@ -184,7 +191,8 @@ export function planet(ctx) {
   let radius=.22,tool=0,painting=false,dirty=true,cut=0,compare=false;
   const redo=[];
   const gauges=ctx.reading();
-  const color=new THREE.Color();
+  const color=new THREE.Color(),land=new THREE.Color();
+  const shore=new THREE.Color(0xc8ad78),ice=new THREE.Color(0xd9e8e8);
   function baseHeight(x,y,z,seed){
     const shift=(seed%1903)*.017;
     return Math.sin(x*4.8+z*2.9+shift)*Math.cos(y*5.03-x*2.52)*.079
@@ -207,10 +215,12 @@ export function planet(ctx) {
       h=clamp(h,-.18,.24);
       const r=2+h;
       positions.setXYZ(i,x*r,y*r,z*r);
+      const texture=.90+Math.sin(x*17+y*11+z*15)*Math.cos(z*12-y*9)*.06+h*1.6;
+      land.setHex(biomeColors[world.preset]).multiplyScalar(texture);
+      const coast=THREE.MathUtils.smoothstep(h,world.level-.004,world.level+.044);
+      const snow=Math.max(THREE.MathUtils.smoothstep(Math.abs(y),.73,.86),THREE.MathUtils.smoothstep(h,.093,.141));
       if(painted)color.setHex(0xd9a456);
-      else if(Math.abs(y)>.79||h>.112)color.setHex(0xc8d5d5);
-      else if(h<world.level+.009)color.setHex(0xa49970);
-      else color.setHex(biomeColors[world.preset]).multiplyScalar(.91+Math.sin(x*49+y*29+z*42)*.09+h*2);
+      else color.lerpColors(shore,land,coast).lerp(ice,snow);
       colors.setXYZ(i,color.r,color.g,color.b);
     }
     positions.needsUpdate=true;colors.needsUpdate=true;geo.computeVertexNormals();

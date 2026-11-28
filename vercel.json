@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "node Sistema/scripts/prepare-online-build.mjs --install-deps --output-only",
+  "outputDirectory": "Publicacao_Online",
+  "rewrites": [
+    { "source": "/api/apps", "destination": "/api/apps.json" },
+    { "source": "/launcher/:path*", "destination": "/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
+    }
+  ]
+}

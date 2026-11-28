@@ -85,6 +85,11 @@ export async function mount(id) {
       field.append(out);
       return out;
     },
+    sceneGuide(text = '') {
+      const guide = node('div', text, 'scene-guide');
+      canvas.parentElement.append(guide);
+      return guide;
+    },
     meter(title) {
       const item = node('label', title, 'meter');
       const meter = node('meter');
@@ -271,7 +276,7 @@ export async function mount(id) {
   on(canvas, 'pointercancel', event => pointer(event, 'cancel'));
   on(canvas, 'lostpointercapture', event => pointer(event, 'cancel'));
   on(window, 'keydown', event => {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.target?.closest('input,textarea,select,button,[contenteditable],a') || timers.paused) return;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.target?.closest('input,textarea,select,button,summary,[contenteditable],a') || timers.paused) return;
     const key = event.key.toLowerCase();
     if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(key)) event.preventDefault();
     keys.add(key);

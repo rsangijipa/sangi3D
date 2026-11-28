@@ -360,6 +360,7 @@ export function midnight(ctx) {
   });
 
   const panel = ctx.group();
+  const streetGuide = ctx.sceneGuide();
   function toggleDoor() {
     if (open && Math.abs(nav.pos.x - 8.65) < .43 && Math.abs(nav.pos.z - 1.7) < 1.2) {
       ctx.say('Afaste-se da passagem para fechar a porta.');
@@ -513,6 +514,12 @@ export function midnight(ctx) {
       else nav.position.textContent = 'Rua · pedestres ' + (greenLight ? 'podem atravessar' : 'aguardam o sinal');
 
       const inside = inCafe || inVinyl || inGallery;
+      const nearCrosswalk = !inside && !onTerrace && Math.abs(nav.pos.z - 1.7) < 4.4;
+      const instruction = !nav.interact.disabled ? nav.interact.textContent + ' · E ou Controles'
+        : nearCrosswalk && nav.pos.x < 7.5 ? (greenLight ? 'Sinal aberto · atravesse pela faixa rumo ao café' : 'Faixa para o café · aguarde o sinal de pedestres')
+        : nearCrosswalk ? 'Entrada do café ao lado da faixa'
+        : nav.position.textContent;
+      if (streetGuide.textContent !== instruction) streetGuide.textContent = instruction;
       const zoneGain = inside ? .13 : inMetro && trainPulse > 0 ? Math.max(rainLevel * .72, .55) : rainLevel * .72;
       const zoneCutoff = inside ? 340 : inMetro && trainPulse > 0 ? 520 : 1620;
       nav.zone(`${inside}-${inMetro && trainPulse > 0}-${rainLevel}`, () => audio.set(zoneGain, zoneCutoff));

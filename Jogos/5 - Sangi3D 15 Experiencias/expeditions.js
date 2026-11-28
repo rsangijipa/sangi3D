@@ -101,6 +101,7 @@ export function forest(ctx) {
   const species = ['Lúmina azul', 'Samambaia-prata', 'Lanterna-rubra', 'Crista de jade', 'Flor do riacho', 'Véu lunar'];
   const flowers = [[-1.36, 3], [1.47, -.42], [-1.35, -8.1], [1.66, -12.35], [-1.2, -17.5], [1.7, -21.75]];
   const colors = [0x70cbef, 0x96d2c2, 0xea8c8e, 0x86f2b3, 0x8c9cef, 0xd7c3ff];
+  const silhouettes = [[1,.42,1],[.45,1.3,1.05],[.83,1.3,.83],[.5,.66,1.26],[1.25,.32,.68],[.7,.88,.72]];
   let flare = -1, until = 0;
   const plantLights = [];
   flowers.forEach(([dx, z], i) => {
@@ -109,7 +110,9 @@ export function forest(ctx) {
     for (let j = 0; j < 9; j++) {
       const a = j * 2.399, d = .10 + random() * .51, px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d, ht = .15 + random() * .54;
       tube(scene, stem, px, y + ht * .5, pz, .021 + ht * .035, ht);
-      const cap = orb(scene, top, px, y + ht, pz, .11 + ht * .12, .052 + ht * .044, .11 + ht * .12);
+      const capSize = .11 + ht * .12;
+      const [sx,sy,sz] = silhouettes[i];
+      const cap = orb(scene, top, px, y + ht, pz, capSize*sx, capSize*sy, capSize*sz);
       cap.rotation.z = (random() - .5) * .38;
       for (let q = 0; q < 5; q++) {
         const a = q / 5 * Math.PI * 2;
@@ -117,6 +120,7 @@ export function forest(ctx) {
       }
     }
     marker(scene, colors[i], x, y + .058, z);
+    sign(scene, species[i], x, y + .93, z + .27, 1.08, .24, {background:'#112726',ink:'#d2f5dc'});
     const light = lamp(scene, colors[i], i < 3 ? 1.8 : 1.2, x, y + .58, z, 2.6);
     plantLights.push(light);
   });
@@ -140,6 +144,7 @@ export function forest(ctx) {
   lamp(scene, 0x7ce6f5, 18, cascadeX, 2.1, -34.8, 9);
   sign(scene, 'CASCATA LUNAR', cascadeX, 2.2, -35.6, 2.2, .32, { background: '#163442' });
   const book = notebook(ctx, 'Caderno', species);
+  const trailGuide = ctx.sceneGuide();
   flowers.forEach(([dx, z], i) => {
     const x = trailCenter(z) + dx;
     nav.add({
@@ -182,6 +187,10 @@ export function forest(ctx) {
       const near = Math.abs(nav.pos.z + 4) < 4.5;
       nav.zone(near, () => audio.set(near ? .49 : .16, near ? 800 : 1420));
       nav.position.textContent = (near ? 'Ponte do riacho' : nav.pos.z > 0 ? 'Clareira' : 'Bosque luminoso') + ' · ' + book.entries.size + ' espécies';
+      const instruction = nav.interact.disabled
+        ? (nav.pos.z > -6.5 ? 'Siga as colônias luminosas até a ponte.' : 'Siga a trilha do bosque até a Cascata Lunar.')
+        : nav.interact.textContent + ' · E ou Controles';
+      if (trailGuide.textContent !== instruction) trailGuide.textContent = instruction;
     }
   });
 }

@@ -215,7 +215,7 @@ export function ferrofluid(ctx){
   lamp(scene,0xffe4c0,46,-3,5,1,13);
   lamp(scene,0xc2e9ff,19,3.4,1.6,1.5,9);
   const probe=ctx.reading();
-  const comparison=ctx.reading('Registre o relevo de um ensaio para comparar o pico.');
+  const scale=ctx.sceneGuide();
   let selected=0,mode=0,dirty=true,dragging=false;
   let reference,peak=0,previewTime=0;
   const validated=s=>Array.isArray(s)&&s.length===2&&s.every(p=>Array.isArray(p)&&p.length===5&&p.every(Number.isFinite)&&Math.hypot(p[0],p[1])<=1.82&&p[2]>=.35&&p[2]<=2.6&&p[3]>=.2&&p[3]<=1.5&&[1,-1].includes(p[4]));
@@ -223,14 +223,15 @@ export function ferrofluid(ctx){
   if(validated(saved?.sources))sources.forEach((source,i)=>source.params=saved.sources[i].slice());
   const modes=ctx.select('Padrão',['Livre · duas fontes','Coroa simétrica','Campo rotativo'],i=>{
     mode=i;if(i===1){sources[0].params[0]=sources[0].params[1]=0;}
-    dirty=true;sync();
+    sync();refreshExperiment();
   });
   ctx.select('Fonte',['Ímã cilíndrico','Ímã em barra'],i=>{selected=i;sync();});
-  const height=ctx.range('Altura',.35,2.6,.05,sources[0].params[2],v=>{sources[selected].params[2]=v;dirty=true;});
-  const strength=ctx.range('Força',.2,1.5,.05,sources[0].params[3],v=>{sources[selected].params[3]=v;dirty=true;});
+  const height=ctx.range('Altura',.35,2.6,.05,sources[0].params[2],v=>{sources[selected].params[2]=v;refreshExperiment();});
+  const strength=ctx.range('Força',.2,1.5,.05,sources[0].params[3],v=>{sources[selected].params[3]=v;refreshExperiment();});
   const xPosition=ctx.range('Posição horizontal',-1.6,1.6,.05,sources[0].params[0],v=>{
     const p=sources[selected].params;
-    p[0]=clamp(v,-Math.sqrt(1.79**2-p[1]**2),Math.sqrt(1.79**2-p[1]**2));dirty=true;
+    const limit=Math.sqrt(Math.max(0,1.79**2-p[1]**2));
+    p[0]=clamp(v,-limit,limit);sync();refreshExperiment();
   });
   function sync(){
     const p=sources[selected].params;
@@ -240,20 +241,20 @@ export function ferrofluid(ctx){
     });
   }
   const options=ctx.group();
-  ctx.button('Inverter polaridade',()=>{sources[selected].params[4]*=-1;dirty=true;ctx.say('Polaridade invertida.');},options);
+  ctx.button('Inverter polaridade',()=>{sources[selected].params[4]*=-1;refreshExperiment();ctx.say('Polaridade invertida.');},options);
   ctx.button('Salvar preset',()=>{if(ctx.save({sources:sources.map(x=>x.params),mode}))ctx.say('Parâmetros magnéticos salvos localmente.');},options);
   const trials=ctx.group();
   ctx.button('Registrar referência',()=>{
+    if(dirty)refreshExperiment();
     reference={peak,time:previewTime};
-    dirty=true;
+    refreshExperiment();
     ctx.say('Pico registrado. Altere altura, força ou polaridade para comparar na mesma fase.');
   },trials);
   ctx.button('Limpar referência',()=>{
-    reference=undefined;dirty=true;
-    comparison.textContent='Registre o relevo de um ensaio para comparar o pico.';
+    reference=undefined;refreshExperiment();
   },trials);
   const pointer=new THREE.Vector3(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),-.19);
-  ctx.hint('Arraste sobre a placa para mover a fonte selecionada. Shift ou botão direito orbita. Use o controle horizontal sem arrastar.');
+  ctx.hint('Os tons claros indicam relevo mais alto. Arraste para mover o ímã ou use os ajustes abaixo. Shift ou botão direito orbita.');
   ctx.paint((p,phase)=>{
     if(phase==='end'||phase==='cancel'){dragging=false;return;}
     if(p.alternate){if(phase==='move')camera.drag(p);return;}
@@ -264,6 +265,7 @@ export function ferrofluid(ctx){
     }else if(phase==='move'&&!dragging)camera.drag(p);
   });
   let elapsed=0;
+  function refreshExperiment(){updateSurface(ctx.reduced?0:ctx.timers.time);}
   function updateSurface(time){
     previewTime=reference?.time??time;
     const data=sources.map(({g,params:[x,z,h,power,polarity]},i)=>{
@@ -274,6 +276,7 @@ export function ferrofluid(ctx){
     peak=0;
     for(let i=0;i<pos.count;i++){
       const x=pos.getX(i),z=pos.getZ(i),outside=Math.hypot(x,z);
+      // Sobrepõe os campos de um dipolo vertical e um horizontal antes de calcular o relevo.
       let bx=0,by=0,bz=0;
       for(let j=0;j<(mode===1?1:2);j++){
         const [sx,sz,h,power,polarity]=data[j],dx=x-sx,dz=z-sz;
@@ -286,6 +289,7 @@ export function ferrofluid(ctx){
       }
       const field=Math.hypot(bx,by,bz);
       const relief=field*field/(1+field*field);
+      // Os picos hexagonais são uma aproximação visual da instabilidade da superfície.
       const lattice=Math.cos(x*21)+2*Math.cos(x*10.5)*Math.cos(z*18.19);
       const spikes=Math.max(0,lattice/3)**3*clamp((Math.abs(by)-.22)*1.6,0,1);
       const y=relief*(.21+.35*spikes)*clamp((2.10-outside)*2.8,0,1);
@@ -295,16 +299,18 @@ export function ferrofluid(ctx){
     }
     pos.needsUpdate=reliefColors.needsUpdate=true;geometry.computeVertexNormals();
     probe.textContent='Pico da superfície: '+peak.toFixed(2)+' u. · modelo visual aproximado';
+    let legend='Pico '+peak.toFixed(3)+' u. · azul-escuro: 0 · azul-claro: 0,48 u.';
     if(reference){
       const delta=peak-reference.peak;
-      comparison.textContent='Referência '+reference.peak.toFixed(3)+' u. · atual '+peak.toFixed(3)+' u. · diferença '+(delta>=0?'+':'')+delta.toFixed(3)+' u.';
+      legend='Referência '+reference.peak.toFixed(3)+' u. · atual '+peak.toFixed(3)+' u. · diferença '+(delta>=0?'+':'')+delta.toFixed(3)+' u.';
     }
+    if(scale.textContent!==legend)scale.textContent=legend;
     dirty=false;
   }
   if(Number.isInteger(saved?.mode)&&saved.mode>=0&&saved.mode<3)mode=saved.mode;
   modes.value=String(mode);
   updateSurface(0);
-  return {reset(){sources.forEach((src,i)=>{src.params=defaults[i].slice();});mode=0;modes.value='0';camera.reset();sync();dirty=true;ctx.say('Campo restaurado.');},
+  return {reset(){sources.forEach((src,i)=>{src.params=defaults[i].slice();});mode=0;modes.value='0';camera.reset();sync();refreshExperiment();ctx.say('Campo restaurado.');},
     update(dt,time){if(dirty||(mode===2&&!reference&&(elapsed+=dt)>.055)){elapsed=0;updateSurface(ctx.reduced?0:time);}}};
 }
 
@@ -416,6 +422,7 @@ export function ink(ctx){
   let softTime=0,dirty=true;
   const pigment=[[.10,.58,.88],[1,.52,.17],[.97,.22,.61],[.83,.92,1],[.33,.73,.63]];
   const state=ctx.reading();
+  const tankGuide=ctx.sceneGuide('Arraste no tanque para injetar tinta ou abra Controles e escolha Ensaio da barreira.');
   function setBarrier(){
     grid.barrier(enabled,barrierX);
     barrierMesh.visible=enabled;
@@ -439,13 +446,14 @@ export function ink(ctx){
     state.textContent='Pigmento na água: '+(mass/(w*h)*100).toFixed(1)+' · Barreira '+(enabled?'ativa':'retirada');
     dirty=false;
   }
-  const splat=(x,y,dx,dy)=>{grid.splash(x,y,dx,dy,brush,tool===0?pigment[palette]:null,1);dirty=true;};
+  const splat=(x,y,dx,dy)=>{grid.splash(x,y,dx,dy,brush,tool===0?pigment[palette]:null,1);tankGuide.hidden=true;dirty=true;};
   ctx.hint('Experimente o ensaio da barreira ou arraste no tanque para injetar pigmento. Compare o caminho com e sem o obstáculo.');
   const experiment=ctx.group();
   ctx.button('Ensaio da barreira',()=>{
-    grid.clear();camera.reset();direction=.6;flow.value='0.6';flow.dispatchEvent(new Event('input'));
+    grid.clear();camera.reset();flow.value='0.6';flow.dispatchEvent(new Event('input'));
     enabled=true;barrierX=w*.52;barrier.textContent='Retirar barreira';setBarrier();
     for(const y of [.4,.5,.6])grid.splash(w*.31,h*y,2.8,0,brush,pigment[palette],1.7);
+    tankGuide.hidden=true;
     draw();ctx.say('Observe a tinta contornar a barreira. Retire o obstáculo e injete de novo para comparar.');
   },experiment,true);
   ctx.select('Ferramenta',['Injetar pigmento','Agitar','Mover barreira','Orbitar'],index=>{tool=index;});
@@ -458,6 +466,7 @@ export function ink(ctx){
   const barrier=ctx.button('Retirar barreira',()=>{enabled=!enabled;barrier.textContent=enabled?'Retirar barreira':'Colocar barreira';setBarrier();},group);
   ctx.button('Injetar da esquerda',()=>{
     grid.splash(w*.27,h*.49,2.1,.48,brush,pigment[palette],1.55);
+    tankGuide.hidden=true;
     dirty=true;ctx.say('Pigmento injetado na corrente.');
   },group,true);
   let vortex=false;
@@ -480,7 +489,7 @@ export function ink(ctx){
     grid.splash(w*.63-Math.cos(t)*r,h*.45+Math.sin(t)*r,-Math.sin(t)*.74,-Math.cos(t)*.78,2.6,pigment[1],.24);
   }
   draw();
-  return {reset(){grid.clear();camera.reset();draw();ctx.say('Tanque limpo. Injete tinta para iniciar uma composição.');},
+  return {reset(){grid.clear();camera.reset();draw();tankGuide.hidden=false;ctx.say('Tanque limpo. Injete tinta para iniciar uma composição.');},
     update(dt){
       softTime+=dt;
       const frame=ctx.low?1/24:1/30;

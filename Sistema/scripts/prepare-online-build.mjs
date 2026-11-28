@@ -3,7 +3,7 @@
 // A pasta repete os mesmos endereços do launcher local:
 //   index.html, loading.html, ids-antigos.js, capas/  (o vercel.json reescreve /launcher/* para /*)
 //   Jogos/, Sistema/shared/, api/apps.json, vercel.json
-// Uso: node Sistema/scripts/prepare-online-build.mjs [--rebuild] [--no-build] [--out <pasta>]
+// Uso: node Sistema/scripts/prepare-online-build.mjs [--rebuild] [--install-deps] [--output-only] [--no-build] [--out <pasta>]
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,24 +105,31 @@ export async function prepareOnlineBuild({
   outDir = path.join(rootDir, 'Publicacao_Online'),
   rebuild = false,
   noBuild = false,
+  installDeps = false,
+  outputOnly = false,
   quiet = false,
 } = {}) {
   const log = (...args) => { if (!quiet) console.log(...args); };
   const launcherDir = path.join(rootDir, 'Sistema', 'launcher');
 
   if (!noBuild) {
+    const run = (command, dir) => spawnSync(command, {
+      cwd: dir, shell: true, windowsHide: true, stdio: quiet ? 'pipe' : 'inherit',
+      env: { ...process.env, BROWSER: 'none', FORCE_COLOR: '0', NO_COLOR: '1' },
+    });
     for (const dir of await findBuildProjects(path.join(rootDir, 'Jogos'))) {
       if (!rebuild && !(await needsBuild(dir))) continue;
       const pkg = await readPackage(dir);
       const deps = Object.keys({ ...pkg?.dependencies, ...pkg?.devDependencies });
       if (deps.length && !(await hasInstalledDependencies(dir, deps))) {
-        throw new Error(`Dependências ausentes para compilar ${path.relative(rootDir, dir)}`);
+        if (!installDeps) throw new Error(`Dependências ausentes para compilar ${path.relative(rootDir, dir)}`);
+        const command = fs.existsSync(path.join(dir, 'package-lock.json')) ? 'npm ci' : 'npm install';
+        log(`[build] Instalando dependências de ${path.relative(rootDir, dir)}...`);
+        const install = run(command + ' --include=dev --no-audit --no-fund', dir);
+        if (install.status !== 0) throw new Error(`Falha ao instalar dependências de ${path.relative(rootDir, dir)} (exit ${install.status})`);
       }
       log(`[build] Compilando ${path.relative(rootDir, dir)}...`);
-      const res = spawnSync('npm run build', {
-        cwd: dir, shell: true, windowsHide: true, stdio: quiet ? 'pipe' : 'inherit',
-        env: { ...process.env, BROWSER: 'none', FORCE_COLOR: '0', NO_COLOR: '1' },
-      });
+      const res = run('npm run build', dir);
       if (res.status !== 0) throw new Error(`Falha ao compilar ${path.relative(rootDir, dir)} (exit ${res.status})`);
     }
   }
@@ -147,9 +154,10 @@ export async function prepareOnlineBuild({
   syncDir(path.join(rootDir, 'Sistema', 'shared'), path.join(outDir, 'Sistema', 'shared'));
 
   log('--- 3. Gerando catálogo estático ---');
+  const onlineCatalog = path.join(outDir, 'api', 'apps.json');
   const apps = await generateCatalog({
     rootDir, quiet,
-    outFiles: [path.join(rootDir, 'Sistema', 'api', 'apps.json'), path.join(outDir, 'api', 'apps.json')],
+    outFiles: outputOnly ? [onlineCatalog] : [path.join(rootDir, 'Sistema', 'api', 'apps.json'), onlineCatalog],
   });
   log(`--- Publicação pronta em ${outDir} (${apps.length} jogos). ---`);
   return apps;
@@ -164,6 +172,8 @@ if (isMain) {
     outDir: outIdx >= 0 ? path.resolve(argv[outIdx + 1]) : undefined,
     rebuild: args.has('--rebuild'),
     noBuild: args.has('--no-build'),
+    installDeps: args.has('--install-deps'),
+    outputOnly: args.has('--output-only'),
   }).catch((err) => {
     console.error('❌ Erro em prepare-online-build:', err.message || err);
     process.exit(1);

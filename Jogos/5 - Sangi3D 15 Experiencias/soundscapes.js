@@ -115,6 +115,7 @@ export function particles(ctx){
   const pointerMap=new Map();
   const center=new THREE.Vector3();
   ctx.camera.position.set(0,2.55,8.9);ctx.camera.lookAt(0,2.46,0);ctx.camera.updateMatrixWorld();
+  const gestureGuide=ctx.sceneGuide('Arraste sobre a silhueta ou pressione Espaço para dispersar.');
   ctx.hint('Arraste para mover um atrator. Use dois dedos para dois atratores. A barra de espaço dispersa a silhueta.');
   const gauge=ctx.meter('Energia dos gestos');
   ctx.select('Modo',['Espelho','Dispersão','Órbita','Desenho'],i=>{mode=i;pointerMap.clear();});
@@ -129,6 +130,7 @@ export function particles(ctx){
     trails.geometry.attributes.position.needsUpdate=true;
   }
   function push(where=undefined){
+    gestureGuide.hidden=true;
     for(let i=0;i<velocity.length;i+=3){
       if(where&&Math.hypot(values[i]-where.x,values[i+1]-where.y)>1.16)continue;
       velocity[i]+=(random()-.5)*6;
@@ -148,6 +150,7 @@ export function particles(ctx){
   ctx.paint((p,phase)=>{
     if(phase==='end'||phase==='cancel'){pointerMap.delete(p.id);return;}
     if(!ctx.project(p,plane,center))return;
+    gestureGuide.hidden=true;
     let target=pointerMap.get(p.id);
     if(!target){target=new THREE.Vector3();pointerMap.set(p.id,target);}
     target.copy(center);
@@ -156,13 +159,14 @@ export function particles(ctx){
     energy=Math.min(1,energy+.15);
   });
   const camera=motionCamera(ctx,(x,y,power)=>{
+    gestureGuide.hidden=true;
     motion={x:(x-.5)*5.7,y:5.1-y*4.9,z:.1,ttl:.23};
     if(mode===1&&power>.51)push(motion);
     if(mode>=2)imprint(motion);
     energy=Math.max(energy,power);
   });
   return {fov:46,mute:sound,releaseMedia:camera.stop,key(key){if(key===' ')push();},cancel(){pointerMap.clear();},pause(){pointerMap.clear();},
-    reset(){velocity.fill(0);values.set(base);clear();ctx.say('Silhueta inicial recomposta.');},
+    reset(){velocity.fill(0);values.set(base);clear();gestureGuide.hidden=false;ctx.say('Silhueta inicial recomposta.');},
     update(dt){
       camera.update(dt);
       const anchors=[...pointerMap.values()];
@@ -218,7 +222,8 @@ export function visualizer(ctx){
       const angle=(j+.5)*Math.PI/3;
       const frame=box(g,base,Math.cos(angle)*3.45,Math.sin(angle)*3.45,0,3.99,.31,.27);
       frame.rotation.z=angle+Math.PI/2;
-      const light=box(g,j%3===0?copper:jade,Math.cos(angle)*3.29,Math.sin(angle)*3.29,.15,3.66,.034,.071);
+      const lightMaterial=j%3===0?copper:j%3===1&&i%2===0?violet:jade;
+      const light=box(g,lightMaterial,Math.cos(angle)*3.29,Math.sin(angle)*3.29,.15,3.66,.034,.071);
       light.rotation.z=frame.rotation.z;
     }
     rings.push(g);
@@ -244,14 +249,32 @@ export function visualizer(ctx){
   box(scene,mat(0x24343c,{metalness:.45,roughness:.19}),0,-3.18,-25,35,.13,61);
   const visual=[tunnel,wave,nebula,city];
   let preset=0,sensitivity=1,moving=false;
+  const gains=[1,1,1];
   const saved=ctx.load({});
   if(Number.isInteger(saved?.preset)&&saved.preset>=0&&saved.preset<4)preset=saved.preset;
   if(Number.isFinite(saved?.sensitivity))sensitivity=clamp(saved.sensitivity,.3,2.5);
+  if(Array.isArray(saved?.gains)&&saved.gains.length===3&&saved.gains.every(Number.isFinite)){
+    saved.gains.forEach((gain,i)=>{gains[i]=clamp(gain,0,2);});
+  }
   const dimensions=['Túnel hexagonal','Catedral de ondas','Nebulosa','Cidade de barras'];
   function show(){visual.forEach((obj,i)=>obj.visible=i===preset);}
   const choose=ctx.select('Cenário',dimensions,i=>{preset=i;show();});choose.value=String(preset);
   ctx.range('Sensibilidade',.3,2.5,.05,sensitivity,value=>{sensitivity=value;});
-  const bandMeters=['Graves','Médios','Agudos'].map(name=>ctx.meter(name));
+  const bandNames=['Graves','Médios','Agudos'];
+  const bandMeters=bandNames.map(name=>ctx.meter(name));
+  const visualMix=document.createElement('details');
+  const mixSummary=document.createElement('summary');
+  mixSummary.textContent='Mistura visual';
+  visualMix.append(mixSummary);
+  ctx.controls.append(visualMix);
+  const mixHint=document.createElement('p');
+  mixHint.className='hint';
+  mixHint.textContent='Ajuste a intensidade de movimento e luz de cada banda.';
+  visualMix.append(mixHint);
+  bandNames.forEach((name,i)=>{
+    const input=ctx.range('Resposta visual · '+name,0,2,.05,gains[i],value=>{gains[i]=value;});
+    visualMix.append(input.closest('label'));
+  });
   const state=ctx.reading('Faixa demonstrativa pronta.');
   const camera=orbit(ctx,5.8,[0,0,-9],.018,0);
   camera.zoom(2.2);
@@ -317,7 +340,7 @@ export function visualizer(ctx){
     }catch{if(request===token)ctx.say('Microfone não disponível. A faixa original continua como alternativa.');}
   });
   const save=ctx.group();
-  ctx.button('Salvar preset',()=>{if(ctx.save({preset,sensitivity}))ctx.say('Preset visual salvo.');},save);
+  ctx.button('Salvar preset',()=>{if(ctx.save({preset,sensitivity,gains:gains.slice()}))ctx.say('Preset visual salvo.');},save);
   const toggle=ctx.button('Travar câmera',()=>{
     moving=!moving;toggle.textContent=moving?'Liberar câmera':'Travar câmera';toggle.setAttribute('aria-pressed',String(moving));
   },save);
@@ -339,12 +362,16 @@ export function visualizer(ctx){
       bandMeters[index].value=energy[index];
     });
     const motion=ctx.reduced?.19:1;
-    const stages=[energy[0],energy[1],energy[2]];
+    const stages=energy.map((value,index)=>value*gains[index]);
     rings.forEach((r,i)=>{r.scale.setScalar(1+stages[0]*.105*motion*Math.cos(i*.32));r.rotation.z=(ctx.reduced?0:Math.sin(time*.45-i*.19)*stages[1]*.13);});
-    bays.forEach((r,i)=>{r.scale.y=1+Math.sin(i*.32+time)*stages[1]*.25*motion;});
+    bays.forEach((r,i)=>{
+      r.scale.x=1+stages[0]*.14*motion;
+      r.scale.y=1+Math.sin(i*.32+time)*stages[1]*.25*motion;
+    });
     bars.forEach((b,i)=>{b.scale.y=.17+stages[i%3]*(.6+(i%12)*.13)*motion;});
     starCloud.material.opacity=.43+stages[2]*.47;starCloud.rotation.z+=dt*stages[0]*.035*motion;
     jade.emissiveIntensity=.74+stages[1]*1.8*motion;copper.emissiveIntensity=.95+stages[0]*1.8*motion;
+    violet.emissiveIntensity=.75+stages[2]*2.25*motion;
     if(mic)state.textContent='Entrada: microfone local';
     else if(playing){const seconds=(offset+audio.currentTime-started)%length;state.textContent='Reproduzindo · '+seconds.toFixed(1)+' / '+length.toFixed(1)+' s';}
     else state.textContent='Faixa parada · '+offset.toFixed(1)+' s';
@@ -364,11 +391,15 @@ export function conductor(ctx){
   const cues=[0xffad60,0x70cdf3,0xbb91ff];
   const sections=positions.map(([x,z],i)=>{
     const g=group(scene,x,0,z), highlight=glow(cues[i],.18), instruments=[];
-    sign(g,names[i],0,.28,.74,1.35,.23);
+    const riser=mat(cues[i],{roughness:.62});
+    box(g,piano,0,-.028,-.93,3.85,.09,2.99);
+    box(g,highlight,0,.024,.57,3.8,.04,.08);
+    sign(g,names[i],0,.29,.77,1.9,.32,{ink:'#f0dab4'});
+    const spotlight=lamp(g,cues[i],4,0,1.75,.42,4.65);
     for(let j=0;j<7;j++){
       const slot=group(g,(j%4-1.5)*.92,0,-Math.floor(j/4)*1.28-.43);
       box(slot,velvet,0,.45,0,.55,.14,.47);
-      box(slot,velvet,0,.77,-.21,.57,.54,.12);
+      box(slot,riser,0,.77,-.21,.57,.54,.12);
       for(const a of [-1,1])for(const b of [-1,1])box(slot,brass,a*.22,.22,b*.18,.034,.43,.034);
       tube(slot,piano,.12,.53,.46,.019,1.04);
       box(slot,mat(0xeee4d1),.12,1.06,.44,.40,.28,.035).rotation.x=.32;
@@ -392,7 +423,7 @@ export function conductor(ctx){
       }
       box(slot,highlight,0,.018,.15,.30,.018,.26);
     }
-    return {g,highlight,instruments};
+    return {highlight,spotlight,instruments};
   });
   for(let i=0;i<13;i++){
     const a=i/12*Math.PI;
@@ -409,6 +440,7 @@ export function conductor(ctx){
   let requested=0, audio, master, replayStart=0;
   const active=[true,true,true], taps=[], recorded=[], scheduled=[];
   const reading=ctx.reading('96 BPM · Compasso de 4 tempos');
+  const stageCue=ctx.sceneGuide('Marque o pulso com Espaço ou abra Controles para iniciar o ensaio.');
   function setup(){
     ({audio,master}=ctx.audio());
     ctx.unmute();
@@ -456,6 +488,7 @@ export function conductor(ctx){
     download(JSON.stringify({version:1,events:recorded},null,2),'sequencia-do-maestro.json');
   },data);
   let firstBeat;
+  let heard;
   const pulses=[-9,-9,-9];
   const voices=new Set();
   function cue(event,at){
@@ -468,10 +501,12 @@ export function conductor(ctx){
       voices.add(voice);
       voice.addEventListener('ended',()=>voices.delete(voice),{once:true});
     });
-    scheduled.push([at,event.on.slice()]);
+    scheduled.push([at,event]);
   }
   function halt(){
     running=replaying=false;
+    heard=undefined;
+    pulses.fill(-9);
     for(const voice of voices)try{voice.stop();}catch{}
     scheduled.length=0;
   }
@@ -502,11 +537,20 @@ export function conductor(ctx){
       }
       if(replaying&&replayIndex===recorded.length&&now>replayStart+recorded.at(-1).t+.4)replaying=false;
       while(scheduled.length&&scheduled[0][0]<=now){
-        const [at,on]=scheduled.shift();on.forEach((value,i)=>{if(value)pulses[i]=at;});
+        const [at,event]=scheduled.shift();
+        heard=event;
+        event.on.forEach((value,i)=>{if(value)pulses[i]=at;});
       }
-      sections.forEach(({highlight,instruments},i)=>{
+      const playingSections=heard?.on.flatMap((on,i)=>on?[names[i]]:[]);
+      const cueText=(running||replaying)&&heard
+        ? 'Tempo '+(heard.beat+1)+' · '+(heard.on[heard.focus]?'Destaque: '+names[heard.focus]:'Sem destaque')+' · '+(playingSections.join(', ')||'Pausa')
+        : 'Marque o pulso com Espaço ou abra Controles para iniciar o ensaio.';
+      if(stageCue.textContent!==cueText)stageCue.textContent=cueText;
+      sections.forEach(({highlight,spotlight,instruments},i)=>{
         const amp=Math.exp(-Math.max(0,now-pulses[i])*7);
-        highlight.emissiveIntensity=.14+amp*.85;
+        const focus=(running||replaying)&&heard?.focus===i&&heard.on[i];
+        highlight.emissiveIntensity=.16+amp*(focus?1.65:.65);
+        spotlight.intensity=3+amp*(focus?23:8);
         instruments.forEach((instrument,j)=>{instrument.rotation.z=ctx.reduced?0:amp*.08*Math.sin(j+now*24);});
       });
     }};
