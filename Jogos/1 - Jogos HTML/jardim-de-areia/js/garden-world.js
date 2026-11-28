@@ -420,8 +420,8 @@ export function buildGardenWorld(scene, mats) {
 
   function updateSunLighting(sunAngle01) {
     // Ângulo rasante (manhã baixa -> tarde suave -> dourado rasante oposto)
-    const az = -1.15 + sunAngle01 * 2.25;
-    const el = 0.28 + Math.sin(sunAngle01 * Math.PI) * 0.34;
+    const az = -1.10 + sunAngle01 * 2.20;
+    const el = 0.36 + Math.sin(sunAngle01 * Math.PI) * 0.32;
     const dist = 16;
     sun.position.set(
       Math.cos(az) * Math.cos(el) * dist,

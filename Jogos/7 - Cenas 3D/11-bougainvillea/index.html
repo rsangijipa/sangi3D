@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Bougainvillea 3D — Quintal em Flor</title>
+  <meta name="description" content="Explore uma bougainvillea em um quintal brasileiro. Aproxime-se das brácteas, mude a luz e compare a cena 3D com a fotografia de referência." />
+  <link rel="icon" href="data:," />
+  <script src="../../../Sistema/shared/sangi-bridge.js"></script>
+  <style>
+    [hidden] { display: none !important; }
+    :root {
+      --bg-glass: rgba(16, 18, 20, 0.72);
+      --bg-glass-strong: rgba(14, 16, 18, 0.88);
+      --border-glass: rgba(255, 255, 255, 0.14);
+      --accent: #f4258c;
+      --accent-soft: rgba(244, 37, 140, 0.22);
+      --text-main: #f4f5f7;
+      --text-muted: #b2b9c2;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #14181c;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      user-select: none;
+      touch-action: none;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Reference Comparison Overlay */
+    #compare-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #compare-overlay.active {
+      opacity: 1;
+    }
+
+    #compare-img-wrap {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #compare-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      filter: saturate(1.0);
+    }
+
+    #compare-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.65);
+      pointer-events: none;
+      display: none;
+    }
+
+    #compare-divider::after {
+      content: "⇄";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-glass-strong);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: #fff;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Atmospheric subtle vignette */
+    #vignette-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 62%, rgba(8,14,10,0.22) 100%);
+    }
+
+    /* Loading Screen */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: radial-gradient(circle at 50% 42%, #241922 0%, #101414 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.55s ease, visibility 0.55s ease;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.12);
+      border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #fff;
+    }
+
+    .loader-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* HUD Wrapper */
+    #hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    #hud.contemplation .hud-chrome {
+      opacity: 0;
+      pointer-events: none !important;
+      transform: translateY(-6px);
+    }
+
+    .hud-chrome {
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      position: absolute;
+      top: calc(12px + var(--safe-top));
+      left: calc(12px + var(--safe-left));
+      right: calc(12px + var(--safe-right));
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .brand-badge {
+      pointer-events: auto;
+      background: var(--bg-glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.2;
+      margin-top: 2px;
+    }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-btn {
+      height: 36px;
+      min-width: 36px;
+      padding: 0 11px;
+      border-radius: 10px;
+      border: 1px solid var(--border-glass);
+      background: var(--bg-glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(34, 38, 44, 0.85);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.96);
+    }
+
+    .icon-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* Exit Contemplation Floating Button */
+    #btn-exit-contemplation {
+      position: absolute;
+      top: calc(12px + var(--safe-top));
+      right: calc(12px + var(--safe-right));
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      z-index: 15;
+    }
+
+    #hud.contemplation #btn-exit-contemplation {
+      pointer-events: auto;
+      opacity: 0.78;
+    }
+
+    #hud.contemplation #btn-exit-contemplation:hover {
+      opacity: 1;
+    }
+
+    /* Settings Drawer */
+    #settings-panel {
+      position: absolute;
+      top: calc(58px + var(--safe-top));
+      right: calc(12px + var(--safe-right));
+      width: 288px;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border-glass);
+      border-radius: 16px;
+      padding: 14px;
+      pointer-events: auto;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+      display: none;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    #settings-panel.open {
+      display: flex;
+    }
+
+    .panel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .seg-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 3px;
+      border-radius: 10px;
+    }
+
+    .seg-group.cols-5 {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 4px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .seg-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.18);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+      cursor: pointer;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-main);
+    }
+
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+
+    .switch.on {
+      background: var(--accent);
+    }
+
+    .switch.on::after {
+      transform: translateX(16px);
+    }
+
+    .perf-strip {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Bottom Dock */
+    .bottom-dock {
+      position: absolute;
+      bottom: calc(14px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 16px;
+      padding: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.36);
+      max-width: calc(100vw - 24px);
+      overflow-x: auto;
+    }
+
+    .dock-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .dock-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .dock-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Compare Slider Bar */
+    #compare-controls {
+      position: absolute;
+      bottom: calc(68px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 8px 14px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      width: min(340px, calc(100vw - 28px));
+      z-index: 12;
+    }
+
+    #compare-controls.open {
+      display: flex;
+    }
+
+    #compare-controls span {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Botanical Tooltip Card */
+    #inspect-card {
+      position: absolute;
+      left: calc(14px + var(--safe-left));
+      bottom: calc(74px + var(--safe-bottom));
+      width: min(290px, calc(100vw - 28px));
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 12px 14px;
+      pointer-events: auto;
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+    }
+
+    #inspect-card.open {
+      display: flex;
+    }
+
+    .inspect-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inspect-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .inspect-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .inspect-body {
+      font-size: 12px;
+      line-height: 1.45;
+      color: #d2d7de;
+    }
+
+    /* Help Modal */
+    #help-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(8, 10, 12, 0.65);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      pointer-events: auto;
+    }
+
+    #help-modal.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(440px, 100%);
+      background: var(--bg-glass-strong);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal-card h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      font-size: 12.5px;
+      color: #d6dbe2;
+      line-height: 1.45;
+    }
+
+    .help-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .help-key {
+      color: #fff;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      top: calc(64px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      z-index: 35;
+      background: var(--bg-glass-strong);
+      border: 1px solid rgba(244, 37, 140, 0.45);
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .short-camera-label { display: none; }
+    @media (max-width: 640px) {
+      .wide-camera-label { display: none; }
+      .short-camera-label { display: inline; }
+      .bottom-dock {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        width: calc(100% - 24px);
+        overflow: visible;
+      }
+      .dock-btn {
+        padding: 5px 2px;
+        min-height: 42px;
+        white-space: normal;
+        line-height: 1.15;
+        font-size: 10px;
+        overflow-wrap: anywhere;
+      }
+      .brand-text p { display: none; }
+      .btn-label-sm { display: none; }
+      .icon-btn { padding: 0 9px; }
+      .dock-btn { padding: 7px 9px; font-size: 11.5px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container" aria-label="Cena 3D interativa de Bougainvillea"></div>
+  <div id="vignette-layer"></div>
+
+  <!-- Optional Reference Comparison Layer (UI tool only, never scene background) -->
+  <div id="compare-overlay" aria-hidden="true">
+    <div id="compare-img-wrap">
+      <img id="compare-img" src="referencia.jpg" alt="Imagem de referência original" />
+    </div>
+    <div id="compare-divider"></div>
+  </div>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-title">Reconstruindo Bougainvillea 3D</div>
+    <div class="loader-sub" id="loader-status">Preparando a cena…</div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="top-bar hud-chrome">
+      <div class="brand-badge">
+        <span class="brand-dot"></span>
+        <div class="brand-text">
+          <h1>Bougainvillea 3D</h1>
+          <p>Quintal em flor</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-btn" id="btn-reset-cam" title="Restaurar enquadramento original (R)">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span class="btn-label-sm">Enquadrar</span>
+        </button>
+        <button class="icon-btn" id="btn-compare" title="Comparar com imagem original (C)">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          <span class="btn-label-sm">Comparar</span>
+        </button>
+        <button class="icon-btn" id="btn-audio" title="Áudio ambiente espacial (M)">
+          <svg viewBox="0 0 24 24" id="icon-audio-svg"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-capture" title="Capturar imagem PNG (P)">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-contemplation" title="Modo contemplação sem interface (H)">
+          <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-fullscreen" title="Tela cheia (F)">
+          <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-settings" title="Configurações gráficas e ambiente">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-help" title="Controles e informações">?</button>
+      </div>
+    </div>
+
+    <button class="icon-btn" id="btn-exit-contemplation" title="Mostrar interface (H)">
+      Mostrar Interface
+    </button>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="hud-chrome" aria-label="Configurações da cena">
+      <div class="panel-section">
+        <div class="panel-label">
+          <span>Qualidade Gráfica</span>
+          <span id="lbl-quality-active">Auto (Alto)</span>
+        </div>
+        <div class="seg-group cols-5" id="quality-group">
+          <button class="seg-btn active" data-quality="auto">Auto</button>
+          <button class="seg-btn" data-quality="low">Baixo</button>
+          <button class="seg-btn" data-quality="medium">Médio</button>
+          <button class="seg-btn" data-quality="high">Alto</button>
+          <button class="seg-btn" data-quality="ultra">Ultra</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label"><span>Iluminação Atmosférica</span></div>
+        <div class="seg-group" id="lighting-group">
+          <button class="seg-btn active" data-light="overcast">Nublado</button>
+          <button class="seg-btn" data-light="sunlit">Sol Vivo</button>
+          <button class="seg-btn" data-light="golden">Fim de Tarde</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">
+          <span>Brisa &amp; Vento</span>
+          <span id="lbl-wind">35%</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="slider-wind" min="0" max="100" value="35" />
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">
+          <span>Volume do Ambiente</span>
+          <span id="lbl-vol">55%</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="slider-volume" min="0" max="100" value="55" />
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="toggle-row">
+          <span>Órbita Cinematográfica</span>
+          <button class="switch" id="toggle-cinematic" aria-label="Alternar órbita cinematográfica"></button>
+        </div>
+        <div class="toggle-row">
+          <span>Partículas de Pólen</span>
+          <button class="switch on" id="toggle-particles" aria-label="Alternar partículas atmosféricas"></button>
+        </div>
+        <div class="toggle-row">
+          <span>Névoa suave</span>
+          <button class="switch on" id="toggle-fog" aria-label="Alternar névoa de profundidade"></button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="toggle-row">
+          <span>Desfoque de lente</span>
+          <button class="switch on" id="toggle-lens" aria-label="Desfoque de lente" aria-pressed="true"></button>
+        </div>
+      </div>
+
+      <div class="perf-strip">
+        <span id="perf-fps">-- FPS</span>
+        <span id="perf-draws">-- draws</span>
+        <span id="perf-tris">-- tris</span>
+      </div>
+    </div>
+
+    <!-- Compare Slider -->
+    <div id="compare-controls" class="hud-chrome">
+      <span>3D</span>
+      <input type="range" id="slider-compare" min="0" max="100" value="50" />
+      <span>Foto Original</span>
+    </div>
+
+    <!-- Botanical Inspection Card -->
+    <div id="inspect-card" class="hud-chrome">
+      <div class="inspect-head">
+        <span class="inspect-title" id="inspect-title">Bráctea de Bougainvillea</span>
+        <button class="inspect-close" id="btn-close-inspect" aria-label="Fechar">×</button>
+      </div>
+      <p class="inspect-body" id="inspect-body"></p>
+    </div>
+
+    <!-- Bottom Camera & Navigation Dock -->
+    <div class="bottom-dock hud-chrome" role="toolbar" aria-label="Modos de câmera">
+      <button class="dock-btn active" data-cam="reference" aria-label="Enquadramento"><span class="wide-camera-label">Enquadramento</span><span class="short-camera-label">Início</span></button>
+      <button class="dock-btn" data-cam="macroTop">Macro Superior</button>
+      <button class="dock-btn" data-cam="macroCenter">Macro Flores</button>
+      <button class="dock-btn" data-cam="side">Perfil 3D</button>
+      <button class="dock-btn" data-cam="garden">Jardim Amplo</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-card">
+      <h2 id="help-title">Controles &amp; Exploração 3D</h2>
+      <div class="help-grid">
+        <div class="help-item"><span class="help-key">Arrastar / 1 dedo</span><span>Orbitar ao redor da Bougainvillea</span></div>
+        <div class="help-item"><span class="help-key">Scroll / Pinça</span><span>Aproximar (macro) ou afastar</span></div>
+        <div class="help-item"><span class="help-key">Botão direito / 2 dedos</span><span>Deslocar câmera (Pan)</span></div>
+        <div class="help-item"><span class="help-key">Clique / Toque na flor</span><span>Agitar ramo com física e inspecionar</span></div>
+        <div class="help-item"><span class="help-key">WASD / Setas</span><span>Mover câmera livremente</span></div>
+        <div class="help-item"><span class="help-key">R / C / H / F / M</span><span>Resetar, Comparar, Ocultar HUD, Tela cheia, Áudio</span></div>
+      </div>
+      <button class="icon-btn active" id="btn-close-help" style="width:100%; justify-content:center;">Entendi</button>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

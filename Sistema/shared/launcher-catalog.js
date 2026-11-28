@@ -9,7 +9,7 @@
     { id: 'natureza', label: 'Natureza e cultivo', hue: 145, entries: [
       'bancada-do-florista', 'colmeia-transparente', 'estufa-das-borboletas', 'jardim-dos-fungos',
       'lago-3d-interativo', 'oficina-de-bonsais', 'terrario-de-vidro',
-      'floresta-bioluminescente', 'escultor-de-planetas', 'universo-de-uma-gota',
+      'floresta-bioluminescente', 'escultor-de-planetas', 'universo-de-uma-gota', 'bougainvillea',
     ] },
     { id: 'oficinas', label: 'Arte e artesanato', hue: 36, entries: [
       'atelie-das-reconstrucoes-kintsugi', 'oficina-das-velas-artesanais', 'oficina-de-estofados',

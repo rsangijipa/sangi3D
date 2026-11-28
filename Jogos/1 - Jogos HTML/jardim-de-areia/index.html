@@ -518,11 +518,17 @@
     @media (max-width: 720px) {
       #top-header {
         top: calc(8px + var(--safe-top));
-        left: calc(10px + var(--safe-left));
-        right: calc(10px + var(--safe-right));
+        left: calc(8px + var(--safe-left));
+        right: calc(8px + var(--safe-right));
+        gap: 6px;
       }
       .title-pill {
         padding: 4px 10px;
+        min-width: 0;
+        flex: 0 1 auto;
+      }
+      .enso-dot {
+        display: none;
       }
       .title-text strong {
         font-size: 12px;
@@ -530,6 +536,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 112px;
+      }
+      .top-actions {
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .icon-btn {
+        padding: 0;
       }
       #status-line {
         display: none;
