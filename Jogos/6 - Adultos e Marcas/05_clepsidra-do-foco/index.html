@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Clepsidra do Foco — Sangi3D</title>
+  <style>
+    :root {
+      --bg: #12181d;
+      --card-bg: rgba(20, 28, 35, 0.90);
+      --card-border: rgba(180, 215, 230, 0.25);
+      --text: #F2E4CC;
+      --text-muted: #8AA0AD;
+      --accent-water: #3E7C99;
+      --accent-brass: #D8AE66;
+      --accent-green: #3B6E52;
+      --serif: "Georgia", "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .hud-panel {
+      position: absolute; top: 16px; right: 16px; width: 340px; max-height: calc(100dvh - 32px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--serif); font-size: 20px; font-weight: 600; color: #FAF5E9; margin-bottom: 4px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+
+    .time-selector {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+    }
+    .time-btn {
+      padding: 10px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: var(--text);
+      cursor: pointer; text-align: center; transition: all 0.2s;
+    }
+    .time-btn.active {
+      background: var(--accent-water); border-color: #79C2E6; color: #FFF;
+      box-shadow: 0 4px 12px rgba(62,124,153,0.4);
+    }
+
+    .level-gauge {
+      background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px;
+      display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gauge-header {
+      display: flex; justify-content: space-between; font-size: 11px; text-transform: uppercase;
+      color: var(--text-muted); font-weight: 600;
+    }
+    .progress-bar-bg {
+      width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      width: 0%; height: 100%; background: linear-gradient(90deg, #3E7C99, #79C2E6);
+      border-radius: 5px; transition: width 0.3s;
+    }
+
+    .btn-valve {
+      width: 100%; padding: 14px; font-size: 13px; font-weight: 700;
+      background: var(--accent-green); color: #FFF; border: none; border-radius: 10px;
+      cursor: pointer; text-align: center; box-shadow: 0 6px 16px rgba(59,110,82,0.4);
+    }
+
+    .help-msg {
+      font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .hud-panel {
+        top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 48dvh;
+        border-radius: 20px 20px 0 0; padding: 16px 18px 24px;
+      }
+    }
+  </style>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Clepsidra do Foco</h1>
+      <p>O tempo medido no fluxo natural da água, sem contagem coercitiva.</p>
+    </div>
+
+    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Bloco de Foco:</div>
+    <div class="time-selector">
+      <button class="time-btn" id="btn-15" onclick="setFocusTime(15)">15 min</button>
+      <button class="time-btn active" id="btn-25" onclick="setFocusTime(25)">25 min</button>
+      <button class="time-btn" id="btn-45" onclick="setFocusTime(45)">45 min</button>
+    </div>
+
+    <div class="level-gauge">
+      <div class="gauge-header">
+        <span>Progresso da Boia</span>
+        <span id="lbl-gauge">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="gauge-fill"></div>
+      </div>
+    </div>
+
+    <button class="btn-valve" id="btn-valve" onclick="toggleValve()">💧 Abrir Válvula</button>
+
+    <div class="help-msg" id="help-msg">Abra a válvula para iniciar o fluxo sereno de água e foco.</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/Sistema/shared/vendor/three.module.js';
+    window.THREE = THREE;
+    import { injectLauncherButton } from '/Sistema/shared/ambientes-kit.js';
+    import { EngineRenderer } from '/Sistema/shared/engine/renderer.js';
+    import { MaterialFactory } from '/Sistema/shared/engine/materials.js';
+    import { LightingRig } from '/Sistema/shared/engine/lighting.js';
+    import { ResponsiveAudio } from '/Sistema/shared/engine/audio.js';
+    import { LifecycleManager } from '/Sistema/shared/engine/lifecycle.js';
+
+    injectLauncherButton({ label: '← Launcher', href: '/' });
+
+    const container = document.getElementById('canvas-container');
+    const audio = new ResponsiveAudio();
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x131b22);
+    scene.fog = new THREE.FogExp2(0x131b22, 0.04);
+
+    const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 50);
+    camera.position.set(0, 3.2, 5.6);
+    camera.lookAt(0, 1.4, 0);
+
+    const engineRenderer = new EngineRenderer(null, { shadowMap: true });
+    container.appendChild(engineRenderer.canvas);
+    engineRenderer.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const lighting = new LightingRig(scene, { preset: 'warm_studio' });
+
+    window.clepsidra = {
+      isOpen: false,
+      durationMin: 25,
+      progress: 0,
+      flowRate: 0.0004
+    };
+
+    // Cenário: Bancada de Pedra Clara com Clepsidra
+    const standGroup = new THREE.Group();
+    scene.add(standGroup);
+
+    // Tampo de pedra clara com chanfro
+    const stoneGeo = new THREE.BoxGeometry(4.8, 0.14, 2.8);
+    const stoneMat = MaterialFactory.stone(0xd5cec5, 0.6);
+    const stone = new THREE.Mesh(stoneGeo, stoneMat);
+    stone.position.set(0, 0.95, 0);
+    stone.receiveShadow = true;
+    standGroup.add(stone);
+
+    // Estrutura de Suporte de Latão
+    const brassMat = MaterialFactory.brass(0.3, 0.9);
+    const frameLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.6, 16), brassMat);
+    frameLeft.position.set(-0.8, 2.3, 0);
+    standGroup.add(frameLeft);
+    const frameRight = frameLeft.clone();
+    frameRight.position.x = 0.8;
+    standGroup.add(frameRight);
+
+    // Câmara Superior de Vidro
+    const glassMat = MaterialFactory.glass(0xcce8ff, 0.35, 0.08);
+    const topChamber = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.35, 0.8, 24), glassMat);
+    topChamber.position.set(0, 2.8, 0);
+    topChamber.castShadow = true;
+    standGroup.add(topChamber);
+
+    // Água Superior
+    const waterMat = MaterialFactory.water(0x3e7c99, 0.75);
+    const topWater = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.33, 0.65, 20), waterMat);
+    topWater.position.set(0, 2.75, 0);
+    standGroup.add(topWater);
+
+    // Roda d'Água de Madeira
+    const wheelGroup = new THREE.Group();
+    wheelGroup.position.set(0, 2.05, 0);
+    const wheelHub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.25, 16), MaterialFactory.wood(0x8a5530));
+    wheelHub.rotation.z = Math.PI / 2;
+    wheelGroup.add(wheelHub);
+
+    // 8 Pás da Roda
+    const paddleGeo = new THREE.BoxGeometry(0.15, 0.04, 0.22);
+    const paddleMat = MaterialFactory.wood(0x5a351c, 0.8);
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const paddle = new THREE.Mesh(paddleGeo, paddleMat);
+      paddle.position.set(Math.cos(angle) * 0.28, Math.sin(angle) * 0.28, 0);
+      paddle.rotation.z = angle;
+      wheelGroup.add(paddle);
+    }
+    standGroup.add(wheelGroup);
+
+    // Câmara Inferior com Escala Gravada
+    const botChamber = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.9, 24), glassMat);
+    botChamber.position.set(0, 1.45, 0);
+    standGroup.add(botChamber);
+
+    // Água Inferior que sobe
+    const botWaterGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.8, 20);
+    botWaterGeo.translate(0, 0.4, 0);
+    const botWater = new THREE.Mesh(botWaterGeo, waterMat);
+    botWater.position.set(0, 1.05, 0);
+    botWater.scale.y = 0.05;
+    standGroup.add(botWater);
+
+    // Boia com Ponteiro na Escala
+    const floatGroup = new THREE.Group();
+    floatGroup.position.set(0, 1.1, 0);
+    const floatMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 16), MaterialFactory.brass());
+    floatGroup.add(floatMesh);
+    const needle = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.02), brassMat);
+    needle.position.set(0.3, 0.03, 0);
+    floatGroup.add(needle);
+    standGroup.add(floatGroup);
+
+    // Válvula / Torneira de Latão
+    const valve = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 16), brassMat);
+    valve.position.set(0.4, 2.35, 0);
+    standGroup.add(valve);
+
+    // Interações
+    window.setFocusTime = function(min) {
+      if (window.clepsidra.isOpen) return;
+      window.clepsidra.durationMin = min;
+      document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + min).classList.add('active');
+      audio.playClick(420, 0.03);
+    };
+
+    window.toggleValve = function() {
+      window.clepsidra.isOpen = !window.clepsidra.isOpen;
+      const btn = document.getElementById('btn-valve');
+      btn.textContent = window.clepsidra.isOpen ? '⏸️ Fechar Válvula' : '💧 Abrir Válvula';
+      btn.style.background = window.clepsidra.isOpen ? '#8C482B' : 'var(--accent-green)';
+
+      audio.playClick(window.clepsidra.isOpen ? 520 : 340, 0.04);
+      document.getElementById('help-msg').textContent = window.clepsidra.isOpen
+        ? 'Válvula aberta: água fluindo e tempo de foco em andamento.'
+        : 'Válvula pausada. O fluxo foi interrompido sem perda de progresso.';
+    };
+
+    let dripTimer = 0;
+    let animId;
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      if (lifecycle.isPaused) return;
+
+      if (window.clepsidra.isOpen) {
+        // Rotação contínua da roda d'água
+        wheelGroup.rotation.z -= 0.05;
+        valve.rotation.z += 0.02;
+
+        // Subida suave do nível de água
+        window.clepsidra.progress = Math.min(1.0, window.clepsidra.progress + 0.0003);
+        const p = window.clepsidra.progress;
+
+        botWater.scale.y = 0.05 + (p * 0.95);
+        topWater.scale.y = Math.max(0.05, 1.0 - (p * 0.95));
+        floatGroup.position.y = 1.1 + (p * 0.75);
+
+        const pct = Math.round(p * 100);
+        document.getElementById('lbl-gauge').textContent = pct + '%';
+        document.getElementById('gauge-fill').style.width = pct + '%';
+
+        // Som de gota d'água periódico
+        dripTimer++;
+        if (dripTimer % 90 === 0) {
+          audio.playDrip(650);
+        }
+
+        if (p >= 1.0) {
+          window.clepsidra.isOpen = false;
+          document.getElementById('btn-valve').textContent = '💧 Reiniciar Bloco';
+          document.getElementById('btn-valve').style.background = '#4A7A8C';
+          audio.playChime(580, 2.0);
+          document.getElementById('help-msg').textContent = 'Bloco de foco concluído com serenidade. Hora de uma pausa.';
+        }
+      }
+
+      engineRenderer.render(scene, camera);
+    }
+    const lifecycle = new LifecycleManager({
+      onPause: () => { audio.setMuted(true); },
+      onResume: () => { audio.setMuted(lifecycle.isMuted); },
+      onMute: (m) => { audio.setMuted(m); },
+      dispose: () => {
+        cancelAnimationFrame(animId);
+        engineRenderer.dispose();
+        audio.dispose();
+        lighting.dispose();
+      }
+    });
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Estúdio dos Limites — Sangi3D</title>
+  <link rel="stylesheet" href="./stage.css">
+  <style>
+    html, body { touch-action: manipulation; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+    #view, .canvas-container { width: 100%; height: 100%; }
+  </style>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <main>
+    <section id="view" class="canvas-container" aria-label="Palco do Estúdio dos Limites">
+      <h1 class="plaque">Estúdio dos Limites</h1>
+      <p class="fallback" hidden>O palco 3D está indisponível. O ensaio continua pelo painel.</p>
+      <span id="stage-card" class="stage-card" aria-hidden="true"></span>
+      <p id="caption" class="caption"></p>
+    </section>
+    <section class="panel" aria-labelledby="panel-title">
+      <header>
+        <h2 id="panel-title">O que e como dizer?</h2>
+        <p class="hint">Escolha uma situação, ajuste o espaço e ensaie no seu ritmo.</p>
+      </header>
+      <div id="settings">
+        <label class="label" for="situation">Situação</label>
+        <select id="situation"></select>
+        <div id="prompt" class="hint" style="margin-block: 6px" aria-live="polite"></div>
+        <fieldset>
+          <legend>Tom</legend>
+          <div class="pair" id="tones">
+            <button type="button" data-tone="suave" aria-pressed="true">Suave</button>
+            <button type="button" data-tone="firme" aria-pressed="false">Firme</button>
+          </div>
+        </fieldset>
+      </div>
+      <fieldset id="spacing">
+        <legend>Distância entre as cadeiras</legend>
+        <div style="display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px">
+          <button type="button" id="closer" aria-label="Aproximar cadeiras">←</button>
+          <output id="distance-text" style="text-align:center"></output>
+          <button type="button" id="farther" aria-label="Afastar cadeiras">→</button>
+        </div>
+      </fieldset>
+      <details id="phrasing-options">
+        <summary>Trocar frase</summary>
+        <div id="choices" role="group" aria-label="Frases para ensaiar"></div>
+        <div id="custom-wrap" hidden>
+          <label for="custom" class="label">Minha frase</label>
+          <textarea id="custom" rows="2" maxlength="180"></textarea>
+        </div>
+      </details>
+      <details>
+        <summary>Direção de cena</summary>
+        <label class="label" for="level">Complexidade</label>
+        <select id="level">
+          <option value="1">Uma fala</option>
+          <option value="2">Uma pergunta adicional</option>
+          <option value="3">Duas perguntas adicionais</option>
+        </select>
+        <label class="label" for="gesture" style="margin-top: 8px">Gesto</label>
+        <select id="gesture">
+          <option value="neutral">Mãos em repouso</option>
+          <option value="open">Mão aberta</option>
+          <option value="step">Afastar a cadeira</option>
+        </select>
+        <div class="pair">
+          <button id="camera" type="button" aria-pressed="false">Vista lateral</button>
+          <button id="repeat" type="button">Repetir situação</button>
+        </div>
+      </details>
+      <p id="status" class="status" role="status"></p>
+      <div class="toolbar sticky">
+        <button class="primary" id="rehearse" type="button">Ensaiar frase</button>
+        <button id="curtain" type="button" aria-pressed="false">Fechar cortina</button>
+        <button id="leave" type="button" hidden>Sair da cena</button>
+      </div>
+    </section>
+  </main>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/Sistema/shared/vendor/three.module.js"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from '/Sistema/shared/vendor/three.module.js';
+    import { MaterialFactory } from '/Sistema/shared/engine/materials.js';
+    import { ResponsiveAudio } from '/Sistema/shared/engine/audio.js';
+    import './studio.js';
+
+    // Touch and lifecycle handling
+    window.addEventListener('pointerdown', () => {});
+    window.addEventListener('sangi:dispose', () => {
+      if (window.studio && typeof window.studio.dispose === 'function') {
+        window.studio.dispose();
+      }
+    });
+  </script>
+</body>
+</html>

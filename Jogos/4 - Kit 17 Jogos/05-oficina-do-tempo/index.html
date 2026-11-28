@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Oficina do Tempo — Sangi3D</title>
+  <style>
+    :root {
+      --bg: #1c1815;
+      --card-bg: rgba(30, 24, 20, 0.92);
+      --card-border: rgba(220, 190, 150, 0.28);
+      --text: #F2E4CC;
+      --text-muted: #A89B88;
+      --accent-green: #3B6E52;
+      --accent-amber: #D8AE66;
+      --accent-leather: #8C482B;
+      --serif: "Georgia", "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100dvh; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .hud-panel {
+      position: absolute; top: 16px; right: 16px; width: 340px; max-height: calc(100dvh - 32px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--serif); font-size: 20px; font-weight: 600; color: #FAF5E9; margin-bottom: 4px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+    
+    .clock-display-badge {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.35); padding: 10px 14px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .digital-time {
+      font-family: "Courier New", monospace; font-size: 22px; font-weight: 700; color: #79C296; letter-spacing: 1px;
+    }
+    .btn-toggle-clock {
+      padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px; color: var(--text); cursor: pointer;
+    }
+
+    .section-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600;
+    }
+    .task-select {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    }
+    .task-btn {
+      padding: 8px 10px; font-size: 11px; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: var(--text);
+      cursor: pointer; text-align: left; transition: all 0.2s;
+    }
+    .task-btn.active {
+      background: var(--accent-leather); border-color: #D8AE66; color: #FFF;
+    }
+
+    .estimate-control {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .btn-step {
+      width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2); color: var(--text); font-size: 16px; font-weight: bold;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .estimate-val {
+      font-size: 16px; font-weight: 600; color: var(--accent-amber);
+    }
+
+    .action-row {
+      display: flex; gap: 8px;
+    }
+    .btn-primary {
+      flex: 1; padding: 10px 14px; font-size: 13px; font-weight: 600;
+      background: var(--accent-green); color: #FFF; border: none; border-radius: 8px;
+      cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(59,110,82,0.4);
+    }
+    .btn-secondary {
+      padding: 10px 14px; font-size: 13px; font-weight: 600;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; color: var(--text); cursor: pointer;
+    }
+
+    .hourglass-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.25); border-radius: 10px; padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.08); font-size: 12px;
+    }
+    .btn-hourglass {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      background: rgba(216, 174, 102, 0.2); border: 1px solid #D8AE66;
+      border-radius: 6px; color: #FAF5E9; cursor: pointer;
+    }
+
+    .comparison-card {
+      background: rgba(0,0,0,0.25); border-radius: 10px; padding: 12px;
+      display: flex; flex-direction: column; gap: 6px; font-size: 12px;
+    }
+    .comp-row { display: flex; justify-content: space-between; }
+    .comp-val { font-weight: 600; color: var(--accent-amber); }
+    .diff-msg { font-size: 11px; font-style: italic; color: #79C296; text-align: center; margin-top: 4px; }
+
+
+    .hud-panel { --text: #39291c; --text-muted: #624e39; --accent-amber: #70452a; background: #f2e4cd; border-color: #d7bc94; }
+    .hud-header { margin: -20px -20px 0; padding: 20px; background: #294834; }
+    .hud-header p { color: #eee2ce; }
+    .comparison-card, .clock-display-badge, .hourglass-row, .estimate-control { background: #e8d5b6; }
+    .task-btn, .btn-secondary, .btn-toggle-clock, .btn-hourglass, .btn-step {
+      color: #3c2d20; border-color: #a98b63; background: #f9eedb;
+    }
+    .digital-time, .diff-msg { color: #254735; }
+    .hourglass-row, .comparison-card { color: var(--text); }
+    .task-btn.active { color: white; background: #365d44; }
+    button:disabled { opacity: .56; cursor: default; }
+    button:focus-visible { outline: 2px solid #875426; outline-offset: 2px; }
+    #sequence { padding-inline-start: 1.5rem; line-height: 1.65; }
+    @media (max-width: 768px) and (orientation: portrait) {
+      #canvas-container { height: 57dvh; }
+      .hud-header { margin: -16px -18px 0; padding: 14px 18px; }
+
+      .hud-panel {
+        top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 43dvh;
+        border-radius: 20px 20px 0 0; padding: 16px 18px 24px;
+      }
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/Sistema/shared/vendor/three.module.js",
+      "three/addons/": "/Sistema/shared/vendor/addons/"
+    }
+  }
+  </script>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Oficina do Tempo</h1>
+      <p>Estime, realize a sequência com foco sereno e observe a ampulheta e o relógio.</p>
+    </div>
+
+    <div class="clock-display-badge">
+      <div>
+        <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted);">Tempo Ativo</div>
+        <div class="digital-time" id="digital-clock">00:00</div>
+      </div>
+      <button class="btn-toggle-clock" id="btn-clock-mode" aria-pressed="false" onclick="toggleClockMode()">Mostrador digital</button>
+    </div>
+
+    <div class="hourglass-row">
+      <span>⏳ Ampulheta de Partículas</span>
+      <button class="btn-hourglass" onclick="flipHourglass()">Girar Ampulheta</button>
+    </div>
+
+    <div class="section-title">1. Escolha a Tarefa</div>
+    <div class="task-select">
+      <button class="task-btn active" id="task-1" onclick="selectTask(1, 'Organizar Mochila')">🎒 Mochila</button>
+      <button class="task-btn" id="task-2" onclick="selectTask(2, 'Separar Materiais')">📐 Materiais</button>
+      <button class="task-btn" id="task-3" onclick="selectTask(3, 'Arrumar Mesa')">🪵 Mesa</button>
+      <button class="task-btn" id="task-4" onclick="selectTask(4, 'Guardar Cadernos')">📖 Cadernos</button>
+    </div>
+
+    <div class="section-title">2. Estimar Duração</div>
+    <div class="estimate-control">
+      <button class="btn-step" onclick="adjustEstimate(-30)">−</button>
+      <div class="estimate-val" id="lbl-estimate">03:00 min</div>
+      <button class="btn-step" onclick="adjustEstimate(30)">+</button>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-primary" id="btn-start" onclick="toggleExecution()">Iniciar Tarefa</button>
+      <button class="btn-secondary" onclick="resetTask()">Reiniciar</button>
+    </div>
+
+    <div class="task-select" id="item-controls" aria-label="Itens da tarefa"></div>
+    <div class="comparison-card" id="comparison-card">
+      <div class="comp-row">
+        <span>Previsão:</span>
+        <span class="comp-val" id="comp-est">03:00 min</span>
+      </div>
+      <div class="comp-row">
+        <span>Tempo Real Medido:</span>
+        <span class="comp-val" id="comp-actual">00:00 min</span>
+      </div>
+      <div class="comp-row">
+        <span>Diferença:</span>
+        <span class="comp-val" id="comp-diff">—</span>
+      </div>
+      <div class="diff-msg" id="diff-msg">Toque nos itens na mesa para guardá-los na mochila.</div>
+      <button class="btn-secondary" id="btn-sequence" onclick="showSequence()" hidden>Ver sequência</button>
+      <ol id="sequence" hidden></ol>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    window.THREE = window.THREE || THREE;
+
+    import { injectLauncherButton } from '/Sistema/shared/ambientes-kit.js';
+    import { EngineRenderer } from '/Sistema/shared/engine/renderer.js';
+    import { MaterialFactory } from '/Sistema/shared/engine/materials.js';
+    import { LightingRig } from '/Sistema/shared/engine/lighting.js';
+    import { ResponsiveAudio } from '/Sistema/shared/engine/audio.js';
+    import { LifecycleManager } from '/Sistema/shared/engine/lifecycle.js';
+    import { mesh, profile, roundedBox } from '/Sistema/shared/engine/scene-details.js';
+    import { buildWorkshop, makeBackpack, makeDial } from '/Sistema/shared/engine/workshop.js';
+
+    injectLauncherButton({ label: '← Launcher', href: '/' });
+
+    const container = document.getElementById('canvas-container');
+    const audio = new ResponsiveAudio();
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x181412);
+    scene.fog = new THREE.FogExp2(0x181412, 0.05);
+
+    const camera = new THREE.PerspectiveCamera(40, 1, .1, 50);
+    const engineRenderer = new EngineRenderer(null, {
+      shadowMap: true, environmentIntensity: .54, toneMappingExposure: 1.08,
+      maxPixelRatio: Math.min(devicePixelRatio || 1, 1.5)
+    });
+    container.appendChild(engineRenderer.canvas);
+
+    function frameScene() {
+      const { clientWidth: width, clientHeight: height } = container;
+      camera.aspect = width / height;
+      const mobile = matchMedia('(max-width: 768px) and (orientation: portrait)').matches;
+      if (mobile) {
+        camera.position.set(.04, 2.9, 6.38);
+        camera.lookAt(-.23, 1.98, -.25);
+      } else {
+        camera.position.set(.0, 3.03, 5.85);
+        camera.lookAt(.90, 1.93, -.50);
+      }
+      camera.updateProjectionMatrix();
+      engineRenderer.renderer.setSize(width, height, false);
+    }
+    window.addEventListener('resize', frameScene);
+    frameScene();
+
+    const lighting = new LightingRig(scene, { ambientIntensity: .67, mainIntensity: 2.10 });
+    lighting.mainLight.color.setHex(0xffdfb5);
+    lighting.mainLight.position.set(-5.4, 5.1, 3.9);
+    lighting.mainLight.shadow.mapSize.set(1536, 1536);
+    lighting.mainLight.shadow.normalBias = .018;
+
+    // Estado da Sessão
+    window.taskState = {
+      isRunning: false,
+      estimateSec: 180,
+      elapsedSec: 0,
+      startTime: null,
+      itemsPacked: 0,
+      taskName: 'Organizar Mochila',
+      showDigital: false,
+      completed: false,
+      steps: []
+    };
+
+    // Cenário: Bancada da Oficina
+    const workshop = new THREE.Group();
+    scene.add(workshop);
+
+    const { oak, trim, clay, brass } = buildWorkshop(workshop);
+    const clockGroup = new THREE.Group();
+    clockGroup.position.set(-.30, 2.33, -.73);
+    const drawDial = makeDial(clockGroup, 1.22, oak, brass);
+    mesh(clockGroup, roundedBox(1.57, .17, .45, .054), trim, 0, -1.20, -.03);
+
+    const digitalFace = document.createElement('canvas');
+    digitalFace.width = 512;
+    digitalFace.height = 256;
+    const digitalContext = digitalFace.getContext('2d');
+    const digitalTexture = new THREE.CanvasTexture(digitalFace);
+    digitalTexture.colorSpace = THREE.SRGBColorSpace;
+    const display = mesh(clockGroup, new THREE.PlaneGeometry(1.51, .71),
+      new THREE.MeshStandardMaterial({ map: digitalTexture, roughness: .52 }), 0, 0, .181, false);
+    display.visible = false;
+    let lastDisplay;
+    function drawDigital(value) {
+      if (lastDisplay === value) return;
+      lastDisplay = value;
+      digitalContext.fillStyle = '#26362b';
+      digitalContext.fillRect(0, 0, 512, 256);
+      digitalContext.textAlign = 'center';
+      digitalContext.fillStyle = '#e8d8b3';
+      digitalContext.font = 'bold 114px monospace';
+      digitalContext.fillText(value, 256, 147);
+      digitalContext.font = 'bold 23px sans-serif';
+      digitalContext.fillText('TEMPO ATIVO', 256, 203);
+      digitalTexture.needsUpdate = true;
+    }
+    drawDigital('00:00');
+
+    // Ponteiro Verde da Duração Ativa
+    const handActualGeo = roundedBox(.061, .80, .035, .014);
+    handActualGeo.translate(0, 0.35, 0);
+    const handActualMat = new THREE.MeshStandardMaterial({ color: 0x2e6647, roughness: 0.4 });
+    const handActual = new THREE.Mesh(handActualGeo, handActualMat);
+    handActual.position.z = .116;
+    clockGroup.add(handActual);
+
+    // Ponteiro Pontilhado de Estimativa
+    const handEstGeo = new THREE.BoxGeometry(0.03, 0.65, 0.02);
+    handEstGeo.translate(0, 0.3, 0);
+    const handEstMat = new THREE.MeshStandardMaterial({ color: 0xd8ae66, roughness: 0.5 });
+    const handEstimate = new THREE.Mesh(handEstGeo, handEstMat);
+    handEstimate.position.z = .103;
+    clockGroup.add(handEstimate);
+
+    // Centro do relógio (latão)
+    const pinGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.04, 24);
+    const pin = new THREE.Mesh(pinGeo, MaterialFactory.brass());
+    pin.rotation.x = Math.PI / 2;
+    pin.position.z = .143;
+    clockGroup.add(pin);
+    workshop.add(clockGroup);
+
+    // Ampulheta 3D de Vidro com Partículas Coloridas
+    const hourglassGroup = new THREE.Group();
+    hourglassGroup.position.set(1.44, 1.06, .05);
+
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xf0fbf2, roughness: .12, ior: 1.47, transmission: .94, thickness: .06,
+    });
+    const hourglass = mesh(hourglassGroup, profile([
+      [0, .046], [.13, .046], [.21, .075], [.215, .14], [.18, .218], [.092, .294], [.030, .341],
+      [.025, .38], [.048, .411], [.132, .488], [.199, .567], [.216, .645], [.171, .70], [0, .724]
+    ], 56), glassMaterial, 0, 0, 0, false);
+
+    // Suporte e Pilares de Madeira e Latão da Ampulheta
+    const hCapGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.04, 24);
+    const hCapMat = MaterialFactory.wood(0x5a351c, 0.8);
+    const hCapTop = new THREE.Mesh(hCapGeo, hCapMat);
+    hCapTop.position.y = 0.74;
+    hourglassGroup.add(hCapTop);
+
+    const hCapBottom = new THREE.Mesh(hCapGeo, hCapMat);
+    hCapBottom.position.y = 0.02;
+    hourglassGroup.add(hCapBottom);
+
+    const pillarMat = MaterialFactory.brass();
+    for (let a = 0; a < 3; a++) {
+      const ang = (a / 3) * Math.PI * 2;
+      const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.72, 12), pillarMat);
+      pil.position.set(Math.cos(ang) * 0.25, 0.38, Math.sin(ang) * 0.25);
+      hourglassGroup.add(pil);
+    }
+
+    // Partículas de Areia Colorida caindo na Ampulheta
+    const sandCount = 120;
+    const sandPositions = new Float32Array(sandCount * 3);
+    const sandColors = new Float32Array(sandCount * 3);
+    for (let i = 0; i < sandCount; i++) {
+      sandPositions[i * 3] = (Math.random() - 0.5) * 0.06;
+      sandPositions[i * 3 + 1] = 0.2 + Math.random() * 0.35;
+      sandPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.06;
+
+      // Cores âmbar e terracota
+      sandColors[i * 3] = 0.85 + Math.random() * 0.15;
+      sandColors[i * 3 + 1] = 0.6 + Math.random() * 0.2;
+      sandColors[i * 3 + 2] = 0.25;
+    }
+    const sandGeo = new THREE.BufferGeometry();
+    sandGeo.setAttribute('position', new THREE.BufferAttribute(sandPositions, 3));
+    sandGeo.setAttribute('color', new THREE.BufferAttribute(sandColors, 3));
+    const sandMat = new THREE.PointsMaterial({ size: 0.025, vertexColors: true });
+    const sandPoints = new THREE.Points(sandGeo, sandMat);
+    hourglassGroup.add(sandPoints);
+
+    // Monte de Areia no Fundo
+    const sandPileGeo = new THREE.ConeGeometry(0.18, 0.12, 16);
+    const sandPileMat = new THREE.MeshStandardMaterial({ color: 0xd8ae66, roughness: 0.9 });
+    const sandPile = new THREE.Mesh(sandPileGeo, sandPileMat);
+    sandPile.position.y = 0.08;
+    hourglassGroup.add(sandPile);
+
+    workshop.add(hourglassGroup);
+
+    // Mochila de Feltro Verde Musgo
+    const backpackGroup = new THREE.Group();
+    backpackGroup.position.set(-1.97, 1.48, -.17);
+    workshop.add(backpackGroup);
+    const flap = makeBackpack(backpackGroup, trim, brass);
+    const tray = mesh(workshop, roundedBox(1.30, .056, .82, .023), clay, 1.84, 1.10, .19);
+    for (const x of [-.62, .62]) mesh(tray, roundedBox(.052, .11, .78, .023), clay, x, .055, 0);
+    for (const z of [-.385, .385]) mesh(tray, roundedBox(1.28, .11, .052, .023), clay, 0, .055, z);
+    tray.visible = false;
+
+    // Objetos Interativos na mesa (Livro, Estojo, Garrafa, Caderno)
+    const items = [];
+    function createItem(name, mesh, targetSlot) {
+      mesh.castShadow = true;
+      workshop.add(mesh);
+      items.push({ name, mesh, targetSlot, packed: false, origPos: mesh.position.clone() });
+    }
+
+    // 1. Livro de capa marrom
+    const bookMesh = new THREE.Mesh(roundedBox(.48, .09, .61, .038), MaterialFactory.wood(0x8a3822, 0.8));
+    bookMesh.position.set(-0.4, 1.1, 0.5);
+    createItem('Livro', bookMesh, new THREE.Vector3(-1.8, 1.4, 0.1));
+
+    // 2. Estojo de lápis
+    const caseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.55, 16), MaterialFactory.brass(0.6, 0.4));
+    caseMesh.rotation.z = Math.PI / 2;
+    caseMesh.position.set(0.3, 1.14, 0.6);
+    createItem('Estojo', caseMesh, new THREE.Vector3(-1.5, 1.4, 0.1));
+
+    // 3. Garrafa térmica
+    const bottleMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 20), MaterialFactory.metal(0x557a8a, 0.3, 0.8));
+    bottleMesh.position.set(0.8, 1.31, 0.4);
+    createItem('Garrafa', bottleMesh, new THREE.Vector3(-1.3, 1.4, 0.1));
+
+    // 4. Caderno de feltro azul
+    const notebookMesh = new THREE.Mesh(roundedBox(.44, .07, .56, .029), new THREE.MeshStandardMaterial({ color: 0x3d5a73, roughness: 0.9 }));
+    notebookMesh.position.set(0.1, 1.1, 0.1);
+    createItem('Caderno', notebookMesh, new THREE.Vector3(-1.6, 1.6, 0.1));
+
+    // Clique e arrasto simples de objetos na mesa
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    const tasks = {
+      1: { items: [0, 1, 2, 3], destination: 'mochila' },
+      2: { items: [1, 2, 3], destination: 'bandeja' },
+      3: { items: [2, 1, 0], destination: 'borda da mesa' },
+      4: { items: [0, 3, 1], destination: 'pilha' },
+    };
+    const sequence = document.getElementById('sequence');
+    const itemControls = document.getElementById('item-controls');
+    let selectedTask = 1;
+    const motions = new Map();
+    let lastElapsed = -1;
+    let scaleMinutes;
+    const clock = window.taskState;
+
+    function renderActions() {
+      itemControls.replaceChildren();
+      for (const index of tasks[selectedTask].items) {
+        const item = items[index];
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'task-btn';
+        button.textContent = 'Guardar ' + item.name;
+        button.disabled = !clock.isRunning || item.packed;
+        button.addEventListener('click', () => packItem(item));
+        itemControls.appendChild(button);
+      }
+    }
+
+    engineRenderer.canvas.addEventListener('pointerdown', event => {
+      const bounds = engineRenderer.canvas.getBoundingClientRect();
+      mouse.set(
+        ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+        1 - ((event.clientY - bounds.top) / bounds.height) * 2
+      );
+      raycaster.setFromCamera(mouse, camera);
+      const hit = raycaster.intersectObjects([hourglass, ...items.map(item => item.mesh)])[0];
+      if (hit?.object === hourglass) flipHourglass();
+      const item = items.find(entry => entry.mesh === hit?.object);
+      if (item) packItem(item);
+    });
+
+    function packItem(item) {
+      const task = tasks[selectedTask];
+      const index = items.indexOf(item);
+      const slot = task.items.indexOf(index);
+      if (!clock.isRunning || clock.completed || item.packed || slot < 0) return;
+      item.packed = true;
+      const end = new THREE.Vector3();
+      switch (selectedTask) {
+        case 1: end.set(-2.19 + slot * .14, 1.69, -.03); break;
+        case 2: end.set(1.46 + slot * .36, index === 2 ? 1.29 : 1.19, .19); break;
+        case 3: end.set(-.83 + slot * .50, index === 2 ? 1.24 : 1.13, -.95); break;
+        case 4: end.set(.27, 1.13 + slot * .095, -.72); break;
+      }
+      motions.set(item, { start: item.mesh.position.clone(), end, elapsed: 0 });
+      clock.steps.push({ item: item.name, at: elapsedTime() });
+      itemControls.children[slot].disabled = true;
+      audio.playClick(500, 0.05);
+    }
+
+    function elapsedTime() {
+      return clock.elapsedSec + (clock.isRunning ? (performance.now() - clock.startTime) / 1000 : 0);
+    }
+
+    function formatTime(seconds) {
+      const whole = Math.floor(Math.max(0, seconds));
+      return String(Math.floor(whole / 60)).padStart(2, '0') + ':' + String(whole % 60).padStart(2, '0');
+    }
+
+    function updateClock() {
+      const elapsed = elapsedTime();
+      const range = Math.max(12, Math.ceil(Math.max(elapsed, clock.estimateSec) / 720) * 12);
+      if (range !== scaleMinutes) {
+        scaleMinutes = range;
+        drawDial(range);
+      }
+      handEstimate.rotation.z = -clock.estimateSec / (range * 60) * Math.PI * 2;
+      handActual.rotation.z = -elapsed / (range * 60) * Math.PI * 2;
+      const second = Math.floor(elapsed);
+      if (lastElapsed === second) return;
+      const value = formatTime(second);
+      document.getElementById('digital-clock').textContent = value;
+      document.getElementById('comp-actual').textContent = value + ' min';
+      drawDigital(value);
+      if (lastElapsed >= 0 && clock.isRunning) audio.playTick(second % 2 === 0);
+      lastElapsed = second;
+    }
+
+    function pauseTask() {
+      if (!clock.isRunning) return;
+      clock.elapsedSec = elapsedTime();
+      clock.isRunning = false;
+      document.getElementById('btn-start').textContent = 'Retomar';
+      document.getElementById('diff-msg').textContent = 'Em pausa.';
+      renderActions();
+      updateClock();
+    }
+
+    window.showSequence = function() {
+      sequence.replaceChildren();
+      for (const step of clock.steps) {
+        const row = document.createElement('li');
+        row.textContent = formatTime(step.at) + ' · ' + step.item;
+        sequence.appendChild(row);
+      }
+      sequence.hidden = !sequence.hidden;
+    };
+
+    window.flipHourglass = function() {
+      audio.playChime(420, 0.8);
+      let r = 0;
+      function flipStep() {
+        r += 0.1;
+        hourglassGroup.rotation.z = Math.min(Math.PI, hourglassGroup.rotation.z + 0.1);
+        if (r < Math.PI) requestAnimationFrame(flipStep);
+        else {
+          hourglassGroup.rotation.z = 0;
+          // Reinicia posições das partículas
+          const pos = sandPoints.geometry.attributes.position.array;
+          for (let i = 0; i < sandCount; i++) {
+            pos[i * 3 + 1] = 0.2 + Math.random() * 0.35;
+          }
+          sandPoints.geometry.attributes.position.needsUpdate = true;
+        }
+      }
+      flipStep();
+    };
+
+    window.selectTask = function(id) {
+      selectedTask = id;
+      document.querySelectorAll('.task-btn[id]').forEach(button => {
+        const selected = button.id === 'task-' + id;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      });
+      resetTask();
+    };
+
+    window.adjustEstimate = function(delta) {
+      clock.estimateSec = THREE.MathUtils.clamp(clock.estimateSec + delta, 30, 3600);
+      updateEstimateUI();
+      audio.playClick(400, 0.02);
+    };
+
+    function updateEstimateUI() {
+      const value = formatTime(clock.estimateSec) + ' min';
+      document.getElementById('lbl-estimate').textContent = value;
+      document.getElementById('comp-est').textContent = value;
+      updateClock();
+    }
+
+    window.toggleExecution = function() {
+      if (clock.completed || lifecycle.isPaused) return;
+      if (clock.isRunning) {
+        pauseTask();
+        return;
+      }
+      clock.startTime = performance.now();
+      clock.isRunning = true;
+      document.getElementById('btn-start').textContent = 'Pausar';
+      document.getElementById('diff-msg').textContent = 'Organize os itens em: ' + tasks[selectedTask].destination + '.';
+      renderActions();
+      audio.playClick(520, 0.04);
+    };
+
+    window.resetTask = function() {
+      clock.isRunning = false;
+      clock.elapsedSec = 0;
+      clock.itemsPacked = 0;
+      clock.completed = false;
+      clock.steps = [];
+      motions.clear();
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('btn-start').textContent = 'Iniciar Tarefa';
+      document.getElementById('comp-diff').textContent = '—';
+      document.getElementById('diff-msg').textContent = 'Destino: ' + tasks[selectedTask].destination + '.';
+      document.getElementById('btn-sequence').hidden = true;
+      sequence.hidden = true;
+      tray.visible = selectedTask === 2;
+      flap.rotation.x = 0;
+      for (const item of items) {
+        item.packed = false;
+        item.mesh.position.copy(item.origPos);
+        item.mesh.visible = true;
+      }
+      renderActions();
+      updateClock();
+    };
+
+    function completeTask() {
+      clock.elapsedSec = elapsedTime();
+      clock.isRunning = false;
+      clock.completed = true;
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-start').textContent = 'Concluído';
+      document.getElementById('btn-sequence').hidden = false;
+      const diff = Math.round(clock.elapsedSec - clock.estimateSec);
+      document.getElementById('comp-diff').textContent = (diff < 0 ? '−' : diff > 0 ? '+' : '') + formatTime(Math.abs(diff)) + ' min';
+      document.getElementById('diff-msg').textContent = diff === 0 ? 'O tempo medido coincidiu com a estimativa.'
+        : diff < 0 ? 'O tempo medido foi menor que a estimativa.' : 'O tempo medido foi maior que a estimativa.';
+      updateClock();
+      audio.playChime(580, 1.5);
+    }
+
+    window.toggleClockMode = function() {
+      clock.showDigital = !clock.showDigital;
+      display.visible = clock.showDigital;
+      document.getElementById('btn-clock-mode').setAttribute('aria-pressed', String(clock.showDigital));
+      document.getElementById('btn-clock-mode').textContent = clock.showDigital ? 'Mostrador analógico' : 'Mostrador digital';
+      audio.playClick(440, 0.02);
+    };
+
+    resetTask();
+    updateEstimateUI();
+
+    // Teclado
+    window.addEventListener('keydown', (e) => {
+      if (e.target.closest?.('button, input')) return;
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        toggleExecution();
+      } else if (e.key.toLowerCase() === 'h') {
+        flipHourglass();
+      } else if (e.key.toLowerCase() === 'r') {
+        resetTask();
+      }
+    });
+
+    // Loop Principal
+    let lastFrame = performance.now();
+    let animId = null;
+    function animate(now = performance.now()) {
+      animId = requestAnimationFrame(animate);
+      const delta = Math.min((now - lastFrame) / 1000, .05);
+      lastFrame = now;
+      if (lifecycle.isPaused) return;
+
+      const opening = selectedTask === 1 && clock.isRunning ? -1.12 : 0;
+      flap.rotation.x = THREE.MathUtils.lerp(flap.rotation.x, opening, Math.min(1, delta * 8));
+      if (clock.isRunning) {
+        updateClock();
+        for (const [item, motion] of motions) {
+          motion.elapsed += delta;
+          const t = Math.min(motion.elapsed / .25, 1);
+          item.mesh.position.lerpVectors(motion.start, motion.end, t);
+          item.mesh.position.y += Math.sin(Math.PI * t) * .24;
+          if (t === 1) {
+            motions.delete(item);
+            item.mesh.visible = selectedTask !== 1;
+            clock.itemsPacked++;
+          }
+        }
+        if (clock.itemsPacked === tasks[selectedTask].items.length) completeTask();
+
+        // Queda contínua de areia na ampulheta
+        const pos = sandPoints.geometry.attributes.position.array;
+        for (let i = 0; i < sandCount; i++) {
+          pos[i * 3 + 1] -= .19 * delta;
+          if (pos[i * 3 + 1] < 0.05) {
+            pos[i * 3 + 1] = 0.5 + Math.random() * 0.1;
+          }
+        }
+        sandPoints.geometry.attributes.position.needsUpdate = true;
+      }
+
+      engineRenderer.render(scene, camera);
+    }
+    const lifecycle = new LifecycleManager({
+      onPause: () => {
+        pauseTask();
+        audio.setMuted(true);
+      },
+      onResume: () => { audio.setMuted(lifecycle.isMuted); },
+      onMute: (m) => { audio.setMuted(m); },
+      dispose: () => {
+        if (animId) cancelAnimationFrame(animId);
+        window.removeEventListener('resize', frameScene);
+        engineRenderer.dispose();
+        audio.dispose();
+        lighting.dispose();
+      }
+    });
+    animate();
+
+  </script>
+</body>
+</html>

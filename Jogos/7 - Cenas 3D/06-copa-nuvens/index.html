@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Copa &amp; Nuvens — Bosque Vivo 2.0</title>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+  <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --glass-bg: rgba(12, 18, 28, 0.56);
+      --glass-border: rgba(255, 255, 255, 0.16);
+      --glass-hover: rgba(255, 255, 255, 0.14);
+      --accent: #5cc3ff;
+      --accent-soft: rgba(92, 195, 255, 0.24);
+      --text-main: #f4f8fc;
+      --text-muted: rgba(232, 241, 250, 0.72);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b5d99;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      touch-action: auto;
+      user-select: none;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Subtle photographic vignette */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 56%, rgba(4, 10, 18, 0.36) 100%);
+      z-index: 2;
+    }
+
+    /* Loading overlay */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: linear-gradient(180deg, #0b64a6 0%, #1582c4 65%, #379bd4 100%);
+      transition: opacity 0.65s ease, visibility 0.65s ease;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2.5px solid rgba(255, 255, 255, 0.24);
+      border-top-color: #ffffff;
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    /* Top HUD */
+    .hud-top {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .brand-badge {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    .brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 13px;
+      border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(20, 32, 48, 0.72);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.96);
+    }
+
+    .icon-btn.active {
+      background: rgba(26, 86, 128, 0.72);
+      border-color: rgba(92, 195, 255, 0.65);
+      color: #ffffff;
+    }
+
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    /* Hint pill */
+    #hint-pill {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(10, 16, 24, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 11.5px;
+      color: rgba(244, 248, 252, 0.88);
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    #hint-pill.faded {
+      opacity: 0;
+    }
+
+    /* Bottom Dock */
+    .hud-bottom {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: calc(100% - 28px);
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .settings-drawer {
+      pointer-events: auto;
+      width: 100%;
+      max-width: 440px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(10, 16, 26, 0.72);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .settings-drawer.open {
+      display: flex;
+      animation: slideUp 0.22s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .drawer-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .drawer-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .drawer-label span:last-child {
+      color: var(--text-main);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .cam-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mini-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mini-chip:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+    }
+
+    .mini-chip.active {
+      background: var(--accent-soft);
+      border-color: rgba(92, 195, 255, 0.6);
+      color: #ffffff;
+    }
+
+    .dock {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .dock::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dock-btn {
+      flex-shrink: 0;
+      padding: 7px 13px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .dock-btn:hover {
+      background: var(--glass-hover);
+      color: #ffffff;
+    }
+
+    .dock-btn.active {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.26);
+      color: #ffffff;
+    }
+
+    .dock-sep {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+
+    /* Hidden UI state */
+    body.ui-hidden .hud-top .brand-badge,
+    body.ui-hidden #btn-audio,
+    body.ui-hidden #btn-reset,
+    body.ui-hidden .hud-bottom,
+    body.ui-hidden #btn-photo,
+    body.ui-hidden #hint-pill {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+
+    @media (max-width: 600px) {
+      .brand-sub { display: none; }
+      .icon-btn span { display: none; }
+      .icon-btn { width: 38px; padding: 0; }
+      #hint-pill { font-size: 10.5px; top: 64px; }
+    }
+    .hud-bottom { bottom: max(12px, env(safe-area-inset-bottom)); }
+    .hud-top { top: max(12px, env(safe-area-inset-top)); }
+    .settings-drawer { max-height: min(64vh, 560px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+    .dock { touch-action: pan-x; max-width: 100%; }
+    .dock-btn, .mini-chip, .icon-btn { min-height: 40px; }
+    input[type=range] { height: 20px; accent-color: #b4e5ac; }
+    button:focus-visible, input:focus-visible { outline: 2px solid #d7f1b8; outline-offset: 3px; }
+    .drawer-label label { color: var(--text-muted); }
+    .status-line { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+    .hud-top { flex-wrap: wrap; }
+    @media(max-width:600px) { .hud-top { left: 10px; right: 10px; gap: 6px; } .top-actions { gap: 4px; } .icon-btn { width: 42px; height: 42px; } .brand-badge { padding: 9px; } .brand-title { font-size: 12px; } .dock { justify-content: flex-start; border-radius: 20px; } .dock-btn { padding: 8px 11px; } #hint-pill { max-width: 95vw; white-space: normal; text-align: center; } }
+    @media(max-height:450px) { .settings-drawer { max-height: 45vh; } #hint-pill { display:none; } }
+    @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div id="loader" aria-live="polite">
+    <div class="spinner"></div>
+    <div class="loader-text">Gerando atmosfera e galhos em 3D...</div>
+  </div>
+
+  <div id="canvas-container" role="application" aria-label="Cena interativa 3D realista de copa de árvore contra céu azul com nuvens procedurais"></div>
+  <div class="vignette"></div>
+
+  <div class="hud-top">
+    <div class="brand-badge">
+      <span class="brand-dot"></span>
+      <div>
+        <div class="brand-title">Copa &amp; Nuvens</div>
+        <div class="brand-sub">Bosque vivo · atmosfera interativa</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="btn-audio" class="icon-btn" type="button" title="Ativar ou silenciar som ambiente" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <span>Som</span>
+      </button>
+      <button id="btn-reset" class="icon-btn" type="button" title="Restaurar ângulo original (R)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span>Resetar</span>
+      </button>
+      <button id="btn-photo" class="icon-btn" type="button" title="Salvar fotografia" aria-label="Salvar fotografia">📷 <span>Foto</span></button>
+      <button id="btn-hide-ui" class="icon-btn" type="button" title="Ocultar ou mostrar controles (H)" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span>Tela limpa</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="hint-pill">Arraste para explorar · Pinça ou rolagem para zoom · Toque para brisa</div>
+
+  <div class="hud-bottom">
+    <div id="settings-drawer" class="settings-drawer" aria-label="Ajustes da cena">
+      <div class="drawer-header">
+        <span>Ajustes Atmosféricos</span>
+        <button id="btn-quality" class="mini-chip active" type="button">Qualidade: Auto</button>
+      </div>
+      <div class="drawer-row">
+        <div class="drawer-label">
+          <span>Intensidade do Vento</span>
+          <span id="val-wind">45%</span>
+        </div>
+        <input id="slider-wind" aria-label="Intensidade do vento" type="range" min="0" max="100" value="45" />
+      </div>
+      <div class="drawer-row">
+        <div class="drawer-label">
+          <span>Cobertura de Nuvens</span>
+          <span id="val-clouds">58%</span>
+        </div>
+        <input id="slider-clouds" aria-label="Cobertura de nuvens" type="range" min="15" max="90" value="58" />
+      </div>
+      <div class="drawer-row">
+        <div class="drawer-label">
+          <span>Exposição Fotográfica</span>
+          <span id="val-exposure">1.08</span>
+        </div>
+        <input id="slider-exposure" aria-label="Exposição fotográfica" type="range" min="70" max="145" value="108" />
+      </div>
+      <div class="drawer-row"><div class="drawer-label"><label for="slider-leaves">Densidade da folhagem</label><span id="val-leaves">85%</span></div><input id="slider-leaves" type="range" min="0" max="100" value="85" /></div>
+      <div class="drawer-row"><div class="drawer-label"><label for="slider-rain">Intensidade da chuva</label><span id="val-rain">0%</span></div><input id="slider-rain" type="range" min="0" max="100" value="0" /></div>
+      <div class="cam-row"><button class="mini-chip" id="btn-pause" aria-pressed="false">Pausar movimento</button><button class="mini-chip" id="btn-gust">Rajada de vento</button></div>
+      <div class="status-line" id="quality-status" aria-live="polite">Qualidade ajustada automaticamente.</div>
+      <div class="cam-row">
+        <span style="font-size:11px;color:var(--text-muted);margin-right:4px;">Câmera:</span>
+        <button class="mini-chip active" data-cam="original" type="button">Ângulo Original</button>
+        <button class="mini-chip" data-cam="canopy" type="button">Copa Alta</button>
+        <button class="mini-chip" data-cam="dramatic" type="button">Contraluz</button>
+      </div>
+    </div>
+
+    <div class="dock" role="toolbar" aria-label="Clima e ajustes">
+      <button class="dock-btn active" data-mood="afternoon" type="button">Tarde Nítida</button>
+      <button class="dock-btn" data-mood="golden" type="button">Hora Dourada</button>
+      <button class="dock-btn" data-mood="storm" type="button">Nuvens Densas</button>
+      <button class="dock-btn" data-mood="dusk" type="button">Crepúsculo</button>
+      <button class="dock-btn" data-mood="rain" type="button">Chuva</button>
+      <div class="dock-sep"></div>
+      <button id="btn-settings" class="dock-btn" type="button" aria-expanded="false">Ajustes</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      if (typeof THREE === 'undefined') {
+        document.getElementById('loader').innerHTML =
+          '<div class="loader-text">Não foi possível carregar o motor 3D. Verifique sua conexão e recarregue.</div>';
+        return;
+      }
+
+      // =========================================================
+      // 1. DETERMINISTIC PRNG (Consistent photorealistic framing)
+      // =========================================================
+      function mulberry32(seed) {
+        let a = seed >>> 0;
+        return function () {
+          a |= 0;
+          a = (a + 0x6D2B79F5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(20261101);
+      const randRange = (min, max) => min + (max - min) * rand();
+
+      // =========================================================
+      // 2. RENDERER, SCENE & CAMERA SETUP
+      // =========================================================
+      const container = document.getElementById('canvas-container');
+      let renderer;
+      try { renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+        alpha: false
+      }); } catch(e) { document.getElementById('loader').textContent = 'WebGL indisponível. Ative a aceleração gráfica e recarregue.'; return; }
+      container.addEventListener('webglcontextlost', e => { e.preventDefault(); const l=document.getElementById('loader'); l.classList.remove('hidden'); l.textContent='Contexto gráfico perdido. Recarregue a página.'; }, true);
+      let highQuality = !matchMedia("(max-width: 700px)").matches;
+      let qualityMode = 0;
+      let paused = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let rainLevel = 0;
+      let leafDensity = .85;
+      const updatePixelRatio = () => {
+        const cap = highQuality ? 1.25 : 0.85;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cap));
+      };
+      updatePixelRatio();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0c72b5);
+
+      const camera = new THREE.PerspectiveCamera(
+        54,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        400
+      );
+
+      // Camera presets matching the iconic low-angle upward framing
+      const CAM_PRESETS = {
+        original: { yaw: 0.04, pitch: 0.56, dist: 10.6, targetY: 5.2, targetX: -0.35 },
+        canopy:   { yaw: -0.22, pitch: 0.92, dist: 8.8,  targetY: 7.4, targetX: 0.45 },
+        dramatic: { yaw: 0.36, pitch: 0.42, dist: 12.2, targetY: 4.4, targetX: -0.8 }
+      };
+
+      const camState = {
+        yaw: CAM_PRESETS.original.yaw,
+        pitch: CAM_PRESETS.original.pitch,
+        dist: CAM_PRESETS.original.dist,
+        targetX: CAM_PRESETS.original.targetX,
+        targetY: CAM_PRESETS.original.targetY,
+        targetYaw: CAM_PRESETS.original.yaw,
+        targetPitch: CAM_PRESETS.original.pitch,
+        targetDist: CAM_PRESETS.original.dist,
+        goalTargetX: CAM_PRESETS.original.targetX,
+        goalTargetY: CAM_PRESETS.original.targetY
+      };
+
+      // =========================================================
+      // 3. MOOD PRESETS (Photographic Sky + Lighting)
+      // =========================================================
+      const MOODS = {
+        afternoon: {
+          skyZenith: new THREE.Color('#075fa3'),
+          skyMid: new THREE.Color('#1484c8'),
+          skyHorizon: new THREE.Color('#6db4de'),
+          cloudLit: new THREE.Color('#ffffff'),
+          cloudShadow: new THREE.Color('#5a6773'),
+          cloudDeep: new THREE.Color('#394550'),
+          sunColor: new THREE.Color('#fff7ea'),
+          sunDir: new THREE.Vector3(-0.52, 0.76, -0.39).normalize(),
+          sunIntensity: 2.85,
+          hemiSky: new THREE.Color('#6ec0f5'),
+          hemiGround: new THREE.Color('#3c3024'),
+          hemiIntensity: 0.95,
+          rimColor: new THREE.Color('#b6deff'),
+          rimIntensity: 0.72,
+          cloudCover: 0.58,
+          exposure: 1.08
+        },
+        golden: {
+          skyZenith: new THREE.Color('#134b85'),
+          skyMid: new THREE.Color('#3d7eb0'),
+          skyHorizon: new THREE.Color('#f0a86b'),
+          cloudLit: new THREE.Color('#ffe2be'),
+          cloudShadow: new THREE.Color('#6d6473'),
+          cloudDeep: new THREE.Color('#423947'),
+          sunColor: new THREE.Color('#ffbe78'),
+          sunDir: new THREE.Vector3(-0.74, 0.38, -0.55).normalize(),
+          sunIntensity: 3.1,
+          hemiSky: new THREE.Color('#ffcf9c'),
+          hemiGround: new THREE.Color('#3a271b'),
+          hemiIntensity: 0.85,
+          rimColor: new THREE.Color('#ffaa5c'),
+          rimIntensity: 1.05,
+          cloudCover: 0.54,
+          exposure: 1.12
+        },
+        storm: {
+          skyZenith: new THREE.Color('#1d4466'),
+          skyMid: new THREE.Color('#3f6482'),
+          skyHorizon: new THREE.Color('#7b8d9c'),
+          cloudLit: new THREE.Color('#e6edf2'),
+          cloudShadow: new THREE.Color('#47525e'),
+          cloudDeep: new THREE.Color('#28313b'),
+          sunColor: new THREE.Color('#dbe8f5'),
+          sunDir: new THREE.Vector3(-0.38, 0.82, -0.43).normalize(),
+          sunIntensity: 1.85,
+          hemiSky: new THREE.Color('#8ea7bd'),
+          hemiGround: new THREE.Color('#2a2622'),
+          hemiIntensity: 1.05,
+          rimColor: new THREE.Color('#b5cbe0'),
+          rimIntensity: 0.55,
+          cloudCover: 0.76,
+          exposure: 1.0
+        },
+        dusk: {
+          skyZenith: new THREE.Color('#0c1e42'),
+          skyMid: new THREE.Color('#274372'),
+          skyHorizon: new THREE.Color('#cc7766'),
+          cloudLit: new THREE.Color('#f2a58c'),
+          cloudShadow: new THREE.Color('#3c415c'),
+          cloudDeep: new THREE.Color('#1f2338'),
+          sunColor: new THREE.Color('#ff9b75'),
+          sunDir: new THREE.Vector3(-0.82, 0.19, -0.54).normalize(),
+          sunIntensity: 2.1,
+          hemiSky: new THREE.Color('#798ec2'),
+          hemiGround: new THREE.Color('#211818'),
+          hemiIntensity: 0.72,
+          rimColor: new THREE.Color('#ff9678'),
+          rimIntensity: 0.9,
+          cloudCover: 0.52,
+          exposure: 1.05
+        }
+      };
+
+      MOODS.rain = Object.assign({}, MOODS.storm, {skyZenith:new THREE.Color('#263b4a'), skyMid:new THREE.Color('#465965'), skyHorizon:new THREE.Color('#87959b'), cloudCover:.88, sunIntensity:.75, hemiIntensity:.9, rimIntensity:.35, exposure:1.02});
+      const activeMood = {
+        skyZenith: MOODS.afternoon.skyZenith.clone(),
+        skyMid: MOODS.afternoon.skyMid.clone(),
+        skyHorizon: MOODS.afternoon.skyHorizon.clone(),
+        cloudLit: MOODS.afternoon.cloudLit.clone(),
+        cloudShadow: MOODS.afternoon.cloudShadow.clone(),
+        cloudDeep: MOODS.afternoon.cloudDeep.clone(),
+        sunColor: MOODS.afternoon.sunColor.clone(),
+        sunDir: MOODS.afternoon.sunDir.clone(),
+        sunIntensity: MOODS.afternoon.sunIntensity,
+        hemiSky: MOODS.afternoon.hemiSky.clone(),
+        hemiGround: MOODS.afternoon.hemiGround.clone(),
+        hemiIntensity: MOODS.afternoon.hemiIntensity,
+        rimColor: MOODS.afternoon.rimColor.clone(),
+        rimIntensity: MOODS.afternoon.rimIntensity
+      };
+      let targetMood = MOODS.afternoon;
+
+      const simState = {
+        wind: 0.45,
+        gust: 0.0,
+        cloudCover: 0.58,
+        exposure: 1.08
+      };
+
+      // =========================================================
+      // 4. VOLUMETRIC CUMULUS SKY DOME SHADER (Photorealistic)
+      // =========================================================
+      const skyUniforms = {
+        uTime:        { value: 0 },
+        uCloudOffset: { value: new THREE.Vector2(0, 0) },
+        uCloudCover:  { value: simState.cloudCover },
+        uSunDir:      { value: activeMood.sunDir.clone() },
+        uSkyZenith:   { value: activeMood.skyZenith.clone() },
+        uSkyMid:      { value: activeMood.skyMid.clone() },
+        uSkyHorizon:  { value: activeMood.skyHorizon.clone() },
+        uCloudLit:    { value: activeMood.cloudLit.clone() },
+        uCloudShadow: { value: activeMood.cloudShadow.clone() },
+        uCloudDeep:   { value: activeMood.cloudDeep.clone() },
+        uSunColor:    { value: activeMood.sunColor.clone() },
+        uQuality:     { value: highQuality ? 1.0 : 0.0 }
+      };
+
+      const skyVertexShader = `
+        varying vec3 vWorldDir;
+        void main() {
+          vec4 worldPos = modelMatrix * vec4(position, 1.0);
+          vWorldDir = normalize(position);
+          gl_Position = projectionMatrix * viewMatrix * worldPos;
+        }
+      `;
+
+      const skyFragmentShader = `
+        precision highp float;
+        varying vec3 vWorldDir;
+
+        uniform float uTime;
+        uniform vec2 uCloudOffset;
+        uniform float uCloudCover;
+        uniform vec3 uSunDir;
+        uniform vec3 uSkyZenith;
+        uniform vec3 uSkyMid;
+        uniform vec3 uSkyHorizon;
+        uniform vec3 uCloudLit;
+        uniform vec3 uCloudShadow;
+        uniform vec3 uCloudDeep;
+        uniform vec3 uSunColor;
+        uniform float uQuality;
+
+        // Fast high-quality 2D hash & value noise
+        float hash21(vec2 p) {
+          p = fract(p * vec2(127.1, 311.7));
+          p += dot(p, p + 34.23);
+          return fract(p.x * p.y);
+        }
+
+        float noise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          float a = hash21(i);
+          float b = hash21(i + vec2(1.0, 0.0));
+          float c = hash21(i + vec2(0.0, 1.0));
+          float d = hash21(i + vec2(1.0, 1.0));
+          return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+        }
+
+        const mat2 rotM = mat2(0.80, -0.60, 0.60, 0.80);
+
+        // Cauliflower-like cumulus billow FBM
+        float billowFbm(vec2 p, int octaves) {
+          float sum = 0.0;
+          float amp = 0.52;
+          float freq = 1.0;
+          for (int i = 0; i < 6; i++) {
+            if (i >= octaves) break;
+            float n = noise(p * freq);
+            // Smooth rounded puff shape
+            float puff = 1.0 - abs(n * 2.0 - 1.0);
+            puff = mix(n, puff * puff, 0.42);
+            sum += amp * puff;
+            p = rotM * p + vec2(1.7, 9.2);
+            freq *= 2.04;
+            amp *= 0.49;
+          }
+          return sum;
+        }
+
+        float cloudDensity(vec2 uv, float cover, int octaves) {
+          // Macro cumulus towers
+          vec2 q = uv * 0.42 + uCloudOffset * 0.35;
+          float warp = billowFbm(q + vec2(0.0, uTime * 0.004), 3);
+          float base = billowFbm(uv * 0.55 + uCloudOffset + warp * 0.38, octaves);
+          // Crisp cumulus turret details
+          float detail = billowFbm(uv * 1.95 + uCloudOffset * 1.15 - vec2(uTime * 0.006, 0.0), octaves - 1);
+          float combined = base * 0.78 + detail * 0.28;
+          // Threshold controlled by cloud cover
+          float threshold = mix(0.76, 0.30, cover);
+          float d = smoothstep(threshold, threshold + 0.26, combined);
+          // Sculpted crisp edges characteristic of bright afternoon cumulus
+          return pow(clamp(d, 0.0, 1.0), 0.86);
+        }
+
+        void main() {
+          vec3 dir = normalize(vWorldDir);
+          float elev = max(dir.y, 0.0);
+
+          // 1. Physical cerulean sky gradient
+          float midBlend = pow(1.0 - elev, 1.75);
+          float horBlend = pow(1.0 - elev, 5.0);
+          vec3 sky = mix(uSkyZenith, uSkyMid, clamp(midBlend * 1.15, 0.0, 1.0));
+          sky = mix(sky, uSkyHorizon, clamp(horBlend, 0.0, 1.0));
+
+          // Subtle sun glow & Mie forward scattering
+          float sunAmt = max(dot(dir, normalize(uSunDir)), 0.0);
+          sky += uSunColor * pow(sunAmt, 12.0) * 0.18;
+          sky += uSunColor * pow(sunAmt, 140.0) * 0.35;
+           sky += uSunColor * smoothstep(0.99978, 0.99996, sunAmt) * (1.0-uCloudCover*0.6) * 1.2;
+           if(dir.y > .04) {
+             vec2 cir = dir.xz/(dir.y+.28)*vec2(3.4,14.0) + uCloudOffset*.3;
+             float veil = smoothstep(.50,.78,billowFbm(cir,3)) * smoothstep(.04,.42,dir.y);
+             sky=mix(sky,uCloudLit,veil*.31);
+           }
+
+          // 2. Curved atmospheric cloud plane projection
+          if (dir.y > 0.015) {
+            // Curvature avoids stretching near horizon and creates towering overhead clouds
+            float curvedY = dir.y + 0.16;
+            vec2 cloudUV = (dir.xz / curvedY) * 1.42;
+
+            int octaves = uQuality > 0.5 ? 4 : 3;
+            float dens = cloudDensity(cloudUV, uCloudCover, octaves);
+
+            if (dens > 0.002) {
+              // Directional self-shadow marching toward the sun
+              vec2 sunStep = normalize(uSunDir.xz + vec2(0.0001)) * 0.13;
+              float d1 = cloudDensity(cloudUV + sunStep * 0.85, uCloudCover, 3);
+              float d2 = cloudDensity(cloudUV + sunStep * 2.10, uCloudCover, 2);
+              float d3 = cloudDensity(cloudUV + sunStep * 3.80, uCloudCover, 2);
+
+              float shadowOcc = clamp(d1 * 0.52 + d2 * 0.34 + d3 * 0.24, 0.0, 1.15);
+
+              // Height/thickness shading: bright white sunlit crowns, slate-gray undersides
+              float thickness = smoothstep(0.12, 0.95, dens);
+              float litFactor = clamp(1.12 - shadowOcc * 0.92 - thickness * 0.28, 0.0, 1.0);
+              litFactor = smoothstep(0.05, 0.92, litFactor);
+
+              // Extra bright edge silver lining near sun & thin cloud rims
+              float silver = pow(sunAmt, 5.0) * (1.0 - dens * 0.65) * 0.45;
+              float rimBright = (1.0 - shadowOcc) * smoothstep(0.0, 0.45, dens) * 0.22;
+
+              vec3 cloudBaseCol = mix(uCloudDeep, uCloudShadow, smoothstep(0.0, 0.65, litFactor));
+              vec3 cloudCol = mix(cloudBaseCol, uCloudLit, smoothstep(0.32, 0.96, litFactor + rimBright));
+              cloudCol += uSunColor * silver;
+
+              // Subtle atmospheric blue tint on distant/shaded cloud undersides
+              cloudCol = mix(cloudCol, sky * 0.85 + vec3(0.18), (1.0 - litFactor) * 0.14);
+
+              // Soft horizon aerial perspective fade
+              float horizonFade = smoothstep(0.015, 0.22, dir.y);
+              float alpha = clamp(dens * 1.06 * horizonFade, 0.0, 1.0);
+              sky = mix(sky, cloudCol, alpha);
+            }
+          } else {
+            // Below horizon subtle dark foliage/ground haze
+            sky = mix(uSkyHorizon * 0.72, vec3(0.06, 0.11, 0.14), (1.0-smoothstep(-0.25, 0.015, dir.y)));
+          }
+
+          gl_FragColor = vec4(sky, 1.0);
+        }
+      `;
+
+      const skyGeo = new THREE.SphereGeometry(185, 48, 32);
+      const skyMat = new THREE.ShaderMaterial({
+        uniforms: skyUniforms,
+        vertexShader: skyVertexShader,
+        fragmentShader: skyFragmentShader,
+        side: THREE.BackSide,
+        depthWrite: false
+      });
+      const skyDome = new THREE.Mesh(skyGeo, skyMat);
+      scene.add(skyDome);
+
+      // =========================================================
+      // 5. PROCEDURAL IBL ENVIRONMENT & CINEMATIC LIGHTING
+      // =========================================================
+      function createProceduralEnvMap() {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 128;
+        const ctx = c.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 128);
+        grad.addColorStop(0.0, '#0c73b8');
+        grad.addColorStop(0.35, '#8ac6eb');
+        grad.addColorStop(0.52, '#d8e7f2');
+        grad.addColorStop(0.58, '#4a4135');
+        grad.addColorStop(1.0, '#1f1a15');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 128);
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.encoding = THREE.sRGBEncoding;
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+        const envRT = pmrem.fromEquirectangular(tex);
+        tex.dispose();
+        pmrem.dispose();
+        return envRT.texture;
+      }
+      const envTexture = createProceduralEnvMap();
+      scene.environment = envTexture;
+
+      const sunLight = new THREE.DirectionalLight(activeMood.sunColor, activeMood.sunIntensity);
+      sunLight.position.copy(activeMood.sunDir).multiplyScalar(28);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 2048;
+      sunLight.shadow.mapSize.height = 2048;
+      sunLight.shadow.camera.near = 4;
+      sunLight.shadow.camera.far = 64;
+      const d = 16;
+      sunLight.shadow.camera.left = -d;
+      sunLight.shadow.camera.right = d;
+      sunLight.shadow.camera.top = d + 6;
+      sunLight.shadow.camera.bottom = -d + 4;
+      sunLight.shadow.bias = -0.0005;
+      scene.add(sunLight);
+
+      const hemiLight = new THREE.HemisphereLight(
+        activeMood.hemiSky,
+        activeMood.hemiGround,
+        activeMood.hemiIntensity
+      );
+      scene.add(hemiLight);
+
+      const rimLight = new THREE.DirectionalLight(activeMood.rimColor, activeMood.rimIntensity);
+      rimLight.position.set(16, 10, 14);
+      scene.add(rimLight);
+
+      // =========================================================
+      // 6. PROCEDURAL PBR BARK TEXTURES (Albedo + Bump + Roughness)
+      // =========================================================
+      function createBarkTextures() {
+        const size = 1024;
+        const colorCanvas = document.createElement('canvas');
+        const bumpCanvas = document.createElement('canvas');
+        const roughCanvas = document.createElement('canvas');
+        colorCanvas.width = bumpCanvas.width = roughCanvas.width = size;
+        colorCanvas.height = bumpCanvas.height = roughCanvas.height = size;
+
+        const cCtx = colorCanvas.getContext('2d');
+        const bCtx = bumpCanvas.getContext('2d');
+        const rCtx = roughCanvas.getContext('2d');
+
+        // Base warm weathered bark brown
+        cCtx.fillStyle = '#382c21';
+        cCtx.fillRect(0, 0, size, size);
+        bCtx.fillStyle = '#707070';
+        bCtx.fillRect(0, 0, size, size);
+        rCtx.fillStyle = '#dadada';
+        rCtx.fillRect(0, 0, size, size);
+
+        const texRand = mulberry32(88421);
+
+        // Longitudinal deep bark fissures & ridges
+        for (let i = 0; i < 420; i++) {
+          const x = texRand() * size;
+          const w = 1.5 + texRand() * 7.5;
+          const isCrevice = texRand() < 0.45;
+          const shade = isCrevice
+            ? Math.floor(22 + texRand() * 24)
+            : Math.floor(58 + texRand() * 38);
+
+          const rCol = isCrevice ? shade : Math.min(255, shade + 16);
+          const gCol = isCrevice ? Math.floor(shade * 0.85) : Math.min(255, shade + 5);
+          const bCol = isCrevice ? Math.floor(shade * 0.68) : Math.floor(shade * 0.78);
+
+          cCtx.strokeStyle = `rgba(${rCol},${gCol},${bCol},${0.45 + texRand() * 0.45})`;
+          cCtx.lineWidth = w;
+          bCtx.strokeStyle = isCrevice ? 'rgba(20,20,20,0.65)' : 'rgba(215,215,215,0.45)';
+          bCtx.lineWidth = w;
+          rCtx.strokeStyle = isCrevice ? 'rgba(248,248,248,0.65)' : 'rgba(182,182,182,0.5)';
+          rCtx.lineWidth = w;
+
+          let cx = x;
+          cCtx.beginPath();
+          bCtx.beginPath();
+          rCtx.beginPath();
+          cCtx.moveTo(cx, 0);
+          bCtx.moveTo(cx, 0);
+          rCtx.moveTo(cx, 0);
+          for (let y = 32; y <= size; y += 32) {
+            cx += (texRand() - 0.5) * 8;
+            cCtx.lineTo(cx, y);
+            bCtx.lineTo(cx, y);
+            rCtx.lineTo(cx, y);
+          }
+          cCtx.stroke();
+          bCtx.stroke();
+          rCtx.stroke();
+        }
+
+        // Subtle horizontal lenticels, weathered knots & pale dry lichen speckles
+        for (let i = 0; i < 650; i++) {
+          const x = texRand() * size;
+          const y = texRand() * size;
+          const rx = 2 + texRand() * 10;
+          const ry = 0.8 + texRand() * 2.5;
+          const dark = texRand() < 0.7;
+          cCtx.fillStyle = dark
+            ? `rgba(18,14,10,${0.25 + texRand() * 0.35})`
+            : `rgba(110,104,88,${0.12 + texRand() * 0.2})`;
+          cCtx.beginPath();
+          cCtx.ellipse(x, y, rx, ry, (texRand() - 0.5) * 0.4, 0, Math.PI * 2);
+          cCtx.fill();
+
+          bCtx.fillStyle = dark ? 'rgba(30,30,30,0.35)' : 'rgba(230,230,230,0.28)';
+          bCtx.beginPath();
+          bCtx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+          bCtx.fill();
+        }
+
+        // Irregular moss and lichen colonies on the bark, including granular relief.
+        for(let k=0;k<125;k++) {
+          const x=texRand()*size,y=texRand()*size,r=4+texRand()*23;
+          const tone=texRand()<.45?'rgba(114,124,87,.24)':'rgba(157,158,119,.20)';
+          for(let j=0;j<22;j++){const a=texRand()*6.283, d=Math.sqrt(texRand())*r, px=x+Math.cos(a)*d,py=y+Math.sin(a)*d,sz=1+texRand()*4;
+            cCtx.fillStyle=tone; cCtx.beginPath();cCtx.ellipse(px,py,sz,sz*.75,a,0,6.283);cCtx.fill();
+            bCtx.fillStyle='rgba(185,185,185,.18)';bCtx.fillRect(px,py,sz,sz);
+          }
+        }
+        const setupTex = (canvas, isColor) => {
+          const t = new THREE.CanvasTexture(canvas);
+          t.wrapS = THREE.RepeatWrapping;
+          t.wrapT = THREE.RepeatWrapping;
+          t.repeat.set(2, 6);
+          if (isColor) t.encoding = THREE.sRGBEncoding;
+          t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+          return t;
+        };
+
+        return {
+          map: setupTex(colorCanvas, true),
+          bumpMap: setupTex(bumpCanvas, false),
+          roughnessMap: setupTex(roughCanvas, false)
+        };
+      }
+
+      const barkTextures = createBarkTextures();
+
+      // Shared wind uniforms injected into the PBR bark material
+      const treeWindUniforms = {
+        uTime: { value: 0 },
+        uWind: { value: simState.wind },
+        uGust: { value: 0 }
+      };
+
+      const barkMaterial = new THREE.MeshStandardMaterial({
+        map: barkTextures.map,
+        bumpMap: barkTextures.bumpMap,
+        bumpScale: 0.085,
+        roughnessMap: barkTextures.roughnessMap,
+        roughness: 0.92,
+        metalness: 0.0,
+        envMapIntensity: 0.65
+      });
+
+      barkMaterial.onBeforeCompile = (shader) => {
+        shader.uniforms.uTime = treeWindUniforms.uTime;
+        shader.uniforms.uWind = treeWindUniforms.uWind;
+        shader.uniforms.uGust = treeWindUniforms.uGust;
+
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <common>',
+          `#include <common>
+           attribute vec3 aSway;
+           uniform float uTime;
+           uniform float uWind;
+           uniform float uGust;`
+        );
+
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+           float flex = aSway.x;
+           float phase = aSway.y;
+           float flutter = aSway.z;
+           float windAmp = (uWind + uGust * 1.45);
+           float slowSway = sin(uTime * 1.25 + position.y * 0.28 + position.x*.19) * 0.24;
+           float medSway  = cos(uTime * 2.75 + position.x * 0.45 + position.z*.3) * 0.085;
+           float tipTremor = sin(uTime * 5.8 + position.x*.9 + position.z * 1.4) * 0.022 * flutter;
+           transformed.x += (slowSway + medSway + tipTremor) * flex * windAmp;
+           transformed.z += (slowSway * 0.55 - medSway * 0.65) * flex * windAmp;
+           transformed.y += abs(slowSway) * 0.06 * flex * windAmp;`
+        );
+      };
+
+      // =========================================================
+      // 7. ORGANIC GNARLED TREE & FRACTAL TWIG BUILDER
+      //    (Merged into a single draw call for 60 FPS mobile/desktop)
+      // =========================================================
+      const leafSites = [];
+      const posArr = [];
+      const normArr = [];
+      const uvArr = [];
+      const swayArr = [];
+      const indexArr = [];
+      let vertexOffset = 0;
+
+      // Adds a smoothly tapered, organically gnarled tube along a 3D curve
+      function addBranchTube(points, rStart, rEnd, tubularSegs, radialSegs, swayStart, swayEnd, phase, gnarlAmp, isTwig) {
+        const curve = new THREE.CatmullRomCurve3(points);
+        const frames = curve.computeFrenetFrames(tubularSegs, false);
+
+        for (let i = 0; i <= tubularSegs; i++) {
+          const t = i / tubularSegs;
+          const P = curve.getPointAt(t);
+          const N = frames.normals[i];
+          const B = frames.binormals[i];
+
+          // Natural exponential taper with subtle organic knot swells
+          const taper = Math.pow(1 - t, 0.78);
+          let radius = rEnd + (rStart - rEnd) * taper;
+          if (!isTwig && gnarlAmp > 0) {
+            radius *= 1.0 + Math.sin(t * Math.PI * 5.0 + phase) * 0.07 * gnarlAmp;
+          }
+
+          const flex = swayStart + (swayEnd - swayStart) * t;
+          const flutter = isTwig ? 1.0 : Math.min(1.0, flex * 1.4);
+
+          for (let j = 0; j <= radialSegs; j++) {
+            const u = j / radialSegs;
+            const theta = u * Math.PI * 2;
+            const cosT = Math.cos(theta);
+            const sinT = Math.sin(theta);
+
+            // Organic cross-sectional bark fluting on thicker boughs
+            const flute = isTwig
+              ? 1.0
+              : 1.0 + Math.sin(theta * 3.0 + t * 6.0 + phase) * 0.055 * gnarlAmp;
+
+            const nx = cosT * N.x + sinT * B.x;
+            const ny = cosT * N.y + sinT * B.y;
+            const nz = cosT * N.z + sinT * B.z;
+
+            const vx = P.x + radius * flute * nx;
+            const vy = P.y + radius * flute * ny;
+            const vz = P.z + radius * flute * nz;
+
+            posArr.push(vx, vy, vz);
+            normArr.push(nx, ny, nz);
+            uvArr.push(u * Math.max(1, rStart * 4.5), t * Math.max(1.5, curve.getLength() * 0.85));
+            swayArr.push(flex, phase, flutter);
+          }
+        }
+
+        const stride = radialSegs + 1;
+        for (let i = 0; i < tubularSegs; i++) {
+          for (let j = 0; j < radialSegs; j++) {
+            const a = vertexOffset + i * stride + j;
+            const b = vertexOffset + (i + 1) * stride + j;
+            const c = vertexOffset + (i + 1) * stride + (j + 1);
+            const d = vertexOffset + i * stride + (j + 1);
+            indexArr.push(a, d, b);
+            indexArr.push(b, d, c);
+          }
+        }
+        vertexOffset += (tubularSegs + 1) * stride;
+        return curve;
+      }
+
+      // Recursive dendritic twig generator for crisp silhouette lacework against clouds
+      function spawnSubBranch(origin, dir, length, radius, depth, baseSway) {
+        if (depth <= 0 || radius < 0.0085 || length < 0.16) return;
+
+        const pts = [origin.clone()];
+        const curPos = origin.clone();
+        const curDir = dir.clone().normalize();
+        const steps = depth >= 3 ? 4 : 3;
+        const stepLen = length / steps;
+
+        for (let s = 1; s <= steps; s++) {
+          // Organic gnarled wandering + gentle upward phototropism
+          curDir.x += randRange(-0.34, 0.34);
+          curDir.y += randRange(-0.14, 0.26);
+          curDir.z += randRange(-0.28, 0.28);
+          curDir.normalize();
+          curPos.addScaledVector(curDir, stepLen);
+          pts.push(curPos.clone());
+        }
+
+        const endRadius = radius * (depth === 1 ? 0.22 : 0.46);
+        const endSway = Math.min(1.0, baseSway + 0.18);
+        const segs = depth >= 3 ? 7 : 4;
+        const radSegs = depth >= 3 ? 6 : 4;
+        const phase = randRange(0, Math.PI * 2);
+
+        const curve = addBranchTube(
+          pts,
+          radius,
+          endRadius,
+          segs,
+          radSegs,
+          baseSway,
+          endSway,
+          phase,
+          depth >= 3 ? 0.6 : 0.0,
+          depth <= 2
+        );
+
+        if(depth<=2 && radius<.075) {
+          for(let k=0;k<5;k++) { const t=.36+k*.14; leafSites.push({p:curve.getPointAt(t),t:curve.getTangentAt(t),flex:baseSway+(endSway-baseSway)*t,phase}); }
+        }
+        // Spawn natural lateral & terminal forks
+        const childCount = depth === 4 ? 4 : depth === 3 ? 3 : 2;
+        for (let c = 0; c < childCount; c++) {
+          const tAttach = c === childCount - 1 ? 0.96 : randRange(0.32, 0.88);
+          const attachPt = curve.getPointAt(tAttach);
+          const tang = curve.getTangentAt(tAttach);
+
+          // Fork angle spread mostly in the viewing plane for rich silhouette readability
+          const forkDir = tang.clone();
+          const sign = (c % 2 === 0 ? 1 : -1);
+          forkDir.x += sign * randRange(0.28, 0.72) + randRange(-0.2, 0.2);
+          forkDir.y += randRange(-0.28, 0.55);
+          forkDir.z += randRange(-0.48, 0.48);
+          forkDir.normalize();
+
+          const childLen = length * randRange(0.56, 0.78);
+          const childRad = (radius + (endRadius - radius) * tAttach) * randRange(0.56, 0.72);
+          spawnSubBranch(
+            attachPt,
+            forkDir,
+            childLen,
+            childRad,
+            depth - 1,
+            baseSway + (endSway - baseSway) * tAttach
+          );
+        }
+      }
+
+      // Helper to dress a hero bough with dense realistic secondary branches & fine twigs
+      function dressHeroBough(curve, rStart, rEnd, count, minDepth, maxDepth, swayMin, swayMax, biasDir) {
+        for (let i = 0; i < count; i++) {
+          const t = (i + randRange(0.15, 0.85)) / count;
+          if (t < 0.08 || t > 0.98) continue;
+          const pt = curve.getPointAt(t);
+          const tang = curve.getTangentAt(t);
+          const rHere = rEnd + (rStart - rEnd) * Math.pow(1 - t, 0.78);
+
+          const dir = tang.clone();
+          const side = i % 2 === 0 ? 1 : -1;
+          dir.x += side * randRange(0.25, 0.65) + (biasDir ? biasDir.x : 0);
+          dir.y += randRange(-0.12, 0.58) + (biasDir ? biasDir.y : 0);
+          dir.z += randRange(-0.45, 0.45) + (biasDir ? biasDir.z : 0);
+          dir.normalize();
+
+          const depth = Math.round(randRange(minDepth, maxDepth));
+          const len = randRange(1.2, 2.6) * (0.65 + 0.55 * (1 - t * 0.45));
+          const rad = Math.max(0.022, rHere * randRange(0.32, 0.54));
+          const sw = swayMin + (swayMax - swayMin) * t;
+
+          spawnSubBranch(pt, dir, len, rad, depth, sw);
+        }
+      }
+
+      // --- BUILD THE HERO TREE COMPOSITION (Inspired by the reference photo) ---
+      // 1. Main gnarled trunk rising on the left side of the frame
+      const trunkCurve = addBranchTube(
+        [
+          new THREE.Vector3(-4.9, -2.5, 0.6),
+          new THREE.Vector3(-4.6, 0.8, 0.45),
+          new THREE.Vector3(-4.35, 3.8, 0.25),
+          new THREE.Vector3(-4.05, 6.8, -0.1),
+          new THREE.Vector3(-3.3, 9.5, -0.45),
+          new THREE.Vector3(-1.9, 11.7, -0.8),
+          new THREE.Vector3(0.4, 13.3, -1.0)
+        ],
+        0.56, 0.12, 28, 12, 0.0, 0.28, 0.2, 1.0, false
+      );
+
+      // 2. Iconic sweeping central bough arching from mid-left across center-right
+      const centerBough = addBranchTube(
+        [
+          new THREE.Vector3(-4.42, 3.1, 0.3),
+          new THREE.Vector3(-3.2, 4.7, 0.22),
+          new THREE.Vector3(-1.2, 5.75, 0.12),
+          new THREE.Vector3(1.1, 6.4, -0.05),
+          new THREE.Vector3(3.2, 7.1, -0.25),
+          new THREE.Vector3(5.2, 7.85, -0.4),
+          new THREE.Vector3(7.1, 8.1, -0.55)
+        ],
+        0.31, 0.06, 26, 10, 0.05, 0.48, 1.3, 0.95, false
+      );
+
+      // Iconic broken vertical snag/stub jutting upward from the central bough!
+      addBranchTube(
+        [
+          new THREE.Vector3(0.05, 6.08, 0.04),
+          new THREE.Vector3(0.28, 6.75, 0.06),
+          new THREE.Vector3(0.42, 7.38, 0.02)
+        ],
+        0.13, 0.065, 8, 8, 0.18, 0.24, 1.3, 1.1, false
+      );
+
+      // 3. Lower sweeping bough curving from bottom-left toward middle-right
+      const lowerBough = addBranchTube(
+        [
+          new THREE.Vector3(-4.55, 1.1, 0.42),
+          new THREE.Vector3(-3.1, 2.25, 0.55),
+          new THREE.Vector3(-1.6, 3.1, 0.5),
+          new THREE.Vector3(0.5, 4.05, 0.35),
+          new THREE.Vector3(2.8, 4.6, 0.25),
+          new THREE.Vector3(5.2, 5.2, 0.05),
+          new THREE.Vector3(6.9, 6.1, -0.2)
+        ],
+        0.26, 0.04, 24, 10, 0.03, 0.52, 2.4, 0.9, false
+      );
+
+      // Upward graceful fork off the lower bough (just like the reference photo!)
+      const lowerFork = addBranchTube(
+        [
+          new THREE.Vector3(-1.65, 3.05, 0.5),
+          new THREE.Vector3(-1.15, 4.1, 0.48),
+          new THREE.Vector3(-1.02, 5.05, 0.42),
+          new THREE.Vector3(-1.35, 5.6, 0.35)
+        ],
+        0.09, 0.018, 12, 7, 0.14, 0.56, 2.8, 0.6, false
+      );
+
+      // 4. Upper arching bough sweeping from upper-left across the big white cloud to top-right
+      const upperBough = addBranchTube(
+        [
+          new THREE.Vector3(-3.75, 7.8, -0.25),
+          new THREE.Vector3(-2.3, 9.1, -0.3),
+          new THREE.Vector3(-0.6, 9.0, -0.35),
+          new THREE.Vector3(1.4, 9.3, -0.45),
+          new THREE.Vector3(3.6, 9.8, -0.6),
+          new THREE.Vector3(5.8, 10.6, -0.75)
+        ],
+        0.24, 0.038, 22, 9, 0.12, 0.62, 3.6, 0.85, false
+      );
+
+      // 5. High top-left to top-right soaring canopy bough
+      const crownBough = addBranchTube(
+        [
+          new THREE.Vector3(-2.4, 10.8, -0.65),
+          new THREE.Vector3(-0.4, 11.4, -0.65),
+          new THREE.Vector3(1.9, 12.1, -0.7),
+          new THREE.Vector3(4.3, 12.8, -0.8),
+          new THREE.Vector3(6.4, 13.6, -0.95)
+        ],
+        0.19, 0.03, 20, 8, 0.22, 0.68, 4.7, 0.8, false
+      );
+
+      // 6. Far-left foreground overhanging canopy branch for depth framing
+      const leftOverhang = addBranchTube(
+        [
+          new THREE.Vector3(-4.2, 5.4, 0.15),
+          new THREE.Vector3(-5.5, 6.9, 0.6),
+          new THREE.Vector3(-6.4, 8.6, 0.9),
+          new THREE.Vector3(-5.8, 10.4, 0.7)
+        ],
+        0.19, 0.035, 16, 8, 0.08, 0.55, 5.4, 0.85, false
+      );
+
+      // Dress all hero boughs with intricate dendritic sub-branches and delicate twigs
+      dressHeroBough(trunkCurve,   0.46, 0.12, 12, 3, 4, 0.04, 0.35, new THREE.Vector3(0.22, 0.24, 0.0));
+      dressHeroBough(centerBough,  0.28, 0.06, 13, 2, 4, 0.10, 0.52, new THREE.Vector3(0.18, 0.32, 0.0));
+      dressHeroBough(lowerBough,   0.23, 0.04, 12, 2, 4, 0.08, 0.56, new THREE.Vector3(0.24, 0.16, 0.0));
+      dressHeroBough(upperBough,   0.22, 0.04, 14, 3, 4, 0.16, 0.65, new THREE.Vector3(0.15, 0.28, 0.0));
+      dressHeroBough(crownBough,   0.18, 0.03, 12, 2, 4, 0.26, 0.72, new THREE.Vector3(0.10, 0.35, 0.0));
+      dressHeroBough(leftOverhang, 0.17, 0.03, 10, 2, 4, 0.12, 0.58, new THREE.Vector3(-0.15, 0.32, 0.0));
+      dressHeroBough(lowerFork,    0.08, 0.02, 5,  2, 3, 0.18, 0.58, new THREE.Vector3(-0.08, 0.32, 0.0));
+
+      // Extra fine silhouetted twig clusters near lower-left and mid-left trunk (signature detail of reference)
+      for (let k = 0; k < 8; k++) {
+        const y = randRange(0.2, 6.2);
+        const origin = new THREE.Vector3(-4.4 + randRange(-0.2, 0.3), y, randRange(-0.1, 0.6));
+        const dir = new THREE.Vector3(randRange(0.2, 0.85), randRange(0.15, 0.75), randRange(-0.4, 0.4)).normalize();
+        spawnSubBranch(origin, dir, randRange(1.1, 2.0), randRange(0.035, 0.06), 3, 0.12);
+      }
+
+      // Grounded trunk extension and buttress roots, outside the main upward view.
+      addBranchTube([new THREE.Vector3(-5.35,-12.15,.83),new THREE.Vector3(-5.18,-8.5,.75),new THREE.Vector3(-5,-5.1,.68),new THREE.Vector3(-4.9,-2.25,.6)],.88,.55,24,14,0,0,.2,1,false);
+      for(let i=0;i<7;i++){const a=i*Math.PI*2/7;addBranchTube([new THREE.Vector3(-5.35,-10.75,.83),new THREE.Vector3(-5.35+Math.cos(a)*.85,-11.65,.83+Math.sin(a)*.85),new THREE.Vector3(-5.35+Math.cos(a)*2.3,-12.05,.83+Math.sin(a)*2.3)],.28,.025,8,7,0,0,.2,.9,false);}
+      // Depth: branching in front and behind the original silhouette.
+      for (const [t, side] of [[.30,-1],[.43,1],[.61,-1],[.74,1],[.85,-1]]) {
+        const origin=trunkCurve.getPointAt(t);
+        spawnSubBranch(origin,new THREE.Vector3(.42,.46,side*.88),3.9,.14,4,.12+t*.24);
+      }
+      // Build single merged BufferGeometry for the entire tree (1 draw call!)
+      const treeGeo = new THREE.BufferGeometry();
+      treeGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+      treeGeo.setAttribute('normal', new THREE.Float32BufferAttribute(normArr, 3));
+      treeGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvArr, 2));
+      treeGeo.setAttribute('aSway', new THREE.Float32BufferAttribute(swayArr, 3));
+      treeGeo.setIndex(indexArr);
+      treeGeo.computeBoundingSphere();
+
+      const treeMesh = new THREE.Mesh(treeGeo, barkMaterial);
+      treeMesh.castShadow = true;
+      treeMesh.receiveShadow = true;
+      scene.add(treeMesh);
+      // Shadow geometry follows the same wind deformation as the visible bark.
+      const windDepth = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+      windDepth.onBeforeCompile=barkMaterial.onBeforeCompile;
+      treeMesh.customDepthMaterial=windDepth;
+      sunLight.shadow.normalBias=.025;
+      sunLight.castShadow=highQuality;
+
+      // Individual curved leaves in a single indexed mesh, connected to twig samples.
+      // UVs follow the midrib; a procedural texture draws branching venation.
+      const lc=document.createElement('canvas');lc.width=128;lc.height=256;const lx=lc.getContext('2d');
+      const lg=lx.createLinearGradient(0,0,128,0);lg.addColorStop(0,'#617f31');lg.addColorStop(.43,'#9db65c');lg.addColorStop(.5,'#c4cf82');lg.addColorStop(.56,'#6e983a');lg.addColorStop(1,'#375b25');lx.fillStyle=lg;lx.fillRect(0,0,128,256);
+      lx.strokeStyle='rgba(225,235,163,.62)';lx.lineWidth=2;lx.beginPath();lx.moveTo(64,256);lx.quadraticCurveTo(62,135,64,0);lx.stroke();
+      for(let i=0;i<13;i++){let y=22+i*17;for(let sign of [-1,1]){lx.lineWidth=.85;lx.beginPath();lx.moveTo(64,y+14);lx.quadraticCurveTo(64+sign*30,y+4,64+sign*65,y-28);lx.stroke();}}
+      const lr=mulberry32(746123);for(let i=0;i<2800;i++){lx.fillStyle=lr()>.5?'rgba(25,46,14,.09)':'rgba(245,232,166,.13)';lx.fillRect(lr()*128,lr()*256,1+lr()*2,1+lr()*2);}
+      const leafTex=new THREE.CanvasTexture(lc);leafTex.encoding=THREE.sRGBEncoding;leafTex.anisotropy=4;
+      const lp=[],lu=[],ls=[],li=[],lcol=[];const leafRand=mulberry32(55902);
+      const L=(a,b)=>a+(b-a)*leafRand();
+      const tmpColor=new THREE.Color();
+      // Shuffle sites to keep spatially uniform density changes.
+      for(let i=leafSites.length-1;i>0;i--){const j=Math.floor(leafRand()*(i+1));[leafSites[i],leafSites[j]]=[leafSites[j],leafSites[i]];}
+      let made=0;const maxLeaves=7200;const rings=7;
+      for(const site of leafSites){
+        if(made>=maxLeaves)break;
+        // Retain some open branches and sky gaps rather than a solid green mass.
+        if(leafRand()<.24+.14*Math.sin(site.p.x*1.4+site.p.y*.5))continue;
+        for(let j=0;j<2&&made<maxLeaves;j++){
+          const tangent=site.t.clone().add(new THREE.Vector3(L(-1,1),L(-.65,.55),L(-1,1))).normalize();
+          const side=new THREE.Vector3().crossVectors(tangent,new THREE.Vector3(L(-.5,.5),1,L(-.5,.5))).normalize();
+          if(side.lengthSq()<.01)side.set(1,0,0);
+          const normal=new THREE.Vector3().crossVectors(tangent,side).normalize();
+          const len=L(.18,.38),width=len*L(.25,.43),base=site.p.clone();
+          const col=tmpColor.setHSL(L(.17,.29),L(.32,.62),L(.55,.85));
+          const off=lp.length/3;
+          for(let k=0;k<rings;k++){
+            const t=k/(rings-1),w=Math.pow(Math.sin(t*Math.PI),.82)*width*(1+.045*Math.sin(k*3.1));
+            for(let m=-1;m<=1;m++){
+              const v=base.clone().addScaledVector(tangent,len*t).addScaledVector(side,w*m).addScaledVector(normal,len*(.14*Math.sin(t*Math.PI)-.12*t*t)-Math.abs(m)*w*.22);
+              lp.push(v.x,v.y,v.z);lu.push((m+1)/2,t);ls.push(Math.min(1,site.flex+t*.08),site.phase,1);lcol.push(col.r,col.g,col.b);
+            }
+            if(k<rings-1){for(let m=0;m<2;m++){const a=off+k*3+m;li.push(a,a+1,a+3,a+1,a+4,a+3);}}
+          }
+          made++;
+        }
+      }
+      const leafGeo=new THREE.BufferGeometry();leafGeo.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));leafGeo.setAttribute('uv',new THREE.Float32BufferAttribute(lu,2));leafGeo.setAttribute('aSway',new THREE.Float32BufferAttribute(ls,3));leafGeo.setAttribute('color',new THREE.Float32BufferAttribute(lcol,3));leafGeo.setIndex(li);leafGeo.computeVertexNormals();leafGeo.computeBoundingSphere();
+      const leafMat=new THREE.MeshStandardMaterial({map:leafTex,vertexColors:true,side:THREE.DoubleSide,roughness:.74,metalness:0,envMapIntensity:.7,emissive:0x46641b,emissiveIntensity:.15});
+      leafMat.onBeforeCompile=barkMaterial.onBeforeCompile;
+      const foliage=new THREE.Mesh(leafGeo,leafMat);foliage.castShadow=true;foliage.receiveShadow=true;foliage.customDepthMaterial=windDepth;scene.add(foliage);
+      const indicesPerLeaf=(rings-1)*12;
+      function applyLeafDensity(){leafGeo.setDrawRange(0,Math.floor(made*leafDensity*(highQuality?1:.7))*indicesPerLeaf);}
+      applyLeafDensity();
+
+      // Distant forest silhouette / atmospheric depth — sculpted rocky/organic crowns without flat mint spheres
+      const forestRnd = mulberry32(9123); const forestRoot = new THREE.Group(); scene.add(forestRoot);
+      const forestTrunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.13, 0.38, 1, 7), new THREE.MeshStandardMaterial({ color: 0x3b4438, roughness: 1 }), 65);
+      const fCrownGeo = new THREE.IcosahedronGeometry(1, 1);
+      const fPos = fCrownGeo.attributes.position;
+      for (let i = 0; i < fPos.count; i++) fPos.setXYZ(i, fPos.getX(i) * (0.82 + forestRnd() * 0.36), fPos.getY(i) * (0.8 + forestRnd() * 0.4), fPos.getZ(i) * (0.82 + forestRnd() * 0.36));
+      fCrownGeo.computeVertexNormals();
+      const forestCrown = new THREE.InstancedMesh(fCrownGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, envMapIntensity: 0.35 }), 195);
+      const dummy = new THREE.Object3D(); const fc = new THREE.Color();
+      for (let i = 0; i < 65; i++) {
+        const a = i / 65 * Math.PI * 2 + forestRnd() * 0.16, rad = 25 + forestRnd() * 32, h = 7.5 + forestRnd() * 9.5, x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+        dummy.position.set(x, -12 + h / 2, z); dummy.scale.set(1, h, 1); dummy.rotation.set(0, a, 0); dummy.updateMatrix(); forestTrunk.setMatrixAt(i, dummy.matrix);
+        for (let j = 0; j < 3; j++) {
+          dummy.position.set(x + (j - 1) * 1.45, -12 + h - 1 + j * 0.58, z + Math.sin(j * 2) * 1.35);
+          dummy.scale.set(2.1 + forestRnd() * 1.8, 1.8 + forestRnd() * 1.6, 2.2 + forestRnd() * 1.8);
+          dummy.rotation.set(forestRnd() * 3, a + j, forestRnd() * 3); dummy.updateMatrix();
+          forestCrown.setMatrixAt(i * 3 + j, dummy.matrix);
+          fc.setHSL(0.28 + forestRnd() * 0.09, 0.24 + forestRnd() * 0.14, 0.16 + forestRnd() * 0.12);
+          forestCrown.setColorAt(i * 3 + j, fc);
+        }
+      }
+      forestRoot.add(forestTrunk, forestCrown);
+      scene.fog=new THREE.FogExp2(0x8bb1bb,.017);
+      const ground=new THREE.Mesh(new THREE.CircleGeometry(70,64),new THREE.MeshStandardMaterial({color:0x4d543a,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-12.1;scene.add(ground);
+
+      // A small flock with articulated wings, flying on individual smooth paths.
+      const birds=[];const birdMat=new THREE.MeshStandardMaterial({color:0x333c40,roughness:.87,side:THREE.DoubleSide});
+      const wingGeo=new THREE.BufferGeometry();wingGeo.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,.45,.08,.14,.95,.02,.32,.72,0,.03,.43,-.035,-.15,0,0,-.08],3));wingGeo.setIndex([0,1,5,1,4,5,1,2,3,1,3,4]);wingGeo.computeVertexNormals();
+      const birdBodyGeo=new THREE.SphereGeometry(1,8,5);
+      for(let i=0;i<7;i++){const b=new THREE.Group(),body=new THREE.Mesh(birdBodyGeo,birdMat);body.scale.set(.09,.075,.25);b.add(body);const left=new THREE.Mesh(wingGeo,birdMat),right=new THREE.Mesh(wingGeo,birdMat);right.scale.x=-1;b.add(left,right);b.scale.setScalar(.55+i*.025);scene.add(b);birds.push({b,left,right});}
+      // Rain: bounded 3D line particles, with wind drift and gravity-like fall speed.
+      const rainCount=1100,rainPos=new Float32Array(rainCount*6),rainSeeds=new Float32Array(rainCount*3);const rainRandom=mulberry32(732);
+      for(let i=0;i<rainCount;i++){rainSeeds[i*3]=(rainRandom()-.5)*24;rainSeeds[i*3+1]=rainRandom()*24;rainSeeds[i*3+2]=(rainRandom()-.5)*24;}
+      const rainGeo=new THREE.BufferGeometry();rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPos,3).setUsage(THREE.DynamicDrawUsage));const rainMat=new THREE.LineBasicMaterial({color:0xb9d5df,transparent:true,opacity:.45,depthWrite:false});const rain=new THREE.LineSegments(rainGeo,rainMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
+      function updateNature(t,dt,wind){
+        scene.fog.color.copy(activeMood.skyHorizon);
+        for(let i=0;i<birds.length;i++){const o=birds[i],a=-1.45+t*.065+i*.065;const rad=28+i*.9;o.b.position.set(Math.cos(a)*rad,15.8+Math.sin(a*2+i*.22)*1.6+i*.27,Math.sin(a)*rad-8);o.b.rotation.y=Math.atan2(-Math.sin(a),Math.cos(a));const flap=Math.sin(t*5.1+i*.8)*.55;o.left.rotation.z=flap;o.right.rotation.z=-flap;o.b.visible=rainLevel<.55;}
+        rain.visible=rainLevel>.005;leafMat.roughness=.74-rainLevel*.36;barkMaterial.roughness=.92-rainLevel*.25;
+        if(rain.visible){const count=Math.floor(rainCount*rainLevel*(highQuality?1:.55));rainGeo.setDrawRange(0,count*2);rainMat.opacity=.22+rainLevel*.32;
+          for(let i=0;i<count;i++){const q=i*3,k=i*6,x=((rainSeeds[q]+t*wind*1.4+12000)%24)-12+camera.position.x,y=((rainSeeds[q+1]-t*(9+(i%7)*.3)%24+24)%24)-10+camera.position.y,z=rainSeeds[q+2]+camera.position.z;rainPos[k]=x;rainPos[k+1]=y;rainPos[k+2]=z;rainPos[k+3]=x-wind*.11;rainPos[k+4]=y+.21+rainLevel*.12;rainPos[k+5]=z+.02;}
+          rainGeo.attributes.position.needsUpdate=true;
+        }
+      }
+
+
+      // =========================================================
+      // 8. SUBTLE SUNLIT ATMOSPHERIC POLLEN / DUST MOTES
+      // =========================================================
+      const moteCount = 110;
+      const motePos = new Float32Array(moteCount * 3);
+      const moteSeed = new Float32Array(moteCount * 3);
+      for (let i = 0; i < moteCount; i++) {
+        motePos[i * 3 + 0] = randRange(-9, 9);
+        motePos[i * 3 + 1] = randRange(0.5, 15);
+        motePos[i * 3 + 2] = randRange(-6, 5);
+        moteSeed[i * 3 + 0] = randRange(0.6, 2.2);
+        moteSeed[i * 3 + 1] = randRange(0, Math.PI * 2);
+        moteSeed[i * 3 + 2] = randRange(0.4, 1.0);
+      }
+
+      const moteGeo = new THREE.BufferGeometry();
+      moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+      moteGeo.setAttribute('aSeed', new THREE.BufferAttribute(moteSeed, 3));
+
+      const moteUniforms = {
+        uTime: { value: 0 },
+        uWind: { value: simState.wind },
+        uColor: { value: new THREE.Color('#fff9eb') }
+      };
+
+      const moteMat = new THREE.ShaderMaterial({
+        uniforms: moteUniforms,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        vertexShader: `
+          attribute vec3 aSeed;
+          uniform float uTime;
+          uniform float uWind;
+          varying float vAlpha;
+          void main() {
+            vec3 p = position;
+            float speed = (0.28 + uWind * 0.9) * aSeed.x;
+            p.x = mod(p.x + uTime * speed + 9.0, 18.0) - 9.0;
+            p.y += sin(uTime * 0.7 * aSeed.x + aSeed.y) * 0.45;
+            p.z += cos(uTime * 0.55 * aSeed.x + aSeed.y) * 0.35;
+            vec4 mvPos = modelViewMatrix * vec4(p, 1.0);
+            gl_PointSize = clamp((28.0 * aSeed.z) / max(1.5, -mvPos.z), 1.5, 6.5);
+            vAlpha = (0.22 + 0.18 * sin(uTime * 1.4 + aSeed.y)) * aSeed.z;
+            gl_Position = projectionMatrix * mvPos;
+          }
+        `,
+        fragmentShader: `
+          precision mediump float;
+          uniform vec3 uColor;
+          varying float vAlpha;
+          void main() {
+            float dist = length(gl_PointCoord - vec2(0.5));
+            float soft = (1.0-smoothstep(0.08,0.5,dist));
+            gl_FragColor = vec4(uColor, soft * vAlpha);
+          }
+        `
+      });
+
+      const motes = new THREE.Points(moteGeo, moteMat);
+      scene.add(motes);
+
+      // =========================================================
+      // 9. PROCEDURAL SPATIAL AMBIENT AUDIO (Web Audio API)
+      // =========================================================
+      let audioCtx = null;
+      let masterGain = null;
+      let windFilter = null;
+      let windGain = null;
+      let rainGain=null;
+      let audioEnabled = false;
+      let birdTimer = null;
+
+      function initAudio() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        audioCtx = new AudioContextClass();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.0;
+        masterGain.connect(audioCtx.destination);
+
+        // Pink-ish noise buffer for realistic wind rustling
+        const bufferSize = audioCtx.sampleRate * 4;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.035;
+          b6 = white * 0.115926;
+        }
+
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        noiseSource.loop = true;
+
+        windFilter = audioCtx.createBiquadFilter();
+        windFilter.type = 'bandpass';
+        windFilter.frequency.value = 340;
+        windFilter.Q.value = 1.6;
+
+        windGain = audioCtx.createGain();
+        windGain.gain.value = 0.32;
+
+        noiseSource.connect(windFilter);
+        windFilter.connect(windGain);
+        windGain.connect(masterGain);
+        const rf=audioCtx.createBiquadFilter();rf.type='highpass';rf.frequency.value=1100;rainGain=audioCtx.createGain();rainGain.gain.value=0;noiseSource.connect(rf);rf.connect(rainGain);rainGain.connect(masterGain);
+        noiseSource.start();
+
+        scheduleDistantBird();
+      }
+
+      function playDistantBird() {
+        if (!audioCtx || !audioEnabled || audioCtx.state !== 'running' || rainLevel>.55) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+
+        const baseFreq = 2100 + Math.random() * 950;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.24, now + 0.09);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.92, now + 0.22);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.022, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+
+        osc.connect(gain);
+        if (panner) {
+          panner.pan.value = Math.random() * 1.4 - 0.7;
+          gain.connect(panner);
+          panner.connect(masterGain);
+        } else {
+          gain.connect(masterGain);
+        }
+
+        osc.start(now);
+        osc.stop(now + 0.28);
+      }
+
+      function scheduleDistantBird() {
+        clearTimeout(birdTimer);
+        birdTimer = setTimeout(() => {
+          playDistantBird();
+          if (Math.random() < 0.45) {
+            setTimeout(playDistantBird, 340);
+          }
+          scheduleDistantBird();
+        }, 4200 + Math.random() * 7500);
+      }
+
+      function toggleAudio() {
+        const btn = document.getElementById('btn-audio');
+        if (!audioCtx) initAudio();
+        if (!audioCtx) return;
+
+        audioEnabled = !audioEnabled;
+        if (audioEnabled && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+        masterGain.gain.cancelScheduledValues(now);
+        masterGain.gain.setTargetAtTime(audioEnabled ? 0.85 : 0.0, now, 0.25);
+
+        btn.classList.toggle('active', audioEnabled);
+        btn.setAttribute('aria-pressed', String(audioEnabled));
+        btn.querySelector('svg').innerHTML = audioEnabled
+          ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>'
+          : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+      }
+
+      // =========================================================
+      // 10. SMOOTH POINTER, TOUCH & KEYBOARD CONTROLS
+      // =========================================================
+      let dragMoved = false;
+      let lastX = 0;
+      let lastY = 0;
+      const hintEl = document.getElementById('hint-pill');
+
+      function fadeHint() {
+        if (hintEl && !hintEl.classList.contains('faded')) {
+          hintEl.classList.add('faded');
+        }
+      }
+      setTimeout(fadeHint, 7500);
+
+      function triggerGust() {
+        simState.gust = Math.min(1.15, simState.gust + 0.65);
+      }
+
+      const domEl = renderer.domElement;
+      domEl.tabIndex=0;domEl.setAttribute('aria-label','Cena 3D. Use setas para olhar e mais ou menos para aproximar.');
+      const pointers=new Map();
+      domEl.addEventListener('pointerdown', e=>{ if(e.button!==0 && e.pointerType==='mouse')return;domEl.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){dragMoved=false;lastX=e.clientX;lastY=e.clientY;}else dragMoved=true;fadeHint(); });
+      domEl.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);const other=[...pointers.entries()].find(([id])=>id!==e.pointerId);if(other){const p=other[1],oldD=Math.hypot(old.x-p.x,old.y-p.y),newD=Math.hypot(e.clientX-p.x,e.clientY-p.y);if(newD>8)camState.targetDist=THREE.MathUtils.clamp(camState.targetDist*oldD/newD,5.5,16.5);dragMoved=true;}else{const dx=e.clientX-old.x,dy=e.clientY-old.y;if(Math.hypot(e.clientX-lastX,e.clientY-lastY)>5)dragMoved=true;camState.targetYaw-=dx*.0042;camState.targetPitch=THREE.MathUtils.clamp(camState.targetPitch+dy*.0038,-.30,1.22);}pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});});
+      function endPointer(e){if(!pointers.has(e.pointerId))return;pointers.delete(e.pointerId);if(!pointers.size&&!dragMoved&&e.type==='pointerup')triggerGust();}
+      domEl.addEventListener('pointerup',endPointer);domEl.addEventListener('pointercancel',endPointer);domEl.addEventListener('lostpointercapture',endPointer);
+      domEl.addEventListener('wheel',e=>{e.preventDefault();camState.targetDist=THREE.MathUtils.clamp(camState.targetDist+e.deltaY*.008,5.5,16.5);fadeHint();},{passive:false});
+      domEl.addEventListener('keydown',e=>{const actions={ArrowLeft:()=>camState.targetYaw+=.12,ArrowRight:()=>camState.targetYaw-=.12,ArrowUp:()=>camState.targetPitch=THREE.MathUtils.clamp(camState.targetPitch+.1,-.3,1.22),ArrowDown:()=>camState.targetPitch=THREE.MathUtils.clamp(camState.targetPitch-.1,-.3,1.22),'+':()=>camState.targetDist=Math.max(5.5,camState.targetDist-.7),'-':()=>camState.targetDist=Math.min(16.5,camState.targetDist+.7),' ':triggerGust};if(actions[e.key]){e.preventDefault();actions[e.key]();}});
+
+      // =========================================================
+      // 11. UI CONTROLS WIRING
+      // =========================================================
+      const sliderWind = document.getElementById('slider-wind');
+      const sliderClouds = document.getElementById('slider-clouds');
+      const sliderExposure = document.getElementById('slider-exposure');
+      const valWind = document.getElementById('val-wind');
+      const valClouds = document.getElementById('val-clouds');
+      const valExposure = document.getElementById('val-exposure');
+      const drawer = document.getElementById('settings-drawer');
+      const btnSettings = document.getElementById('btn-settings');
+
+      sliderWind.addEventListener('input', () => {
+        simState.wind = Number(sliderWind.value) / 100;
+        valWind.textContent = `${sliderWind.value}%`;
+      });
+
+      sliderClouds.addEventListener('input', () => {
+        simState.cloudCover = Number(sliderClouds.value) / 100;
+        valClouds.textContent = `${sliderClouds.value}%`;
+      });
+
+      sliderExposure.addEventListener('input', () => {
+        simState.exposure = Number(sliderExposure.value) / 100;
+        valExposure.textContent = simState.exposure.toFixed(2);
+        renderer.toneMappingExposure = simState.exposure;
+      });
+
+      btnSettings.addEventListener('click', () => {
+        const isOpen = drawer.classList.toggle('open');
+        btnSettings.classList.toggle('active', isOpen);
+        btnSettings.setAttribute('aria-expanded', String(isOpen));
+      });
+
+      document.getElementById('btn-audio').addEventListener('click', toggleAudio);
+
+      function applyCameraPreset(key) {
+        const p = CAM_PRESETS[key] || CAM_PRESETS.original;
+        camState.targetYaw = p.yaw;
+        camState.targetPitch = p.pitch;
+        camState.targetDist = p.dist;
+        camState.goalTargetX = p.targetX;
+        camState.goalTargetY = p.targetY;
+        document.querySelectorAll('[data-cam]').forEach((el) => {
+          el.classList.toggle('active', el.dataset.cam === key);
+        });
+      }
+
+      document.querySelectorAll('[data-cam]').forEach((btn) => {
+        btn.addEventListener('click', () => applyCameraPreset(btn.dataset.cam));
+      });
+
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        applyCameraPreset('original');
+      });
+
+      document.querySelectorAll('[data-mood]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const moodKey = btn.dataset.mood;
+          if (!MOODS[moodKey]) return;
+          targetMood = MOODS[moodKey];
+          rainLevel=moodKey==='rain'?.78:0;document.getElementById('slider-rain').value=Math.round(rainLevel*100);document.getElementById('val-rain').textContent=Math.round(rainLevel*100)+'%';
+          simState.cloudCover = targetMood.cloudCover;
+          simState.exposure = targetMood.exposure;
+
+          sliderClouds.value = String(Math.round(simState.cloudCover * 100));
+          valClouds.textContent = `${sliderClouds.value}%`;
+          sliderExposure.value = String(Math.round(simState.exposure * 100));
+          valExposure.textContent = simState.exposure.toFixed(2);
+          renderer.toneMappingExposure = simState.exposure;
+
+          document.querySelectorAll('[data-mood]').forEach((el) => {
+            el.classList.toggle('active', el.dataset.mood === moodKey);
+          });
+        });
+      });
+
+      const btnQuality = document.getElementById('btn-quality');
+      const qStatus=document.getElementById('quality-status');
+      function setQuality(v){highQuality=v;updatePixelRatio();skyUniforms.uQuality.value=v?1:0;sunLight.castShadow=v;applyLeafDensity();moteGeo.setDrawRange(0,v?moteCount:50);btnQuality.textContent='Qualidade: '+(qualityMode===0?'Auto':qualityMode===1?'Alta':'Leve');qStatus.textContent=(qualityMode===0?'Automático: ':'Manual: ')+(v?'detalhes altos':'modo econômico');}
+      btnQuality.addEventListener('click',()=>{qualityMode=(qualityMode+1)%3;setQuality(qualityMode===0?!matchMedia('(max-width:700px)').matches:qualityMode===1);});
+      document.getElementById('slider-leaves').addEventListener('input',e=>{leafDensity=Number(e.target.value)/100;document.getElementById('val-leaves').textContent=e.target.value+'%';applyLeafDensity();});
+      document.getElementById('slider-rain').addEventListener('input',e=>{rainLevel=Number(e.target.value)/100;document.getElementById('val-rain').textContent=e.target.value+'%';});
+      const pauseBtn=document.getElementById('btn-pause');function syncPause(){pauseBtn.setAttribute('aria-pressed',String(paused));pauseBtn.textContent=paused?'Retomar movimento':'Pausar movimento';}syncPause();pauseBtn.addEventListener('click',()=>{paused=!paused;syncPause();});document.getElementById('btn-gust').addEventListener('click',()=>{triggerGust();});
+      document.getElementById('btn-photo').addEventListener('click',()=>{renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='copa-e-nuvens.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);},'image/png');});
+      setQuality(highQuality);
+      let frameSum=0,frameCount=0,slowWindows=0,fastWindows=0;
+      function adapt(raw){if(qualityMode!==0||document.hidden||raw>.3)return;frameSum+=raw;frameCount++;if(frameSum<3)return;const avg=frameSum/frameCount;slowWindows=avg>.042?slowWindows+1:0;fastWindows=avg<.021?fastWindows+1:0;frameSum=0;frameCount=0;if(highQuality&&slowWindows>=2){setQuality(false);slowWindows=0;}else if(!highQuality&&fastWindows>=5&&!matchMedia('(max-width:700px)').matches){setQuality(true);fastWindows=0;}}
+
+      const btnHideUi = document.getElementById('btn-hide-ui');
+      function toggleUiHidden() {
+        const hidden = document.body.classList.toggle('ui-hidden');
+        btnHideUi.classList.toggle('active', hidden);
+        btnHideUi.setAttribute('aria-pressed', String(hidden));
+        if (hidden) {
+          drawer.classList.remove('open');
+          btnSettings.classList.remove('active');
+          btnSettings.setAttribute('aria-expanded', 'false');
+        }
+      }
+      btnHideUi.addEventListener('click', toggleUiHidden);
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'h' || e.key === 'H') toggleUiHidden();
+        if (e.key === 'r' || e.key === 'R') applyCameraPreset('original');
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        updatePixelRatio();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // =========================================================
+      // 12. ANIMATION LOOP (60 FPS damped camera + living sky)
+      // =========================================================
+      const clock = new THREE.Clock();
+      let animFrameId = null;
+      let simElapsed=0;
+      const lookTarget=new THREE.Vector3();
+
+      let sangiPaused = false, copaDisposed = false;
+      function animate() {
+        if (copaDisposed) return;
+        animFrameId = requestAnimationFrame(animate);
+        if (sangiPaused || document.hidden) return;
+        const raw=clock.getDelta();adapt(raw);
+        const dt = Math.min(raw, 0.05);
+        const motionDt=paused?0:dt;simElapsed+=motionDt;const elapsed=simElapsed;
+
+        // Smooth mood color & lighting transitions
+        const lerpRate = Math.min(1, dt * 2.4);
+        activeMood.skyZenith.lerp(targetMood.skyZenith, lerpRate);
+        activeMood.skyMid.lerp(targetMood.skyMid, lerpRate);
+        activeMood.skyHorizon.lerp(targetMood.skyHorizon, lerpRate);
+        activeMood.cloudLit.lerp(targetMood.cloudLit, lerpRate);
+        activeMood.cloudShadow.lerp(targetMood.cloudShadow, lerpRate);
+        activeMood.cloudDeep.lerp(targetMood.cloudDeep, lerpRate);
+        activeMood.sunColor.lerp(targetMood.sunColor, lerpRate);
+        activeMood.sunDir.lerp(targetMood.sunDir, lerpRate).normalize();
+        activeMood.sunIntensity += (targetMood.sunIntensity - activeMood.sunIntensity) * lerpRate;
+        activeMood.hemiSky.lerp(targetMood.hemiSky, lerpRate);
+        activeMood.hemiGround.lerp(targetMood.hemiGround, lerpRate);
+        activeMood.hemiIntensity += (targetMood.hemiIntensity - activeMood.hemiIntensity) * lerpRate;
+        activeMood.rimColor.lerp(targetMood.rimColor, lerpRate);
+        activeMood.rimIntensity += (targetMood.rimIntensity - activeMood.rimIntensity) * lerpRate;
+
+        // Update lights
+        sunLight.color.copy(activeMood.sunColor);
+        sunLight.intensity = activeMood.sunIntensity;
+        sunLight.position.copy(activeMood.sunDir).multiplyScalar(28);
+        hemiLight.color.copy(activeMood.hemiSky);
+        hemiLight.groundColor.copy(activeMood.hemiGround);
+        hemiLight.intensity = activeMood.hemiIntensity;
+        rimLight.color.copy(activeMood.rimColor);
+        rimLight.intensity = activeMood.rimIntensity;
+
+        // Decay interactive wind gust smoothly
+        simState.gust = Math.max(0, simState.gust - motionDt * 0.45);
+        const effWind = simState.wind + simState.gust * 0.65;
+
+        // Update volumetric cloud dome uniforms
+        skyUniforms.uTime.value = elapsed;
+        skyUniforms.uCloudOffset.value.x += motionDt * (0.012 + effWind * 0.036);
+        skyUniforms.uCloudOffset.value.y += motionDt * (0.005 + effWind * 0.012);
+        skyUniforms.uCloudCover.value += (simState.cloudCover - skyUniforms.uCloudCover.value) * Math.min(1, dt * 4.5);
+        skyUniforms.uSunDir.value.copy(activeMood.sunDir);
+        skyUniforms.uSkyZenith.value.copy(activeMood.skyZenith);
+        skyUniforms.uSkyMid.value.copy(activeMood.skyMid);
+        skyUniforms.uSkyHorizon.value.copy(activeMood.skyHorizon);
+        skyUniforms.uCloudLit.value.copy(activeMood.cloudLit);
+        skyUniforms.uCloudShadow.value.copy(activeMood.cloudShadow);
+        skyUniforms.uCloudDeep.value.copy(activeMood.cloudDeep);
+        skyUniforms.uSunColor.value.copy(activeMood.sunColor);
+
+        // Update tree wind & dust motes
+        treeWindUniforms.uTime.value = elapsed;
+        treeWindUniforms.uWind.value = simState.wind;
+        treeWindUniforms.uGust.value = simState.gust;
+        moteUniforms.uTime.value = elapsed;
+        moteUniforms.uWind.value = effWind;
+        moteUniforms.uColor.value.copy(activeMood.sunColor);
+
+        // Modulate procedural wind audio if active
+        if (audioEnabled && windFilter && windGain && audioCtx) {
+          const now = audioCtx.currentTime;
+          const lfo = 0.5 + 0.5 * Math.sin(elapsed * 0.65);
+          windFilter.frequency.setTargetAtTime(220 + effWind * 460 + lfo * 140, now, 0.15);
+          windGain.gain.setTargetAtTime(0.12 + effWind * 0.42, now, 0.15);
+          if(rainGain)rainGain.gain.setTargetAtTime(rainLevel*.65,now,.25);
+        }
+
+        // Smooth damped camera positioning with subtle organic breathing
+        const camLerp = Math.min(1, dt * 5.2);
+        camState.yaw += (camState.targetYaw - camState.yaw) * camLerp;
+        camState.pitch += (camState.targetPitch - camState.pitch) * camLerp;
+        camState.dist += (camState.targetDist - camState.dist) * camLerp;
+        camState.targetX += (camState.goalTargetX - camState.targetX) * camLerp;
+        camState.targetY += (camState.goalTargetY - camState.targetY) * camLerp;
+
+        const breathYaw = paused ? 0 : Math.sin(elapsed * 0.28) * 0.007;
+        const breathPitch = paused ? 0 : Math.cos(elapsed * 0.22) * 0.005;
+        const yAngle = camState.yaw + breathYaw;
+        const pAngle = camState.pitch + breathPitch;
+
+        lookTarget.set(camState.targetX, camState.targetY, -0.2);
+        camera.position.set(
+          lookTarget.x + Math.sin(yAngle) * Math.cos(pAngle) * camState.dist,
+          lookTarget.y - Math.sin(pAngle) * camState.dist,
+          lookTarget.z + Math.cos(yAngle) * Math.cos(pAngle) * camState.dist
+        );
+        camera.lookAt(lookTarget);
+
+        // Keep sky dome centered on camera
+        skyDome.position.copy(camera.position);
+
+        updateNature(elapsed,motionDt,effWind);
+        renderer.render(scene, camera);
+      }
+
+      document.addEventListener('visibilitychange',()=>{if(document.hidden){if(animFrameId)cancelAnimationFrame(animFrameId);animFrameId=null;clock.stop();if(audioCtx&&audioEnabled)audioCtx.suspend().catch(()=>{});}else if(animFrameId===null){clock.start();animate();if(audioCtx&&audioEnabled)audioCtx.resume().catch(()=>{});}});
+      // Hide loader smoothly after first rendered frame
+      animate();
+      requestAnimationFrame(() => {
+        const loader = document.getElementById('loader');
+        if (loader && !renderer.getContext().isContextLost()) loader.classList.add('hidden');
+      });
+
+      // Clean GPU disposal on unload & SangiBridge integration
+      function cleanupCopa() {
+        if (copaDisposed) return;
+        copaDisposed = true;
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        clearTimeout(birdTimer);
+        treeGeo.dispose();
+        barkMaterial.dispose();
+        barkTextures.map.dispose();
+        barkTextures.bumpMap.dispose();
+        barkTextures.roughnessMap.dispose();
+        skyGeo.dispose();
+        skyMat.dispose();
+        moteGeo.dispose();
+        moteMat.dispose();
+        if (envTexture) envTexture.dispose();
+        leafTex.dispose(); windDepth.dispose();
+        scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.dispose(); } });
+        if (audioCtx) audioCtx.close().catch(() => {});
+        renderer.dispose();
+      }
+      window.addEventListener('beforeunload', cleanupCopa);
+      window.addEventListener('pagehide', cleanupCopa);
+      window.addEventListener('sangi:dispose', cleanupCopa);
+      window.addEventListener('sangi:pause', () => { sangiPaused = true; clock.stop(); if (audioCtx && audioEnabled) audioCtx.suspend().catch(() => {}); });
+      window.addEventListener('sangi:resume', () => { sangiPaused = false; clock.start(); if (audioCtx && audioEnabled) audioCtx.resume().catch(() => {}); });
+      window.addEventListener('sangi:mute', () => { if (audioEnabled) toggleAudio(); });
+      window.addEventListener('sangi:reset', () => { applyCameraPreset('original'); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,4 +1,0 @@
-12 — Máquina das Consequências
-Bancada de engenharia artesanal com circuito modular de esferas de vidro, trilhos de madeira, bifurcações, alavancas, dominós e recipientes, luz quente de oficina
-visão isométrica próxima do circuito e da esfera entrando em bifurcação; replay em câmera lenta opcional
-HUD: Construir / Prever / Testar / Rever percurso

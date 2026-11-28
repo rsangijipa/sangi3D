@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Máquina de Reação em Cadeia — Engenho Criativo | Sangi3D</title>
+  <style>
+    :root {
+      --bg: #1A1A18;
+      --card-bg: rgba(30, 28, 24, 0.92);
+      --card-border: rgba(230, 180, 80, 0.25);
+      --text: #F5EFEB;
+      --text-muted: #A8A29A;
+      --accent-wood: #B8860B;
+      --accent-brass: #E5C158;
+      --accent-red: #D9483B;
+      --accent-blue: #3A7BD5;
+      --accent-green: #2ECC71;
+      --mono: "Space Grotesk", monospace;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: calc(100% - 360px); height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .nav-bar {
+      position: absolute; top: 0; left: 0; width: calc(100% - 360px); height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 10;
+      background: linear-gradient(180deg, rgba(26,26,24,0.85) 0%, rgba(26,26,24,0) 100%);
+      pointer-events: none;
+    }
+    .brand-logo {
+      font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent-brass);
+      pointer-events: auto;
+    }
+    .cta-btn {
+      padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      background: var(--accent-brass); color: #1A1A18; border: none; cursor: pointer;
+      pointer-events: auto; transition: transform 0.2s, background 0.2s;
+    }
+    .cta-btn:hover { background: #F0CF70; transform: translateY(-1px); }
+
+    .hud-panel {
+      position: absolute; top: 72px; right: 20px; width: 340px; max-height: calc(100dvh - 90px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--mono); font-size: 20px; font-weight: 700; color: #FFF; margin-bottom: 2px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+
+    .preset-selector {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    }
+    .preset-btn {
+      padding: 8px 4px; font-size: 10px; font-weight: 600; text-align: center;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px; color: var(--text); cursor: pointer; transition: all 0.2s;
+    }
+    .preset-btn.active {
+      background: #8E6E26; border-color: var(--accent-brass); color: #FFF;
+    }
+
+    .status-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.35); padding: 10px 14px; border-radius: 8px;
+      border: 1px solid rgba(229,193,88,0.2);
+    }
+    .status-text {
+      font-size: 12px; font-weight: 600; font-family: var(--mono);
+    }
+
+    .dock-controls {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .btn-dock {
+      padding: 10px 12px; font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--text); cursor: pointer; text-align: center;
+      transition: all 0.2s;
+    }
+    .btn-dock.primary {
+      background: var(--accent-brass); color: #1A1A18; border-color: transparent;
+    }
+    .btn-dock.primary:hover { background: #F0CF70; }
+    .btn-dock.active {
+      background: #5A481B; border-color: var(--accent-brass); color: #FFF;
+    }
+
+    .win-modal {
+      display: none; background: rgba(229,193,88,0.15); border: 1px solid var(--accent-brass);
+      padding: 12px; border-radius: 8px; text-align: center;
+    }
+    .win-modal.show { display: block; animation: fadeIn 0.3s ease-out; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    @media (max-width: 768px) {
+      #canvas-container, .nav-bar { width: 100%; }
+      #canvas-container { height: 52dvh; }
+      .hud-panel {
+        top: 52dvh; bottom: 0; right: 0; left: 0; width: 100%; max-height: none;
+        border-radius: 16px 16px 0 0; padding: 14px 18px 20px;
+      }
+    }
+  </style>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div class="nav-bar">
+    <div class="brand-logo">Engenho Criativo</div>
+    <button class="cta-btn" onclick="openContact()">Fale com a gente</button>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Monte. Solte. Veja.</h1>
+      <p>Bancada de reação em cadeia estilo Rube Goldberg com física interativa.</p>
+    </div>
+
+    <div class="status-banner">
+      <span class="status-text" id="sim-status">Pronto para soltar</span>
+      <span id="time-display" style="font-size:12px; font-family:monospace; color:var(--accent-brass);">0.00s</span>
+    </div>
+
+    <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Circuitos de Desafio:</div>
+    <div class="preset-selector">
+      <button class="preset-btn active" id="p-0" onclick="loadChallenge(0)">1. Clássico</button>
+      <button class="preset-btn" id="p-1" onclick="loadChallenge(1)">2. Gangorra</button>
+      <button class="preset-btn" id="p-2" onclick="loadChallenge(2)">3. Torre Alta</button>
+    </div>
+
+    <div class="dock-controls">
+      <button class="btn-dock primary" id="btn-release" onclick="toggleRun()">▶ Soltar Bolinha</button>
+      <button class="btn-dock" id="btn-reset" onclick="resetSimulation()">↺ Reiniciar</button>
+      <button class="btn-dock" id="btn-slowmo" onclick="toggleSlowMo()">⏱ Câmera Lenta</button>
+      <button class="btn-dock" id="btn-angle" onclick="switchCamera()">🎥 Mudar Câmera</button>
+    </div>
+
+    <div class="win-modal" id="win-card">
+      <div style="font-size:14px; font-weight:700; color:var(--accent-brass); margin-bottom:4px;">🎉 Reação Completa!</div>
+      <div style="font-size:11px; color:var(--text); line-height:1.4;">
+        O sino de latão tocou com sucesso. Criatividade em movimento contínuo!
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/Sistema/shared/vendor/three.module.js",
+        "three/addons/": "/Sistema/shared/vendor/addons/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { createStudioEnvironment } from '/Sistema/shared/engine/studio-environment.js';
+
+    // State
+    const CHALLENGES = [
+      {
+        name: 'Clássico',
+        ballStart: [-3.1, 1.35, 0],
+        rampEnd: [-1.14, 0.28, 0],
+        dominoCount: 8,
+        dominoSpacing: 0.22,
+        seesawX: 1.08,
+        seesawY: 0.25,
+        bellX: 2.55,
+      },
+      {
+        name: 'Gangorra',
+        ballStart: [-2.65, 1.55, 0],
+        rampEnd: [-1.25, 0.28, 0],
+        dominoCount: 6,
+        dominoSpacing: 0.25,
+        seesawX: 0.92,
+        seesawY: 0.34,
+        bellX: 2.55,
+      },
+      {
+        name: 'Torre Alta',
+        ballStart: [-3.25, 2.05, 0],
+        rampEnd: [-1.14, 0.28, 0],
+        dominoCount: 10,
+        dominoSpacing: 0.19,
+        seesawX: 1.24,
+        seesawY: 0.25,
+        bellX: 2.65,
+      },
+    ];
+
+    const state = {
+      isRunning: false,
+      isSlowMo: false,
+      simTime: 0,
+      phase: 0, // 0: ready, 1: ball rolling ramp, 2: domino cascade, 3: seesaw tilting, 4: ball 2 rolling, 5: bell hit
+      rampProgress: 0,
+      bellRingTimer: 0,
+      ball1Pos: new THREE.Vector3(-3.1, 1.35, 0),
+      ball2Pos: new THREE.Vector3(1.4, 0.25, 0),
+      ball2Vel: new THREE.Vector3(0, 0, 0),
+      seesawAngle: -0.15,
+      targetSeesawAngle: -0.15,
+      dominoStates: [],
+      currentChallenge: 0,
+      cameraView: 0
+    };
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+    let masterGain = null;
+    let isMuted = false;
+
+    function initAudio() {
+      if (audioCtx) {
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        return;
+      }
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      audioCtx = new AudioContext();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(isMuted ? 0 : 0.3, audioCtx.currentTime);
+      masterGain.connect(audioCtx.destination);
+    }
+
+    function playWoodClick(freq = 480) {
+      if (!audioCtx || isMuted) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.04);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.connect(gain); gain.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.05);
+    }
+
+    function playBellChime() {
+      if (!audioCtx || isMuted) return;
+      const now = audioCtx.currentTime;
+      const freqs = [1760, 2640, 3520];
+      freqs.forEach((f, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now);
+        gain.gain.setValueAtTime(0.2 / (idx + 1), now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        osc.connect(gain); gain.connect(masterGain);
+        osc.start(now); osc.stop(now + 1.9);
+      });
+    }
+
+    // Three.js Scene Setup
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1A1A18);
+    scene.fog = new THREE.FogExp2(0x1A1A18, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(42, Math.max(1, container.clientWidth) / Math.max(1, container.clientHeight), 0.1, 50);
+    camera.position.set(0, 3.1, 6.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const environment = createStudioEnvironment(renderer);
+    scene.environment = environment.texture;
+    scene.environmentIntensity = .73;
+    renderer.setSize(container.clientWidth, container.clientHeight, false);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2.05;
+    controls.target.set(0, 1.0, 0);
+
+    // Lighting
+    const hemiLight = new THREE.HemisphereLight(0xFCEECB, 0x1A1A18, 0.75);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xFFF0D0, 2.2);
+    keyLight.position.set(4, 7, 3);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.bias = -0.0002;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x7FB5D8, 0.5);
+    fillLight.position.set(-4, 4, -2);
+    scene.add(fillLight);
+
+    // Workbench Table (Compensado / Plywood PBR)
+    const benchGeo = new THREE.BoxGeometry(8, 0.4, 4);
+    const benchMat = new THREE.MeshStandardMaterial({
+      color: 0x8C6843,
+      roughness: 0.55,
+      metalness: 0.05
+    });
+    const bench = new THREE.Mesh(benchGeo, benchMat);
+    bench.position.y = -0.2;
+    bench.receiveShadow = true;
+    scene.add(bench);
+
+    // Pegboard Wall in Background
+    const wallGeo = new THREE.BoxGeometry(8, 4.5, 0.2);
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0x2A2926,
+      roughness: 0.8
+    });
+    const wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.position.set(0, 2.0, -1.9);
+    wall.receiveShadow = true;
+    scene.add(wall);
+
+    // Track 1: Inclined Ramp for Ball 1 (rails run horizontally along X inside rampGroup)
+    const rampGroup = new THREE.Group();
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.85, roughness: 0.2 });
+    const railGeo = new THREE.CylinderGeometry(0.016, 0.016, 1, 16);
+    railGeo.rotateZ(Math.PI / 2);
+
+    const railLeft = new THREE.Mesh(railGeo, railMat);
+    railLeft.position.z = -0.048;
+    railLeft.castShadow = true;
+    const railRight = new THREE.Mesh(railGeo, railMat);
+    railRight.position.z = 0.048;
+    railRight.castShadow = true;
+    const rampBed = new THREE.Mesh(new THREE.BoxGeometry(1, 0.02, 0.12), new THREE.MeshStandardMaterial({ color: 0x6E4A2A, roughness: 0.65 }));
+    rampBed.position.y = -0.025;
+    rampBed.castShadow = true;
+    rampGroup.add(railLeft, railRight, rampBed);
+
+    // Wooden Ramp Base Support (unit height scaled per challenge)
+    const supportGeo = new THREE.BoxGeometry(0.14, 1, 0.22);
+    const supportMat = new THREE.MeshStandardMaterial({ color: 0x6E4A2A, roughness: 0.7 });
+    const support = new THREE.Mesh(supportGeo, supportMat);
+    support.castShadow = true;
+    scene.add(support);
+    scene.add(rampGroup);
+
+    // Ball 1: Glass Marble
+    const marbleMat = new THREE.MeshPhysicalMaterial({
+      color: 0x48CAE4,
+      metalness: 0.1,
+      roughness: 0.1,
+      transmission: 0.75,
+      thickness: 0.4
+    });
+    const ball1Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 32), marbleMat);
+    ball1Mesh.castShadow = true;
+    scene.add(ball1Mesh);
+
+    // Dominoes Row on Flat Bench (max 10)
+    const dominoes = [];
+    const dominoColors = [0xD9483B, 0x3A7BD5, 0x2ECC71, 0xF1C40F, 0x9B59B6, 0xE67E22, 0x1ABC9C, 0xE74C3C];
+    const dominoGeo = new THREE.BoxGeometry(0.05, 0.32, 0.14);
+
+    for (let i = 0; i < 10; i++) {
+      const dMat = new THREE.MeshStandardMaterial({
+        color: dominoColors[i % dominoColors.length],
+        roughness: 0.35,
+        metalness: 0.1
+      });
+      const dMesh = new THREE.Mesh(dominoGeo, dMat);
+      dMesh.position.set(-1.0 + (i * 0.22), 0.16, 0);
+      dMesh.castShadow = true;
+      scene.add(dMesh);
+      dominoes.push(dMesh);
+      state.dominoStates.push({ angle: 0, targetAngle: 0, fallen: false });
+    }
+
+    // Seesaw (Gangorra)
+    const seesawGroup = new THREE.Group();
+    seesawGroup.position.set(1.08, 0.25, 0);
+    scene.add(seesawGroup);
+
+    const pivotStand = new THREE.Mesh(new THREE.ConeGeometry(0.12, 1, 4), new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8 }));
+    pivotStand.position.set(1.08, 0.125, 0);
+    pivotStand.rotation.y = Math.PI / 4;
+    scene.add(pivotStand);
+
+    const plankGeo = new THREE.BoxGeometry(0.9, 0.03, 0.2);
+    const plankMat = new THREE.MeshStandardMaterial({ color: 0xA57140, roughness: 0.4 });
+    const plank = new THREE.Mesh(plankGeo, plankMat);
+    plank.castShadow = true;
+    seesawGroup.add(plank);
+
+    // Ball 2: Steel Ball sitting on right side of seesaw
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0xCCCCCC, metalness: 0.95, roughness: 0.15 });
+    const ball2Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 32), steelMat);
+    ball2Mesh.castShadow = true;
+    scene.add(ball2Mesh);
+
+    // Brass Bell at the End
+    const bellGroup = new THREE.Group();
+    bellGroup.position.set(2.55, 0.25, 0);
+    scene.add(bellGroup);
+
+    const bellMat = new THREE.MeshStandardMaterial({
+      color: 0xE5C158,
+      metalness: 0.85,
+      roughness: 0.22
+    });
+    const bellDome = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), bellMat);
+    bellDome.position.y = -0.17;
+    bellDome.castShadow = true;
+    bellGroup.add(bellDome);
+
+    const bellFinial = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), bellMat);
+    bellFinial.position.y = 0.04;
+    bellGroup.add(bellFinial);
+
+    const bellBase = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.06, 32), new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 }));
+    bellBase.position.y = -0.22;
+    bellGroup.add(bellBase);
+
+    // Simulation Reset
+    function setupPositions() {
+      const cfg = CHALLENGES[state.currentChallenge] || CHALLENGES[0];
+      state.isRunning = false;
+      state.phase = 0;
+      state.simTime = 0;
+      state.rampProgress = 0;
+      state.bellRingTimer = 0;
+
+      const [sx, sy, sz] = cfg.ballStart;
+      const [ex, ey, ez] = cfg.rampEnd;
+      const dx = ex - sx;
+      const dy = ey - sy;
+      const rampLen = Math.hypot(dx, dy);
+      const rampAngle = Math.atan2(dy, dx);
+
+      rampGroup.position.set((sx + ex) / 2, (sy + ey) / 2 - 0.085, sz);
+      rampGroup.rotation.z = rampAngle;
+      railLeft.scale.x = rampLen;
+      railRight.scale.x = rampLen;
+      rampBed.scale.x = rampLen;
+
+      const supH = Math.max(0.2, sy - 0.11);
+      support.scale.y = supH;
+      support.position.set(sx, supH / 2, sz);
+
+      state.ball1Pos.set(sx, sy, sz);
+      ball1Mesh.position.copy(state.ball1Pos);
+      ball1Mesh.rotation.set(0, 0, 0);
+
+      seesawGroup.position.set(cfg.seesawX, cfg.seesawY, 0);
+      pivotStand.scale.y = cfg.seesawY;
+      pivotStand.position.set(cfg.seesawX, cfg.seesawY / 2, 0);
+      state.seesawAngle = -0.15;
+      state.targetSeesawAngle = -0.15;
+      seesawGroup.rotation.z = state.seesawAngle;
+
+      state.ball2Pos.set(cfg.seesawX + 0.3, cfg.seesawY + 0.055, 0);
+      state.ball2Vel.set(0, 0, 0);
+      ball2Mesh.position.copy(state.ball2Pos);
+      ball2Mesh.rotation.set(0, 0, 0);
+
+      bellGroup.position.set(cfg.bellX, 0.25, 0);
+      bellGroup.rotation.z = 0;
+
+      dominoes.forEach((d, i) => {
+        const active = i < cfg.dominoCount;
+        d.visible = active;
+        d.position.set(ex + 0.14 + (i * cfg.dominoSpacing), 0.16, 0);
+        d.rotation.z = 0;
+        state.dominoStates[i].angle = 0;
+        state.dominoStates[i].targetAngle = 0;
+        state.dominoStates[i].fallen = false;
+      });
+
+      document.getElementById('sim-status').textContent = `${cfg.name} · Pronto para soltar`;
+      document.getElementById('time-display').textContent = '0.00s';
+      document.getElementById('btn-release').textContent = '▶ Soltar Bolinha';
+      document.getElementById('win-card').classList.remove('show');
+    }
+    setupPositions();
+
+    // Controls
+    window.toggleRun = function() {
+      initAudio();
+      if (state.phase === 5) {
+        setupPositions();
+      }
+      if (!state.isRunning) {
+        state.isRunning = true;
+        if (state.phase === 0) state.phase = 1;
+        document.getElementById('sim-status').textContent = 'Em movimento...';
+        document.getElementById('btn-release').textContent = '⏸ Pausar';
+      } else {
+        state.isRunning = false;
+        document.getElementById('sim-status').textContent = 'Pausado';
+        document.getElementById('btn-release').textContent = '▶ Continuar';
+      }
+    };
+
+    window.resetSimulation = function() {
+      setupPositions();
+    };
+
+    window.toggleSlowMo = function() {
+      state.isSlowMo = !state.isSlowMo;
+      document.getElementById('btn-slowmo').classList.toggle('active', state.isSlowMo);
+    };
+
+    window.switchCamera = function() {
+      state.cameraView = (state.cameraView + 1) % 3;
+      const aspect = Math.max(1, container.clientWidth) / Math.max(1, container.clientHeight);
+      if (state.cameraView === 0) {
+        camera.position.set(0, 3.1, aspect < 1 ? 7.2 : 6.2);
+        controls.target.set(0, 0.9, 0);
+      } else if (state.cameraView === 1) {
+        camera.position.set(-2.0, 2.0, 3.0);
+        controls.target.set(-1.0, 0.5, 0);
+      } else {
+        camera.position.set(2.4, 1.5, 2.5);
+        controls.target.set(2.0, 0.4, 0);
+      }
+    };
+
+    window.loadChallenge = function(idx) {
+      state.currentChallenge = idx;
+      document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === idx);
+      });
+      setupPositions();
+    };
+
+    window.openContact = function() {
+      window.parent.postMessage({ type: 'cta', tipo: 'cta', target: 'contato' }, '*');
+      document.getElementById('sim-status').textContent = 'Engenho Criativo · Demonstração interativa.';
+    };
+
+    // Sangi Bridge Integration
+    let rafId = null;
+    let isPaused = false;
+    let isDisposed = false;
+    let wasRunningBeforePause = false;
+    window.addEventListener('sangi:pause', () => {
+      isPaused = true;
+      wasRunningBeforePause = state.isRunning;
+      state.isRunning = false;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(() => {});
+    });
+    window.addEventListener('sangi:resume', () => {
+      if (isDisposed || !isPaused) return;
+      isPaused = false;
+      state.isRunning = wasRunningBeforePause;
+      lastTime = performance.now();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      rafId = requestAnimationFrame(animate);
+    });
+    window.addEventListener('sangi:mute', (e) => {
+      isMuted = e.detail?.muted ?? true;
+      if (masterGain && audioCtx) {
+        masterGain.gain.setTargetAtTime(isMuted ? 0 : 0.3, audioCtx.currentTime, 0.03);
+      }
+    });
+    window.addEventListener('sangi:dispose', () => {
+      if (isDisposed) return;
+      isDisposed = true;
+      isPaused = true;
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      resizeObserver.disconnect();
+      controls.dispose();
+      if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
+      environment.dispose();
+      renderer.dispose();
+    });
+
+    // Resize
+    function resize() {
+      const w = Math.max(1, container.clientWidth);
+      const h = Math.max(1, container.clientHeight);
+      const aspect = w / h;
+      camera.fov = aspect < 1 ? Math.min(70, 42 / Math.max(0.60, aspect)) : 42;
+      if (state.cameraView === 0) {
+        camera.position.z = aspect < 1 ? 7.2 : 6.2;
+      }
+      camera.aspect = aspect;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(container);
+    resize();
+
+    // Main Simulation Loop
+    let lastTime = performance.now();
+    function animate(time) {
+      if (isPaused || isDisposed) { rafId = null; return; }
+      rafId = requestAnimationFrame(animate);
+      let dt = Math.min((time - lastTime) / 1000, 0.1);
+      lastTime = time;
+
+      if (state.isSlowMo) dt *= 0.35;
+
+      const cfg = CHALLENGES[state.currentChallenge] || CHALLENGES[0];
+
+      if (state.isRunning) {
+        state.simTime += dt;
+        document.getElementById('time-display').textContent = state.simTime.toFixed(2) + 's';
+
+        // Phase 1: Ball 1 rolling down inclined ramp
+        if (state.phase === 1) {
+          const [sx, sy, sz] = cfg.ballStart;
+          const [ex, ey] = cfg.rampEnd;
+          const rampLen = Math.hypot(ex - sx, ey - sy);
+          const speed = (1.5 + state.rampProgress * 1.6) / Math.max(0.5, rampLen);
+          state.rampProgress = Math.min(1, state.rampProgress + speed * dt);
+          state.ball1Pos.set(
+            THREE.MathUtils.lerp(sx, ex, state.rampProgress),
+            THREE.MathUtils.lerp(sy, ey, state.rampProgress),
+            sz
+          );
+          ball1Mesh.position.copy(state.ball1Pos);
+          ball1Mesh.rotation.z -= 9 * dt;
+
+          if (state.rampProgress >= 1) {
+            state.phase = 2; // Domino cascade start
+            playWoodClick(380);
+          }
+        }
+
+        // Phase 2: Dominoes fall one by one
+        if (state.phase === 2) {
+          for (let i = 0; i < cfg.dominoCount; i++) {
+            const d = dominoes[i];
+            if (!state.dominoStates[i].fallen) {
+              const prevFallen = (i === 0) || state.dominoStates[i - 1].angle > 0.4;
+              if (prevFallen) {
+                state.dominoStates[i].targetAngle = 1.15;
+                playWoodClick(440 + i * 40);
+                state.dominoStates[i].fallen = true;
+              }
+            }
+            state.dominoStates[i].angle += (state.dominoStates[i].targetAngle - state.dominoStates[i].angle) * (dt * 18);
+            d.rotation.z = -state.dominoStates[i].angle;
+          }
+
+          // Last domino hits seesaw
+          if (state.dominoStates[cfg.dominoCount - 1].angle > 0.8) {
+            state.phase = 3;
+            state.targetSeesawAngle = 0.16;
+            playWoodClick(520);
+          }
+        }
+
+        // Phase 3: Seesaw tilts & launches Ball 2
+        if (state.phase === 3) {
+          state.seesawAngle += (state.targetSeesawAngle - state.seesawAngle) * (dt * 12);
+          seesawGroup.rotation.z = state.seesawAngle;
+          state.ball2Pos.y = Math.max(0.08, cfg.seesawY + 0.055 - Math.max(0, state.seesawAngle) * 0.4);
+          ball2Mesh.position.copy(state.ball2Pos);
+
+          if (state.seesawAngle > 0.1) {
+            state.phase = 4; // Ball 2 rolls toward bell
+            state.ball2Vel.x = 2.4;
+          }
+        }
+
+        // Phase 4: Ball 2 rolls along bench towards brass bell
+        if (state.phase === 4) {
+          state.ball2Pos.x += state.ball2Vel.x * dt;
+          state.ball2Pos.y = Math.max(0.08, state.ball2Pos.y - 1.2 * dt);
+          ball2Mesh.position.copy(state.ball2Pos);
+          ball2Mesh.rotation.z -= 10 * dt;
+
+          if (state.ball2Pos.x >= cfg.bellX - 0.24) {
+            state.phase = 5; // Bell strike!
+            state.bellRingTimer = 1.4;
+            playBellChime();
+            document.getElementById('sim-status').textContent = 'Sucesso! Sino tocado!';
+            document.getElementById('btn-release').textContent = '▶ Soltar Novamente';
+            document.getElementById('win-card').classList.add('show');
+            state.isRunning = false;
+          }
+        }
+      }
+
+      if (state.bellRingTimer > 0) {
+        state.bellRingTimer = Math.max(0, state.bellRingTimer - dt);
+        bellGroup.rotation.z = Math.sin(state.bellRingTimer * 28) * 0.08 * (state.bellRingTimer / 1.4);
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    rafId = requestAnimationFrame(animate);
+
+    console.log("Sangi3D Environment #63 Máquina de Reação em Cadeia initialized.");
+  </script>
+</body>
+</html>

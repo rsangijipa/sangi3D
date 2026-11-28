@@ -1,0 +1,51 @@
+{
+  "id": "observatorio-das-auroras",
+  "number": "054",
+  "title": "Observatório das Auroras",
+  "category": "Jogos HTML",
+  "entry": "index.html",
+  "offline": true,
+  "dependencies": {
+    "three": "/Sistema/shared/vendor/three.module.js",
+    "orbitControls": "/Sistema/shared/vendor/addons/controls/OrbitControls.js",
+    "studioEnvironment": "/Sistema/shared/engine/studio-environment.js",
+    "sangiBridge": "/Sistema/shared/sangi-bridge.js"
+  },
+  "assets": [
+    {
+      "path": "js/state.js",
+      "type": "module",
+      "license": "local-original"
+    },
+    {
+      "path": "js/shaders.js",
+      "type": "procedural-glsl-shaders",
+      "license": "local-original"
+    },
+    {
+      "path": "js/materials.js",
+      "type": "procedural-pbr-textures",
+      "license": "local-original"
+    },
+    {
+      "path": "js/observatory-world.js",
+      "type": "procedural-3d-world",
+      "license": "local-original"
+    },
+    {
+      "path": "js/audio-engine.js",
+      "type": "procedural-web-audio",
+      "license": "local-original"
+    },
+    {
+      "path": "js/ui-controller.js",
+      "type": "hud-controller",
+      "license": "local-original"
+    },
+    {
+      "path": "miniatura.png",
+      "type": "thumbnail-screenshot",
+      "license": "local-original"
+    }
+  ]
+}

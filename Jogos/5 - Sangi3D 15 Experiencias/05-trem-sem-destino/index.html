@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1114">
+<link rel="icon" href="data:,">
+<title>Trem sem Destino · Sangi3D</title>
+<link rel="stylesheet" href="trem.css">
+</head>
+<body>
+<div id="app" class="app">
+  <canvas id="view" aria-label="Cena 3D do Trem sem Destino: interior do trem com paisagem em movimento" tabindex="0"></canvas>
+  <div class="vignette-ui" aria-hidden="true"></div>
+  <div class="crosshair" id="crosshair" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+
+  <header class="hud-top">
+    <nav class="back" aria-label="Navegação"><a href="../index.html">← Experiências</a><a href="mockup.html">Mockup</a></nav>
+    <div class="title">
+      <p class="kicker">Viagem panorâmica</p>
+      <h1>Trem sem Destino</h1>
+    </div>
+    <ul class="chips" aria-label="Estado da viagem">
+      <li id="chipRoute">Rota pelos Alpes</li>
+      <li id="chipWeather">Céu limpo</li>
+      <li id="chipSpeed">72 km/h</li>
+    </ul>
+  </header>
+
+  <aside class="readout" aria-label="Percurso no trem" aria-live="polite"><p id="carName">Salão panorâmico</p><ol class="steps"><li data-car="0" aria-current="step">Panorâmico</li><li data-car="1">Café</li><li data-car="2">Leitura</li></ol><div class="minimap" aria-hidden="true"><span id="miniDot"></span></div></aside>
+
+  <section class="context" id="context" aria-label="Ação contextual">
+    <p class="kicker">Ação contextual</p>
+    <h2 id="ctxTitle">Salão panorâmico</h2>
+    <p id="ctxText">Sente à janela, prepare o chá e observe a paisagem em movimento.</p>
+    <div class="ctx-actions">
+      <button class="primary" id="ctxPrimary">Sentar à janela</button>
+      <button class="ghost" id="standBtn" hidden>Levantar</button>
+    </div>
+    <p id="status" class="status" role="status">Modo livre. Explore os três vagões.</p>
+  </section>
+
+  <button class="sheet-toggle" id="sheetToggle" aria-expanded="false" aria-controls="panel">Viagem</button>
+
+  <section class="panel" id="panel" aria-label="Ferramentas da viagem">
+    <div class="group">
+      <h3>Rota e clima</h3>
+      <label class="field"><span>Rota</span>
+        <select id="route" aria-label="Rota">
+          <option value="0" selected>Alpes nevados</option>
+          <option value="1">Litoral atlântico</option>
+          <option value="2">Floresta antiga</option>
+          <option value="3">Deserto dourado</option>
+        </select>
+      </label>
+      <div class="seg" role="group" aria-label="Clima">
+        <button data-weather="0" aria-pressed="true">Limpo</button>
+        <button data-weather="1" aria-pressed="false">Chuva</button>
+        <button data-weather="2" aria-pressed="false">Noite</button>
+        <button data-weather="3" aria-pressed="false">Amanhecer</button>
+      </div>
+      <label class="field"><span>Velocidade <output id="speedOut">72 km/h</output></span>
+        <input type="range" id="speed" aria-label="Velocidade" min="0" max="100" value="45">
+      </label>
+    </div>
+    <div class="group">
+      <h3>Vagão</h3>
+      <div class="grid2">
+        <button id="curtainBtn">Fechar cortinas</button>
+        <button id="lampBtn">Acender luminárias</button>
+        <button id="readBtn">Ler livro</button>
+        <button id="walkBtn">Ir ao próximo vagão</button>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Chá da viagem</h3>
+      <ol class="tea" aria-label="Etapas do chá"><li id="tea0" aria-current="step">Xícara</li><li id="tea1">Servir</li><li id="tea2">Vapor</li></ol>
+      <div class="grid2">
+        <button id="cupBtn">Selecionar xícara</button>
+        <button id="pourBtn" disabled>Servir chá</button>
+      </div>
+      <meter id="teaMeter" min="0" max="100" value="0" aria-label="Volume de chá na xícara"></meter>
+    </div>
+    <div class="group">
+      <h3>Câmera</h3>
+      <div class="grid2">
+        <button id="stableBtn" aria-pressed="false">Vista estável</button>
+        <button id="tourBtn" aria-pressed="false">Passeio automático</button>
+        <button id="sceneryBtn" aria-pressed="false">Só paisagem</button>
+        <button id="motion" aria-pressed="false">Movimento reduzido</button>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Sistema</h3>
+      <div class="grid2">
+        <button id="sound" aria-pressed="false">Ativar som</button>
+        <button id="pause" aria-pressed="false">Pausar</button>
+        <button id="photo">Fotografar</button>
+        <button id="reset">Reiniciar cena</button>
+      </div>
+      <label class="field"><span>Qualidade</span>
+        <select id="quality" aria-label="Qualidade gráfica"><option value="LOW">Econômica</option><option value="BALANCED" selected>Equilibrada</option><option value="HIGH">Alta</option></select>
+      </label>
+      <p class="keys"><kbd>WASD</kbd> andar · arrastar olha · <kbd>E</kbd> interagir · <kbd>Q</kbd> levantar · <kbd>F</kbd> foto · <kbd>P</kbd> pausa</p>
+      <small id="backend"></small>
+    </div>
+  </section>
+
+  <div class="joystick" id="joy" aria-hidden="true"><div class="knob" id="knob"></div></div>
+  <button class="exit-scenery" id="exitScenery" hidden>Sair do modo paisagem</button>
+
+  <div class="welcome" id="welcome" role="note">
+    <p><strong>Boa viagem.</strong> Arraste para olhar, use WASD ou o joystick para andar e toque nos objetos para interagir.</p>
+    <button class="ghost" id="welcomeClose">Entendi</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="tunnel-banner" id="banner" aria-hidden="true"></div>
+
+  <div class="book" id="book" role="dialog" aria-modal="true" aria-labelledby="bookTitle" hidden>
+    <div class="book-inner">
+      <p class="kicker">Cabine de leitura</p>
+      <h2 id="bookTitle">A estação que não existia</h2>
+      <div class="pages"><p id="bookPage"></p></div>
+      <div class="book-nav"><button id="bookPrev">Anterior</button><span id="bookNum">1/4</span><button id="bookNext">Próxima</button><button class="primary" id="bookClose">Fechar livro</button></div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading" role="status">Preparando os vagões…</div>
+</div>
+<script src="../../../Sistema/shared/sangi-bridge.js" defer></script>
+<script type="module" src="trem.js"></script>
+</body>
+</html>

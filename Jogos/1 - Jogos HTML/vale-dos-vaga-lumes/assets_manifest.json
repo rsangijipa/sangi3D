@@ -1,0 +1,63 @@
+{
+  "appId": "095-vale-dos-vaga-lumes",
+  "title": "Vale dos Vaga-lumes",
+  "version": "1.0.0",
+  "offline": true,
+  "dependencies": [
+    {
+      "name": "Three.js r187 (three.module.js + OrbitControls.js)",
+      "source": "/Sistema/shared/vendor/",
+      "license": "MIT",
+      "licenseFile": "/Sistema/shared/vendor/LICENSE"
+    },
+    {
+      "name": "SangiBridge (sangi-bridge.js)",
+      "source": "/Sistema/shared/sangi-bridge.js",
+      "license": "Proprietary / Local Sangi3D Runtime"
+    }
+  ],
+  "generatedAssets": [
+    {
+      "id": "procedural-terrain-textures",
+      "type": "CanvasTexture PBR (albedo + roughness/bump)",
+      "author": "Procedural code (js/materials.js)",
+      "license": "CC0 / Original Procedural"
+    },
+    {
+      "id": "procedural-bark-rope-rock-leaf-textures",
+      "type": "CanvasTexture PBR",
+      "author": "Procedural code (js/materials.js)",
+      "license": "CC0 / Original Procedural"
+    },
+    {
+      "id": "procedural-pmrem-night-env",
+      "type": "HalfFloat Equirectangular PMREM Probe",
+      "author": "Procedural code (js/materials.js)",
+      "license": "CC0 / Original Procedural"
+    },
+    {
+      "id": "procedural-lantern-trees-rocks-grass",
+      "type": "Three.js BufferGeometry & InstancedMesh",
+      "author": "Procedural code (js/world-geometry.js)",
+      "license": "CC0 / Original Procedural"
+    },
+    {
+      "id": "procedural-stream-shader",
+      "type": "Custom GLSL Water ShaderMaterial",
+      "author": "Procedural code (js/water-stream.js)",
+      "license": "CC0 / Original Procedural"
+    },
+    {
+      "id": "procedural-fireflies-kuramoto",
+      "type": "Instanced/Points Shader + Fixed-Step Physics",
+      "author": "Procedural code (js/fireflies-physics.js)",
+      "license": "CC0 / Original Procedural"
+    },
+    {
+      "id": "procedural-nature-audio",
+      "type": "Web Audio API Synthesizer (stream, crickets, wind)",
+      "author": "Procedural code (js/audio-engine.js)",
+      "license": "CC0 / Original Procedural"
+    }
+  ]
+}

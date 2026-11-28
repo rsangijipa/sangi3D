@@ -1,0 +1,3303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Santuário Zen 3D — Fotorrealismo, Meditação & Incenso</title>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+  <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background-color: #0e0805;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #f7ede2;
+    }
+    .serif-title { font-family: Georgia, 'Times New Roman', serif; }
+    /* Self-contained offline layout & utility styles */
+    .fixed { position: fixed; } .inset-0 { inset: 0; } .relative { position: relative; }
+    .top-3 { top: 12px; } .top-20 { top: 76px; } .right-3 { right: 12px; } .left-3 { left: 12px; } .bottom-3 { bottom: 12px; }
+    .left-1\/2 { left: 50%; } .-translate-x-1\/2 { transform: translateX(-50%); }
+    .z-20 { z-index: 20; } .z-30 { z-index: 30; }
+    .flex { display: flex; } .hidden { display: none; } .grid { display: grid; } .block { display: block; }
+    .flex-wrap { flex-wrap: wrap; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .justify-center { justify-content: center; }
+    .grid-cols-1 { grid-template-columns: 1fr; }
+    @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } .sm\:block { display: block; } }
+    @media (max-width: 639px) { .hidden.sm\:block { display: none; } }
+    @media (min-width: 768px) { .md\:text-xl { font-size: 1.25rem; } }
+    .gap-1 { gap: 4px; } .gap-1\.5 { gap: 6px; } .gap-2 { gap: 8px; } .gap-2\.5 { gap: 10px; } .gap-3 { gap: 12px; }
+    .space-y-3 > * + * { margin-top: 12px; }
+    .p-2\.5 { padding: 10px; } .p-4 { padding: 16px; } .p-5 { padding: 20px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; } .py-0\.5 { padding-top: 2px; padding-bottom: 2px; }
+    .px-2\.5 { padding-left: 10px; padding-right: 10px; } .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .py-1\.5 { padding-top: 6px; padding-bottom: 6px; } .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .py-2\.5 { padding-top: 10px; padding-bottom: 10px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; } .px-3\.5 { padding-left: 14px; padding-right: 14px; } .px-4 { padding-left: 16px; padding-right: 16px; }
+    .pr-1 { padding-right: 4px; } .pb-2 { padding-bottom: 8px; } .pb-3 { padding-bottom: 12px; } .pt-2 { padding-top: 8px; }
+    .mb-0\.5 { margin-bottom: 2px; } .mb-1 { margin-bottom: 4px; } .mb-3 { margin-bottom: 12px; } .mb-4 { margin-bottom: 16px; } .mt-1 { margin-top: 4px; }
+    .w-2 { width: 8px; } .h-2 { height: 8px; } .w-3 { width: 12px; } .h-3 { height: 12px; } .w-12 { width: 48px; } .h-12 { height: 48px; }
+    .w-72 { width: 288px; } .w-full { width: 100%; } .max-w-lg { max-width: 512px; } .max-w-\[90vw\] { max-width: 90vw; } .max-w-\[96vw\] { max-width: 96vw; }
+    .max-h-\[65vh\] { max-height: 65vh; } .overflow-y-auto { overflow-y: auto; }
+    .rounded-md { border-radius: 6px; } .rounded-lg { border-radius: 8px; } .rounded-xl { border-radius: 12px; } .rounded-2xl { border-radius: 16px; } .rounded-full { border-radius: 9999px; }
+    .border { border-width: 1px; border-style: solid; } .border-2 { border-width: 2px; border-style: solid; } .border-b { border-bottom-width: 1px; border-bottom-style: solid; } .border-t { border-top-width: 1px; border-top-style: solid; }
+    .border-transparent { border-color: transparent; } .border-white\/10 { border-color: rgba(255,255,255,0.1); }
+    .border-amber-400\/30 { border-color: rgba(251,191,36,0.3); } .border-amber-400\/25 { border-color: rgba(251,191,36,0.25); } .border-amber-300\/20 { border-color: rgba(252,211,77,0.2); } .border-amber-300\/30 { border-color: rgba(252,211,77,0.3); } .border-amber-200\/15 { border-color: rgba(253,230,138,0.15); } .border-amber-200\/20 { border-color: rgba(253,230,138,0.2); } .border-t-amber-300 { border-top-color: #fcd34d; }
+    .bg-white\/5 { background-color: rgba(255,255,255,0.06); } .bg-black\/70 { background-color: rgba(0,0,0,0.72); } .bg-amber-400 { background-color: #fbbf24; } .bg-amber-500\/20 { background-color: rgba(245,158,11,0.22); }
+    .text-xs { font-size: 12px; line-height: 1.35; } .text-base { font-size: 15px; } .text-lg { font-size: 17px; } .text-xl { font-size: 19px; } .text-2xl { font-size: 24px; }
+    .text-\[10px\] { font-size: 10px; } .text-\[11px\] { font-size: 11px; }
+    .font-medium { font-weight: 500; } .font-semibold { font-weight: 600; } .font-mono { font-family: ui-monospace, monospace; }
+    .tracking-wide { letter-spacing: 0.025em; } .leading-tight { line-height: 1.25; }
+    .text-amber-50 { color: #fffbeb; } .text-amber-100 { color: #fef3c7; } .text-amber-100\/90 { color: rgba(254,243,199,0.9); } .text-amber-200 { color: #fde68a; } .text-amber-200\/70 { color: rgba(253,230,138,0.72); } .text-amber-200\/75 { color: rgba(253,230,138,0.75); } .text-amber-200\/90 { color: rgba(253,230,138,0.9); } .text-amber-300 { color: #fcd34d; } .text-amber-300\/80 { color: rgba(252,211,77,0.82); }
+    .opacity-0 { opacity: 0; } .pointer-events-none { pointer-events: none; } .pointer-events-auto { pointer-events: auto; } .cursor-pointer { cursor: pointer; }
+    .backdrop-blur-sm { backdrop-filter: blur(6px); } .transition-all { transition: all 0.25s ease; } .duration-300 { transition-duration: 300ms; }
+    .shadow-\[0_0_12px_\#fbbf24\] { box-shadow: 0 0 12px #fbbf24; }
+    @keyframes spinAnim { to { transform: rotate(360deg); } } .animate-spin { animation: spinAnim 0.85s linear infinite; }
+    button { background: transparent; color: inherit; border: 1px solid transparent; font: inherit; }
+    @media (max-width: 640px) { #control-drawer { width: calc(100vw - 24px); max-height: 44dvh; overflow-y: auto; top: auto; bottom: 72px; } }
+    #canvas-container {
+      position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    /* Subtle cinematic vignette overlay */
+    #vignette-overlay {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 54%, rgba(10,5,2,0.48) 100%);
+    }
+    .glass-panel {
+      background: rgba(20, 12, 8, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 204, 145, 0.22);
+      box-shadow: 0 14px 44px rgba(0, 0, 0, 0.6);
+    }
+    .btn-preset {
+      transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+      cursor: pointer;
+    }
+    .btn-preset:hover {
+      background: rgba(255, 183, 107, 0.2);
+      border-color: rgba(255, 204, 145, 0.55);
+      transform: translateY(-1px);
+    }
+    .btn-preset.active {
+      background: linear-gradient(135deg, rgba(217, 119, 42, 0.52), rgba(147, 68, 108, 0.58));
+      border-color: #fbbf24;
+      color: #fffbeb;
+      box-shadow: 0 0 18px rgba(251, 191, 36, 0.28);
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fbbf24;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.85);
+    }
+    .tooltip-badge {
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    @keyframes pulseSlow {
+      0%, 100% { opacity: 0.65; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+    .pulse-indicator {
+      animation: pulseSlow 3.2s infinite ease-in-out;
+    }
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 50;
+      background: radial-gradient(circle at center, #26160d 0%, #0e0805 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+    #loading-screen.hidden-load {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div id="loading-screen">
+    <div class="w-12 h-12 rounded-full border-2 border-amber-400/30 border-t-amber-300 animate-spin mb-4"></div>
+    <h2 class="serif-title text-2xl text-amber-100 tracking-wide">Preparando o Santuário Zen 3D</h2>
+    <p class="text-xs text-amber-200/70 mt-1">Gerando materiais PBR, iluminação volumétrica e atmosfera...</p>
+  </div>
+
+  <!-- 3D Viewport -->
+  <div id="canvas-container"></div>
+  <div id="vignette-overlay"></div>
+
+  <!-- Top Header Overlay -->
+  <header class="fixed top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+    <div class="glass-panel px-4 py-2.5 rounded-2xl pointer-events-auto flex items-center gap-3">
+      <div class="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_12px_#fbbf24] pulse-indicator"></div>
+      <div>
+        <h1 class="serif-title text-lg md:text-xl font-semibold tracking-wide text-amber-100 leading-tight">
+          Santuário Zen 3D — Meditação & Incenso
+        </h1>
+        <p class="text-[11px] text-amber-200/75 hidden sm:block">
+          Clique no Buda, tigela tibetana, incenso, ametista ou luminárias · Arraste para explorar
+        </p>
+      </div>
+    </div>
+
+    <!-- Top Quick Actions -->
+    <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
+      <button id="btn-bowl-strike" class="glass-panel btn-preset px-3.5 py-2 rounded-xl text-xs font-medium text-amber-100 flex items-center gap-2 border border-amber-400/30">
+        <span>🔔</span>
+        <span>Tocar Tigela</span>
+      </button>
+
+      <button id="btn-audio-toggle" class="glass-panel btn-preset px-3.5 py-2 rounded-xl text-xs font-medium text-amber-100 flex items-center gap-2 border border-amber-400/30">
+        <span id="audio-icon">🔇</span>
+        <span id="audio-label">Som Relaxante</span>
+      </button>
+
+      <button id="btn-ref-modal" class="glass-panel btn-preset px-3 py-2 rounded-xl text-xs font-medium text-amber-200/90 border border-amber-400/25" title="Ver Detalhes da Cena 3D">
+        <span>✨ Detalhes</span>
+      </button>
+
+      <button id="btn-toggle-ui" class="glass-panel btn-preset px-3 py-2 rounded-xl text-xs font-medium text-amber-200/90 border border-amber-400/25" title="Recolher/Expandir Controles">
+        <span id="toggle-ui-label">⚙️ Controles</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Interactive Object Hover / Status Toast -->
+  <div id="interaction-toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-1.5 rounded-full text-xs text-amber-100 opacity-0 tooltip-badge flex items-center gap-2">
+    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+    <span id="toast-text">Interaja com o ambiente</span>
+  </div>
+
+  <!-- Bottom Camera Bar -->
+  <nav class="fixed bottom-3 left-1/2 -translate-x-1/2 z-20 glass-panel px-2.5 py-2 rounded-2xl flex flex-wrap items-center justify-center gap-1.5 max-w-[96vw]">
+    <button data-cam="photo" class="cam-btn btn-preset active px-3 py-1.5 rounded-xl text-xs font-medium border border-transparent">
+      📷 Vista Principal
+    </button>
+    <button data-cam="incense" class="cam-btn btn-preset px-3 py-1.5 rounded-xl text-xs font-medium border border-transparent">
+      💨 Mesa de Incenso
+    </button>
+    <button data-cam="altar" class="cam-btn btn-preset px-3 py-1.5 rounded-xl text-xs font-medium border border-transparent">
+      🪷 Altar & Buda
+    </button>
+    <button data-cam="window" class="cam-btn btn-preset px-3 py-1.5 rounded-xl text-xs font-medium border border-transparent">
+      🌅 Janela & Penas
+    </button>
+    <button data-cam="circle" class="cam-btn btn-preset px-3 py-1.5 rounded-xl text-xs font-medium border border-transparent">
+      🧘 Roda de Almofadas
+    </button>
+    <button id="btn-orbit-auto" class="btn-preset px-3 py-1.5 rounded-xl text-xs font-medium border border-amber-300/20 text-amber-200">
+      🔄 Giro: <span id="orbit-state">OFF</span>
+    </button>
+  </nav>
+
+  <!-- Right Control Drawer -->
+  <aside id="control-drawer" class="fixed top-20 right-3 z-20 w-72 max-w-[90vw] glass-panel rounded-2xl p-4 transition-all duration-300">
+    <div class="flex items-center justify-between mb-3 pb-2 border-b border-amber-200/15">
+      <h2 class="serif-title text-base font-semibold text-amber-100">Atmosfera & Realismo</h2>
+      <span class="text-[11px] text-amber-300/80 font-mono" id="fps-badge">60 FPS</span>
+    </div>
+
+    <div class="space-y-3 text-xs">
+      <!-- Smoke density -->
+      <div>
+        <div class="flex justify-between mb-1">
+          <label for="slider-smoke" class="text-amber-100/90">Fumaça do Incenso</label>
+          <span id="val-smoke" class="text-amber-300 font-mono">100%</span>
+        </div>
+        <input id="slider-smoke" type="range" min="0" max="200" value="100" />
+      </div>
+
+      <!-- Fire / Candle flicker -->
+      <div>
+        <div class="flex justify-between mb-1">
+          <label for="slider-fire" class="text-amber-100/90">Chamas & Velas</label>
+          <span id="val-fire" class="text-amber-300 font-mono">100%</span>
+        </div>
+        <input id="slider-fire" type="range" min="15" max="180" value="100" />
+      </div>
+
+      <!-- Sunset Golden Hour -->
+      <div>
+        <div class="flex justify-between mb-1">
+          <label for="slider-sun" class="text-amber-100/90">Luz Dourada & Raios</label>
+          <span id="val-sun" class="text-amber-300 font-mono">100%</span>
+        </div>
+        <input id="slider-sun" type="range" min="10" max="180" value="100" />
+      </div>
+
+      <!-- Salt lamp & Lotus glow -->
+      <div>
+        <div class="flex justify-between mb-1">
+          <label for="slider-glow" class="text-amber-100/90">Luminária de Sal & Lótus</label>
+          <span id="val-glow" class="text-amber-300 font-mono">100%</span>
+        </div>
+        <input id="slider-glow" type="range" min="20" max="180" value="100" />
+      </div>
+
+      <!-- Gentle breeze -->
+      <div>
+        <div class="flex justify-between mb-1">
+          <label for="slider-breeze" class="text-amber-100/90">Brisa nas Plantas & Penas</label>
+          <span id="val-breeze" class="text-amber-300 font-mono">100%</span>
+        </div>
+        <input id="slider-breeze" type="range" min="0" max="200" value="100" />
+      </div>
+
+      <!-- Quality selector -->
+      <div class="pt-2 border-t border-amber-200/15 flex items-center justify-between">
+        <span class="text-amber-100/90">Qualidade Gráfica</span>
+        <div class="flex gap-1">
+          <button data-quality="eco" class="qual-btn btn-preset px-2 py-0.5 rounded-md border border-amber-300/20 text-[10px]">Eco</button>
+          <button data-quality="high" class="qual-btn btn-preset active px-2 py-0.5 rounded-md border border-amber-300/20 text-[10px]">Alta</button>
+          <button data-quality="ultra" class="qual-btn btn-preset px-2 py-0.5 rounded-md border border-amber-300/20 text-[10px]">Ultra</button>
+        </div>
+      </div>
+
+      <!-- Breathing Pace Guide -->
+      <div class="pt-2 border-t border-amber-200/15 flex items-center justify-between">
+        <div>
+          <p class="font-medium text-amber-100">Guia de Respiração Zen</p>
+          <p class="text-[11px] text-amber-200/70" id="breath-status">Inspire suave... (4-7-8)</p>
+        </div>
+        <button id="btn-breath-toggle" class="btn-preset px-2.5 py-1 rounded-lg border border-amber-300/30 text-[11px] text-amber-200">
+          Ativo
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Modal: Scene Fidelity & PBR Details -->
+  <div id="modal-details" class="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-panel max-w-lg w-full rounded-2xl p-5 border border-amber-300/30 text-amber-50">
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-amber-200/20">
+        <h3 class="serif-title text-xl font-semibold text-amber-200">Recursos de Fotorrealismo 3D</h3>
+        <button id="btn-close-modal" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/40 text-xs cursor-pointer">✕ Fechar</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-amber-100/90 max-h-[65vh] overflow-y-auto pr-1">
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+          <strong class="text-amber-300 block mb-0.5">1. Iluminação Física & IBL</strong>
+          Reflexos ambientais PMREM calibrados para pôr do sol dourado, feixes volumétricos (god rays) em shader GLSL e sombras suaves de contato.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+          <strong class="text-amber-300 block mb-0.5">2. Materiais PBR Procedurais</strong>
+          Mapas de cor, relevo (bump) e rugosidade para tábuas de madeira envernizada, reboco artesanal, juta trançada, linho, veludo e bronze patinado.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+          <strong class="text-amber-300 block mb-0.5">3. Buda, Lótus & Ametista</strong>
+          Buda esculpido em bronze sobre trono de lótus duplo, flor de lótus translúcida acesa, drusa de ametista cristalina facetada e tigela tibetana martelada.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+          <strong class="text-amber-300 block mb-0.5">4. Fumaça & Chamas em Shader</strong>
+          Chamas vivas em GLSL com base azulada e cintilação orgânica; fumaça de incenso em filamento laminar-turbulento iluminada pelos raios solares.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+          <strong class="text-amber-300 block mb-0.5">5. Botânica Realista</strong>
+          Folhas cordiformes de jiboia em ramos curvos pendentes e folhagens tropicais largas com brilho ceroso e balanço suave pela brisa.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+          <strong class="text-amber-300 block mb-0.5">6. Áudio Espacial Sintetizado</strong>
+          Drone harmônico em 432 Hz, brisa filtrada dinâmica e ressonância metálica realista da tigela tibetana com onda visual acústica.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==========================================
+      // 1. STATE & CAMERA PRESETS
+      // ==========================================
+      const state = {
+        smokeDensity: 1.0,
+        fireIntensity: 1.0,
+        sunIntensity: 1.0,
+        glowIntensity: 1.0,
+        breezeStrength: 1.0,
+        autoOrbit: false,
+        breathingGuide: true,
+        audioActive: false,
+        uiOpen: true,
+        quality: 'high',
+        bowlRingTime: -10,
+        saltLampBoost: 1.0,
+        lotusBoost: 1.0
+      };
+
+      const cameraPresets = {
+        photo:   { pos: [0.0, 2.02, 6.15], target: [0.0, 1.48, -1.2] },
+        incense: { pos: [-1.05, 1.42, 4.82], target: [-1.82, 0.98, 3.24] },
+        altar:   { pos: [0.0, 2.08, 1.15], target: [0.0, 1.62, -3.55] },
+        window:  { pos: [-1.1, 2.25, 3.3], target: [-4.6, 2.38, -1.6] },
+        circle:  { pos: [0.0, 3.85, 4.3], target: [0.0, 0.32, 0.48] }
+      };
+
+      let activeCamTransition = null;
+
+      // Deterministic pseudo-random helper for crisp reproducible textures
+      function mulberry32(seed) {
+        return function () {
+          let t = (seed += 0x6d2b79f5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      // ==========================================
+      // 2. PROCEDURAL PBR TEXTURE SUITES
+      // ==========================================
+
+      // 2.1 Hardwood Plank Floor (Albedo + Bump + Roughness)
+      function createWoodFloorMaps() {
+        const size = 1024;
+        const cCol = document.createElement('canvas');
+        const cBmp = document.createElement('canvas');
+        const cRgh = document.createElement('canvas');
+        cCol.width = cBmp.width = cRgh.width = size;
+        cCol.height = cBmp.height = cRgh.height = size;
+        const ctxC = cCol.getContext('2d');
+        const ctxB = cBmp.getContext('2d');
+        const ctxR = cRgh.getContext('2d');
+        const rand = mulberry32(101);
+
+        const planks = 12;
+        const plankH = size / planks;
+
+        for (let i = 0; i < planks; i++) {
+          const y = i * plankH;
+          const tone = (rand() - 0.5) * 26;
+          const r = Math.round(104 + tone);
+          const g = Math.round(64 + tone * 0.62);
+          const b = Math.round(37 + tone * 0.38);
+
+          // Base plank color
+          const pGrad = ctxC.createLinearGradient(0, y, size, y + plankH);
+          pGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`);
+          pGrad.addColorStop(0.5, `rgb(${r + 8}, ${g + 5}, ${b + 3})`);
+          pGrad.addColorStop(1, `rgb(${r - 6}, ${g - 4}, ${b - 2})`);
+          ctxC.fillStyle = pGrad;
+          ctxC.fillRect(0, y, size, plankH);
+
+          // Base bump & varnish roughness (satin-gloss wood: 75..125)
+          const rghBase = Math.round(82 + rand() * 34);
+          ctxB.fillStyle = '#888888';
+          ctxB.fillRect(0, y, size, plankH);
+          ctxR.fillStyle = `rgb(${rghBase}, ${rghBase}, ${rghBase})`;
+          ctxR.fillRect(0, y, size, plankH);
+
+          // Wood grain fibers
+          for (let f = 0; f < 42; f++) {
+            const fy = y + rand() * (plankH - 4) + 2;
+            const amp = 1.5 + rand() * 4.5;
+            const dark = rand() > 0.35;
+            ctxC.strokeStyle = dark ? `rgba(38, 18, 7, ${0.08 + rand() * 0.14})` : `rgba(175, 118, 68, ${0.06 + rand() * 0.1})`;
+            ctxC.lineWidth = 0.8 + rand() * 2.1;
+            ctxC.beginPath();
+            ctxC.moveTo(0, fy);
+            ctxC.bezierCurveTo(size * 0.33, fy + amp, size * 0.66, fy - amp, size, fy + (rand() - 0.5) * 2);
+            ctxC.stroke();
+
+            ctxB.strokeStyle = dark ? 'rgba(40,40,40,0.22)' : 'rgba(180,180,180,0.16)';
+            ctxB.lineWidth = 1.2;
+            ctxB.beginPath();
+            ctxB.moveTo(0, fy);
+            ctxB.bezierCurveTo(size * 0.33, fy + amp, size * 0.66, fy - amp, size, fy);
+            ctxB.stroke();
+
+            ctxR.strokeStyle = dark ? 'rgba(155,155,155,0.24)' : 'rgba(65,65,65,0.18)';
+            ctxR.lineWidth = 1.5;
+            ctxR.beginPath();
+            ctxR.moveTo(0, fy);
+            ctxR.bezierCurveTo(size * 0.33, fy + amp, size * 0.66, fy - amp, size, fy);
+            ctxR.stroke();
+          }
+
+          // Occasional subtle wood knot
+          if (rand() > 0.55) {
+            const kx = 120 + rand() * (size - 240);
+            const ky = y + plankH * (0.28 + rand() * 0.44);
+            const kr = 6 + rand() * 8;
+            const kGrad = ctxC.createRadialGradient(kx, ky, 1, kx, ky, kr);
+            kGrad.addColorStop(0, 'rgba(32, 16, 7, 0.72)');
+            kGrad.addColorStop(0.55, 'rgba(60, 32, 16, 0.42)');
+            kGrad.addColorStop(1, 'rgba(60, 32, 16, 0)');
+            ctxC.fillStyle = kGrad;
+            ctxC.beginPath();
+            ctxC.ellipse(kx, ky, kr * 2.2, kr * 0.85, 0, 0, Math.PI * 2);
+            ctxC.fill();
+          }
+
+          // Horizontal bevel seam
+          ctxC.fillStyle = 'rgba(22, 10, 4, 0.85)';
+          ctxC.fillRect(0, y + plankH - 3, size, 3);
+          ctxB.fillStyle = '#181818';
+          ctxB.fillRect(0, y + plankH - 3, size, 3);
+          ctxR.fillStyle = '#e8e8e8';
+          ctxR.fillRect(0, y + plankH - 3, size, 3);
+
+          // Staggered vertical end joints
+          const j1 = Math.floor(((i * 389 + 140) % (size - 160)) + 80);
+          ctxC.fillStyle = 'rgba(24, 11, 5, 0.8)';
+          ctxC.fillRect(j1, y, 3, plankH);
+          ctxB.fillStyle = '#1d1d1d';
+          ctxB.fillRect(j1, y, 3, plankH);
+        }
+
+        const map = new THREE.CanvasTexture(cCol);
+        const bumpMap = new THREE.CanvasTexture(cBmp);
+        const roughnessMap = new THREE.CanvasTexture(cRgh);
+        map.encoding = THREE.sRGBEncoding;
+        [map, bumpMap, roughnessMap].forEach(t => {
+          t.wrapS = t.wrapT = THREE.RepeatWrapping;
+          t.repeat.set(3.2, 3.2);
+          t.anisotropy = 8;
+        });
+        return { map, bumpMap, roughnessMap };
+      }
+
+      // 2.2 Venetian Warm Terracotta/Ochre Plaster Walls (Albedo + Bump)
+      function createPlasterMaps() {
+        const size = 512;
+        const cCol = document.createElement('canvas');
+        const cBmp = document.createElement('canvas');
+        cCol.width = cBmp.width = size;
+        cCol.height = cBmp.height = size;
+        const ctxC = cCol.getContext('2d');
+        const ctxB = cBmp.getContext('2d');
+        const rand = mulberry32(202);
+
+        const g = ctxC.createLinearGradient(0, 0, 0, size);
+        g.addColorStop(0, '#b98f70');
+        g.addColorStop(0.5, '#c8a080');
+        g.addColorStop(1, '#a97e5f');
+        ctxC.fillStyle = g;
+        ctxC.fillRect(0, 0, size, size);
+
+        ctxB.fillStyle = '#808080';
+        ctxB.fillRect(0, 0, size, size);
+
+        // Soft trowel clouds
+        for (let i = 0; i < 180; i++) {
+          const x = rand() * size;
+          const y = rand() * size;
+          const rad = 24 + rand() * 72;
+          const light = rand() > 0.5;
+          const cg = ctxC.createRadialGradient(x, y, 2, x, y, rad);
+          cg.addColorStop(0, light ? 'rgba(240, 212, 184, 0.09)' : 'rgba(92, 54, 30, 0.08)');
+          cg.addColorStop(1, 'rgba(0,0,0,0)');
+          ctxC.fillStyle = cg;
+          ctxC.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+
+          const bg = ctxB.createRadialGradient(x, y, 2, x, y, rad * 0.7);
+          bg.addColorStop(0, light ? 'rgba(175,175,175,0.14)' : 'rgba(85,85,85,0.14)');
+          bg.addColorStop(1, 'rgba(128,128,128,0)');
+          ctxB.fillStyle = bg;
+          ctxB.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+        }
+
+        // Fine mineral sand grain
+        for (let i = 0; i < 6500; i++) {
+          const x = rand() * size;
+          const y = rand() * size;
+          const v = rand() > 0.5 ? 255 : 40;
+          ctxC.fillStyle = `rgba(${v}, ${Math.round(v * 0.88)}, ${Math.round(v * 0.74)}, 0.032)`;
+          ctxC.fillRect(x, y, 2, 2);
+          ctxB.fillStyle = rand() > 0.5 ? 'rgba(210,210,210,0.08)' : 'rgba(50,50,50,0.08)';
+          ctxB.fillRect(x, y, 2, 2);
+        }
+
+        const map = new THREE.CanvasTexture(cCol);
+        const bumpMap = new THREE.CanvasTexture(cBmp);
+        map.encoding = THREE.sRGBEncoding;
+        [map, bumpMap].forEach(t => {
+          t.wrapS = t.wrapT = THREE.RepeatWrapping;
+          t.repeat.set(2, 1.5);
+        });
+        return { map, bumpMap };
+      }
+
+      // 2.3 Dark Rustic Walnut Furniture Wood (Albedo + Bump + Roughness)
+      function createDarkWoodMaps() {
+        const size = 512;
+        const cCol = document.createElement('canvas');
+        const cBmp = document.createElement('canvas');
+        cCol.width = cBmp.width = size;
+        cCol.height = cBmp.height = size;
+        const ctxC = cCol.getContext('2d');
+        const ctxB = cBmp.getContext('2d');
+        const rand = mulberry32(303);
+
+        ctxC.fillStyle = '#3b2112';
+        ctxC.fillRect(0, 0, size, size);
+        ctxB.fillStyle = '#808080';
+        ctxB.fillRect(0, 0, size, size);
+
+        for (let i = 0; i < 160; i++) {
+          const y = rand() * size;
+          const w = 1 + rand() * 3.5;
+          const dark = rand() > 0.4;
+          ctxC.strokeStyle = dark ? `rgba(18, 8, 3, ${0.18 + rand() * 0.25})` : `rgba(112, 68, 38, ${0.14 + rand() * 0.2})`;
+          ctxC.lineWidth = w;
+          ctxC.beginPath();
+          ctxC.moveTo(0, y);
+          ctxC.bezierCurveTo(size * 0.3, y + (rand() - 0.5) * 14, size * 0.7, y + (rand() - 0.5) * 14, size, y);
+          ctxC.stroke();
+
+          ctxB.strokeStyle = dark ? 'rgba(40,40,40,0.35)' : 'rgba(185,185,185,0.22)';
+          ctxB.lineWidth = w;
+          ctxB.beginPath();
+          ctxB.moveTo(0, y);
+          ctxB.bezierCurveTo(size * 0.3, y + (rand() - 0.5) * 10, size * 0.7, y + (rand() - 0.5) * 10, size, y);
+          ctxB.stroke();
+        }
+
+        const map = new THREE.CanvasTexture(cCol);
+        const bumpMap = new THREE.CanvasTexture(cBmp);
+        map.encoding = THREE.sRGBEncoding;
+        map.wrapS = map.wrapT = bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+        return { map, bumpMap };
+      }
+
+      // 2.4 Ornate Purple & Metallic Gold Mandala Tapestry (Albedo + Roughness + Bump)
+      function createMandalaTapestryMaps() {
+        const size = 1024;
+        const cCol = document.createElement('canvas');
+        const cRgh = document.createElement('canvas');
+        const cBmp = document.createElement('canvas');
+        cCol.width = cRgh.width = cBmp.width = size;
+        cCol.height = cRgh.height = cBmp.height = size;
+        const ctx = cCol.getContext('2d');
+        const ctxR = cRgh.getContext('2d');
+        const ctxB = cBmp.getContext('2d');
+        const rand = mulberry32(404);
+
+        const bgGrad = ctx.createRadialGradient(512, 512, 35, 512, 512, 720);
+        bgGrad.addColorStop(0, '#5a2d47');
+        bgGrad.addColorStop(0.45, '#3e1e36');
+        bgGrad.addColorStop(0.85, '#281326');
+        bgGrad.addColorStop(1, '#1b0c1a');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, size, size);
+
+        // Matte fabric roughness (high), neutral bump
+        ctxR.fillStyle = '#e5e5e5';
+        ctxR.fillRect(0, 0, size, size);
+        ctxB.fillStyle = '#7a7a7a';
+        ctxB.fillRect(0, 0, size, size);
+
+        // Woven textile threads
+        ctx.strokeStyle = 'rgba(255, 220, 175, 0.025)';
+        ctxB.strokeStyle = 'rgba(155, 155, 155, 0.14)';
+        ctx.lineWidth = 1;
+        ctxB.lineWidth = 1;
+        for (let i = 0; i < size; i += 4) {
+          ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+          ctxB.beginPath(); ctxB.moveTo(i, 0); ctxB.lineTo(i, size); ctxB.stroke();
+          ctxB.beginPath(); ctxB.moveTo(0, i); ctxB.lineTo(size, i); ctxB.stroke();
+        }
+
+        // Helper to draw gold embroidery on all 3 maps (shinier & raised!)
+        function strokeGold(drawFn, color, lw) {
+          ctx.strokeStyle = color; ctx.lineWidth = lw; drawFn(ctx); ctx.stroke();
+          ctxR.strokeStyle = '#555555'; ctxR.lineWidth = lw + 1; drawFn(ctxR); ctxR.stroke();
+          ctxB.strokeStyle = '#cccccc'; ctxB.lineWidth = lw; drawFn(ctxB); ctxB.stroke();
+        }
+
+        strokeGold(c => c.strokeRect(22, 22, 980, 980), '#d99b52', 6);
+        strokeGold(c => c.strokeRect(38, 38, 948, 948), '#e6b268', 2.4);
+
+        [ctx, ctxR, ctxB].forEach(c => { c.save(); c.translate(512, 512); });
+
+        const rings = [
+          { r: 444, petals: 32, style: '#c98844', lw: 2.3 },
+          { r: 392, petals: 24, style: '#e5a85b', lw: 2.8 },
+          { r: 336, petals: 24, style: '#d49248', lw: 2.3 },
+          { r: 276, petals: 16, style: '#f2ba6d', lw: 3.1 },
+          { r: 215, petals: 16, style: '#df9e50', lw: 2.6 },
+          { r: 155, petals: 12, style: '#f6c57a', lw: 2.8 },
+          { r: 100, petals: 12, style: '#e5a85b', lw: 2.3 },
+          { r: 52,  petals: 8,  style: '#ffd48a', lw: 2.6 }
+        ];
+
+        rings.forEach((ring, idx) => {
+          strokeGold(c => { c.beginPath(); c.arc(0, 0, ring.r, 0, Math.PI * 2); }, ring.style, ring.lw);
+
+          const dots = ring.petals * 2;
+          for (let d = 0; d < dots; d++) {
+            const a = (d / dots) * Math.PI * 2;
+            const dx = Math.cos(a) * (ring.r - 9);
+            const dy = Math.sin(a) * (ring.r - 9);
+            ctx.fillStyle = '#f5c276';
+            ctx.beginPath(); ctx.arc(dx, dy, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctxR.fillStyle = '#484848';
+            ctxR.beginPath(); ctxR.arc(dx, dy, 3.0, 0, Math.PI * 2); ctxR.fill();
+          }
+
+          const prevR = idx < rings.length - 1 ? rings[idx + 1].r : 16;
+          for (let p = 0; p < ring.petals; p++) {
+            const angle = (p / ring.petals) * Math.PI * 2;
+            const step = (Math.PI * 2) / ring.petals;
+            [ctx, ctxR, ctxB].forEach(c => { c.save(); c.rotate(angle); });
+
+            strokeGold(c => {
+              c.beginPath();
+              c.moveTo(prevR, 0);
+              c.quadraticCurveTo((prevR + ring.r) * 0.55, Math.tan(step * 0.42) * ring.r * 0.55, ring.r, 0);
+              c.quadraticCurveTo((prevR + ring.r) * 0.55, -Math.tan(step * 0.42) * ring.r * 0.55, prevR, 0);
+            }, ring.style, ring.lw);
+
+            ctx.fillStyle = idx % 2 === 0 ? 'rgba(235, 168, 84, 0.13)' : 'rgba(180, 105, 65, 0.15)';
+            ctx.fill();
+
+            strokeGold(c => {
+              c.beginPath(); c.moveTo(prevR + 6, 0); c.lineTo(ring.r - 8, 0);
+            }, 'rgba(255, 220, 150, 0.55)', 1.2);
+
+            [ctx, ctxR, ctxB].forEach(c => c.restore());
+          }
+        });
+
+        // Corner arabesques
+        for (let c = 0; c < 4; c++) {
+          [ctx, ctxR, ctxB].forEach(ct => { ct.save(); ct.rotate((c * Math.PI) / 2); ct.translate(396, 396); });
+          for (let k = 0; k < 7; k++) {
+            strokeGold(ct => {
+              ct.beginPath(); ct.arc(0, 0, 22 + k * 14, Math.PI * 0.65, Math.PI * 1.85);
+            }, '#d8974e', 2.2);
+          }
+          [ctx, ctxR, ctxB].forEach(ct => ct.restore());
+        }
+
+        [ctx, ctxR, ctxB].forEach(c => c.restore());
+
+        // Subtle organic fabric patina
+        for (let i = 0; i < 1200; i++) {
+          ctx.fillStyle = 'rgba(255, 210, 150, 0.018)';
+          ctx.fillRect(rand() * size, rand() * size, 3, 3);
+        }
+
+        const map = new THREE.CanvasTexture(cCol);
+        const roughnessMap = new THREE.CanvasTexture(cRgh);
+        const bumpMap = new THREE.CanvasTexture(cBmp);
+        map.encoding = THREE.sRGBEncoding;
+        map.anisotropy = 8;
+        return { map, roughnessMap, bumpMap };
+      }
+
+      // 2.5 Woven Jute Circular Mandala Rug (Albedo + Bump)
+      function createJuteRugMaps() {
+        const size = 1024;
+        const cCol = document.createElement('canvas');
+        const cBmp = document.createElement('canvas');
+        cCol.width = cBmp.width = size;
+        cCol.height = cBmp.height = size;
+        const ctx = cCol.getContext('2d');
+        const ctxB = cBmp.getContext('2d');
+
+        ctx.translate(512, 512);
+        ctxB.translate(512, 512);
+
+        const grad = ctx.createRadialGradient(0, 0, 20, 0, 0, 502);
+        grad.addColorStop(0, '#c69a68');
+        grad.addColorStop(0.55, '#b68854');
+        grad.addColorStop(0.92, '#9e7141');
+        grad.addColorStop(1, '#78512c');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0, 0, 502, 0, Math.PI * 2); ctx.fill();
+
+        ctxB.fillStyle = '#808080';
+        ctxB.beginPath(); ctxB.arc(0, 0, 502, 0, Math.PI * 2); ctxB.fill();
+
+        // Braided concentric jute coils with diagonal braid ticks
+        for (let r = 10; r < 498; r += 6) {
+          ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.strokeStyle = r % 12 === 0 ? 'rgba(84, 50, 24, 0.42)' : 'rgba(245, 215, 175, 0.24)';
+          ctx.lineWidth = 2.6; ctx.stroke();
+
+          ctxB.beginPath(); ctxB.arc(0, 0, r, 0, Math.PI * 2);
+          ctxB.strokeStyle = r % 12 === 0 ? '#303030' : '#d2d2d2';
+          ctxB.lineWidth = 2.6; ctxB.stroke();
+
+          const ticks = Math.max(18, Math.floor(r * 0.45));
+          ctxB.strokeStyle = 'rgba(220,220,220,0.45)';
+          ctxB.lineWidth = 1.4;
+          for (let t = 0; t < ticks; t++) {
+            const a = (t / ticks) * Math.PI * 2;
+            ctxB.beginPath();
+            ctxB.moveTo(Math.cos(a) * (r - 2.5), Math.sin(a) * (r - 2.5));
+            ctxB.lineTo(Math.cos(a + 0.04) * (r + 2.5), Math.sin(a + 0.04) * (r + 2.5));
+            ctxB.stroke();
+          }
+        }
+
+        // Printed plum-brown mandala motif
+        const rugRings = [
+          { r: 465, petals: 28 },
+          { r: 375, petals: 16 },
+          { r: 270, petals: 12 },
+          { r: 165, petals: 12 },
+          { r: 80,  petals: 8 }
+        ];
+
+        rugRings.forEach((ring, i) => {
+          ctx.beginPath(); ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(68, 42, 52, 0.72)';
+          ctx.lineWidth = 5; ctx.stroke();
+
+          const innerR = i < rugRings.length - 1 ? rugRings[i + 1].r : 15;
+          for (let p = 0; p < ring.petals; p++) {
+            const a = (p / ring.petals) * Math.PI * 2;
+            const step = (Math.PI * 2) / ring.petals;
+            ctx.save(); ctx.rotate(a);
+            ctx.beginPath();
+            ctx.moveTo(innerR, 0);
+            ctx.quadraticCurveTo((innerR + ring.r) * 0.55, step * ring.r * 0.38, ring.r, 0);
+            ctx.quadraticCurveTo((innerR + ring.r) * 0.55, -step * ring.r * 0.38, innerR, 0);
+            ctx.fillStyle = i % 2 === 0 ? 'rgba(76, 46, 58, 0.38)' : 'rgba(235, 205, 168, 0.26)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(60, 34, 44, 0.76)';
+            ctx.lineWidth = 3.2; ctx.stroke();
+            ctx.restore();
+          }
+        });
+
+        const map = new THREE.CanvasTexture(cCol);
+        const bumpMap = new THREE.CanvasTexture(cBmp);
+        map.encoding = THREE.sRGBEncoding;
+        map.anisotropy = 8;
+        return { map, bumpMap };
+      }
+
+      // 2.6 Woven Fabric Bump + Subtle Color Map (for Cushions & Poufs)
+      function createFabricBumpTexture() {
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(0, 0, size, size);
+        for (let y = 0; y < size; y += 3) {
+          for (let x = 0; x < size; x += 3) {
+            const even = ((x / 3 + y / 3) % 2) === 0;
+            ctx.fillStyle = even ? '#a6a6a6' : '#5e5e5e';
+            ctx.fillRect(x, y, 2, 2);
+          }
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(8, 8);
+        return tex;
+      }
+
+      // 2.7 Aged Hammered Bronze Map (Buddha & Singing Bowl)
+      function createBronzeMaps() {
+        const size = 512;
+        const cCol = document.createElement('canvas');
+        const cBmp = document.createElement('canvas');
+        const cRgh = document.createElement('canvas');
+        cCol.width = cBmp.width = cRgh.width = size;
+        cCol.height = cBmp.height = cRgh.height = size;
+        const ctxC = cCol.getContext('2d');
+        const ctxB = cBmp.getContext('2d');
+        const ctxR = cRgh.getContext('2d');
+        const rand = mulberry32(505);
+
+        ctxC.fillStyle = '#5e4024';
+        ctxC.fillRect(0, 0, size, size);
+        ctxB.fillStyle = '#808080';
+        ctxB.fillRect(0, 0, size, size);
+        ctxR.fillStyle = '#707070';
+        ctxR.fillRect(0, 0, size, size);
+
+        // Subtle hammered dimples & warm bronze patina
+        for (let i = 0; i < 650; i++) {
+          const x = rand() * size;
+          const y = rand() * size;
+          const r = 4 + rand() * 14;
+          const bright = rand() > 0.42;
+          const g = ctxC.createRadialGradient(x, y, 1, x, y, r);
+          g.addColorStop(0, bright ? 'rgba(165, 118, 62, 0.22)' : 'rgba(32, 20, 12, 0.25)');
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctxC.fillStyle = g;
+          ctxC.beginPath(); ctxC.arc(x, y, r, 0, Math.PI * 2); ctxC.fill();
+
+          const gb = ctxB.createRadialGradient(x, y, 1, x, y, r);
+          gb.addColorStop(0, bright ? 'rgba(175,175,175,0.28)' : 'rgba(65,65,65,0.28)');
+          gb.addColorStop(1, 'rgba(128,128,128,0)');
+          ctxB.fillStyle = gb;
+          ctxB.beginPath(); ctxB.arc(x, y, r, 0, Math.PI * 2); ctxB.fill();
+
+          const gr = ctxR.createRadialGradient(x, y, 1, x, y, r);
+          gr.addColorStop(0, bright ? 'rgba(70,70,70,0.3)' : 'rgba(150,150,150,0.3)');
+          gr.addColorStop(1, 'rgba(112,112,112,0)');
+          ctxR.fillStyle = gr;
+          ctxR.beginPath(); ctxR.arc(x, y, r, 0, Math.PI * 2); ctxR.fill();
+        }
+
+        const map = new THREE.CanvasTexture(cCol);
+        const bumpMap = new THREE.CanvasTexture(cBmp);
+        const roughnessMap = new THREE.CanvasTexture(cRgh);
+        map.encoding = THREE.sRGBEncoding;
+        [map, bumpMap, roughnessMap].forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
+        return { map, bumpMap, roughnessMap };
+      }
+
+      // 2.8 7-Chakra Vertical Banner Texture
+      function createChakraBannerTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 768;
+        const ctx = canvas.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 0, 768);
+        grad.addColorStop(0.0, '#2c1644');
+        grad.addColorStop(0.22, '#342458');
+        grad.addColorStop(0.38, '#2b445e');
+        grad.addColorStop(0.54, '#365440');
+        grad.addColorStop(0.70, '#7c5c28');
+        grad.addColorStop(0.85, '#8c3b20');
+        grad.addColorStop(1.0, '#6a1b29');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 768);
+
+        ctx.strokeStyle = 'rgba(255, 215, 160, 0.42)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(10, 10, 236, 748);
+
+        const petalsPerChakra = [24, 16, 12, 12, 10, 6, 4];
+        for (let i = 0; i < 7; i++) {
+          const cy = 68 + i * 104;
+          ctx.save();
+          ctx.translate(128, cy);
+          ctx.strokeStyle = 'rgba(255, 240, 218, 0.88)';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.stroke();
+
+          const n = petalsPerChakra[i];
+          for (let p = 0; p < n; p++) {
+            const a = (p / n) * Math.PI * 2;
+            ctx.save(); ctx.rotate(a);
+            ctx.beginPath();
+            ctx.moveTo(22, -5);
+            ctx.quadraticCurveTo(38, 0, 44, 0);
+            ctx.quadraticCurveTo(38, 0, 22, 5);
+            ctx.stroke();
+            ctx.restore();
+          }
+          ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, -14); ctx.lineTo(13, 9); ctx.lineTo(-13, 9); ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      // 2.9 Pierced Filigree Lantern Texture (Albedo + Emissive + Alpha)
+      function createCandleLatticeTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#24130a';
+        ctx.fillRect(0, 0, 512, 256);
+
+        const cols = 16;
+        const rows = 6;
+        const cw = 512 / cols;
+        const rh = 256 / rows;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const cx = (c + 0.5) * cw;
+            const cy = (r + 0.5) * rh;
+            const g = ctx.createRadialGradient(cx, cy, 1, cx, cy, cw * 0.44);
+            g.addColorStop(0, '#fffbe0');
+            g.addColorStop(0.5, '#ffaa38');
+            g.addColorStop(1, 'rgba(36, 19, 10, 0)');
+            ctx.fillStyle = g;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - rh * 0.36);
+            ctx.lineTo(cx + cw * 0.34, cy);
+            ctx.lineTo(cx, cy + rh * 0.36);
+            ctx.lineTo(cx - cw * 0.34, cy);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      // 2.10 Soft Radial Glow / Contact Shadow / Smoke Sprite Textures
+      function createRadialTexture(stops, size = 128) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const g = ctx.createRadialGradient(size / 2, size / 2, 1, size / 2, size / 2, size / 2);
+        stops.forEach(([offset, color]) => g.addColorStop(offset, color));
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+        return new THREE.CanvasTexture(canvas);
+      }
+
+      const contactShadowTex = createRadialTexture([
+        [0.0, 'rgba(10, 5, 2, 0.72)'],
+        [0.45, 'rgba(12, 6, 3, 0.42)'],
+        [0.78, 'rgba(14, 7, 3, 0.12)'],
+        [1.0, 'rgba(14, 7, 3, 0.0)']
+      ], 128);
+
+      const warmGlowTex = createRadialTexture([
+        [0.0, 'rgba(255, 245, 210, 0.92)'],
+        [0.25, 'rgba(255, 185, 90, 0.46)'],
+        [0.62, 'rgba(255, 125, 40, 0.12)'],
+        [1.0, 'rgba(255, 100, 20, 0.0)']
+      ], 128);
+
+      const smokeTex = createRadialTexture([
+        [0.0, 'rgba(255, 246, 238, 0.42)'],
+        [0.32, 'rgba(235, 224, 218, 0.22)'],
+        [0.68, 'rgba(205, 194, 192, 0.06)'],
+        [1.0, 'rgba(200, 190, 190, 0.0)']
+      ], 128);
+
+      // 2.11 Botanical Leaf Texture (with central midrib & lateral veins)
+      function createLeafTexture(baseHex, veinHex) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0, baseHex);
+        grad.addColorStop(1, '#183315');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Midrib
+        ctx.strokeStyle = veinHex;
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(128, 250); ctx.lineTo(128, 18); ctx.stroke();
+
+        // Lateral veins
+        ctx.lineWidth = 1.6;
+        for (let i = 1; i <= 7; i++) {
+          const y = 230 - i * 28;
+          ctx.beginPath();
+          ctx.moveTo(128, y);
+          ctx.quadraticCurveTo(85, y - 10, 35, y - 32);
+          ctx.moveTo(128, y);
+          ctx.quadraticCurveTo(171, y - 10, 221, y - 32);
+          ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      // ==========================================
+      // 3. THREE.JS SCENE, RENDERER & PMREM IBL
+      // ==========================================
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x160d08);
+      scene.fog = new THREE.FogExp2(0x1e110a, 0.036);
+
+      const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 60);
+      camera.position.set(...cameraPresets.photo.pos);
+
+      const isMobZen = matchMedia('(max-width: 700px)').matches;
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobZen ? 1.15 : 1.5));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.physicallyCorrectLights = true;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+      container.appendChild(renderer.domElement);
+
+      // Generate Procedural Warm Golden-Hour Room Environment Map (IBL)
+      function buildRoomEnvironmentMap() {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+
+        const envCanvas = document.createElement('canvas');
+        envCanvas.width = 512;
+        envCanvas.height = 256;
+        const ctx = envCanvas.getContext('2d');
+
+        // Warm interior ambient gradient
+        const bg = ctx.createLinearGradient(0, 0, 0, 256);
+        bg.addColorStop(0.0, '#2a1810');
+        bg.addColorStop(0.45, '#593422');
+        bg.addColorStop(0.65, '#3b2115');
+        bg.addColorStop(1.0, '#1c100a');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 512, 256);
+
+        // Bright golden sunset window on left side (specular key reflection)
+        const winG = ctx.createRadialGradient(115, 118, 8, 115, 118, 95);
+        winG.addColorStop(0.0, '#fff7d6');
+        winG.addColorStop(0.35, '#ffba52');
+        winG.addColorStop(0.75, 'rgba(255, 130, 45, 0.35)');
+        winG.addColorStop(1.0, 'rgba(255, 110, 30, 0)');
+        ctx.fillStyle = winG;
+        ctx.fillRect(0, 0, 260, 240);
+
+        // Warm Moroccan lantern & salt lamp accents on right
+        const rightG = ctx.createRadialGradient(390, 125, 5, 390, 125, 65);
+        rightG.addColorStop(0.0, '#ffd485');
+        rightG.addColorStop(0.45, 'rgba(255, 145, 55, 0.45)');
+        rightG.addColorStop(1.0, 'rgba(255, 120, 40, 0)');
+        ctx.fillStyle = rightG;
+        ctx.fillRect(300, 40, 200, 180);
+
+        // Subtle purple tapestry bounce in center-back
+        const tapG = ctx.createRadialGradient(256, 118, 10, 256, 118, 70);
+        tapG.addColorStop(0.0, 'rgba(130, 62, 105, 0.5)');
+        tapG.addColorStop(1.0, 'rgba(130, 62, 105, 0)');
+        ctx.fillStyle = tapG;
+        ctx.fillRect(160, 40, 190, 160);
+
+        const envTex = new THREE.CanvasTexture(envCanvas);
+        envTex.mapping = THREE.EquirectangularReflectionMapping;
+        envTex.encoding = THREE.sRGBEncoding;
+
+        const envRT = pmrem.fromEquirectangular(envTex);
+        envTex.dispose();
+        pmrem.dispose();
+        return envRT.texture;
+      }
+
+      scene.environment = buildRoomEnvironmentMap();
+
+      // Zero-dependency smooth spherical OrbitControls (mouse, touch, wheel, damping, autoRotate)
+      class SmoothOrbitControls {
+        constructor(cam, dom) {
+          this.camera = cam;
+          this.domElement = dom;
+          this.target = new THREE.Vector3();
+          this.enableDamping = true;
+          this.dampingFactor = 0.06;
+          this.minPolarAngle = 0.16;
+          this.maxPolarAngle = Math.PI * 0.488;
+          this.minDistance = 1.45;
+          this.maxDistance = 10.2;
+          this.autoRotate = false;
+          this.autoRotateSpeed = 0.55;
+
+          this._spherical = new THREE.Spherical();
+          this._sphericalDelta = new THREE.Spherical();
+          this._scale = 1;
+          this._isDragging = false;
+          this._prevX = 0;
+          this._prevY = 0;
+          this._pinchDist = 0;
+
+          this._onPointerDown = (e) => {
+            if (e.button !== 0 && e.pointerType === 'mouse') return;
+            this._isDragging = true;
+            this._prevX = e.clientX;
+            this._prevY = e.clientY;
+            activeCamTransition = null;
+          };
+          this._onPointerMove = (e) => {
+            if (!this._isDragging) return;
+            const dx = e.clientX - this._prevX;
+            const dy = e.clientY - this._prevY;
+            this._prevX = e.clientX;
+            this._prevY = e.clientY;
+            const h = Math.max(1, this.domElement.clientHeight);
+            this._sphericalDelta.theta -= (2 * Math.PI * dx / h) * 0.65;
+            this._sphericalDelta.phi -= (2 * Math.PI * dy / h) * 0.65;
+          };
+          this._onPointerUp = () => { this._isDragging = false; };
+          this._onWheel = (e) => {
+            e.preventDefault();
+            activeCamTransition = null;
+            this._scale *= e.deltaY > 0 ? 1.07 : 0.935;
+          };
+          this._onTouchStart = (e) => {
+            if (e.touches.length === 2) {
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              this._pinchDist = Math.hypot(dx, dy);
+            }
+          };
+          this._onTouchMove = (e) => {
+            if (e.touches.length === 2 && this._pinchDist > 0) {
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              const d = Math.hypot(dx, dy);
+              this._scale *= this._pinchDist / Math.max(1, d);
+              this._pinchDist = d;
+            }
+          };
+
+          dom.addEventListener('pointerdown', this._onPointerDown);
+          window.addEventListener('pointermove', this._onPointerMove);
+          window.addEventListener('pointerup', this._onPointerUp);
+          dom.addEventListener('wheel', this._onWheel, { passive: false });
+          dom.addEventListener('touchstart', this._onTouchStart, { passive: true });
+          dom.addEventListener('touchmove', this._onTouchMove, { passive: true });
+        }
+
+        update() {
+          const offset = new THREE.Vector3().subVectors(this.camera.position, this.target);
+          this._spherical.setFromVector3(offset);
+          if (this.autoRotate && !this._isDragging) {
+            this._sphericalDelta.theta -= 0.0022 * this.autoRotateSpeed;
+          }
+          const damp = this.enableDamping ? this.dampingFactor : 1.0;
+          this._spherical.theta += this._sphericalDelta.theta * damp;
+          this._spherical.phi += this._sphericalDelta.phi * damp;
+          this._spherical.phi = Math.max(this.minPolarAngle, Math.min(this.maxPolarAngle, this._spherical.phi));
+          this._spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this._spherical.radius * this._scale));
+
+          offset.setFromSpherical(this._spherical);
+          this.camera.position.copy(this.target).add(offset);
+          this.camera.lookAt(this.target);
+
+          if (this.enableDamping) {
+            this._sphericalDelta.theta *= (1 - damp);
+            this._sphericalDelta.phi *= (1 - damp);
+          } else {
+            this._sphericalDelta.set(0, 0, 0);
+          }
+          this._scale = 1;
+        }
+      }
+
+      const controls = new SmoothOrbitControls(camera, renderer.domElement);
+      controls.target.set(...cameraPresets.photo.target);
+      controls.update();
+
+      const interactables = [];
+
+      // Helper to add grounded soft contact shadow (Ambient Occlusion decal)
+      function addContactShadow(x, y, z, rx, rz = rx, opacity = 0.72) {
+        const mesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(rx * 2, rz * 2),
+          new THREE.MeshBasicMaterial({
+            map: contactShadowTex,
+            transparent: true,
+            opacity,
+            depthWrite: false
+          })
+        );
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(x, y + 0.004, z);
+        scene.add(mesh);
+        return mesh;
+      }
+
+      // Helper to add soft glowing halo sprite
+      function addGlowSprite(parent, x, y, z, scale, color = 0xffb347, opacity = 0.55) {
+        const mat = new THREE.SpriteMaterial({
+          map: warmGlowTex,
+          color,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const sp = new THREE.Sprite(mat);
+        sp.position.set(x, y, z);
+        sp.scale.set(scale, scale, 1);
+        parent.add(sp);
+        return sp;
+      }
+
+      // ==========================================
+      // 4. CINEMATIC LIGHTING SYSTEM
+      // ==========================================
+      const ambientLight = new THREE.HemisphereLight(0xffdfb8, 0x3b2216, 1.35);
+      scene.add(ambientLight);
+
+      // Golden sunset directional key light through left window
+      const sunLight = new THREE.DirectionalLight(0xffa640, 5.4);
+      sunLight.position.set(-10.0, 4.4, 1.4);
+      sunLight.target.position.set(1.2, 0.0, 0.8);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = isMobZen ? 1024 : 1024;
+      sunLight.shadow.mapSize.height = isMobZen ? 1024 : 1024;
+      sunLight.shadow.camera.near = 1.5;
+      sunLight.shadow.camera.far = 22;
+      sunLight.shadow.camera.left = -7.2;
+      sunLight.shadow.camera.right = 7.2;
+      sunLight.shadow.camera.top = 6.2;
+      sunLight.shadow.camera.bottom = -4.2;
+      sunLight.shadow.bias = -0.0004;
+      sunLight.shadow.normalBias = 0.02;
+      scene.add(sunLight);
+      scene.add(sunLight.target);
+
+      // Soft warm bounce light from window into room
+      const windowBounceLight = new THREE.PointLight(0xffb566, 8.5, 11.5, 2.0);
+      windowBounceLight.position.set(-3.8, 2.5, 1.5);
+      scene.add(windowBounceLight);
+
+      // Practical candle & lamp lights (physically-based decay = 2)
+      const lotusLight = new THREE.PointLight(0xffb84d, 5.2, 5.5, 2.0);
+      lotusLight.position.set(0, 1.24, -3.22);
+      scene.add(lotusLight);
+
+      const bowlFlameLight = new THREE.PointLight(0xff962e, 4.2, 4.8, 2.0);
+      bowlFlameLight.position.set(0.95, 1.48, -3.45);
+      scene.add(bowlFlameLight);
+
+      const saltLampLight = new THREE.PointLight(0xff7224, 7.2, 6.0, 2.0);
+      saltLampLight.position.set(3.28, 0.78, -2.85);
+      scene.add(saltLampLight);
+
+      const moroccanLight = new THREE.PointLight(0xffb84d, 8.5, 7.5, 2.0);
+      moroccanLight.position.set(2.85, 4.18, -2.55);
+      scene.add(moroccanLight);
+
+      const fgCandleLight = new THREE.PointLight(0xff9c30, 5.8, 4.5, 2.0);
+      fgCandleLight.position.set(-1.62, 1.12, 3.22);
+      scene.add(fgCandleLight);
+
+      const leftVotiveLight = new THREE.PointLight(0xff9933, 3.4, 3.8, 2.0);
+      leftVotiveLight.position.set(-2.15, 0.45, -2.55);
+      scene.add(leftVotiveLight);
+
+      // ==========================================
+      // 5. ROOM ARCHITECTURE, BEAMS & SUNSET SKY
+      // ==========================================
+      const woodFloorMaps = createWoodFloorMaps();
+      const plasterMaps = createPlasterMaps();
+      const darkWoodMaps = createDarkWoodMaps();
+      const fabricBumpTex = createFabricBumpTexture();
+      const bronzeMaps = createBronzeMaps();
+
+      const darkWoodMat = new THREE.MeshStandardMaterial({
+        map: darkWoodMaps.map,
+        bumpMap: darkWoodMaps.bumpMap,
+        bumpScale: 0.015,
+        roughness: 0.46,
+        metalness: 0.05
+      });
+
+      // Floor
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(13.5, 13.5),
+        new THREE.MeshStandardMaterial({
+          map: woodFloorMaps.map,
+          bumpMap: woodFloorMaps.bumpMap,
+          bumpScale: 0.018,
+          roughnessMap: woodFloorMaps.roughnessMap,
+          roughness: 0.62,
+          metalness: 0.06
+        })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // Walls material
+      const wallMat = new THREE.MeshStandardMaterial({
+        map: plasterMaps.map,
+        bumpMap: plasterMaps.bumpMap,
+        bumpScale: 0.022,
+        roughness: 0.88,
+        metalness: 0.02
+      });
+
+      // Back wall
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(11.6, 6.2), wallMat);
+      backWall.position.set(0.3, 3.1, -4.2);
+      backWall.receiveShadow = true;
+      scene.add(backWall);
+
+      // Right wall
+      const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(12.2, 6.2), wallMat);
+      rightWall.position.set(5.4, 3.1, 1.4);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.receiveShadow = true;
+      scene.add(rightWall);
+
+      // Back-behind-camera wall (for 360 realism)
+      const behindWall = new THREE.Mesh(new THREE.PlaneGeometry(11.6, 6.2), wallMat);
+      behindWall.position.set(0.3, 3.1, 7.5);
+      behindWall.rotation.y = Math.PI;
+      behindWall.receiveShadow = true;
+      scene.add(behindWall);
+
+      // Ceiling + Dark Timber Ceiling Beams
+      const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(11.6, 12.2),
+        new THREE.MeshStandardMaterial({ map: plasterMaps.map, color: 0xa88469, roughness: 0.92 })
+      );
+      ceiling.position.set(0.3, 5.75, 1.6);
+      ceiling.rotation.x = Math.PI / 2;
+      scene.add(ceiling);
+
+      for (let bz = -3.4; bz <= 5.6; bz += 2.25) {
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(11.2, 0.24, 0.22), darkWoodMat);
+        beam.position.set(0.3, 5.63, bz);
+        scene.add(beam);
+      }
+
+      // Wooden Baseboards (Rodapés)
+      const baseboardBack = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.14, 0.05), darkWoodMat);
+      baseboardBack.position.set(0.3, 0.07, -4.17);
+      scene.add(baseboardBack);
+
+      const baseboardRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 11.8), darkWoodMat);
+      baseboardRight.position.set(5.37, 0.07, 1.6);
+      scene.add(baseboardRight);
+
+      // Left wall around recessed sunset window
+      const leftWallGroup = new THREE.Group();
+      const leftWallBack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 6.0, 3.7), wallMat);
+      leftWallBack.position.set(-4.85, 3.0, -2.4);
+      leftWallBack.receiveShadow = true;
+      leftWallGroup.add(leftWallBack);
+
+      const leftWallFront = new THREE.Mesh(new THREE.BoxGeometry(0.32, 6.0, 3.0), wallMat);
+      leftWallFront.position.set(-4.85, 3.0, 6.1);
+      leftWallFront.receiveShadow = true;
+      leftWallGroup.add(leftWallFront);
+
+      const leftWallHeader = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.9, 5.4), wallMat);
+      leftWallHeader.position.set(-4.85, 5.5, 2.05);
+      leftWallGroup.add(leftWallHeader);
+
+      // Low windowsill wall + wooden sill ledge
+      const windowLedge = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.32, 5.6), wallMat);
+      windowLedge.position.set(-4.78, 0.66, 2.05);
+      windowLedge.receiveShadow = true;
+      windowLedge.castShadow = true;
+      leftWallGroup.add(windowLedge);
+
+      const sillBoard = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.06, 5.55), darkWoodMat);
+      sillBoard.position.set(-4.72, 1.34, 2.05);
+      sillBoard.receiveShadow = true;
+      sillBoard.castShadow = true;
+      leftWallGroup.add(sillBoard);
+
+      // Detailed Wooden Window Muntins
+      const windowMuntins = new THREE.Group();
+      windowMuntins.position.set(-4.85, 3.25, 2.05);
+      [-2.6, -1.3, 0.0, 1.3, 2.6].forEach(zPos => {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.11, 3.9, 0.085), darkWoodMat);
+        post.position.set(0, 0, zPos);
+        post.castShadow = true;
+        windowMuntins.add(post);
+      });
+      [-1.88, -0.62, 0.62, 1.88].forEach(yPos => {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.075, 5.28), darkWoodMat);
+        bar.position.set(0, yPos, 0);
+        bar.castShadow = true;
+        windowMuntins.add(bar);
+      });
+      leftWallGroup.add(windowMuntins);
+
+      // Subtle reflective glass panes
+      const glassPane = new THREE.Mesh(
+        new THREE.PlaneGeometry(5.2, 3.8),
+        new THREE.MeshPhysicalMaterial({
+          color: 0xffe4b8,
+          roughness: 0.08,
+          metalness: 0.05,
+          transparent: true,
+          opacity: 0.12,
+          reflectivity: 0.9
+        })
+      );
+      glassPane.position.set(-4.92, 3.25, 2.05);
+      glassPane.rotation.y = Math.PI / 2;
+      leftWallGroup.add(glassPane);
+      scene.add(leftWallGroup);
+
+      // Outside Golden Hour Sky + Atmospheric Tree Silhouettes
+      const skyCanvas = document.createElement('canvas');
+      skyCanvas.width = 1024;
+      skyCanvas.height = 512;
+      const sCtx = skyCanvas.getContext('2d');
+      const sGrad = sCtx.createLinearGradient(0, 0, 0, 512);
+      sGrad.addColorStop(0.0, '#d97a32');
+      sGrad.addColorStop(0.32, '#f5a54a');
+      sGrad.addColorStop(0.62, '#ffd680');
+      sGrad.addColorStop(0.84, '#ffe9a8');
+      sGrad.addColorStop(1.0, '#6e4522');
+      sCtx.fillStyle = sGrad;
+      sCtx.fillRect(0, 0, 1024, 512);
+
+      const sunOrb = sCtx.createRadialGradient(540, 290, 12, 540, 290, 260);
+      sunOrb.addColorStop(0, 'rgba(255, 255, 240, 1.0)');
+      sunOrb.addColorStop(0.28, 'rgba(255, 215, 115, 0.78)');
+      sunOrb.addColorStop(0.65, 'rgba(255, 155, 55, 0.25)');
+      sunOrb.addColorStop(1, 'rgba(255, 130, 35, 0)');
+      sCtx.fillStyle = sunOrb;
+      sCtx.fillRect(0, 0, 1024, 512);
+
+      // Soft distant hills & backlit tree foliage silhouettes
+      sCtx.fillStyle = 'rgba(72, 42, 22, 0.58)';
+      sCtx.beginPath();
+      sCtx.moveTo(0, 512);
+      for (let x = 0; x <= 1024; x += 32) {
+        const y = 395 + Math.sin(x * 0.008) * 28 + Math.cos(x * 0.021) * 14;
+        sCtx.lineTo(x, y);
+      }
+      sCtx.lineTo(1024, 512);
+      sCtx.closePath();
+      sCtx.fill();
+
+      const skyTex = new THREE.CanvasTexture(skyCanvas);
+      skyTex.encoding = THREE.sRGBEncoding;
+      const skyBackdrop = new THREE.Mesh(
+        new THREE.PlaneGeometry(12.0, 6.8),
+        new THREE.MeshBasicMaterial({ map: skyTex })
+      );
+      skyBackdrop.position.set(-7.6, 3.3, 2.0);
+      skyBackdrop.rotation.y = Math.PI / 2;
+      scene.add(skyBackdrop);
+
+      // ==========================================
+      // 5.2 VOLUMETRIC GOD RAYS (CUSTOM GLSL SHADER)
+      // ==========================================
+      const godRayUniforms = {
+        uTime: { value: 0 },
+        uIntensity: { value: 1.0 },
+        uColor: { value: new THREE.Color(0xffbe63) }
+      };
+
+      const godRayMat = new THREE.ShaderMaterial({
+        uniforms: godRayUniforms,
+        vertexShader: `
+          varying vec2 vUv;
+          varying vec3 vNormalView;
+          varying vec3 vViewPos;
+          void main() {
+            vUv = uv;
+            vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+            vViewPos = -mvPos.xyz;
+            vNormalView = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * mvPos;
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform float uIntensity;
+          uniform vec3 uColor;
+          varying vec2 vUv;
+          varying vec3 vNormalView;
+          varying vec3 vViewPos;
+          void main() {
+            // Soft fade at start (window) and far end (floor)
+            float lengthFade = smoothstep(0.0, 0.14, vUv.y) * pow(1.0 - vUv.y, 1.55);
+            // Soft edge fade across beam width
+            float edgeFade = smoothstep(0.0, 0.28, vUv.x) * smoothstep(1.0, 0.72, vUv.x);
+            // Subtle shimmering dust bands inside beam
+            float band = 0.72 + 0.28 * sin(vUv.x * 18.0 + uTime * 0.35) * cos(vUv.y * 6.0 - uTime * 0.25);
+            // Grazing angle softening
+            vec3 viewDir = normalize(vViewPos);
+            float facing = pow(abs(dot(normalize(vNormalView), viewDir)), 0.65);
+            float alpha = lengthFade * edgeFade * band * facing * 0.115 * uIntensity;
+            gl_FragColor = vec4(uColor, alpha);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+
+      const godRayGroup = new THREE.Group();
+      const rayConfigs = [
+        { z: 0.75, y: 3.1, w: 1.45, len: 6.4, pitch: -0.44, yaw: -0.18 },
+        { z: 2.05, y: 3.25, w: 1.65, len: 6.8, pitch: -0.42, yaw: -0.15 },
+        { z: 3.25, y: 3.0, w: 1.35, len: 6.0, pitch: -0.45, yaw: -0.12 }
+      ];
+      rayConfigs.forEach(rc => {
+        const geo = new THREE.PlaneGeometry(rc.w, rc.len);
+        geo.translate(0, -rc.len / 2, 0);
+        const ray1 = new THREE.Mesh(geo, godRayMat);
+        ray1.position.set(-4.65, rc.y, rc.z);
+        ray1.rotation.order = 'YXZ';
+        ray1.rotation.z = Math.PI / 2 + rc.pitch;
+        ray1.rotation.y = rc.yaw;
+        godRayGroup.add(ray1);
+
+        const ray2 = ray1.clone();
+        ray2.rotation.x = Math.PI * 0.28;
+        godRayGroup.add(ray2);
+      });
+      scene.add(godRayGroup);
+
+      // Soft sun patches projected on the hardwood floor
+      const sunPatchTex = createRadialTexture([
+        [0.0, 'rgba(255, 205, 110, 0.55)'],
+        [0.65, 'rgba(255, 175, 75, 0.22)'],
+        [1.0, 'rgba(255, 150, 50, 0.0)']
+      ], 128);
+      const patchMat = new THREE.MeshBasicMaterial({
+        map: sunPatchTex,
+        transparent: true,
+        opacity: 0.42,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      for (let i = 0; i < 4; i++) {
+        const patch = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 0.62), patchMat);
+        patch.rotation.x = -Math.PI / 2;
+        patch.rotation.z = -0.28;
+        patch.position.set(-0.55 + i * 0.56, 0.008, 2.35 + i * 0.34);
+        scene.add(patch);
+      }
+
+      // ==========================================
+      // 6. CENTER MANDALA TAPESTRY & ALTAR CREDENZA
+      // ==========================================
+      const mandalaMaps = createMandalaTapestryMaps();
+      const tapestryGeo = new THREE.PlaneGeometry(4.45, 4.35, 32, 32);
+      const tPos = tapestryGeo.attributes.position;
+      for (let i = 0; i < tPos.count; i++) {
+        const vx = tPos.getX(i);
+        const vy = tPos.getY(i);
+        const edgeWeight = Math.min(1, (2.18 - vy) / 1.5);
+        tPos.setZ(i, (Math.sin(vx * 3.8) * 0.018 + Math.cos(vy * 2.2) * 0.01) * Math.max(0.2, edgeWeight));
+      }
+      tapestryGeo.computeVertexNormals();
+
+      const tapestry = new THREE.Mesh(
+        tapestryGeo,
+        new THREE.MeshStandardMaterial({
+          map: mandalaMaps.map,
+          roughnessMap: mandalaMaps.roughnessMap,
+          bumpMap: mandalaMaps.bumpMap,
+          bumpScale: 0.012,
+          roughness: 0.85,
+          metalness: 0.22
+        })
+      );
+      tapestry.position.set(0, 3.24, -4.13);
+      tapestry.receiveShadow = true;
+      scene.add(tapestry);
+
+      // Wooden hanging rod & brass finials at top of tapestry
+      const tapRod = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 4.78, 16), darkWoodMat);
+      tapRod.rotation.z = Math.PI / 2;
+      tapRod.position.set(0, 5.42, -4.11);
+      scene.add(tapRod);
+      [-2.42, 2.42].forEach(fx => {
+        const finial = new THREE.Mesh(
+          new THREE.SphereGeometry(0.042, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0xc99648, roughness: 0.25, metalness: 0.88 })
+        );
+        finial.position.set(fx, 5.42, -4.11);
+        scene.add(finial);
+      });
+
+      // Wooden Altar Credenza with Carved Panels & Brass Pulls
+      const altarGroup = new THREE.Group();
+      altarGroup.position.set(0, 0, -3.58);
+
+      const altarBody = new THREE.Mesh(new THREE.BoxGeometry(4.52, 0.82, 0.82), darkWoodMat);
+      altarBody.position.y = 0.48;
+      altarBody.castShadow = true;
+      altarBody.receiveShadow = true;
+      altarGroup.add(altarBody);
+
+      // Recessed plinth base
+      const altarPlinth = new THREE.Mesh(new THREE.BoxGeometry(4.36, 0.08, 0.72), darkWoodMat);
+      altarPlinth.position.y = 0.04;
+      altarGroup.add(altarPlinth);
+
+      // Thick beveled top slab
+      const altarTop = new THREE.Mesh(new THREE.BoxGeometry(4.66, 0.065, 0.90), darkWoodMat);
+      altarTop.position.y = 0.92;
+      altarTop.castShadow = true;
+      altarTop.receiveShadow = true;
+      altarGroup.add(altarTop);
+
+      const brassMat = new THREE.MeshStandardMaterial({
+        map: bronzeMaps.map,
+        bumpMap: bronzeMaps.bumpMap,
+        bumpScale: 0.008,
+        roughnessMap: bronzeMaps.roughnessMap,
+        color: 0xd49c4b,
+        roughness: 0.26,
+        metalness: 0.88
+      });
+
+      // Three recessed cabinet doors + brass ring pulls
+      for (let d = -1; d <= 1; d++) {
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.66, 0.025), darkWoodMat);
+        frame.position.set(d * 1.44, 0.48, 0.415);
+        altarGroup.add(frame);
+
+        const inset = new THREE.Mesh(
+          new THREE.BoxGeometry(1.18, 0.50, 0.015),
+          new THREE.MeshStandardMaterial({ map: darkWoodMaps.map, color: 0x2a160b, roughness: 0.58 })
+        );
+        inset.position.set(d * 1.44, 0.48, 0.425);
+        altarGroup.add(inset);
+
+        const pull = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.007, 10, 20), brassMat);
+        pull.position.set(d * 1.44, 0.48, 0.445);
+        altarGroup.add(pull);
+      }
+      scene.add(altarGroup);
+      addContactShadow(0, 0, -3.55, 2.55, 0.65, 0.68);
+
+      // ==========================================
+      // 7. SCULPTED BRONZE BUDDHA & TRANSLUCENT LOTUS
+      // ==========================================
+      const buddhaGroup = new THREE.Group();
+      buddhaGroup.position.set(0, 0.955, -3.55);
+      buddhaGroup.userData = { name: 'Estátua de Buda em Meditação (Dhyana Mudra)', type: 'buddha' };
+
+      const buddhaBronzeMat = new THREE.MeshStandardMaterial({
+        map: bronzeMaps.map,
+        bumpMap: bronzeMaps.bumpMap,
+        bumpScale: 0.012,
+        roughnessMap: bronzeMaps.roughnessMap,
+        color: 0x7a5430,
+        roughness: 0.34,
+        metalness: 0.78
+      });
+
+      // Double-tiered sculpted Lotus Throne pedestal
+      const throneProfile = [
+        new THREE.Vector2(0.0, 0.0),
+        new THREE.Vector2(0.50, 0.0),
+        new THREE.Vector2(0.52, 0.04),
+        new THREE.Vector2(0.45, 0.08),
+        new THREE.Vector2(0.42, 0.11),
+        new THREE.Vector2(0.47, 0.16),
+        new THREE.Vector2(0.44, 0.19),
+        new THREE.Vector2(0.0, 0.19)
+      ];
+      const pedestal = new THREE.Mesh(new THREE.LatheGeometry(throneProfile, 36), buddhaBronzeMat);
+      pedestal.castShadow = true;
+      pedestal.receiveShadow = true;
+      buddhaGroup.add(pedestal);
+
+      // Carved lotus petals around pedestal rim
+      for (let lp = 0; lp < 16; lp++) {
+        const a = (lp / 16) * Math.PI * 2;
+        const pMesh = new THREE.Mesh(new THREE.SphereGeometry(0.068, 12, 10), buddhaBronzeMat);
+        pMesh.scale.set(1.0, 0.85, 0.42);
+        pMesh.position.set(Math.cos(a) * 0.45, 0.12, Math.sin(a) * 0.45);
+        pMesh.rotation.y = -a + Math.PI / 2;
+        buddhaGroup.add(pMesh);
+      }
+
+      // Crossed legs (Padmasana) with smooth organic robe folds
+      [-1, 1].forEach(side => {
+        const leg = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 18), buddhaBronzeMat);
+        leg.scale.set(1.78, 0.52, 1.15);
+        leg.position.set(side * 0.20, 0.24, 0.04);
+        leg.rotation.z = side * 0.11;
+        leg.castShadow = true;
+        buddhaGroup.add(leg);
+      });
+
+      // Sculpted torso via LatheGeometry
+      const torsoProfile = [
+        new THREE.Vector2(0.0, 0.22),
+        new THREE.Vector2(0.32, 0.26),
+        new THREE.Vector2(0.27, 0.45),
+        new THREE.Vector2(0.24, 0.62),
+        new THREE.Vector2(0.28, 0.78),
+        new THREE.Vector2(0.18, 0.88),
+        new THREE.Vector2(0.09, 0.92)
+      ];
+      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoProfile, 28), buddhaBronzeMat);
+      torso.scale.set(1.12, 1.0, 0.78);
+      torso.castShadow = true;
+      torso.userData = buddhaGroup.userData;
+      buddhaGroup.add(torso);
+
+      // Diagonal monastic robe sash (Sanghati) across chest
+      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.245, 0.032, 12, 28), buddhaBronzeMat);
+      sash.position.set(-0.02, 0.58, 0.02);
+      sash.rotation.set(0.35, 0.2, 0.85);
+      sash.scale.set(1.0, 1.25, 0.72);
+      buddhaGroup.add(sash);
+
+      // Broad serene shoulders
+      const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 18), buddhaBronzeMat);
+      shoulders.scale.set(1.42, 0.52, 0.76);
+      shoulders.position.set(0, 0.80, -0.02);
+      shoulders.castShadow = true;
+      buddhaGroup.add(shoulders);
+
+      // Arms & Dhyana Mudra hands
+      [-1, 1].forEach(side => {
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.062, 0.42, 16), buddhaBronzeMat);
+        upperArm.position.set(side * 0.31, 0.56, 0.02);
+        upperArm.rotation.z = side * 0.27;
+        upperArm.rotation.x = 0.22;
+        upperArm.castShadow = true;
+        buddhaGroup.add(upperArm);
+
+        const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.052, 0.32, 16), buddhaBronzeMat);
+        forearm.position.set(side * 0.17, 0.34, 0.14);
+        forearm.rotation.z = side * 1.25;
+        forearm.rotation.y = -side * 0.35;
+        buddhaGroup.add(forearm);
+      });
+
+      const mudraHands = new THREE.Mesh(new THREE.SphereGeometry(0.082, 16, 12), buddhaBronzeMat);
+      mudraHands.scale.set(1.45, 0.52, 0.92);
+      mudraHands.position.set(0, 0.30, 0.21);
+      buddhaGroup.add(mudraHands);
+
+      // Neck & Serene Sculpted Head
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.09, 0.11, 18), buddhaBronzeMat);
+      neck.position.set(0, 0.95, -0.01);
+      buddhaGroup.add(neck);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 32, 24), buddhaBronzeMat);
+      head.scale.set(0.90, 1.13, 0.96);
+      head.position.set(0, 1.12, 0.0);
+      head.castShadow = true;
+      head.userData = buddhaGroup.userData;
+      buddhaGroup.add(head);
+
+      // Subtle nose bridge & Urna bindi dot
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.065, 8), buddhaBronzeMat);
+      nose.position.set(0, 1.11, 0.152);
+      nose.rotation.x = 0.22;
+      buddhaGroup.add(nose);
+
+      // Elongated earlobes
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 12), buddhaBronzeMat);
+        ear.scale.set(0.45, 2.0, 0.62);
+        ear.position.set(side * 0.148, 1.08, 0.0);
+        buddhaGroup.add(ear);
+      });
+
+      // Textured Hair Crown (Ushnisha) + Flame Spire
+      const hairCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.152, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.56),
+        buddhaBronzeMat
+      );
+      hairCap.position.set(0, 1.15, -0.005);
+      buddhaGroup.add(hairCap);
+
+      const ushnisha = new THREE.Mesh(new THREE.SphereGeometry(0.072, 18, 16), buddhaBronzeMat);
+      ushnisha.position.set(0, 1.30, -0.01);
+      buddhaGroup.add(ushnisha);
+
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.085, 14), buddhaBronzeMat);
+      spire.position.set(0, 1.38, -0.01);
+      buddhaGroup.add(spire);
+
+      scene.add(buddhaGroup);
+      interactables.push(head, torso);
+      addContactShadow(0, 0.955, -3.55, 0.58, 0.45, 0.6);
+
+      // Glowing Translucent Lotus Lamp in front of Buddha
+      const lotusGroup = new THREE.Group();
+      lotusGroup.position.set(0, 0.96, -3.19);
+      lotusGroup.userData = { name: 'Flor de Lótus Luminosa (Clique para pulsar)', type: 'lotus' };
+
+      const lotusPetalMat = new THREE.MeshPhysicalMaterial({
+        color: 0xfff5dc,
+        emissive: 0xffa833,
+        emissiveIntensity: 1.55,
+        roughness: 0.22,
+        metalness: 0.0,
+        clearcoat: 0.5,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide
+      });
+
+      // Sculpted curved lotus petal geometry
+      function createCurvedPetalGeo(w, h) {
+        const geo = new THREE.PlaneGeometry(w, h, 6, 8);
+        const p = geo.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i);
+          const y = p.getY(i) + h / 2; // 0 to h
+          const t = y / h;
+          const widthScale = Math.sin(t * Math.PI) * (1.0 - t * 0.25);
+          const cupZ = Math.sin(t * Math.PI) * 0.035 - (x * x) * 1.4;
+          p.setXYZ(i, x * widthScale, y, cupZ);
+        }
+        geo.computeVertexNormals();
+        return geo;
+      }
+
+      const outerPetalGeo = createCurvedPetalGeo(0.11, 0.21);
+      const innerPetalGeo = createCurvedPetalGeo(0.085, 0.16);
+
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        const p = new THREE.Mesh(outerPetalGeo, lotusPetalMat);
+        p.position.set(Math.cos(a) * 0.045, 0.02, Math.sin(a) * 0.045);
+        p.rotation.order = 'YXZ';
+        p.rotation.y = -a + Math.PI / 2;
+        p.rotation.x = 0.92;
+        p.userData = lotusGroup.userData;
+        lotusGroup.add(p);
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + 0.35;
+        const p = new THREE.Mesh(innerPetalGeo, lotusPetalMat);
+        p.position.set(Math.cos(a) * 0.03, 0.03, Math.sin(a) * 0.03);
+        p.rotation.order = 'YXZ';
+        p.rotation.y = -a + Math.PI / 2;
+        p.rotation.x = 0.48;
+        p.userData = lotusGroup.userData;
+        lotusGroup.add(p);
+      }
+
+      const lotusCore = new THREE.Mesh(
+        new THREE.SphereGeometry(0.055, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffea })
+      );
+      lotusCore.position.y = 0.065;
+      lotusCore.userData = lotusGroup.userData;
+      lotusGroup.add(lotusCore);
+      interactables.push(lotusCore);
+      const lotusHalo = addGlowSprite(lotusGroup, 0, 0.09, 0, 0.58, 0xffbe55, 0.52);
+      scene.add(lotusGroup);
+
+      // ==========================================
+      // 8. AMETHYST GEODE & TIBETAN SINGING BOWL + MALA
+      // ==========================================
+      // 8.1 Faceted Amethyst Crystal Geode (Left of Buddha)
+      const geodeGroup = new THREE.Group();
+      geodeGroup.position.set(-0.92, 0.955, -3.52);
+      geodeGroup.userData = { name: 'Drusa de Ametista Natural', type: 'amethyst' };
+
+      const outerRock = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.11, 0.25, 0.54, 9, 4),
+        new THREE.MeshStandardMaterial({ color: 0x2a242c, roughness: 0.9, metalness: 0.06 })
+      );
+      outerRock.position.y = 0.27;
+      outerRock.scale.set(1.0, 1.0, 0.62);
+      outerRock.castShadow = true;
+      outerRock.userData = geodeGroup.userData;
+      geodeGroup.add(outerRock);
+      interactables.push(outerRock);
+
+      // White agate inner rim
+      const agateRim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.15, 0.022, 10, 24),
+        new THREE.MeshStandardMaterial({ color: 0xd8d0dc, roughness: 0.45 })
+      );
+      agateRim.scale.set(0.95, 1.55, 0.5);
+      agateRim.position.set(0, 0.27, 0.085);
+      geodeGroup.add(agateRim);
+
+      // Instanced sharp hexagonal amethyst crystal points
+      const crystalGeo = new THREE.ConeGeometry(0.028, 0.085, 6);
+      const crystalMat = new THREE.MeshPhysicalMaterial({
+        color: 0x7c32ba,
+        emissive: 0x380e62,
+        emissiveIntensity: 0.48,
+        roughness: 0.12,
+        metalness: 0.15,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.08
+      });
+      const crystalCount = 54;
+      const crystalInst = new THREE.InstancedMesh(crystalGeo, crystalMat, crystalCount);
+      const dummy = new THREE.Object3D();
+      const randGeo = mulberry32(707);
+      for (let c = 0; c < crystalCount; c++) {
+        const angle = randGeo() * Math.PI * 2;
+        const rad = randGeo() * 0.11;
+        const cx = Math.cos(angle) * rad;
+        const cy = 0.12 + randGeo() * 0.34;
+        const cz = 0.07 + randGeo() * 0.05;
+        dummy.position.set(cx, cy, cz);
+        dummy.rotation.set(Math.PI * 0.35 + (randGeo() - 0.5) * 0.7, randGeo() * 3, (randGeo() - 0.5) * 0.7);
+        const sc = 0.65 + randGeo() * 0.95;
+        dummy.scale.set(sc, sc * (1.0 + randGeo() * 0.5), sc);
+        dummy.updateMatrix();
+        crystalInst.setMatrixAt(c, dummy.matrix);
+      }
+      geodeGroup.add(crystalInst);
+      scene.add(geodeGroup);
+      addContactShadow(-0.92, 0.955, -3.52, 0.32, 0.22, 0.55);
+
+      // Frosted Glass Votive Candle next to Amethyst
+      const altarVotive = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.085, 0.078, 0.22, 24),
+        new THREE.MeshPhysicalMaterial({
+          color: 0xffe2c2,
+          emissive: 0xff8d2e,
+          emissiveIntensity: 0.85,
+          roughness: 0.28,
+          transparent: true,
+          opacity: 0.84,
+          clearcoat: 0.6
+        })
+      );
+      altarVotive.position.set(-1.35, 1.065, -3.48);
+      scene.add(altarVotive);
+      addContactShadow(-1.35, 0.955, -3.48, 0.13, 0.13, 0.45);
+
+      // 8.2 Hammered Tibetan Singing Bowl + Silk Ring + Striker + Japamala
+      const bowlGroup = new THREE.Group();
+      bowlGroup.position.set(0.95, 0.955, -3.45);
+      bowlGroup.userData = { name: 'Tigela Tibetana de Bronze (Clique para tocar)', type: 'bowl' };
+
+      // Red silk cushion ring under singing bowl
+      const silkRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.145, 0.026, 12, 28),
+        new THREE.MeshStandardMaterial({ color: 0x7c1f2c, roughness: 0.78, bumpMap: fabricBumpTex, bumpScale: 0.008 })
+      );
+      silkRing.rotation.x = Math.PI / 2;
+      silkRing.position.y = 0.026;
+      bowlGroup.add(silkRing);
+
+      // Lathe-turned realistic bowl profile (with thickness)
+      const bowlProfile = [
+        new THREE.Vector2(0.0, 0.02),
+        new THREE.Vector2(0.12, 0.02),
+        new THREE.Vector2(0.20, 0.08),
+        new THREE.Vector2(0.245, 0.17),
+        new THREE.Vector2(0.24, 0.22),
+        new THREE.Vector2(0.225, 0.22),
+        new THREE.Vector2(0.222, 0.16),
+        new THREE.Vector2(0.175, 0.08),
+        new THREE.Vector2(0.10, 0.04),
+        new THREE.Vector2(0.0, 0.04)
+      ];
+      const singingBowl = new THREE.Mesh(new THREE.LatheGeometry(bowlProfile, 40), brassMat);
+      singingBowl.position.y = 0.015;
+      singingBowl.castShadow = true;
+      singingBowl.receiveShadow = true;
+      singingBowl.userData = bowlGroup.userData;
+      bowlGroup.add(singingBowl);
+      interactables.push(singingBowl);
+
+      // Wooden suede-wrapped striker mallet resting beside bowl
+      const mallet = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.020, 0.28, 14), darkWoodMat);
+      mallet.rotation.z = Math.PI / 2;
+      mallet.rotation.y = 0.42;
+      mallet.position.set(0.32, 0.022, 0.12);
+      mallet.castShadow = true;
+      bowlGroup.add(mallet);
+
+      // Acoustic resonance golden ripple ring (expands when struck!)
+      const rippleMat = new THREE.MeshBasicMaterial({
+        color: 0xffd27a,
+        transparent: true,
+        opacity: 0.0,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      const acousticRipple = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.26, 48), rippleMat);
+      acousticRipple.rotation.x = -Math.PI / 2;
+      acousticRipple.position.y = 0.23;
+      bowlGroup.add(acousticRipple);
+
+      // Japamala wooden beads draped gracefully over altar edge (InstancedMesh)
+      const beadMat = new THREE.MeshStandardMaterial({ color: 0x8f5630, roughness: 0.42, metalness: 0.08 });
+      const malaCount = 30;
+      const malaInst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.017, 10, 8), beadMat, malaCount);
+      const malaDummy = new THREE.Object3D();
+      for (let b = 0; b < malaCount; b++) {
+        const t = b / (malaCount - 1);
+        malaDummy.position.set(Math.sin(t * Math.PI) * 0.16 - 0.04, -Math.sin(t * Math.PI) * 0.36 + 0.02, 0.22 + Math.sin(t * Math.PI) * 0.11);
+        malaDummy.updateMatrix();
+        malaInst.setMatrixAt(b, malaDummy.matrix);
+      }
+      bowlGroup.add(malaInst);
+      const tassel = new THREE.Mesh(
+        new THREE.ConeGeometry(0.026, 0.13, 14),
+        new THREE.MeshStandardMaterial({ color: 0xd8bfa2, roughness: 0.85 })
+      );
+      tassel.position.set(-0.04, -0.40, 0.32);
+      bowlGroup.add(tassel);
+
+      scene.add(bowlGroup);
+      addContactShadow(0.95, 0.955, -3.45, 0.30, 0.30, 0.55);
+
+      // ==========================================
+      // 9. REALISTIC GLSL SHADER FLAMES
+      // ==========================================
+      const flames = [];
+      const flameVertexShader = `
+        uniform float uTime;
+        uniform float uPhase;
+        uniform float uBreeze;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec3 pos = position;
+          float h = clamp((pos.y + 0.05) / 0.16, 0.0, 1.0);
+          float sway = sin(uTime * 10.5 + uPhase + h * 4.5) * 0.014 * h * h * (0.4 + uBreeze * 0.8);
+          float flutter = cos(uTime * 19.0 + uPhase * 2.0) * 0.005 * h;
+          pos.x += sway + flutter;
+          pos.z += sin(uTime * 8.2 + uPhase) * 0.006 * h * h;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `;
+      const flameFragmentShader = `
+        uniform float uIntensity;
+        varying vec2 vUv;
+        void main() {
+          float y = vUv.y;
+          // Teardrop radial mask
+          float xDist = abs(vUv.x - 0.5) * 2.0;
+          float core = 1.0 - smoothstep(0.0, 0.85, xDist);
+          // Blue base -> incandescent white-yellow core -> orange tip
+          vec3 blueBase = vec3(0.25, 0.45, 1.0);
+          vec3 whiteCore = vec3(1.0, 0.98, 0.86);
+          vec3 amberMid = vec3(1.0, 0.62, 0.12);
+          vec3 redTip = vec3(0.95, 0.22, 0.02);
+
+          vec3 col = mix(blueBase, whiteCore, smoothstep(0.0, 0.25, y));
+          col = mix(col, amberMid, smoothstep(0.32, 0.72, y));
+          col = mix(col, redTip, smoothstep(0.72, 1.0, y));
+
+          float alpha = smoothstep(0.0, 0.14, y) * smoothstep(1.0, 0.35, y) * core;
+          gl_FragColor = vec4(col * (1.25 + uIntensity * 0.35), alpha * 0.95);
+        }
+      `;
+
+      // Sculpted teardrop geometry for flames
+      const flameGeo = new THREE.SphereGeometry(0.036, 16, 16);
+      const fPos = flameGeo.attributes.position;
+      for (let i = 0; i < fPos.count; i++) {
+        const x = fPos.getX(i);
+        const y = fPos.getY(i);
+        const z = fPos.getZ(i);
+        const t = (y + 0.036) / 0.072; // 0 bottom to 1 top
+        const pinch = Math.pow(1.0 - t * 0.82, 0.85);
+        fPos.setXYZ(i, x * pinch, t * 0.145, z * pinch);
+      }
+      flameGeo.computeVertexNormals();
+
+      function createFlameMesh(x, y, z, scale = 1.0) {
+        const fGroup = new THREE.Group();
+        fGroup.position.set(x, y, z);
+
+        const uniforms = {
+          uTime: { value: 0 },
+          uPhase: { value: Math.random() * 20 },
+          uBreeze: { value: 1.0 },
+          uIntensity: { value: 1.0 }
+        };
+        const mat = new THREE.ShaderMaterial({
+          uniforms,
+          vertexShader: flameVertexShader,
+          fragmentShader: flameFragmentShader,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+
+        const mesh = new THREE.Mesh(flameGeo, mat);
+        mesh.scale.setScalar(scale);
+        fGroup.add(mesh);
+
+        const halo = addGlowSprite(fGroup, 0, 0.06 * scale, 0, 0.32 * scale, 0xffaa3b, 0.48);
+        scene.add(fGroup);
+        flames.push({ group: fGroup, mesh, halo, uniforms, baseScale: scale, phase: uniforms.uPhase.value });
+        return fGroup;
+      }
+
+      createFlameMesh(0.95, 1.15, -3.45, 1.25);  // Singing bowl fire
+      createFlameMesh(-1.35, 1.16, -3.48, 0.72); // Altar votive
+      createFlameMesh(-1.62, 0.96, 3.22, 1.12);  // Foreground lantern
+      createFlameMesh(-2.35, 0.24, -2.85, 0.88); // Left floor lantern 1
+      createFlameMesh(-1.95, 0.16, -2.05, 0.72); // Left floor votive 2
+      createFlameMesh(2.25, 0.20, -2.95, 0.82);  // Right floor votive
+
+      // ==========================================
+      // 10. FOREGROUND TABLE, INCENSE & FLUID SMOKE
+      // ==========================================
+      const fgTableGroup = new THREE.Group();
+      fgTableGroup.position.set(-1.82, 0, 3.28);
+
+      // Rustic side table with tabletop slab + 4 legs + lower shelf
+      const fgTopMat = new THREE.MeshStandardMaterial({
+        map: darkWoodMaps.map,
+        bumpMap: darkWoodMaps.bumpMap,
+        bumpScale: 0.016,
+        color: 0x8f5b37,
+        roughness: 0.42,
+        metalness: 0.05
+      });
+      const fgSlab = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.065, 0.96), fgTopMat);
+      fgSlab.position.y = 0.79;
+      fgSlab.castShadow = true;
+      fgSlab.receiveShadow = true;
+      fgTableGroup.add(fgSlab);
+
+      const fgShelf = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.04, 0.84), fgTopMat);
+      fgShelf.position.y = 0.22;
+      fgShelf.receiveShadow = true;
+      fgTableGroup.add(fgShelf);
+
+      [[-0.4, -0.4], [0.4, -0.4], [-0.4, 0.4], [0.4, 0.4]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.78, 0.075), fgTopMat);
+        leg.position.set(lx, 0.39, lz);
+        leg.castShadow = true;
+        fgTableGroup.add(leg);
+      });
+
+      // Carved circular wooden tray
+      const woodenTray = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.35, 0.33, 0.032, 40),
+        darkWoodMat
+      );
+      woodenTray.position.set(0.04, 0.838, -0.02);
+      woodenTray.receiveShadow = true;
+      fgTableGroup.add(woodenTray);
+
+      const trayRim = new THREE.Mesh(new THREE.TorusGeometry(0.342, 0.018, 12, 40), darkWoodMat);
+      trayRim.rotation.x = Math.PI / 2;
+      trayRim.position.set(0.04, 0.858, -0.02);
+      fgTableGroup.add(trayRim);
+
+      // Pierced Filigree Metal Lantern on Foreground Tray
+      const latticeTex = createCandleLatticeTexture();
+      const fgLantern = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.115, 0.115, 0.29, 32),
+        new THREE.MeshStandardMaterial({
+          map: latticeTex,
+          emissiveMap: latticeTex,
+          emissive: 0xff9d3b,
+          emissiveIntensity: 1.8,
+          roughness: 0.32,
+          metalness: 0.65
+        })
+      );
+      fgLantern.position.set(0.18, 0.995, -0.05);
+      fgLantern.castShadow = true;
+      fgLantern.userData = { name: 'Lanterna Rendada Acesa', type: 'candle' };
+      fgTableGroup.add(fgLantern);
+      interactables.push(fgLantern);
+
+      // Brass rims on foreground lantern
+      [0.855, 1.14].forEach(ry => {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.116, 0.008, 10, 32), brassMat);
+        rim.rotation.x = Math.PI / 2;
+        rim.position.set(0.18, ry, -0.05);
+        fgTableGroup.add(rim);
+      });
+
+      // Glazed Ceramic Incense Pot + Ash Bed + Incense Stick + Ember
+      const ceramicMat = new THREE.MeshPhysicalMaterial({
+        color: 0x2a1c15,
+        roughness: 0.22,
+        metalness: 0.12,
+        clearcoat: 0.85,
+        clearcoatRoughness: 0.18
+      });
+      const incensePot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 28, 20), ceramicMat);
+      incensePot.scale.set(1.18, 0.76, 1.18);
+      incensePot.position.set(-0.08, 0.925, 0.06);
+      incensePot.castShadow = true;
+      incensePot.userData = { name: 'Queimador de Incenso Zen (Clique para intensificar)', type: 'incense' };
+      fgTableGroup.add(incensePot);
+      interactables.push(incensePot);
+
+      const incenseNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.062, 0.045, 22), ceramicMat);
+      incenseNeck.position.set(-0.08, 0.995, 0.06);
+      fgTableGroup.add(incenseNeck);
+
+      // Fine white-grey ash mound inside pot
+      const ashBed = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.042, 0.042, 0.01, 16),
+        new THREE.MeshStandardMaterial({ color: 0x9e958e, roughness: 0.98 })
+      );
+      ashBed.position.set(-0.08, 1.015, 0.06);
+      fgTableGroup.add(ashBed);
+
+      const incenseStick = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.0035, 0.004, 0.15, 8),
+        new THREE.MeshStandardMaterial({ color: 0x6b472b, roughness: 0.85 })
+      );
+      incenseStick.position.set(-0.08, 1.06, 0.06);
+      incenseStick.rotation.z = -0.07;
+      fgTableGroup.add(incenseStick);
+
+      const emberTip = new THREE.Mesh(
+        new THREE.SphereGeometry(0.0075, 10, 10),
+        new THREE.MeshBasicMaterial({ color: 0xff4800 })
+      );
+      emberTip.position.set(-0.075, 1.132, 0.06);
+      fgTableGroup.add(emberTip);
+      addGlowSprite(fgTableGroup, -0.075, 1.132, 0.06, 0.07, 0xff5511, 0.85);
+
+      scene.add(fgTableGroup);
+      addContactShadow(-1.82, 0, 3.28, 0.62, 0.62, 0.65);
+
+      // 10.2 Multi-Layered Realistic Incense Smoke:
+      // Layer A: Laminar-to-Turbulent Silky Ribbon Shader (the unmistakable wisp of real incense!)
+      const smokeOrigin = new THREE.Vector3(-1.895, 1.138, 3.34);
+      const ribbonUniforms = {
+        uTime: { value: 0 },
+        uDensity: { value: 1.0 },
+        uBreeze: { value: 1.0 }
+      };
+      const ribbonGeo = new THREE.PlaneGeometry(0.28, 1.65, 12, 64);
+      ribbonGeo.translate(0, 0.825, 0);
+
+      const ribbonMat = new THREE.ShaderMaterial({
+        uniforms: ribbonUniforms,
+        vertexShader: `
+          uniform float uTime;
+          uniform float uBreeze;
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            vec3 pos = position;
+            float h = vUv.y;
+            // Tight laminar rise at bottom -> sinuous vortex curl higher up
+            float spread = 0.08 + pow(h, 1.35) * 1.15;
+            pos.x *= spread;
+            float curlX = sin(h * 7.5 - uTime * 2.1) * pow(h, 1.25) * 0.18 * (0.55 + uBreeze * 0.55);
+            float curlZ = cos(h * 5.8 - uTime * 1.7) * pow(h, 1.3) * 0.12 * (0.55 + uBreeze * 0.55);
+            pos.x += curlX;
+            pos.z += curlZ;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform float uDensity;
+          varying vec2 vUv;
+          void main() {
+            float x = (vUv.x - 0.5) * 2.0;
+            float h = vUv.y;
+            // Delicate multi-strand filament pattern
+            float strand1 = exp(-pow((x - sin(h * 11.0 - uTime * 2.6) * 0.28) * 3.8, 2.0));
+            float strand2 = exp(-pow((x + cos(h * 9.0 - uTime * 2.1) * 0.34) * 3.0, 2.0)) * 0.6;
+            float wisps = (strand1 + strand2) * (0.65 + 0.35 * sin(h * 14.0 - uTime * 3.2));
+            float fade = smoothstep(0.0, 0.08, h) * pow(1.0 - h, 1.45);
+            // Sunlit warm-white smoke tint
+            vec3 col = mix(vec3(0.92, 0.88, 0.86), vec3(1.0, 0.92, 0.80), h);
+            float alpha = clamp(wisps * fade * 0.42 * uDensity, 0.0, 0.65);
+            gl_FragColor = vec4(col, alpha);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+
+      const smokeRibbon1 = new THREE.Mesh(ribbonGeo, ribbonMat);
+      smokeRibbon1.position.copy(smokeOrigin);
+      scene.add(smokeRibbon1);
+
+      const smokeRibbon2 = new THREE.Mesh(ribbonGeo, ribbonMat);
+      smokeRibbon2.position.copy(smokeOrigin);
+      smokeRibbon2.rotation.y = Math.PI * 0.48;
+      scene.add(smokeRibbon2);
+
+      // Layer B: Soft diffusing volumetric smoke puffs
+      const smokePuffs = [];
+      const SMOKE_COUNT = 28;
+      for (let i = 0; i < SMOKE_COUNT; i++) {
+        const mat = new THREE.SpriteMaterial({
+          map: smokeTex,
+          color: 0xf7eee6,
+          transparent: true,
+          opacity: 0.0,
+          depthWrite: false
+        });
+        const sprite = new THREE.Sprite(mat);
+        scene.add(sprite);
+        smokePuffs.push({
+          sprite,
+          mat,
+          age: (i / SMOKE_COUNT) * 6.8,
+          maxLife: 6.8,
+          seed: Math.random() * 100
+        });
+      }
+
+      // ==========================================
+      // 11. CENTER JUTE RUG & 7 PLUSH MEDITATION CUSHIONS
+      // ==========================================
+      const rugMaps = createJuteRugMaps();
+      const centerRug = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.94, 1.96, 0.026, 72),
+        new THREE.MeshStandardMaterial({
+          map: rugMaps.map,
+          bumpMap: rugMaps.bumpMap,
+          bumpScale: 0.024,
+          roughness: 0.94,
+          metalness: 0.0
+        })
+      );
+      centerRug.position.set(0, 0.013, 0.55);
+      centerRug.receiveShadow = true;
+      scene.add(centerRug);
+      addContactShadow(0, 0, 0.55, 2.02, 2.02, 0.32);
+
+      // Round Purple Velvet Tufted Pouf (Zafu)
+      function createPurplePouf(x, z, rotY = 0) {
+        const group = new THREE.Group();
+        group.position.set(x, 0, z);
+        group.rotation.y = rotY;
+
+        const poufMat = new THREE.MeshPhysicalMaterial({
+          color: 0x522846,
+          bumpMap: fabricBumpTex,
+          bumpScale: 0.014,
+          roughness: 0.88,
+          metalness: 0.02,
+          clearcoat: 0.08,
+          clearcoatRoughness: 0.85
+        });
+
+        const bodyGeo = new THREE.SphereGeometry(0.48, 40, 28);
+        const pos = bodyGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const px = pos.getX(i);
+          const py = pos.getY(i);
+          const pz = pos.getZ(i);
+          const angle = Math.atan2(pz, px);
+          const pleat = 1.0 + Math.sin(angle * 18) * 0.022;
+          const rDist = Math.sqrt(px * px + pz * pz);
+          const tuftDip = rDist < 0.19 ? (0.19 - rDist) * 0.42 : 0;
+          pos.setXYZ(i, px * pleat, (py * 0.44) - Math.sign(py) * tuftDip, pz * pleat);
+        }
+        bodyGeo.computeVertexNormals();
+
+        const mesh = new THREE.Mesh(bodyGeo, poufMat);
+        mesh.position.y = 0.20;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        group.add(mesh);
+
+        // Center tufted button
+        const button = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.032, 0.032, 0.018, 16),
+          new THREE.MeshStandardMaterial({ color: 0x3b1a32, roughness: 0.7 })
+        );
+        button.position.y = 0.345;
+        group.add(button);
+
+        // Piping seam ring
+        const piping = new THREE.Mesh(
+          new THREE.TorusGeometry(0.455, 0.008, 8, 40),
+          new THREE.MeshStandardMaterial({ color: 0x6b3a5c, roughness: 0.8 })
+        );
+        piping.rotation.x = Math.PI / 2;
+        piping.position.y = 0.28;
+        group.add(piping);
+
+        scene.add(group);
+        addContactShadow(x, 0.025, z, 0.56, 0.56, 0.58);
+        return group;
+      }
+
+      // Square Beige Linen Floor Pillow with pinched corners & subtle creases
+      function createBeigePillow(x, z, rotY = 0) {
+        const geo = new THREE.BoxGeometry(0.84, 0.25, 0.84, 22, 10, 22);
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const px = pos.getX(i);
+          const py = pos.getY(i);
+          const pz = pos.getZ(i);
+          const nx = px / 0.42;
+          const nz = pz / 0.42;
+          const dome = Math.cos(nx * Math.PI * 0.46) * Math.cos(nz * Math.PI * 0.46);
+          const crease = Math.sin(nx * 5.0 + nz * 4.0) * 0.005;
+          pos.setY(i, py * (0.22 + 0.98 * dome) + crease);
+        }
+        geo.computeVertexNormals();
+
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xc8ab8d,
+          bumpMap: fabricBumpTex,
+          bumpScale: 0.016,
+          roughness: 0.90,
+          metalness: 0.0
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, 0.135, z);
+        mesh.rotation.y = rotY;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+        addContactShadow(x, 0.025, z, 0.55, 0.55, 0.55);
+        return mesh;
+      }
+
+      createPurplePouf(-0.08, -1.62, 0.2);
+      createPurplePouf(-2.15, 0.62, 0.5);
+      createPurplePouf(2.18, 0.68, -0.4);
+
+      createBeigePillow(-1.68, -0.78, 0.42);
+      createBeigePillow(1.68, -0.72, -0.38);
+      createBeigePillow(-1.05, 1.98, 0.28);
+      createBeigePillow(1.18, 1.92, -0.32);
+
+      // ==========================================
+      // 12. RIGHT SIDE: MOROCCAN LANTERN, SALT LAMP, CHAKRA BANNER
+      // ==========================================
+      const moroccanGroup = new THREE.Group();
+      moroccanGroup.position.set(2.85, 4.35, -2.55);
+
+      const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1.4, 8), brassMat);
+      chain.position.y = 0.85;
+      moroccanGroup.add(chain);
+
+      const domeProfile = [
+        new THREE.Vector2(0.0, 0.34),
+        new THREE.Vector2(0.05, 0.29),
+        new THREE.Vector2(0.16, 0.20),
+        new THREE.Vector2(0.24, 0.08),
+        new THREE.Vector2(0.25, 0.0)
+      ];
+      const lanternDomeTop = new THREE.Mesh(new THREE.LatheGeometry(domeProfile, 24), brassMat);
+      lanternDomeTop.position.y = 0.22;
+      moroccanGroup.add(lanternDomeTop);
+
+      const lanternCage = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.20, 0.48, 8),
+        new THREE.MeshStandardMaterial({
+          map: latticeTex,
+          emissiveMap: latticeTex,
+          emissive: 0xffb347,
+          emissiveIntensity: 2.0,
+          roughness: 0.28,
+          metalness: 0.78
+        })
+      );
+      moroccanGroup.add(lanternCage);
+
+      const lanternFinial = new THREE.Mesh(new THREE.ConeGeometry(0.20, 0.26, 8), brassMat);
+      lanternFinial.rotation.x = Math.PI;
+      lanternFinial.position.y = -0.36;
+      moroccanGroup.add(lanternFinial);
+
+      addGlowSprite(moroccanGroup, 0, -0.02, 0, 1.15, 0xffbd59, 0.42);
+      scene.add(moroccanGroup);
+
+      // Himalayan Salt Lamp with Subsurface-Like Warm Gradient
+      const saltLampGroup = new THREE.Group();
+      saltLampGroup.position.set(3.28, 0, -2.85);
+      saltLampGroup.userData = { name: 'Luminária de Sal do Himalaia (Clique para alternar brilho)', type: 'salt' };
+
+      const saltBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.27, 0.08, 28), darkWoodMat);
+      saltBase.position.y = 0.04;
+      saltBase.castShadow = true;
+      saltLampGroup.add(saltBase);
+
+      const saltGeo = new THREE.DodecahedronGeometry(0.34, 3);
+      const sPos = saltGeo.attributes.position;
+      const sColors = [];
+      for (let i = 0; i < sPos.count; i++) {
+        const x = sPos.getX(i);
+        const y = sPos.getY(i);
+        const z = sPos.getZ(i);
+        const taper = y > 0 ? 1.0 - y * 0.58 : 1.0;
+        const n = 1.0 + Math.sin(x * 11 + y * 8) * 0.065 + Math.cos(z * 13 - y * 9) * 0.05;
+        const ny = (y + 0.34) * 1.32;
+        sPos.setXYZ(i, x * taper * n, ny, z * taper * n);
+        // Brighter incandescent center, deeper amber-pink crystalline outer ridges
+        const hNorm = Math.min(1, Math.max(0, ny / 0.85));
+        const col = new THREE.Color().setHSL(0.055 + (1 - hNorm) * 0.035, 0.95, 0.42 + (1 - hNorm) * 0.28);
+        sColors.push(col.r, col.g, col.b);
+      }
+      saltGeo.setAttribute('color', new THREE.Float32BufferAttribute(sColors, 3));
+      saltGeo.computeVertexNormals();
+
+      const saltMat = new THREE.MeshPhysicalMaterial({
+        vertexColors: true,
+        emissive: 0xff5a14,
+        emissiveIntensity: 1.45,
+        roughness: 0.52,
+        clearcoat: 0.22,
+        clearcoatRoughness: 0.55
+      });
+      const saltRock = new THREE.Mesh(saltGeo, saltMat);
+      saltRock.position.y = 0.06;
+      saltRock.castShadow = true;
+      saltRock.userData = saltLampGroup.userData;
+      saltLampGroup.add(saltRock);
+      interactables.push(saltRock);
+      const saltHalo = addGlowSprite(saltLampGroup, 0, 0.46, 0, 1.25, 0xff7b29, 0.36);
+      scene.add(saltLampGroup);
+      addContactShadow(3.28, 0, -2.85, 0.36, 0.36, 0.62);
+
+      // 7-Chakra Vertical Banner on Right Wall
+      const chakraBannerGroup = new THREE.Group();
+      chakraBannerGroup.position.set(5.34, 3.15, -1.55);
+      chakraBannerGroup.rotation.y = -Math.PI / 2;
+
+      const chakraTex = createChakraBannerTexture();
+      const bannerCloth = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.95, 2.75),
+        new THREE.MeshStandardMaterial({
+          map: chakraTex,
+          bumpMap: fabricBumpTex,
+          bumpScale: 0.008,
+          roughness: 0.88,
+          side: THREE.DoubleSide
+        })
+      );
+      chakraBannerGroup.add(bannerCloth);
+
+      [-1.38, 1.38].forEach(ry => {
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.08, 12), darkWoodMat);
+        rod.rotation.z = Math.PI / 2;
+        rod.position.y = ry;
+        chakraBannerGroup.add(rod);
+      });
+      scene.add(chakraBannerGroup);
+
+      // Floor Lanterns
+      function createFloorLantern(x, z, h = 0.34) {
+        const l = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.11, 0.11, h, 28),
+          new THREE.MeshStandardMaterial({
+            map: latticeTex,
+            emissiveMap: latticeTex,
+            emissive: 0xff9a33,
+            emissiveIntensity: 1.45,
+            roughness: 0.35,
+            metalness: 0.6
+          })
+        );
+        l.position.set(x, h / 2, z);
+        l.castShadow = true;
+        scene.add(l);
+        addContactShadow(x, 0, z, 0.18, 0.18, 0.55);
+      }
+      createFloorLantern(-2.35, -2.85, 0.36);
+      createFloorLantern(-1.95, -2.05, 0.24);
+      createFloorLantern(2.25, -2.95, 0.28);
+
+      // ==========================================
+      // 13. DREAMCATCHER ON LEFT WALL
+      // ==========================================
+      const dreamcatcherGroup = new THREE.Group();
+      dreamcatcherGroup.position.set(-4.64, 3.08, -2.05);
+      dreamcatcherGroup.rotation.y = Math.PI / 2;
+
+      const hoopMat = new THREE.MeshStandardMaterial({ color: 0x7a502c, roughness: 0.72 });
+      const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.017, 14, 56), hoopMat);
+      dreamcatcherGroup.add(hoop);
+
+      const innerHoop = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.009, 10, 36), hoopMat);
+      dreamcatcherGroup.add(innerHoop);
+
+      const webMat = new THREE.MeshStandardMaterial({ color: 0xe2cfb6, roughness: 0.84 });
+      const spokeInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.0028, 0.0028, 1.11, 5), webMat, 16);
+      const spokeDummy = new THREE.Object3D();
+      for (let s = 0; s < 16; s++) {
+        spokeDummy.rotation.set(0, 0, (s / 16) * Math.PI * 2);
+        spokeDummy.updateMatrix();
+        spokeInst.setMatrixAt(s, spokeDummy.matrix);
+      }
+      dreamcatcherGroup.add(spokeInst);
+
+      // Feathers with wooden accent beads
+      const feathers = [];
+      for (let f = -3; f <= 3; f++) {
+        const fGroup = new THREE.Group();
+        const hangY = -0.56 - Math.abs(f) * 0.035;
+        fGroup.position.set(f * 0.14, hangY, 0);
+
+        const cordLen = 0.36 - Math.abs(f) * 0.035;
+        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0035, cordLen, 6), webMat);
+        cord.position.y = -cordLen / 2;
+        fGroup.add(cord);
+
+        const accentBead = new THREE.Mesh(
+          new THREE.SphereGeometry(0.016, 10, 10),
+          new THREE.MeshStandardMaterial({ color: f % 2 === 0 ? 0x3b8c88 : 0x9c5a2d, roughness: 0.35 })
+        );
+        accentBead.position.y = -cordLen;
+        fGroup.add(accentBead);
+
+        const feather = new THREE.Mesh(
+          createCurvedPetalGeo(0.095, 0.38),
+          new THREE.MeshStandardMaterial({
+            color: f % 2 === 0 ? 0xead8c0 : 0xb88962,
+            roughness: 0.88,
+            side: THREE.DoubleSide
+          })
+        );
+        feather.rotation.x = Math.PI;
+        feather.position.y = -cordLen - 0.02;
+        fGroup.add(feather);
+
+        dreamcatcherGroup.add(fGroup);
+        feathers.push({ group: fGroup, phase: f * 0.72 });
+      }
+      scene.add(dreamcatcherGroup);
+
+      // ==========================================
+      // 14. REALISTIC BOTANICALS (CURVED LEAVES & VINES)
+      // ==========================================
+      const animatedLeaves = [];
+      const leafTexMid = createLeafTexture('#36642b', '#5d9148');
+      const leafTexDark = createLeafTexture('#23451e', '#447034');
+
+      const leafMatMid = new THREE.MeshPhysicalMaterial({
+        map: leafTexMid,
+        roughness: 0.36,
+        metalness: 0.02,
+        clearcoat: 0.32,
+        clearcoatRoughness: 0.35,
+        side: THREE.DoubleSide
+      });
+      const leafMatDark = new THREE.MeshPhysicalMaterial({
+        map: leafTexDark,
+        roughness: 0.40,
+        metalness: 0.02,
+        clearcoat: 0.25,
+        clearcoatRoughness: 0.4,
+        side: THREE.DoubleSide
+      });
+
+      // Sculpted heart-shaped curved pothos leaf geometry
+      function createHeartLeafGeo(size = 0.16) {
+        const geo = new THREE.PlaneGeometry(size, size * 1.25, 6, 8);
+        const p = geo.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i);
+          const y = p.getY(i);
+          const ny = (y + size * 0.625) / (size * 1.25); // 0 base to 1 tip
+          const widthEnv = Math.sin(Math.pow(ny, 0.72) * Math.PI) * 1.15;
+          const archZ = -Math.pow(ny, 1.7) * size * 0.32 + Math.abs(x) * 0.18;
+          p.setXYZ(i, x * widthEnv, ny * size * 1.25, archZ);
+        }
+        geo.computeVertexNormals();
+        return geo;
+      }
+
+      const pothosLeafGeo = createHeartLeafGeo(0.15);
+      const stemMat = new THREE.MeshStandardMaterial({ color: 0x2a4a22, roughness: 0.65 });
+
+      function createHangingVine(x, yTop, z, length = 3.2, leafCount = 26) {
+        const vineGroup = new THREE.Group();
+        vineGroup.position.set(x, yTop, z);
+
+        const pts = [];
+        for (let s = 0; s <= 10; s++) {
+          const t = s / 10;
+          pts.push(new THREE.Vector3(Math.sin(t * 7.5 + x) * 0.075, -t * length, Math.cos(t * 6.0 + z) * 0.075));
+        }
+        const curve = new THREE.CatmullRomCurve3(pts);
+        const stem = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.008, 6, false), stemMat);
+        vineGroup.add(stem);
+
+        const leafInst = new THREE.InstancedMesh(pothosLeafGeo, leafMatMid, leafCount);
+        const ld = new THREE.Object3D(), col = new THREE.Color();
+        for (let i = 0; i < leafCount; i++) {
+          const t = (i + 0.5) / leafCount;
+          ld.position.copy(curve.getPoint(t));
+          ld.rotation.set(0.55 + (i % 3) * 0.16, i * 1.65, Math.sin(i) * 0.35);
+          ld.scale.setScalar(0.82 + (i % 3) * 0.18);
+          ld.updateMatrix();
+          leafInst.setMatrixAt(i, ld.matrix);
+          col.setHex(i % 2 === 0 ? 0xffffff : 0xc0dbb6);
+          leafInst.setColorAt(i, col);
+        }
+        leafInst.castShadow = true;
+        vineGroup.add(leafInst);
+        scene.add(vineGroup);
+        animatedLeaves.push({ mesh: vineGroup, phase: x + z });
+      }
+
+      createHangingVine(-2.85, 5.4, -3.85, 4.7, 32);
+      createHangingVine(-2.45, 5.4, -3.82, 3.8, 26);
+      createHangingVine(-3.25, 5.4, -3.75, 3.2, 22);
+      createHangingVine(-4.35, 4.95, 2.85, 3.7, 28);
+      createHangingVine(-4.42, 4.95, 1.55, 3.3, 24);
+      createHangingVine(-4.30, 4.95, 3.65, 3.8, 26);
+
+      // Altar Side Bushy Plants (Left & Right) — batched via InstancedMesh
+      const terraPotMat = new THREE.MeshStandardMaterial({ color: 0x734d34, roughness: 0.72 });
+      [-1.78, 1.72].forEach((ax, idx) => {
+        const potGroup = new THREE.Group();
+        potGroup.position.set(ax, 0.955, -3.48);
+
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.135, 0.28, 24), terraPotMat);
+        pot.position.y = 0.14;
+        pot.castShadow = true;
+        potGroup.add(pot);
+
+        const soil = new THREE.Mesh(
+          new THREE.CircleGeometry(0.165, 20),
+          new THREE.MeshStandardMaterial({ color: 0x261a12, roughness: 0.96 })
+        );
+        soil.rotation.x = -Math.PI / 2;
+        soil.position.y = 0.275;
+        potGroup.add(soil);
+
+        const bushInst = new THREE.InstancedMesh(pothosLeafGeo, leafMatMid, 34);
+        const bd = new THREE.Object3D(), bCol = new THREE.Color();
+        for (let l = 0; l < 34; l++) {
+          const angle = (l / 34) * Math.PI * 2 * 3;
+          const isTrailing = l > 18;
+          const r = isTrailing ? 0.16 + (l - 18) * 0.014 : 0.05 + (l % 4) * 0.045;
+          const ly = isTrailing ? 0.25 - (l - 18) * 0.05 : 0.29 + (l % 5) * 0.06;
+          bd.position.set(Math.cos(angle) * r, ly, Math.sin(angle) * r + 0.04);
+          bd.rotation.set(isTrailing ? 1.15 : 0.45, angle, 0.25);
+          bd.scale.setScalar(0.95);
+          bd.updateMatrix();
+          bushInst.setMatrixAt(l, bd.matrix);
+          bCol.setHex(l % 2 === 0 ? 0xffffff : 0xc0dbb6);
+          bushInst.setColorAt(l, bCol);
+        }
+        potGroup.add(bushInst);
+        scene.add(potGroup);
+        addContactShadow(ax, 0.955, -3.48, 0.22, 0.22, 0.55);
+        animatedLeaves.push({ mesh: potGroup, phase: idx * 2.5 });
+      });
+
+      // Large Tropical Philodendron / Peace Lily on Tripod Stand (Right Side)
+      const bigPlantGroup = new THREE.Group();
+      bigPlantGroup.position.set(2.68, 0, -2.88);
+
+      for (let leg = 0; leg < 3; leg++) {
+        const a = (leg / 3) * Math.PI * 2;
+        const standLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.024, 0.44, 12), darkWoodMat);
+        standLeg.position.set(Math.cos(a) * 0.23, 0.22, Math.sin(a) * 0.23);
+        standLeg.rotation.z = Math.cos(a) * 0.12;
+        standLeg.castShadow = true;
+        bigPlantGroup.add(standLeg);
+      }
+
+      const ceramicPot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.36, 0.26, 0.56, 32),
+        new THREE.MeshPhysicalMaterial({ color: 0x6e5138, roughness: 0.45, clearcoat: 0.25 })
+      );
+      ceramicPot.position.y = 0.62;
+      ceramicPot.castShadow = true;
+      ceramicPot.receiveShadow = true;
+      bigPlantGroup.add(ceramicPot);
+
+      const bigLeafGeo = createHeartLeafGeo(0.42);
+      const foliageCluster = new THREE.Group();
+      foliageCluster.position.y = 0.88;
+      for (let b = 0; b < 14; b++) {
+        const branch = new THREE.Group();
+        const angle = (b / 14) * Math.PI * 2 + (b % 2) * 0.12;
+        const hScale = 0.72 + (b % 3) * 0.26;
+
+        const stemCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 0.42 * hScale, 0.12 * hScale),
+          new THREE.Vector3(0, 0.78 * hScale, 0.34 * hScale)
+        ]);
+        const stem = new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 12, 0.011, 6, false), stemMat);
+        branch.add(stem);
+
+        const bigLeaf = new THREE.Mesh(bigLeafGeo, b % 2 === 0 ? leafMatMid : leafMatDark);
+        bigLeaf.position.set(0, 0.76 * hScale, 0.33 * hScale);
+        bigLeaf.rotation.x = 0.85;
+        bigLeaf.scale.setScalar(hScale);
+        bigLeaf.castShadow = true;
+        branch.add(bigLeaf);
+
+        branch.rotation.y = angle;
+        foliageCluster.add(branch);
+      }
+      bigPlantGroup.add(foliageCluster);
+      scene.add(bigPlantGroup);
+      addContactShadow(2.68, 0, -2.88, 0.44, 0.44, 0.62);
+      animatedLeaves.push({ mesh: foliageCluster, phase: 4.2 });
+
+      // ==========================================
+      // 15. GOLDEN SUNLIGHT DUST MOTES
+      // ==========================================
+      const dustCount = 190;
+      const dustGeo = new THREE.BufferGeometry();
+      const dustPositions = new Float32Array(dustCount * 3);
+      for (let i = 0; i < dustCount; i++) {
+        dustPositions[i * 3] = -4.2 + Math.random() * 8.4;
+        dustPositions[i * 3 + 1] = 0.25 + Math.random() * 4.5;
+        dustPositions[i * 3 + 2] = -3.4 + Math.random() * 7.2;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+      const dustMat = new THREE.PointsMaterial({
+        map: warmGlowTex,
+        color: 0xffe2a8,
+        size: 0.065,
+        transparent: true,
+        opacity: 0.58,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const dustParticles = new THREE.Points(dustGeo, dustMat);
+      scene.add(dustParticles);
+
+      // ==========================================
+      // 16. SPATIAL WEB AUDIO (DRONE, BREEZE & BOWL)
+      // ==========================================
+      let audioCtx = null;
+      let ambientGain = null;
+      let breezeFilter = null;
+
+      function initAudio() {
+        if (audioCtx) return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        audioCtx = new AudioContextClass();
+
+        ambientGain = audioCtx.createGain();
+        ambientGain.gain.value = 0.0001;
+        ambientGain.connect(audioCtx.destination);
+
+        // Warm 432Hz harmonic pad
+        [108, 162, 216, 324, 432].forEach((f, idx) => {
+          const osc = audioCtx.createOscillator();
+          const oscGain = audioCtx.createGain();
+          osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+          osc.frequency.value = f;
+          oscGain.gain.value = 0.042 / (idx + 1);
+          osc.connect(oscGain);
+          oscGain.connect(ambientGain);
+          osc.start();
+        });
+
+        // Soft filtered pink-noise wind breeze
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.997 * b0 + white * 0.029;
+          b1 = 0.985 * b1 + white * 0.032;
+          b2 = 0.950 * b2 + white * 0.048;
+          output[i] = (b0 + b1 + b2) * 0.14;
+        }
+        const noiseSrc = audioCtx.createBufferSource();
+        noiseSrc.buffer = noiseBuffer;
+        noiseSrc.loop = true;
+
+        breezeFilter = audioCtx.createBiquadFilter();
+        breezeFilter.type = 'lowpass';
+        breezeFilter.frequency.value = 340;
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0.18;
+
+        noiseSrc.connect(breezeFilter);
+        breezeFilter.connect(noiseGain);
+        noiseGain.connect(ambientGain);
+        noiseSrc.start();
+      }
+
+      function toggleAmbientAudio() {
+        initAudio();
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        state.audioActive = !state.audioActive;
+        const now = audioCtx.currentTime;
+        ambientGain.gain.cancelScheduledValues(now);
+        ambientGain.gain.setValueAtTime(Math.max(0.0001, ambientGain.gain.value), now);
+        ambientGain.gain.exponentialRampToValueAtTime(state.audioActive ? 0.36 : 0.0001, now + 0.9);
+
+        document.getElementById('audio-icon').textContent = state.audioActive ? '🔊' : '🔇';
+        document.getElementById('audio-label').textContent = state.audioActive ? 'Som: ON' : 'Som Relaxante';
+      }
+
+      function strikeSingingBowl() {
+        initAudio();
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        // Authentic Tibetan bowl inharmonic partials with warm beating
+        const partials = [
+          { freq: 216.0, amp: 0.24, decay: 6.8 },
+          { freq: 217.6, amp: 0.14, decay: 6.2 },
+          { freq: 589.5, amp: 0.11, decay: 4.8 },
+          { freq: 591.8, amp: 0.06, decay: 4.4 },
+          { freq: 1122.0, amp: 0.04, decay: 3.0 }
+        ];
+
+        partials.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(p.freq, now);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(p.amp, now + 0.035);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + p.decay);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + p.decay + 0.06);
+        });
+
+        state.bowlRingTime = performance.now() * 0.001;
+        showToast('🔔 Ressonância da Tigela Tibetana ativada');
+      }
+
+      // ==========================================
+      // 17. UI HANDLERS, QUALITY SCALING & RAYCASTER
+      // ==========================================
+      const toastEl = document.getElementById('interaction-toast');
+      const toastText = document.getElementById('toast-text');
+      let toastTimeout = null;
+
+      function showToast(msg) {
+        toastText.textContent = msg;
+        toastEl.style.opacity = '1';
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => { toastEl.style.opacity = '0'; }, 2800);
+      }
+
+      // Camera presets
+      const camBtns = document.querySelectorAll('.cam-btn');
+      camBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          camBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const preset = cameraPresets[btn.getAttribute('data-cam')];
+          if (preset) {
+            activeCamTransition = {
+              startPos: camera.position.clone(),
+              endPos: new THREE.Vector3(...preset.pos),
+              startTarget: controls.target.clone(),
+              endTarget: new THREE.Vector3(...preset.target),
+              progress: 0
+            };
+          }
+        });
+      });
+
+      // Sliders
+      function bindSlider(id, valId, stateKey) {
+        const el = document.getElementById(id);
+        const valEl = document.getElementById(valId);
+        el.addEventListener('input', () => {
+          const v = Number(el.value);
+          state[stateKey] = v / 100;
+          valEl.textContent = v + '%';
+        });
+      }
+      bindSlider('slider-smoke', 'val-smoke', 'smokeDensity');
+      bindSlider('slider-fire', 'val-fire', 'fireIntensity');
+      bindSlider('slider-sun', 'val-sun', 'sunIntensity');
+      bindSlider('slider-glow', 'val-glow', 'glowIntensity');
+      bindSlider('slider-breeze', 'val-breeze', 'breezeStrength');
+
+      // Adaptive Quality Selector
+      const qualBtns = document.querySelectorAll('.qual-btn');
+      qualBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          qualBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const q = btn.getAttribute('data-quality');
+          state.quality = q;
+          if (q === 'eco') {
+            renderer.setPixelRatio(1);
+            sunLight.castShadow = false;
+            godRayGroup.visible = false;
+          } else if (q === 'high') {
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            sunLight.castShadow = true;
+            godRayGroup.visible = true;
+          } else {
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            sunLight.castShadow = true;
+            godRayGroup.visible = true;
+          }
+          showToast(`✨ Qualidade gráfica ajustada para ${q.toUpperCase()}`);
+        });
+      });
+
+      document.getElementById('btn-bowl-strike').addEventListener('click', strikeSingingBowl);
+      document.getElementById('btn-audio-toggle').addEventListener('click', toggleAmbientAudio);
+
+      const orbitBtn = document.getElementById('btn-orbit-auto');
+      const orbitStateSpan = document.getElementById('orbit-state');
+      orbitBtn.addEventListener('click', () => {
+        state.autoOrbit = !state.autoOrbit;
+        controls.autoRotate = state.autoOrbit;
+        controls.autoRotateSpeed = 0.55;
+        orbitStateSpan.textContent = state.autoOrbit ? 'ON' : 'OFF';
+        orbitBtn.classList.toggle('active', state.autoOrbit);
+      });
+
+      const breathBtn = document.getElementById('btn-breath-toggle');
+      breathBtn.addEventListener('click', () => {
+        state.breathingGuide = !state.breathingGuide;
+        breathBtn.textContent = state.breathingGuide ? 'Ativo' : 'Pausado';
+      });
+
+      const drawer = document.getElementById('control-drawer');
+      document.getElementById('btn-toggle-ui').addEventListener('click', () => {
+        state.uiOpen = !state.uiOpen;
+        drawer.style.opacity = state.uiOpen ? '1' : '0';
+        drawer.style.pointerEvents = state.uiOpen ? 'auto' : 'none';
+      });
+
+      const modalDetails = document.getElementById('modal-details');
+      document.getElementById('btn-ref-modal').addEventListener('click', () => {
+        modalDetails.classList.remove('hidden');
+        modalDetails.classList.add('flex');
+      });
+      document.getElementById('btn-close-modal').addEventListener('click', () => {
+        modalDetails.classList.add('hidden');
+        modalDetails.classList.remove('flex');
+      });
+
+      // 3D Raycaster Click & Pointer Hover Feedback
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      renderer.domElement.addEventListener('pointermove', (e) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(interactables, false);
+        renderer.domElement.style.cursor = hits.length > 0 ? 'pointer' : 'grab';
+      });
+
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(interactables, false);
+        if (hits.length > 0) {
+          const info = hits[0].object.userData || {};
+          if (info.type === 'bowl') {
+            strikeSingingBowl();
+          } else if (info.type === 'incense') {
+            state.smokeDensity = state.smokeDensity > 1.4 ? 1.0 : 1.75;
+            document.getElementById('slider-smoke').value = Math.round(state.smokeDensity * 100);
+            document.getElementById('val-smoke').textContent = Math.round(state.smokeDensity * 100) + '%';
+            showToast('💨 Espiral de fumaça do incenso intensificada');
+          } else if (info.type === 'buddha') {
+            showToast('🪷 "A paz vem de dentro. Não a procure à sua volta."');
+          } else if (info.type === 'salt') {
+            state.saltLampBoost = state.saltLampBoost > 1.2 ? 0.65 : 1.45;
+            showToast('🧡 Brilho da Luminária de Sal ajustado');
+          } else if (info.type === 'lotus') {
+            state.lotusBoost = state.lotusBoost > 1.2 ? 0.8 : 1.5;
+            showToast('🪷 Flor de Lótus iluminada');
+          } else if (info.name) {
+            showToast('✨ ' + info.name);
+          }
+        }
+      });
+
+      let zenPaused = false, zenDisposed = false, zenRafId = 0;
+      const onResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener('resize', onResize);
+
+      function cleanupZen() {
+        if (zenDisposed) return;
+        zenDisposed = true;
+        cancelAnimationFrame(zenRafId);
+        window.removeEventListener('resize', onResize);
+        renderer.domElement.removeEventListener('pointerdown', controls._onPointerDown);
+        window.removeEventListener('pointermove', controls._onPointerMove);
+        window.removeEventListener('pointerup', controls._onPointerUp);
+        renderer.domElement.removeEventListener('wheel', controls._onWheel);
+        renderer.domElement.removeEventListener('touchstart', controls._onTouchStart);
+        renderer.domElement.removeEventListener('touchmove', controls._onTouchMove);
+        const seen = new Set();
+        scene.traverse(o => {
+          [o.geometry, o.material].forEach(it => {
+            if (it && !seen.has(it)) { seen.add(it); if (it.isMaterial) Object.values(it).forEach(v => { if (v && v.isTexture && !seen.has(v)) { seen.add(v); v.dispose(); } }); it.dispose(); }
+          });
+        });
+        if (scene.environment) scene.environment.dispose();
+        renderer.dispose();
+        if (audioCtx) { try { audioCtx.close(); } catch (e) {} }
+      }
+      window.addEventListener('beforeunload', cleanupZen);
+      window.addEventListener('pagehide', cleanupZen);
+      window.addEventListener('sangi:dispose', cleanupZen);
+      window.addEventListener('sangi:pause', () => { zenPaused = true; if (audioCtx && state.audioActive) audioCtx.suspend().catch(() => {}); });
+      window.addEventListener('sangi:resume', () => { zenPaused = false; lastTime = performance.now(); if (audioCtx && state.audioActive) audioCtx.resume().catch(() => {}); });
+      window.addEventListener('sangi:mute', () => { if (state.audioActive) toggleAmbientAudio(); });
+      window.addEventListener('sangi:reset', () => {
+        const photoBtn = document.querySelector('[data-cam="photo"]');
+        if (photoBtn) photoBtn.click();
+      });
+
+      // ==========================================
+      // 18. ANIMATION LOOP
+      // ==========================================
+      let lastTime = performance.now();
+      let frameCount = 0;
+      let fpsTimer = 0;
+      const fpsBadge = document.getElementById('fps-badge');
+      const breathStatus = document.getElementById('breath-status');
+
+      renderer.render(scene, camera);
+      const loadingEl = document.getElementById('loading-screen');
+      loadingEl.classList.add('hidden-load');
+
+      function animate(nowMs) {
+        if (zenDisposed) return;
+        zenRafId = requestAnimationFrame(animate);
+        if (zenPaused || document.hidden) { lastTime = nowMs; return; }
+
+        const dt = Math.min((nowMs - lastTime) * 0.001, 0.1);
+        lastTime = nowMs;
+        const t = nowMs * 0.001;
+
+        frameCount++;
+        fpsTimer += dt;
+        if (fpsTimer >= 0.5) {
+          fpsBadge.textContent = Math.round(frameCount / fpsTimer) + ' FPS';
+          frameCount = 0;
+          fpsTimer = 0;
+        }
+
+        // Smooth camera transitions
+        if (activeCamTransition) {
+          activeCamTransition.progress += dt * 1.55;
+          const k = Math.min(activeCamTransition.progress, 1.0);
+          const ease = 1 - Math.pow(1 - k, 3);
+          camera.position.lerpVectors(activeCamTransition.startPos, activeCamTransition.endPos, ease);
+          controls.target.lerpVectors(activeCamTransition.startTarget, activeCamTransition.endTarget, ease);
+          if (k >= 1.0) activeCamTransition = null;
+        }
+        controls.update();
+
+        // 1. Volumetric God Rays & Sun Intensity
+        godRayUniforms.uTime.value = t;
+        godRayUniforms.uIntensity.value = state.sunIntensity;
+        sunLight.intensity = 5.4 * state.sunIntensity;
+        windowBounceLight.intensity = 8.5 * state.sunIntensity;
+        patchMat.opacity = 0.42 * state.sunIntensity;
+
+        // 2. Incense Smoke Ribbon + Volumetric Puffs
+        ribbonUniforms.uTime.value = t;
+        ribbonUniforms.uDensity.value = state.smokeDensity;
+        ribbonUniforms.uBreeze.value = state.breezeStrength;
+
+        smokePuffs.forEach((p, idx) => {
+          p.age += dt * (0.68 + (idx % 5) * 0.055);
+          if (p.age > p.maxLife) p.age = 0;
+          const lifeRatio = p.age / p.maxLife;
+          const height = lifeRatio * 1.65;
+
+          const waveX = Math.sin(height * 5.0 - t * 1.7 + p.seed * 0.15) * (0.02 + lifeRatio * 0.16) * (0.6 + state.breezeStrength * 0.4);
+          const waveZ = Math.cos(height * 4.2 - t * 1.4 + p.seed * 0.15) * (0.02 + lifeRatio * 0.10);
+
+          p.sprite.position.set(smokeOrigin.x + waveX, smokeOrigin.y + height, smokeOrigin.z + waveZ);
+          const scale = 0.045 + Math.pow(lifeRatio, 1.18) * 0.36;
+          p.sprite.scale.set(scale, scale * 1.15, 1);
+
+          const fadeIn = Math.min(lifeRatio * 4.2, 1.0);
+          const fadeOut = Math.pow(1.0 - lifeRatio, 1.6);
+          p.mat.opacity = fadeIn * fadeOut * 0.28 * state.smokeDensity;
+        });
+
+        emberTip.material.color.setHSL(0.04, 1.0, 0.48 + Math.sin(t * 6.5) * 0.12);
+
+        // 3. GLSL Flames & Dynamic Candle Flicker Lights
+        const fireMod = state.fireIntensity;
+        flames.forEach(f => {
+          f.uniforms.uTime.value = t;
+          f.uniforms.uBreeze.value = state.breezeStrength;
+          f.uniforms.uIntensity.value = fireMod;
+          const flicker = 1.0 + Math.sin(t * 14 + f.phase) * 0.08 + Math.cos(t * 23 + f.phase) * 0.05;
+          const s = f.baseScale * Math.max(0.2, fireMod);
+          f.mesh.scale.set(s, s * flicker, s);
+          f.halo.material.opacity = 0.44 * fireMod * flicker;
+        });
+
+        fgCandleLight.intensity = (5.8 + Math.sin(t * 11.5) * 0.55) * fireMod;
+        bowlFlameLight.intensity = (4.2 + Math.cos(t * 13.2) * 0.45) * fireMod;
+        leftVotiveLight.intensity = (3.4 + Math.sin(t * 9.5) * 0.35) * fireMod;
+        moroccanLight.intensity = (8.5 + Math.sin(t * 7.2) * 0.4) * fireMod;
+
+        // 4. Salt Lamp, Lotus Glow & Breathing Guide
+        const breathPulse = state.breathingGuide ? (0.9 + Math.sin(t * 0.85) * 0.14) : 1.0;
+        saltLampLight.intensity = 7.2 * state.glowIntensity * state.saltLampBoost * breathPulse;
+        saltMat.emissiveIntensity = 1.45 * state.glowIntensity * state.saltLampBoost * breathPulse;
+        saltHalo.material.opacity = 0.34 * state.glowIntensity * state.saltLampBoost * breathPulse;
+
+        lotusLight.intensity = 5.2 * state.glowIntensity * state.lotusBoost * breathPulse;
+        lotusPetalMat.emissiveIntensity = 1.55 * state.glowIntensity * state.lotusBoost * breathPulse;
+        lotusHalo.material.opacity = 0.48 * state.glowIntensity * state.lotusBoost * breathPulse;
+
+        if (state.breathingGuide) {
+          const cycle = t % 11;
+          if (cycle < 4) breathStatus.textContent = 'Inspire profundamente pelo nariz...';
+          else if (cycle < 7.5) breathStatus.textContent = 'Sustente a presença no agora...';
+          else breathStatus.textContent = 'Expire soltando as tensões...';
+        }
+
+        // Singing bowl acoustic vibration & golden ripple wave
+        const ringElapsed = t - state.bowlRingTime;
+        if (ringElapsed >= 0 && ringElapsed < 5.0) {
+          const decay = 1.0 - ringElapsed / 5.0;
+          const vib = Math.sin(t * 48) * 0.012 * decay;
+          singingBowl.scale.set(1 + vib, 1 - vib * 0.5, 1 + vib);
+          const wave = (ringElapsed * 1.15) % 1.0;
+          acousticRipple.scale.setScalar(1.0 + wave * 3.2);
+          rippleMat.opacity = (1.0 - wave) * decay * 0.55;
+        } else {
+          singingBowl.scale.set(1, 1, 1);
+          rippleMat.opacity = 0.0;
+        }
+
+        // 5. Gentle Breeze on Plants, Feathers & Moroccan Lantern
+        const bStr = state.breezeStrength;
+        if (breezeFilter && audioCtx) {
+          breezeFilter.frequency.setTargetAtTime(220 + bStr * 240, audioCtx.currentTime, 0.2);
+        }
+        moroccanGroup.rotation.z = Math.sin(t * 0.85) * 0.018 * bStr;
+        feathers.forEach(f => {
+          f.group.rotation.z = Math.sin(t * 1.75 + f.phase) * 0.068 * bStr;
+        });
+        animatedLeaves.forEach(item => {
+          item.mesh.rotation.z = Math.sin(t * 1.25 + item.phase) * 0.02 * bStr;
+        });
+
+        // 6. Floating Sunlit Dust Motes
+        const dPos = dustGeo.attributes.position.array;
+        for (let i = 0; i < dustCount; i++) {
+          dPos[i * 3 + 1] += Math.sin(t * 0.55 + i) * 0.0006;
+          dPos[i * 3] += Math.cos(t * 0.38 + i) * 0.0005 * bStr;
+        }
+        dustGeo.attributes.position.needsUpdate = true;
+
+        renderer.render(scene, camera);
+      }
+
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>

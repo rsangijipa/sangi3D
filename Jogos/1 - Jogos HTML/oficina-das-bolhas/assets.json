@@ -1,0 +1,23 @@
+{
+  "project": "Oficina das Bolhas",
+  "assets": [
+    {
+      "item": "Geometria do ateliê, utensílios, bolhas e aro, texturas de materiais, janela e rótulos",
+      "provenance": "Procedurais, gerados especificamente para a oficina",
+      "source": "studio.js"
+    },
+    {
+      "item": "Sons de mergulho, sopro e estalo",
+      "provenance": "Síntese Web Audio por osciladores",
+      "source": "main.js e Sistema/shared/sangi-workbench.js"
+    },
+    {
+      "item": "Three.js r187",
+      "provenance": "Dependência vendorizada do Sangi3D",
+      "source": "Sistema/shared/vendor/three.module.js e Sistema/shared/vendor/three.core.js",
+      "license": "MIT",
+      "licenseFile": "Sistema/shared/vendor/LICENSE"
+    }
+  ],
+  "externalRequests": []
+}

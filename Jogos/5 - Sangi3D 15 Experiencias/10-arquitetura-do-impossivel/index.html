@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <title>Arquitetura do Impossível · Sangi3D</title>
+  <link rel="stylesheet" href="../launcher-view.css">
+</head>
+<body>
+  <main class="shell">
+    <nav class="bar" aria-label="Navegação">
+      <div class="bar-links">
+        <a href="../index.html">← Experiências</a>
+        <a href="mockup.html">Mockup</a>
+      </div>
+      <div class="bar-links">
+        <button id="helpBtn" type="button" aria-label="Abrir ajuda">? Ajuda</button>
+      </div>
+    </nav>
+
+    <header class="title-row">
+      <div>
+        <p class="kicker">Museu de Percepção Espacial · Sangi3D</p>
+        <h1>Arquitetura do Impossível</h1>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage-col" aria-label="Visualização 3D">
+        <div class="viewport" id="viewportWrap">
+          <canvas id="view" aria-label="Cena 3D interativa de Arquitetura do Impossível" tabindex="0"></canvas>
+          <div class="crosshair" aria-hidden="true"></div>
+
+          <div class="hud-top">
+            <span class="hud-badge" id="hudRoom">Sala: <strong>Hub Central</strong></span>
+            <span class="hud-badge" id="hudGravity">Gravidade: <strong>Chão</strong></span>
+          </div>
+
+          <aside class="hud-stepper" aria-label="Passagem entre plataformas">
+            <p class="hud-stepper-title">Passagem entre plataformas</p>
+            <ol class="steps-list" id="bridgeSteps">
+              <li data-step="0" aria-current="step">Observar</li>
+              <li data-step="1">Alinhar</li>
+              <li data-step="2">Atravessar</li>
+            </ol>
+            <p id="bridgeGuide" class="bridge-guide">Siga até a marca Ponto de Observação.</p>
+          </aside>
+
+          <div class="touch-pad" id="touchStick" aria-label="Joystick tátil de movimento">
+            <div class="touch-knob" id="touchKnob"></div>
+          </div>
+
+          <div class="transition-fade" id="transitionFade" aria-hidden="true"></div>
+          <div class="scene-message" id="scene-message" role="status">Carregando o museu em tempo real…</div>
+        </div>
+
+        <div class="global" role="group" aria-label="Ajustes da experiência">
+          <button id="pause" type="button" aria-pressed="false">Pausar</button>
+          <button id="sound" type="button" aria-pressed="false">Ativar som</button>
+          <button id="photo" type="button">Fotografar</button>
+          <button id="reset" type="button">Reiniciar sala</button>
+          <select id="quality" aria-label="Qualidade gráfica">
+            <option value="LOW">Econômica</option>
+            <option value="BALANCED" selected>Equilibrada</option>
+            <option value="HIGH">Alta</option>
+          </select>
+          <button id="motion" type="button" aria-pressed="false">Movimento reduzido</button>
+        </div>
+      </section>
+
+      <aside class="panel" aria-label="Controles e Salas">
+        <h2>Controles</h2>
+        <p class="instructions">Explore as 5 salas em modo livre. Alinhe estruturas e experimente portais, espelhos e gravidade variável.</p>
+        <p class="hint" id="hint">WASD ou setas para andar. Arraste na cena para olhar. E ativa o ponto contextual.</p>
+
+        <div id="controls" class="rack">
+          <output class="readout" id="bridgeReadout">Passagem fechada</output>
+          <output class="readout" id="progressReadout">Salas visitadas: 1 / 6 · Marcos: 0 / 3</output>
+
+          <div class="walk" aria-label="Controles direcionais">
+            <button type="button" data-move="w" aria-label="Avançar">↑</button>
+            <button type="button" data-move="a" aria-label="Ir à esquerda">←</button>
+            <button type="button" data-move="s" aria-label="Recuar">↓</button>
+            <button type="button" data-move="d" aria-label="Ir à direita">→</button>
+          </div>
+
+          <button type="button" id="ctxInteract" class="primary" disabled>Aproxime-se de um ponto</button>
+
+          <div class="group">
+            <button type="button" id="btnObserve">Ir ao ponto de observação</button>
+            <button type="button" id="btnRotate">Girar 90°</button>
+          </div>
+          <button type="button" id="btnAlignBridge" class="primary">Alinhar plataformas</button>
+          <div class="group">
+            <button type="button" id="btnPanorama">Vista panorâmica</button>
+            <button type="button" id="btnSafe">Ponto seguro</button>
+          </div>
+
+          <details open>
+            <summary>Mapa da Galeria (Teleporte acessível)</summary>
+            <div class="room-list" id="roomList"></div>
+          </details>
+
+          <details>
+            <summary>Câmera, Áudio e Dados</summary>
+            <label class="field">
+              <span class="field-label"><span>Campo de visão (FOV)</span><span id="fovVal">60°</span></span>
+              <input id="fovRange" type="range" min="50" max="84" step="1" value="60" aria-label="Campo de visão (FOV)">
+            </label>
+            <label class="field">
+              <span class="field-label"><span>Volume geral</span><span id="volVal">80%</span></span>
+              <input id="volRange" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="Volume geral">
+            </label>
+            <div class="group">
+              <button type="button" id="btnTransitionMode" aria-pressed="true">Transição suave</button>
+              <button type="button" id="btnSaveLocal">Salvar estado</button>
+            </div>
+            <div class="group">
+              <button type="button" id="btnExportJson">Exportar JSON</button>
+              <button type="button" id="btnImportJson">Importar JSON</button>
+              <button type="button" id="btnClearLocal">Limpar dados</button>
+            </div>
+            <input id="importFile" type="file" accept="application/json,.json" hidden>
+          </details>
+        </div>
+
+        <p id="status" class="status" role="status">Modo livre ativo. Explore o átrio.</p>
+        <small id="backend" class="backend-meta">Three.js r187 · WebGL 2</small>
+      </aside>
+    </div>
+  </main>
+
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <h2 id="helpTitle">Guia de Arquitetura do Impossível</h2>
+    <p>Este museu explora percepção espacial, portais geométricos e gravidade local sem punições nem cronômetro.</p>
+    <ul>
+      <li><strong>Sala 1 · Ponte Anamórfica:</strong> caminhe ao Ponto de Observação, gire o mecanismo em 90° e alinhe as plataformas.</li>
+      <li><strong>Sala 2 · Galeria de Perspectivas:</strong> alinhe os degraus suspensos do ponto azul para alcançar o Terraço Panorâmico.</li>
+      <li><strong>Sala 3 · Escada de Gravidade:</strong> suba a escada leste e pressione <strong>E</strong> (ou o botão contextual) nas placas verdes para caminhar pela parede e pelo teto.</li>
+      <li><strong>Sala 4 · Corredor de Portais:</strong> os arcos azuis mostram o destino em tempo real e preservam direção relativa.</li>
+      <li><strong>Sala 5 · Salão de Espelhos:</strong> compare os reflexos do prisma central para revelar o selo final.</li>
+    </ul>
+    <p><strong>Atalhos:</strong> WASD/Setas movem · Arraste gira a câmera · E interage · R reinicia a sala · P pausa.</p>
+    <button type="button" id="closeHelp" class="primary">Voltar ao museu</button>
+  </dialog>
+
+  <script src="../launcher-view.js" defer></script>
+  <script src="../../../Sistema/shared/sangi-bridge.js" defer></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

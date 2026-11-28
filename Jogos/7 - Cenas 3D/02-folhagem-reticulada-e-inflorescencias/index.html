@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Folhagem Reticulada & Inflorescências 3D — Three.js</title>
+<script src="/Sistema/shared/sangi-bridge.js"></script>
+<script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+<style>
+  :root {
+    --bg: #080f07;
+    --panel: rgba(13, 21, 12, 0.80);
+    --border: rgba(255, 168, 120, 0.25);
+    --accent: #f48c58;
+    --leaf: #5fb04c;
+    --text: #f3f7f2;
+    --muted: #a6b7a4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); }
+  #canvas-wrap { position: fixed; inset: 0; cursor: grab; touch-action: none; }
+  #canvas-wrap:active { cursor: grabbing; }
+  .hud-top { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10; gap: 10px; }
+  .badge { pointer-events: auto; background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; max-width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.48); }
+  .badge h1 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--leaf)); box-shadow: 0 0 10px var(--accent); flex-shrink: 0; }
+  .badge p { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.38; }
+  .hud-actions { pointer-events: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; min-height: 38px; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(12px); transition: 0.2s; }
+  .btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .btn.active { background: rgba(244, 140, 88, 0.22); border-color: var(--accent); color: #ffe3d2; }
+  .panel { position: fixed; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); width: min(306px, calc(100vw - 24px)); background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px; padding: 14px; z-index: 10; transition: 0.28s; box-shadow: 0 14px 36px rgba(0,0,0,0.5); }
+  .panel.collapsed { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; }
+  .ctrl { margin-bottom: 11px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-bottom: 5px; }
+  .ctrl-head strong { color: var(--text); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; min-height: 22px; }
+  .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .cam-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text); border-radius: 8px; padding: 7px 8px; min-height: 36px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .cam-btn:hover, .cam-btn.active { border-color: var(--accent); background: rgba(244, 140, 88, 0.2); }
+  .hint { position: fixed; left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(10px); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: var(--muted); z-index: 9; }
+  @media (max-width: 640px) {
+    .hud-top { flex-direction: column; }
+    .badge p { display: none; }
+    .hint { display: none; }
+    .panel { left: 12px; right: 12px; width: auto; max-height: 44dvh; overflow: auto; }
+  }
+</style>
+</head>
+<body>
+<div id="canvas-wrap" tabindex="0" aria-label="Cena 3D de folhagem reticulada e inflorescências"></div>
+
+<div class="hud-top">
+  <div class="badge">
+    <h1><span class="dot"></span> Folhagem Reticulada &amp; Inflorescências 3D</h1>
+    <p>Roseta tropical com folhas buladas em alto relevo, orvalho cristalino e panículas florais vermelhas visitadas por polinizadores.</p>
+  </div>
+  <div class="hud-actions">
+    <button class="btn" id="btn-mood">Clima: Dossel</button>
+    <button class="btn active" id="btn-panel">Controles</button>
+  </div>
+</div>
+
+<div class="hint">Arraste para girar · Scroll/Pinça para zoom · Setas para orbitar</div>
+
+<div class="panel" id="panel">
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Vento na mata</span><strong id="val-wind">40%</strong></div>
+    <input type="range" id="rng-wind" aria-label="Vento na mata" min="0" max="100" value="40" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Pólen e insetos</span><strong id="val-pollen">80%</strong></div>
+    <input type="range" id="rng-pollen" aria-label="Pólen e insetos" min="0" max="100" value="80" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Ângulos de câmera</span><strong>4 presets</strong></div>
+    <div class="cam-grid">
+      <button class="cam-btn active" data-cam="photo">Topo (Foto)</button>
+      <button class="cam-btn" data-cam="flowers">Cachos Florais</button>
+      <button class="cam-btn" data-cam="veins">Relevo Folha</button>
+      <button class="cam-btn" data-cam="orbit">Órbita 3D</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  const wrap = document.getElementById('canvas-wrap');
+  const isMobile = matchMedia('(max-width: 720px)').matches;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let seed = 42019;
+  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  const rand = (a, b) => a + (b - a) * rnd();
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b1509);
+  scene.fog = new THREE.FogExp2(0x0b1509, 0.048);
+
+  const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.05, 90);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.65));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  wrap.appendChild(renderer.domElement);
+
+  // PMREM Canopy Environment Reflection (adds realistic waxy cuticle highlights)
+  (function buildEnv() {
+    const ec = document.createElement('canvas'); ec.width = 512; ec.height = 256;
+    const ex = ec.getContext('2d');
+    const g = ex.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0.0, '#8cc89c');
+    g.addColorStop(0.38, '#c8dfb2');
+    g.addColorStop(0.55, '#2b4720');
+    g.addColorStop(1.0, '#0a1208');
+    ex.fillStyle = g; ex.fillRect(0, 0, 512, 256);
+    for (let i = 0; i < 36; i++) {
+      ex.fillStyle = `rgba(${i % 2 === 0 ? '255,245,205' : '32,68,24'}, ${0.12 + rnd() * 0.22})`;
+      ex.beginPath(); ex.ellipse(rnd() * 512, 25 + rnd() * 110, 12 + rnd() * 48, 8 + rnd() * 32, 0, 0, Math.PI * 2); ex.fill();
+    }
+    const sunSpot = ex.createRadialGradient(340, 62, 2, 340, 62, 58);
+    sunSpot.addColorStop(0, '#fffef2'); sunSpot.addColorStop(0.35, 'rgba(255,240,190,0.6)'); sunSpot.addColorStop(1, 'rgba(255,240,190,0)');
+    ex.fillStyle = sunSpot; ex.fillRect(0, 0, 512, 256);
+    const tex = new THREE.CanvasTexture(ec); tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const rt = pmrem.fromEquirectangular(tex);
+    scene.environment = rt.texture;
+    pmrem.dispose(); tex.dispose();
+  })();
+
+  const defaultCam = { theta: 0.12, phi: 0.24, radius: isMobile ? 7.6 : 6.2, target: new THREE.Vector3(0, 0.55, 0) };
+  const camState = {
+    theta: defaultCam.theta, phi: defaultCam.phi, radius: defaultCam.radius,
+    targetTheta: defaultCam.theta, targetPhi: defaultCam.phi, targetRadius: defaultCam.radius,
+    target: defaultCam.target.clone(), desiredTarget: defaultCam.target.clone(), autoOrbit: false
+  };
+
+  // Three-layer Lighting
+  const hemi = new THREE.HemisphereLight(0xdef7d4, 0x162411, 0.92);
+  scene.add(hemi);
+
+  const sun = new THREE.DirectionalLight(0xfff1d4, 2.05);
+  sun.position.set(3.8, 8.6, 2.8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(isMobile ? 1024 : 2048, isMobile ? 1024 : 2048);
+  Object.assign(sun.shadow.camera, { left: -5.5, right: 5.5, top: 5.5, bottom: -5.5, near: 0.5, far: 22 });
+  sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+
+  const rim = new THREE.DirectionalLight(0xff9254, 0.72);
+  rim.position.set(-4.0, 3.2, -3.5);
+  scene.add(rim);
+
+  const bounce = new THREE.PointLight(0x7be078, 0.48, 12);
+  bounce.position.set(0, -0.4, 2.5);
+  scene.add(bounce);
+
+  // High-resolution Bullate Reticulated Leaf Textures (Albedo + Bump + Roughness)
+  function createBullateLeafTextures() {
+    const size = isMobile ? 512 : 1024;
+    const cCol = document.createElement('canvas'); cCol.width = cCol.height = size;
+    const cBmp = document.createElement('canvas'); cBmp.width = cBmp.height = size;
+    const cRgh = document.createElement('canvas'); cRgh.width = cRgh.height = size;
+    const ctx = cCol.getContext('2d'), bCtx = cBmp.getContext('2d'), rCtx = cRgh.getContext('2d');
+    const imgC = ctx.createImageData(size, size), imgB = bCtx.createImageData(size, size), imgR = rCtx.createImageData(size, size);
+    const cd = imgC.data, bd = imgB.data, rd = imgR.data;
+
+    for (let y = 0; y < size; y++) {
+      const u = 1.0 - y / (size - 1);
+      for (let x = 0; x < size; x++) {
+        const v = (x / (size - 1)) * 2 - 1;
+        const av = Math.abs(v);
+        const idx = (y * size + x) * 4;
+
+        const warp = Math.sin(u * 14 + v * 7) * 0.02;
+        const ua = u + warp;
+        const primary = Math.exp(-Math.pow((v - Math.sin(u * 3) * 0.01) * 26, 2));
+        const secArg = (ua * 12.0 - av * 6.8) * Math.PI * 2;
+        const secVein = Math.pow(Math.max(0, Math.cos(secArg)), 14);
+        const tertArg = (av * 17.5 + ua * 6.0) * Math.PI * 2;
+        const tertVein = Math.pow(Math.max(0, Math.cos(tertArg)), 12);
+        const fineRetic = Math.pow(Math.max(0, Math.cos(ua * 52 + v * 28) * Math.sin(v * 46 - ua * 24)), 8);
+
+        const veinMask = clamp(primary * 1.1 + secVein * 0.85 + tertVein * 0.6 + fineRetic * 0.3, 0, 1);
+        const pillow = clamp(Math.sin(secArg * 0.5) * Math.sin(tertArg * 0.5), 0, 1);
+        const edgeGlow = Math.pow(av, 1.8) * 0.35 + Math.pow(u, 1.9) * 0.22;
+        const micro = (Math.sin(x * 0.41 + y * 0.37) * 0.5 + (rnd() - 0.5)) * 7;
+
+        const r = 30 + pillow * 74 + edgeGlow * 66 - veinMask * 24 + primary * 34 + micro;
+        const g = 64 + pillow * 92 + edgeGlow * 74 - veinMask * 30 + primary * 36 + micro * 1.1;
+        const b = 26 + pillow * 40 + edgeGlow * 34 - veinMask * 16 + micro * 0.6;
+
+        cd[idx] = clamp(r, 12, 238);
+        cd[idx + 1] = clamp(g, 24, 245);
+        cd[idx + 2] = clamp(b, 10, 200);
+        cd[idx + 3] = 255;
+
+        const bump = clamp(128 + pillow * 112 + primary * 52 - secVein * 84 - tertVein * 58 - fineRetic * 28 + micro, 0, 255);
+        bd[idx] = bd[idx + 1] = bd[idx + 2] = bump; bd[idx + 3] = 255;
+
+        const rough = clamp(118 + veinMask * 56 - pillow * 28 + micro, 60, 220);
+        rd[idx] = rd[idx + 1] = rd[idx + 2] = rough; rd[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imgC, 0, 0); bCtx.putImageData(imgB, 0, 0); rCtx.putImageData(imgR, 0, 0);
+    const maxA = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    const map = new THREE.CanvasTexture(cCol); map.encoding = THREE.sRGBEncoding; map.anisotropy = maxA;
+    const bumpMap = new THREE.CanvasTexture(cBmp); bumpMap.anisotropy = maxA;
+    const roughnessMap = new THREE.CanvasTexture(cRgh); roughnessMap.anisotropy = maxA;
+    return { map, bumpMap, roughnessMap };
+  }
+
+  function evalLeafSurface(u, v, len, wid, phase) {
+    const av = Math.abs(v);
+    const env = Math.sin(Math.pow(u, 0.72) * Math.PI);
+    // Smooth organic crenate margin without sharp sawtooth triangles
+    const crenate = 0.94 + 0.06 * Math.pow(0.5 + 0.5 * Math.sin(u * Math.PI * 18 + phase * 0.3), 1.6);
+    const x = v * env * crenate * wid * 0.5 + Math.sin(u * 3.4 + phase) * 0.045 * wid;
+    const z = u * len;
+    const arch = Math.sin(u * Math.PI * 0.84) * 0.34 * len - Math.pow(u, 2.25) * 0.24 * len;
+    const cup = av * av * 0.14 * wid;
+    const bullate = Math.sin((u * 12.0 - av * 6.8) * Math.PI * 2) * Math.sin((av * 17.5 + u * 6.0) * Math.PI * 2) * 0.018 * (1 - av * 0.35);
+    return new THREE.Vector3(x, arch + cup + bullate, z);
+  }
+
+  function buildSmoothLeafGeo(len, wid, phase) {
+    const segU = isMobile ? 34 : 50;
+    const segV = isMobile ? 48 : 72;
+    const geo = new THREE.PlaneGeometry(1, 1, segU, segV);
+    const pos = geo.attributes.position, uv = geo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const q = evalLeafSurface(uv.getY(i), uv.getX(i) * 2 - 1, len, wid, phase);
+      pos.setXYZ(i, q.x, q.y, q.z);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  const root = new THREE.Group();
+  scene.add(root);
+
+  // Dark mossy tropical loam floor & subtle shadow ground
+  const floorTex = (function() {
+    const N = 512, c = document.createElement('canvas'); c.width = c.height = N;
+    const x = c.getContext('2d'), im = x.createImageData(N, N);
+    for (let i = 0; i < N * N; i++) {
+      const px = i % N, py = (i / N) | 0;
+      const n = Math.sin(px * 0.03) * Math.cos(py * 0.03) * 14 + Math.sin(px * 0.11 + py * 0.09) * 8 + (rnd() - 0.5) * 20;
+      im.data[i * 4] = clamp(24 + n * 0.6, 8, 90);
+      im.data[i * 4 + 1] = clamp(36 + n * 0.9, 12, 110);
+      im.data[i * 4 + 2] = clamp(18 + n * 0.4, 6, 70);
+      im.data[i * 4 + 3] = 255;
+    }
+    x.putImageData(im, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 4);
+    return t;
+  })();
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(18, 48),
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -1.15;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Central woody rosette crown caudex
+  const caudexMat = new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.9 });
+  const caudex = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.36, 1.45, 16), caudexMat);
+  caudex.position.y = -0.45;
+  caudex.castShadow = true; caudex.receiveShadow = true;
+  root.add(caudex);
+
+  const leafTex = createBullateLeafTextures();
+  const leafMat = new THREE.MeshPhysicalMaterial({
+    map: leafTex.map, bumpMap: leafTex.bumpMap, roughnessMap: leafTex.roughnessMap,
+    bumpScale: 0.055, roughness: 0.56, metalness: 0.0,
+    clearcoat: 0.34, clearcoatRoughness: 0.36, envMapIntensity: 0.85,
+    side: THREE.DoubleSide
+  });
+  leafMat.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vLeafUv;\nvarying vec3 vWorldP;')
+      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvLeafUv = uv;\nvWorldP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vLeafUv;\nvarying vec3 vWorldP;')
+      .replace('#include <dithering_fragment>', `
+        vec3 Vd = normalize(cameraPosition - vWorldP);
+        vec3 Ld = normalize(vec3(0.45, 0.85, 0.35));
+        float back = pow(clamp(dot(Vd, -Ld), 0.0, 1.0), 2.5);
+        float margin = smoothstep(0.35, 1.0, abs(vLeafUv.x - 0.5) * 2.0);
+        gl_FragColor.rgb += vec3(0.28, 0.44, 0.12) * (0.14 + back * 0.42 + margin * 0.12) * diffuseColor.rgb;
+        #include <dithering_fragment>
+      `);
+  };
+
+  const midribMat = new THREE.MeshStandardMaterial({ color: 0x456b2e, roughness: 0.72 });
+  const dewMat = new THREE.MeshPhysicalMaterial({
+    color: 0xf4fff5, roughness: 0.03, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.02,
+    transparent: true, opacity: 0.52, depthWrite: false, envMapIntensity: 2.2
+  });
+  const dewGeo = new THREE.SphereGeometry(1, 14, 10);
+  const dewMatrices = [];
+  const dummy = new THREE.Object3D();
+
+  const leavesAnim = [];
+  const leafRings = [
+    { count: 7, y: -0.22, len: 3.35, wid: 2.38, tilt: 0.35, rotOff: 0.15 },
+    { count: 6, y: 0.06,  len: 2.80, wid: 2.02, tilt: 0.25, rotOff: 0.65 },
+    { count: 5, y: 0.30,  len: 2.00, wid: 1.46, tilt: 0.16, rotOff: 0.30 }
+  ];
+
+  leafRings.forEach((ring) => {
+    for (let i = 0; i < ring.count; i++) {
+      const ang = ring.rotOff + (i / ring.count) * Math.PI * 2 + (rnd() - 0.5) * 0.16;
+      const phase = rnd() * 6.28;
+      const geo = buildSmoothLeafGeo(ring.len, ring.wid, phase);
+      const mesh = new THREE.Mesh(geo, leafMat);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+
+      // Sculpted central midrib tube
+      const mPts = [];
+      for (let k = 0; k <= 10; k++) {
+        const q = evalLeafSurface(0.02 + k * 0.088, 0, ring.len, ring.wid, phase);
+        q.y += 0.008; mPts.push(q);
+      }
+      const midrib = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(mPts), 14, 0.022, 6, false), midribMat);
+      mesh.add(midrib);
+
+      const pivot = new THREE.Group();
+      pivot.position.set(0, ring.y, 0);
+      pivot.rotation.y = ang;
+      pivot.rotation.x = ring.tilt;
+      pivot.add(mesh);
+      root.add(pivot);
+      leavesAnim.push({ pivot, baseX: ring.tilt, phase, speed: 0.72 + rnd() * 0.45 });
+
+      // Collect dew drops attached gently in leaf valleys
+      for (let d = 0; d < 4; d++) {
+        const u = rand(0.22, 0.78), v = rand(-0.65, 0.65);
+        const q = evalLeafSurface(u, v, ring.len, ring.wid, phase);
+        const r = rand(0.024, 0.048);
+        dummy.position.copy(q).add(new THREE.Vector3(0, r * 0.45, 0));
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(r, r * 0.58, r * 1.15);
+        dummy.updateMatrix();
+        const worldDrop = new THREE.Matrix4();
+        pivot.updateMatrix();
+        worldDrop.multiplyMatrices(pivot.matrix, dummy.matrix);
+        dewMatrices.push(worldDrop);
+      }
+    }
+  });
+
+  const dewInst = new THREE.InstancedMesh(dewGeo, dewMat, dewMatrices.length);
+  dewMatrices.forEach((m, i) => dewInst.setMatrixAt(i, m));
+  dewInst.instanceMatrix.needsUpdate = true;
+  root.add(dewInst);
+
+  // Sculpted 5-petal botanical star floret geometry (replaces flat octahedrons!)
+  function buildStarFloretGeo() {
+    const p = [], idx = [];
+    p.push(0, 0.015, 0);
+    const petals = 5;
+    for (let i = 0; i < petals; i++) {
+      const a0 = (i / petals) * Math.PI * 2;
+      const aL = a0 - 0.34, aR = a0 + 0.34;
+      const rMid = 0.028, rTip = 0.056;
+      const b = p.length / 3;
+      p.push(Math.cos(aL) * rMid, 0.02, Math.sin(aL) * rMid);
+      p.push(Math.cos(a0) * rTip, -0.008, Math.sin(a0) * rTip);
+      p.push(Math.cos(aR) * rMid, 0.02, Math.sin(aR) * rMid);
+      idx.push(0, b, b + 1, 0, b + 1, b + 2);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  const floretGeo = buildStarFloretGeo();
+  const budGeo = new THREE.SphereGeometry(0.028, 10, 8);
+  const stamenGeo = new THREE.SphereGeometry(0.013, 6, 5);
+
+  const stemMat = new THREE.MeshPhysicalMaterial({ color: 0x9b1822, roughness: 0.35, clearcoat: 0.25 });
+  const floretMat = new THREE.MeshPhysicalMaterial({ roughness: 0.42, clearcoat: 0.15, side: THREE.DoubleSide });
+  const budMat = new THREE.MeshStandardMaterial({ roughness: 0.38 });
+  const stamenMat = new THREE.MeshStandardMaterial({ color: 0xffe48f, emissive: 0x704500, emissiveIntensity: 0.35, roughness: 0.55 });
+
+  const stemsAnim = [];
+  const flMatrices = [], flColors = [];
+  const budMatrices = [], budColors = [];
+  const stamMatrices = [];
+
+  function addOrganicBranch(parent, start, dir, len, radius, depth) {
+    const midBend = new THREE.Vector3((rnd() - 0.5) * 0.22, 0.12 + rnd() * 0.14, (rnd() - 0.5) * 0.22);
+    const end = start.clone().addScaledVector(dir, len);
+    const mid = start.clone().lerp(end, 0.5).add(midBend);
+    const curve = new THREE.CatmullRomCurve3([start, mid, end]);
+    const tubeGeo = new THREE.TubeGeometry(curve, depth === 0 ? 5 : 8, radius * 0.85, 7, false);
+    const tPos = tubeGeo.attributes.position;
+    for (let i = 0; i < tPos.count; i++) {
+      // Taper radius smoothly
+      const yFrac = clamp((tPos.getY(i) - start.y) / Math.max(0.05, end.y - start.y), 0, 1);
+      const center = curve.getPointAt(yFrac);
+      const scale = 1.0 - yFrac * 0.32;
+      tPos.setXYZ(i, center.x + (tPos.getX(i) - center.x) * scale, center.y + (tPos.getY(i) - center.y) * scale, center.z + (tPos.getZ(i) - center.z) * scale);
+    }
+    tubeGeo.computeVertexNormals();
+    const cyl = new THREE.Mesh(tubeGeo, stemMat);
+    cyl.castShadow = true;
+    parent.add(cyl);
+
+    if (depth <= 2) {
+      const clusters = depth === 0 ? 10 : 6;
+      for (let c = 0; c < clusters; c++) {
+        const t = 0.22 + (c / clusters) * 0.78;
+        const p = curve.getPointAt(t);
+        const subCount = 4 + Math.floor(rnd() * 4);
+        for (let k = 0; k < subCount; k++) {
+          const offset = new THREE.Vector3((rnd() - 0.5) * 0.24, (rnd() - 0.3) * 0.16, (rnd() - 0.5) * 0.24);
+          const pos = p.clone().add(offset);
+          dummy.position.copy(pos);
+          dummy.rotation.set(rand(-0.9, 0.9), rand(0, 6.28), rand(-0.9, 0.9));
+          const s = 0.85 + rnd() * 0.85;
+          dummy.scale.set(s, s, s);
+          dummy.updateMatrix();
+          if (rnd() < 0.65) {
+            flMatrices.push(dummy.matrix.clone());
+            const col = new THREE.Color();
+            const rPick = rnd();
+            if (rPick < 0.48) col.setHex(0xd9301c);
+            else if (rPick < 0.78) col.setHex(0xf26f32);
+            else col.setHex(0xf7c38a);
+            flColors.push(col);
+
+            dummy.position.copy(pos).add(new THREE.Vector3(0, 0.022 * s, 0));
+            dummy.scale.setScalar(s);
+            dummy.updateMatrix();
+            stamMatrices.push(dummy.matrix.clone());
+          } else {
+            dummy.scale.set(s * 0.9, s * 1.25, s * 0.9);
+            dummy.updateMatrix();
+            budMatrices.push(dummy.matrix.clone());
+            budColors.push(new THREE.Color(rnd() < 0.55 ? 0xb8241d : 0xd0d89e));
+          }
+        }
+      }
+    }
+
+    if (depth > 0) {
+      const subBranches = 2 + (depth === 2 ? 1 : 0);
+      for (let b = 0; b < subBranches; b++) {
+        const spread = new THREE.Vector3((rnd() - 0.5) * 0.85, 0.24 + rnd() * 0.35, (rnd() - 0.5) * 0.85);
+        addOrganicBranch(parent, end, dir.clone().add(spread).normalize(), len * (0.62 + rnd() * 0.16), radius * 0.68, depth - 1);
+      }
+    }
+  }
+
+  for (let s = 0; s < 8; s++) {
+    const stalkGroup = new THREE.Group();
+    const ang = (s / 8) * Math.PI * 2 + 0.22;
+    stalkGroup.position.set(0, 0.24, 0);
+    const dir = new THREE.Vector3(Math.cos(ang) * 0.82, 0.60 + rnd() * 0.22, Math.sin(ang) * 0.82).normalize();
+    flMatrices.length = 0; flColors.length = 0;
+    budMatrices.length = 0; budColors.length = 0;
+    stamMatrices.length = 0;
+    addOrganicBranch(stalkGroup, new THREE.Vector3(0, 0, 0), dir, 1.38 + rnd() * 0.32, 0.042, 2);
+
+    const fInst = new THREE.InstancedMesh(floretGeo, floretMat, flMatrices.length);
+    flMatrices.forEach((m, i) => { fInst.setMatrixAt(i, m); fInst.setColorAt(i, flColors[i]); });
+    fInst.instanceMatrix.needsUpdate = true; if (fInst.instanceColor) fInst.instanceColor.needsUpdate = true;
+
+    const bInst = new THREE.InstancedMesh(budGeo, budMat, budMatrices.length);
+    budMatrices.forEach((m, i) => { bInst.setMatrixAt(i, m); bInst.setColorAt(i, budColors[i]); });
+    bInst.instanceMatrix.needsUpdate = true; if (bInst.instanceColor) bInst.instanceColor.needsUpdate = true;
+
+    const sInst = new THREE.InstancedMesh(stamenGeo, stamenMat, stamMatrices.length);
+    stamMatrices.forEach((m, i) => sInst.setMatrixAt(i, m));
+    sInst.instanceMatrix.needsUpdate = true;
+
+    stalkGroup.add(fInst, bInst, sInst);
+    root.add(stalkGroup);
+    stemsAnim.push({ group: stalkGroup, phase: s * 0.85, speed: 1.15 + rnd() * 0.4 });
+  }
+
+  // Background mossy understory mounds & fern fronds for organic depth
+  const moundInst = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({ roughness: 0.96 }), 48);
+  const bgLeafInst = new THREE.InstancedMesh(buildSmoothLeafGeo(1.15, 0.46, 0.5), new THREE.MeshStandardMaterial({ map: leafTex.map, roughness: 0.82, side: THREE.DoubleSide }), 36);
+  for (let i = 0; i < 48; i++) {
+    const a = rnd() * 6.28, r = 2.6 + rnd() * 7.5;
+    dummy.position.set(Math.cos(a) * r, -1.12, Math.sin(a) * r);
+    dummy.rotation.set(rnd() * 0.2, rnd() * 6.28, rnd() * 0.2);
+    dummy.scale.set(rand(0.4, 1.3), rand(0.14, 0.42), rand(0.4, 1.3));
+    dummy.updateMatrix();
+    moundInst.setMatrixAt(i, dummy.matrix);
+    moundInst.setColorAt(i, new THREE.Color().setHSL(rand(0.24, 0.32), rand(0.32, 0.52), rand(0.08, 0.16)));
+  }
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * 6.28 + rnd() * 0.2, r = 3.2 + rnd() * 5.2;
+    dummy.position.set(Math.cos(a) * r, -0.95, Math.sin(a) * r);
+    dummy.rotation.set(-0.45 - rnd() * 0.4, a + Math.PI, 0, 'YXZ');
+    dummy.scale.setScalar(rand(0.75, 1.35));
+    dummy.updateMatrix();
+    bgLeafInst.setMatrixAt(i, dummy.matrix);
+  }
+  moundInst.receiveShadow = true;
+  scene.add(moundInst, bgLeafInst);
+
+  // Articulated hovering hoverflies with translucent wings + soft bokeh pollen
+  const pollinators = [];
+  const beeBodyMat = new THREE.MeshStandardMaterial({ color: 0xffc848, emissive: 0x442200, roughness: 0.35 });
+  const wingMat = new THREE.MeshBasicMaterial({ color: 0xfff8ee, transparent: true, opacity: 0.48, side: THREE.DoubleSide, depthWrite: false });
+  const bodyGeo = new THREE.SphereGeometry(0.026, 8, 8);
+  const wGeo = new THREE.PlaneGeometry(0.055, 0.022);
+  for (let i = 0; i < 6; i++) {
+    const g = new THREE.Group();
+    const b = new THREE.Mesh(bodyGeo, beeBodyMat); b.scale.set(1.5, 0.85, 0.85);
+    const wl = new THREE.Mesh(wGeo, wingMat); wl.position.set(0, 0.015, 0.022);
+    const wr = new THREE.Mesh(wGeo, wingMat); wr.position.set(0, 0.015, -0.022);
+    g.add(b, wl, wr);
+    scene.add(g);
+    pollinators.push({ mesh: g, wl, wr, ang: i * 1.1, rad: 0.95 + rnd() * 1.6, h: 1.05 + rnd() * 0.95, spd: 0.62 + rnd() * 0.55 });
+  }
+
+  const bokehTex = (function() {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(32, 32, 2, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255, 240, 195, 1)');
+    g.addColorStop(0.4, 'rgba(255, 215, 145, 0.55)');
+    g.addColorStop(1, 'rgba(255, 200, 120, 0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    return t;
+  })();
+
+  const pCount = isMobile ? 75 : 140;
+  const pArr = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount; i++) {
+    pArr[i * 3] = (rnd() - 0.5) * 7.2;
+    pArr[i * 3 + 1] = 0.05 + rnd() * 3.4;
+    pArr[i * 3 + 2] = (rnd() - 0.5) * 7.2;
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
+  const pMat = new THREE.PointsMaterial({ color: 0xffe2a8, size: 0.075, map: bokehTex, transparent: true, opacity: 0.68, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pollenPts = new THREE.Points(pGeo, pMat);
+  scene.add(pollenPts);
+
+  // Input & Camera Controls
+  let pointerDown = false, lastX = 0, lastY = 0;
+  const onPointerDown = (e) => { pointerDown = true; lastX = e.clientX; lastY = e.clientY; camState.autoOrbit = false; };
+  const onPointerUp = () => { pointerDown = false; };
+  const onPointerMove = (e) => {
+    if (!pointerDown) return;
+    camState.targetTheta -= (e.clientX - lastX) * 0.0065;
+    camState.targetPhi = clamp(camState.targetPhi - (e.clientY - lastY) * 0.0065, 0.06, 1.42);
+    lastX = e.clientX; lastY = e.clientY;
+  };
+  const onWheel = (e) => {
+    e.preventDefault();
+    camState.targetRadius = clamp(camState.targetRadius + e.deltaY * 0.004, 2.0, 12.5);
+  };
+  const onKeyDown = (e) => {
+    if (e.key === 'ArrowLeft') camState.targetTheta += 0.14;
+    else if (e.key === 'ArrowRight') camState.targetTheta -= 0.14;
+    else if (e.key === 'ArrowUp') camState.targetPhi = clamp(camState.targetPhi - 0.1, 0.06, 1.42);
+    else if (e.key === 'ArrowDown') camState.targetPhi = clamp(camState.targetPhi + 0.1, 0.06, 1.42);
+  };
+  wrap.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointermove', onPointerMove);
+  wrap.addEventListener('wheel', onWheel, { passive: false });
+  wrap.addEventListener('keydown', onKeyDown);
+
+  let wind = reducedMotion ? 0 : 0.4;
+  let pollenAmt = 0.8;
+  let moodIdx = 0;
+  const moods = [
+    { name: 'Dossel', bg: 0x0b1509, sunCol: 0xfff1d4, sunInt: 2.05, hemiInt: 0.92 },
+    { name: 'Raio de Sol', bg: 0x15190b, sunCol: 0xffd480, sunInt: 2.55, hemiInt: 0.72 },
+    { name: 'Crepúsculo', bg: 0x0d0a16, sunCol: 0xff805a, sunInt: 1.45, hemiInt: 0.58 }
+  ];
+
+  const rngWind = document.getElementById('rng-wind');
+  const rngPollen = document.getElementById('rng-pollen');
+  const btnMood = document.getElementById('btn-mood');
+  const btnPanel = document.getElementById('btn-panel');
+  const panel = document.getElementById('panel');
+
+  rngWind.addEventListener('input', (e) => {
+    wind = e.target.value / 100;
+    document.getElementById('val-wind').textContent = e.target.value + '%';
+  });
+  rngPollen.addEventListener('input', (e) => {
+    pollenAmt = e.target.value / 100;
+    document.getElementById('val-pollen').textContent = e.target.value + '%';
+    pMat.opacity = 0.72 * pollenAmt;
+    pollinators.forEach((p) => { p.mesh.visible = pollenAmt > 0.05; });
+  });
+  btnMood.addEventListener('click', (e) => {
+    moodIdx = (moodIdx + 1) % moods.length;
+    const m = moods[moodIdx];
+    e.target.textContent = 'Clima: ' + m.name;
+    scene.background.setHex(m.bg); scene.fog.color.setHex(m.bg);
+    sun.color.setHex(m.sunCol); sun.intensity = m.sunInt; hemi.intensity = m.hemiInt;
+  });
+  btnPanel.addEventListener('click', () => {
+    const c = panel.classList.toggle('collapsed');
+    btnPanel.classList.toggle('active', !c);
+  });
+
+  const camPresets = {
+    photo:   { theta: 0.12, phi: 0.24, radius: isMobile ? 7.6 : 6.2, target: [0, 0.55, 0], auto: false },
+    flowers: { theta: 0.82, phi: 0.74, radius: 3.1, target: [0.3, 1.15, 0.2], auto: false },
+    veins:   { theta: -0.62, phi: 0.90, radius: 3.2, target: [1.05, 0.35, 0.78], auto: false },
+    orbit:   { theta: 0.4,  phi: 0.58, radius: 5.9, target: [0, 0.65, 0], auto: !reducedMotion }
+  };
+  document.querySelectorAll('.cam-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.cam-btn').forEach((x) => x.classList.remove('active'));
+      b.classList.add('active');
+      const p = camPresets[b.dataset.cam];
+      camState.targetTheta = p.theta; camState.targetPhi = p.phi; camState.targetRadius = p.radius;
+      camState.desiredTarget.set(p.target[0], p.target[1], p.target[2]);
+      camState.autoOrbit = p.auto;
+    });
+  });
+
+  const onResize = () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  };
+  window.addEventListener('resize', onResize);
+
+  let paused = false, disposed = false, rafId = 0, simT = 0, lastNow = performance.now();
+  function animate(now) {
+    if (disposed) return;
+    rafId = requestAnimationFrame(animate);
+    const rawDt = Math.min(0.05, Math.max(0.001, (now - lastNow) * 0.001));
+    lastNow = now;
+    if (paused || document.hidden) return;
+    const dt = reducedMotion ? 0 : rawDt;
+    simT += dt;
+    const t = simT;
+
+    if (camState.autoOrbit) camState.targetTheta += dt * 0.24;
+    const damp = 1 - Math.exp(-rawDt * 5.5);
+    camState.theta += (camState.targetTheta - camState.theta) * damp;
+    camState.phi += (camState.targetPhi - camState.phi) * damp;
+    camState.radius += (camState.targetRadius - camState.radius) * damp;
+    camState.target.lerp(camState.desiredTarget, damp);
+
+    camera.position.set(
+      camState.target.x + camState.radius * Math.sin(camState.phi) * Math.sin(camState.theta),
+      camState.target.y + camState.radius * Math.cos(camState.phi),
+      camState.target.z + camState.radius * Math.sin(camState.phi) * Math.cos(camState.theta)
+    );
+    camera.lookAt(camState.target);
+
+    for (let i = 0; i < leavesAnim.length; i++) {
+      const l = leavesAnim[i];
+      l.pivot.rotation.x = l.baseX + Math.sin(t * l.speed + l.phase) * 0.025 * (0.18 + wind * 1.6);
+    }
+    for (let i = 0; i < stemsAnim.length; i++) {
+      const st = stemsAnim[i];
+      st.group.rotation.z = Math.sin(t * st.speed + st.phase) * 0.052 * (0.22 + wind * 1.6);
+      st.group.rotation.x = Math.cos(t * st.speed * 0.8 + st.phase) * 0.042 * (0.22 + wind * 1.6);
+    }
+    for (let i = 0; i < pollinators.length; i++) {
+      const p = pollinators[i];
+      const a = t * p.spd + p.ang;
+      p.mesh.position.set(Math.cos(a) * p.rad, p.h + Math.sin(t * 3.1 + i) * 0.14, Math.sin(a * 1.2) * p.rad);
+      p.mesh.rotation.y = -a;
+      const flap = Math.sin(t * 42 + i) * 0.55;
+      p.wl.rotation.x = flap; p.wr.rotation.x = -flap;
+    }
+    const pa = pollenPts.geometry.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pa[i * 3 + 1] += dt * 0.16;
+      pa[i * 3] += Math.sin(t + i) * dt * 0.12 * (0.3 + wind);
+      if (pa[i * 3 + 1] > 3.5) pa[i * 3 + 1] = 0.05;
+    }
+    pollenPts.geometry.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  }
+  rafId = requestAnimationFrame(animate);
+
+  function cleanup() {
+    if (disposed) return;
+    disposed = true;
+    cancelAnimationFrame(rafId);
+    wrap.removeEventListener('pointerdown', onPointerDown);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointermove', onPointerMove);
+    wrap.removeEventListener('wheel', onWheel);
+    wrap.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('resize', onResize);
+    const seen = new Set();
+    scene.traverse((o) => {
+      [o.geometry, o.material].forEach((it) => {
+        if (it && !seen.has(it)) {
+          seen.add(it);
+          if (it.isMaterial) Object.values(it).forEach((v) => { if (v && v.isTexture && !seen.has(v)) { seen.add(v); v.dispose(); } });
+          it.dispose();
+        }
+      });
+    });
+    if (scene.environment) scene.environment.dispose();
+    renderer.dispose();
+  }
+  window.addEventListener('sangi:pause', () => { paused = true; });
+  window.addEventListener('sangi:resume', () => { paused = false; lastNow = performance.now(); });
+  window.addEventListener('sangi:mute', () => {});
+  window.addEventListener('sangi:reset', () => {
+    camState.targetTheta = defaultCam.theta; camState.targetPhi = defaultCam.phi; camState.targetRadius = defaultCam.radius;
+    camState.desiredTarget.copy(defaultCam.target); camState.autoOrbit = false;
+    wind = 0.4; rngWind.value = 40; document.getElementById('val-wind').textContent = '40%';
+    pollenAmt = 0.8; rngPollen.value = 80; document.getElementById('val-pollen').textContent = '80%';
+    pMat.opacity = 0.68; pollinators.forEach((p) => p.mesh.visible = true);
+    moodIdx = 2; btnMood.click();
+  });
+  window.addEventListener('sangi:dispose', cleanup);
+  window.addEventListener('pagehide', cleanup);
+})();
+</script>
+</body>
+</html>

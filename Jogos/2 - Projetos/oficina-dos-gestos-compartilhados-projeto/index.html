@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Oficina dos Gestos Compartilhados</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div id="canvas-container" aria-label="Cena 3D da Oficina dos Gestos Compartilhados"></div>
+
+  <!-- Top HUD -->
+  <header class="hud-top">
+    <div class="brand-pill">
+      <span>🖌️</span>
+      <span>Oficina dos Gestos Compartilhados</span>
+      <span>🌿</span>
+    </div>
+
+    <div class="top-actions" role="toolbar" aria-label="Controles principais">
+      <button id="btn-panel" class="icon-btn" title="Modos e Configurações ABA" aria-label="Modos e Configurações ABA"><span class="ico" aria-hidden="true">⚙️</span><span class="lbl">Modos & ABA</span></button>
+      <button id="btn-camera" class="icon-btn" title="Alternar câmera (R)" aria-label="Alternar câmera (R)"><span class="ico" aria-hidden="true">📷</span><span class="lbl">Câmera</span></button>
+      <button id="btn-mute" class="icon-btn" title="Ativar/silenciar áudio (M)" aria-label="Ativar/silenciar áudio (M)"><span class="ico" aria-hidden="true">🔊</span><span class="lbl">Áudio</span></button>
+      <button id="btn-ambience" class="icon-btn active" title="Ambiente sonoro do ateliê" aria-label="Ambiente sonoro do ateliê"><span class="ico" aria-hidden="true">🍃</span><span class="lbl">Ambiente</span></button>
+      <button id="btn-quality" class="icon-btn" title="Qualidade gráfica" aria-label="Qualidade gráfica"><span class="ico" aria-hidden="true">✨</span><span class="lbl">Equilibrada</span></button>
+      <button id="btn-undo" class="icon-btn" title="Desfazer (Ctrl+Z)" aria-label="Desfazer (Ctrl+Z)"><span class="ico" aria-hidden="true">↩️</span><span class="lbl">Desfazer</span></button>
+      <button id="btn-redo" class="icon-btn" title="Refazer (Ctrl+Y)" aria-label="Refazer (Ctrl+Y)"><span class="ico" aria-hidden="true">↪️</span><span class="lbl">Refazer</span></button>
+      <button id="btn-save" class="icon-btn" title="Salvar criação" aria-label="Salvar criação"><span class="ico" aria-hidden="true">💾</span><span class="lbl">Salvar</span></button>
+      <button id="btn-export" class="icon-btn" title="Exportar imagem PNG" aria-label="Exportar imagem PNG"><span class="ico" aria-hidden="true">🖼️</span><span class="lbl">Exportar</span></button>
+      <button id="btn-clear" class="icon-btn" title="Limpar superfície ativa" aria-label="Limpar superfície ativa"><span class="ico" aria-hidden="true">🧹</span><span class="lbl">Limpar</span></button>
+      <button id="btn-catalog" class="icon-btn" title="Retornar ao catálogo" aria-label="Retornar ao catálogo"><span class="ico" aria-hidden="true">↩</span><span class="lbl">Catálogo</span></button>
+    </div>
+
+    <div class="turn-card">
+      <div class="turn-mode-row">
+        <div class="turn-badge">👥</div>
+        <span id="hud-mode-label">Criação compartilhada</span>
+      </div>
+      <button id="btn-turn" class="turn-btn" title="Alternar participante (Espaço)">✋ Sua vez (A)</button>
+      <div class="seal-row" aria-label="Selos de descoberta">
+        <span class="seal-title">Selos <b id="seal-count">0/5</b></span>
+        <span class="seal" data-seal="pintura" title="Selo da Pintura">🖌️</span>
+        <span class="seal" data-seal="argila" title="Selo da Argila">🏺</span>
+        <span class="seal" data-seal="areia" title="Selo da Areia">〰️</span>
+        <span class="seal" data-seal="fitas" title="Selo das Fitas">🎀</span>
+        <span class="seal" data-seal="ritmo" title="Selo do Ritmo">🥁</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mode Guidance Banner -->
+  <div id="mode-banner" class="mode-banner hidden" role="status">
+    <span id="mode-banner-text"></span>
+  </div>
+
+  <!-- Collapsible Side Panel (Modes & ABA) -->
+  <aside id="side-panel" class="side-panel collapsed" aria-label="Modos de experiência e acompanhamento">
+    <div class="panel-section">
+      <div class="panel-title">Modos de Experiência</div>
+      <div id="mode-grid" class="mode-grid"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Acompanhamento & Mediação (ABA)</div>
+      <div class="control-row">
+        <label for="aba-steps">Número de etapas</label>
+        <select id="aba-steps">
+          <option value="2">2 etapas</option>
+          <option value="3" selected>3 etapas</option>
+          <option value="4">4 etapas</option>
+          <option value="6">6 etapas</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="aba-complexity">Complexidade</label>
+        <select id="aba-complexity">
+          <option value="simples" selected>Simples</option>
+          <option value="moderado">Moderado</option>
+          <option value="composto">Composto</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="aba-materials">Materiais visíveis</label>
+        <input id="aba-materials" type="range" min="2" max="6" value="6" />
+      </div>
+      <div class="control-row">
+        <label for="aba-cues">Pistas visuais (Imitação)</label>
+        <input id="aba-cues" type="checkbox" checked />
+      </div>
+      <div class="control-row">
+        <label for="aba-nopressure">Tempo livre sem pressão</label>
+        <input id="aba-nopressure" type="checkbox" checked />
+      </div>
+      <div class="control-row">
+        <label for="aba-turns">Alternância de turnos</label>
+        <input id="aba-turns" type="checkbox" checked />
+      </div>
+      <div class="control-row">
+        <label for="opt-reduced-motion">Movimento reduzido</label>
+        <input id="opt-reduced-motion" type="checkbox" />
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Registro Observável (Opcional)</div>
+      <div class="control-row">
+        <label for="aba-record">Registrar ações automaticamente</label>
+        <input id="aba-record" type="checkbox" />
+      </div>
+      <div class="obs-actions">
+        <button class="obs-btn" data-obs-type="independente">✓ Independente</button>
+        <button class="obs-btn" data-obs-type="com_ajuda">🤝 Com ajuda</button>
+        <button class="obs-btn" data-obs-type="pausa">⏸ Pausa</button>
+      </div>
+      <div id="obs-log" class="obs-log">Nenhum registro nesta sessão.</div>
+      <div class="obs-actions">
+        <button id="btn-export-json" class="obs-btn">⬇ Exportar JSON da sessão</button>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      Recurso complementar à prática profissional. Não constitui instrumento de avaliação psicológica validado e não classifica produções artísticas como certas ou erradas.
+    </div>
+  </aside>
+
+  <!-- Bottom Tool Subdock & Station Dock -->
+  <nav class="hud-bottom" aria-label="Estações e ferramentas">
+    <div id="tool-subdock" class="tool-subdock"></div>
+    <div class="station-dock">
+      <button class="station-pill active" data-station="pintura">🖌️ Pintura</button>
+      <button class="station-pill" data-station="argila">🏺 Argila</button>
+      <button class="station-pill" data-station="areia">〰️ Areia</button>
+      <button class="station-pill" data-station="fitas">🎀 Fitas</button>
+      <button class="station-pill" data-station="ritmo">🥁 Ritmo</button>
+    </div>
+  </nav>
+
+  <!-- Clear Surface Confirmation Modal -->
+  <div id="clear-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h3>Limpar superfície ativa?</h3>
+      <p>Esta ação reinicia os traços ou formas da estação atual. Você poderá desfazer se desejar.</p>
+      <div class="modal-actions">
+        <button id="btn-clear-cancel" class="btn-secondary">Cancelar</button>
+        <button id="btn-clear-confirm" class="btn-danger">Limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

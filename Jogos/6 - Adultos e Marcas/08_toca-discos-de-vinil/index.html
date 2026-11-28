@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Toca-Discos de Vinil — Café Lado B | Sangi3D</title>
+  <style>
+    :root {
+      --bg: #181310;
+      --card-bg: rgba(28, 22, 18, 0.92);
+      --card-border: rgba(212, 163, 115, 0.25);
+      --text: #F7EBE1;
+      --text-muted: #BFA594;
+      --accent-wood: #8D5B36;
+      --accent-gold: #E0A96D;
+      --accent-vinyl: #111111;
+      --serif: "Abril Fatface", Georgia, serif;
+      --sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+    #canvas-container {
+      position: absolute; top: 0; left: 0; width: calc(100% - 360px); height: 100%; z-index: 1;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .nav-bar {
+      position: absolute; top: 0; left: 0; width: calc(100% - 360px); height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 10;
+      background: linear-gradient(180deg, rgba(24,19,16,0.85) 0%, rgba(24,19,16,0) 100%);
+      pointer-events: none;
+    }
+    .brand-logo {
+      font-family: var(--serif); font-size: 20px; color: var(--accent-gold);
+      letter-spacing: 0.5px; pointer-events: auto;
+    }
+    .cta-btn {
+      padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      background: var(--accent-gold); color: #1C1612; border: none; cursor: pointer;
+      pointer-events: auto; transition: transform 0.2s, background 0.2s;
+    }
+    .cta-btn:hover { background: #EBB980; transform: translateY(-1px); }
+
+    .hud-panel {
+      position: absolute; top: 72px; right: 20px; width: 340px; max-height: calc(100dvh - 90px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+      z-index: 10;
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .hud-header h1 {
+      font-family: var(--serif); font-size: 22px; font-weight: 400; color: #FFF; margin-bottom: 2px;
+    }
+    .hud-header p {
+      font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    }
+
+    .record-selector {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    .record-thumb {
+      aspect-ratio: 1; border-radius: 8px; border: 2px solid transparent;
+      background: #2A211B; cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-size: 10px; font-weight: 600;
+      text-align: center; padding: 4px; transition: all 0.2s;
+    }
+    .record-thumb.active {
+      border-color: var(--accent-gold); box-shadow: 0 0 12px rgba(224,169,109,0.4);
+    }
+
+    .status-badge {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.35); padding: 10px 14px; border-radius: 12px;
+      border: 1px solid rgba(224,169,109,0.2);
+    }
+    .status-light {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: #555; margin-right: 6px;
+    }
+    .status-light.on {
+      background: #00E676; box-shadow: 0 0 8px #00E676;
+    }
+
+    .dock-controls {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .btn-dock {
+      padding: 10px 12px; font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; color: var(--text); cursor: pointer; text-align: center;
+      transition: all 0.2s;
+    }
+    .btn-dock.active {
+      background: var(--accent-wood); border-color: var(--accent-gold); color: #FFF;
+    }
+
+    .pitch-slider-container {
+      background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 10px;
+    }
+    .slider-row {
+      display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+    input[type=range] {
+      width: 100%; accent-color: var(--accent-gold); cursor: pointer;
+    }
+
+    .hint-box {
+      font-size: 11px; color: var(--text-muted); text-align: center;
+      padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px;
+    }
+
+    @media (max-width: 768px) {
+      #canvas-container, .nav-bar { width: 100%; }
+      #canvas-container { height: 52dvh; }
+      .hud-panel {
+        top: 52dvh; bottom: 0; right: 0; left: 0; width: 100%; max-height: none;
+        border-radius: 20px 20px 0 0; padding: 14px 18px 20px;
+      }
+    }
+  </style>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+</head>
+<body>
+  <div class="nav-bar">
+    <div class="brand-logo">Café Lado B</div>
+    <button class="cta-btn" onclick="openMenu()">Ver cardápio</button>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="hud">
+    <div class="hud-header">
+      <h1>Ponha um disco.</h1>
+      <p>Toca-discos vintage de nogueira com prato de alumínio e braço em S.</p>
+    </div>
+
+    <div class="status-badge">
+      <div style="display:flex; align-items:center;">
+        <span class="status-light" id="power-light"></span>
+        <span id="player-status" style="font-size:12px; font-weight:600;">Desligado</span>
+      </div>
+      <span id="rpm-label" style="font-size:12px; font-family:monospace; color:var(--accent-gold);">33 ⅓ RPM</span>
+    </div>
+
+    <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Coleção de Discos:</div>
+    <div class="record-selector">
+      <div class="record-thumb active" id="rec-0" onclick="selectRecord(0)">
+        <span style="font-size:16px;">☕</span>
+        <span>Lo-Fi Café</span>
+      </div>
+      <div class="record-thumb" id="rec-1" onclick="selectRecord(1)">
+        <span style="font-size:16px;">🎷</span>
+        <span>Bossa 64</span>
+      </div>
+      <div class="record-thumb" id="rec-2" onclick="selectRecord(2)">
+        <span style="font-size:16px;">🌙</span>
+        <span>Midnight</span>
+      </div>
+    </div>
+
+    <div class="dock-controls">
+      <button class="btn-dock" id="btn-power" onclick="togglePower()">⏻ Ligar Motor</button>
+      <button class="btn-dock" id="btn-arm" onclick="toggleArm()">📍 Braço / Agulha</button>
+      <button class="btn-dock" id="btn-rpm" onclick="toggleRpm()">⚡ 33 / 45 RPM</button>
+      <button class="btn-dock" id="btn-scratch" onclick="triggerScratch()">🎛️ Scratch</button>
+    </div>
+
+    <div class="pitch-slider-container">
+      <div class="slider-row">
+        <span>Pitch Slider (±8%)</span>
+        <span id="pitch-val">0.0%</span>
+      </div>
+      <input type="range" id="pitch-range" min="-8" max="8" step="0.5" value="0" oninput="updatePitch(this.value)">
+    </div>
+
+    <div class="hint-box">
+      💡 Arraste o vinil em 3D para arranhar (scratch) ou use o botão.
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/Sistema/shared/vendor/three.module.js",
+        "three/addons/": "/Sistema/shared/vendor/addons/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { createStudioEnvironment } from '/Sistema/shared/engine/studio-environment.js';
+
+    // State
+    const ARM_OFF_ANGLE = -0.20;
+    const ARM_ON_ANGLE = -0.82;
+    const state = {
+      isPowerOn: false,
+      isArmOnRecord: false,
+      rpm: 33.333,
+      pitchFactor: 1.0,
+      activeRecord: 0,
+      currentAngle: 0,
+      angularVelocity: 0,
+      targetAngularVelocity: 0,
+      needleAngle: ARM_OFF_ANGLE,
+      targetNeedleAngle: ARM_OFF_ANGLE,
+      isScratching: false,
+      scratchVelocity: 0
+    };
+
+    // Brand preset
+    const MARCA = {
+      nome: 'Café Lado B',
+      cores: { primaria: '#8D5B36', acento: '#E0A96D', fundo: '#181310' }
+    };
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+    let vinylNoiseNode = null;
+    let masterGain = null;
+    let beatTimer = null;
+    let isMuted = false;
+
+    const RECORD_PROGRESSIONS = [
+      {
+        tempoMs: 1800,
+        chords: [
+          [261.63, 329.63, 392.00, 130.81], // Cmaj7
+          [220.00, 261.63, 329.63, 110.00], // Am7
+          [174.61, 220.00, 261.63, 87.31],  // Fmaj7
+          [196.00, 246.94, 293.66, 98.00],  // G7
+        ],
+      },
+      {
+        tempoMs: 1550,
+        chords: [
+          [174.61, 220.00, 261.63, 87.31],  // Fmaj7
+          [196.00, 246.94, 293.66, 98.00],  // G7
+          [164.81, 196.00, 246.94, 82.41],  // Em7
+          [220.00, 261.63, 329.63, 110.00], // Am7
+        ],
+      },
+      {
+        tempoMs: 2100,
+        chords: [
+          [146.83, 174.61, 220.00, 73.42],  // Dm7
+          [196.00, 233.08, 293.66, 98.00],  // Gm7
+          [130.81, 164.81, 196.00, 65.41],  // Cmaj7
+          [110.00, 138.59, 164.81, 55.00],  // A7
+        ],
+      },
+    ];
+
+    function initAudio() {
+      if (audioCtx) {
+        if (audioCtx.state === 'suspended' && !isPaused) audioCtx.resume().catch(() => {});
+        return;
+      }
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended' && !isPaused) audioCtx.resume().catch(() => {});
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(isMuted ? 0 : 0.28, audioCtx.currentTime);
+      masterGain.connect(audioCtx.destination);
+
+      // Procedural vinyl surface crackle
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        // pink-ish noise with sporadic dust pops
+        const white = Math.random() * 2 - 1;
+        const pop = Math.random() < 0.0008 ? (Math.random() - 0.5) * 4 : 0;
+        output[i] = white * 0.05 + pop;
+      }
+      vinylNoiseNode = audioCtx.createBufferSource();
+      vinylNoiseNode.buffer = noiseBuffer;
+      vinylNoiseNode.loop = true;
+
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.setValueAtTime(2800, audioCtx.currentTime);
+
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      vinylNoiseNode.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(masterGain);
+      vinylNoiseNode.start();
+
+      state.noiseGain = noiseGain;
+    }
+
+    function stopChordProgression() {
+      if (beatTimer !== null) {
+        clearTimeout(beatTimer);
+        beatTimer = null;
+      }
+    }
+
+    function playChordProgression() {
+      stopChordProgression();
+      if (!audioCtx || isDisposed || isPaused || !state.isPowerOn || !state.isArmOnRecord) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+
+      let chordIdx = 0;
+      function step() {
+        beatTimer = null;
+        if (isDisposed || isPaused || !state.isPowerOn || !state.isArmOnRecord || !audioCtx) {
+          return;
+        }
+
+        const prog = RECORD_PROGRESSIONS[state.activeRecord] || RECORD_PROGRESSIONS[0];
+        const chord = prog.chords[chordIdx % prog.chords.length];
+        chordIdx++;
+
+        const now = audioCtx.currentTime;
+        const speed = (state.rpm / 33.333) * state.pitchFactor;
+
+        // Triad oscillators
+        const oscA = audioCtx.createOscillator();
+        const oscB = audioCtx.createOscillator();
+        const oscC = audioCtx.createOscillator();
+        const bass = audioCtx.createOscillator();
+
+        oscA.type = 'triangle';
+        oscB.type = 'sine';
+        oscC.type = 'triangle';
+        bass.type = 'sawtooth';
+
+        oscA.frequency.setValueAtTime(chord[0] * speed, now);
+        oscB.frequency.setValueAtTime(chord[1] * speed, now);
+        oscC.frequency.setValueAtTime(chord[2] * speed, now);
+        bass.frequency.setValueAtTime(chord[3] * speed, now);
+
+        const env = audioCtx.createGain();
+        env.gain.setValueAtTime(0.01, now);
+        env.gain.exponentialRampToValueAtTime(0.15, now + 0.1);
+        env.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+
+        const bassFilter = audioCtx.createBiquadFilter();
+        bassFilter.type = 'lowpass';
+        bassFilter.frequency.setValueAtTime(220, now);
+
+        oscA.connect(env);
+        oscB.connect(env);
+        oscC.connect(env);
+        bass.connect(bassFilter);
+        bassFilter.connect(env);
+
+        env.connect(masterGain);
+
+        oscA.start(now); oscB.start(now); oscC.start(now); bass.start(now);
+        oscA.stop(now + 1.9); oscB.stop(now + 1.9); oscC.stop(now + 1.9); bass.stop(now + 1.9);
+
+        // Hi-hat / rim tap
+        const rim = audioCtx.createOscillator();
+        rim.type = 'square';
+        rim.frequency.setValueAtTime(900 * speed, now);
+        const rimEnv = audioCtx.createGain();
+        rimEnv.gain.setValueAtTime(0.04, now);
+        rimEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        rim.connect(rimEnv); rimEnv.connect(masterGain);
+        rim.start(now); rim.stop(now + 0.06);
+
+        beatTimer = setTimeout(step, prog.tempoMs / speed);
+      }
+      step();
+    }
+
+    function playScratchSound() {
+      if (!audioCtx || isMuted || isPaused) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(1400, now + 0.08);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.22);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.23);
+    }
+
+    // Three.js Scene Setup
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x181310);
+    scene.fog = new THREE.FogExp2(0x181310, 0.04);
+
+    const camera = new THREE.PerspectiveCamera(40, Math.max(1, container.clientWidth) / Math.max(1, container.clientHeight), 0.1, 50);
+    camera.position.set(-0.2, 3.1, 4.3);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const environment = createStudioEnvironment(renderer);
+    scene.environment = environment.texture;
+    scene.environmentIntensity = .73;
+    renderer.setSize(container.clientWidth, container.clientHeight, false);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2.05;
+    controls.minDistance = 2.0;
+    controls.maxDistance = 8.0;
+    controls.target.set(0, 0.4, 0);
+
+    // Lighting
+    const ambientLight = new THREE.HemisphereLight(0xFDF0E0, 0x1A1410, 0.7);
+    scene.add(ambientLight);
+
+    const warmKeyLight = new THREE.DirectionalLight(0xFFE2B8, 2.4);
+    warmKeyLight.position.set(3, 5, 2.5);
+    warmKeyLight.castShadow = true;
+    warmKeyLight.shadow.mapSize.width = 2048;
+    warmKeyLight.shadow.mapSize.height = 2048;
+    warmKeyLight.shadow.bias = -0.0003;
+    scene.add(warmKeyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x88A0C0, 0.6);
+    fillLight.position.set(-3, 3, -2);
+    scene.add(fillLight);
+
+    // Table surface (Dark Mahogany Wood)
+    const tableGeo = new THREE.BoxGeometry(7, 0.2, 5);
+    const tableMat = new THREE.MeshStandardMaterial({
+      color: 0x241812,
+      roughness: 0.4,
+      metalness: 0.1
+    });
+    const table = new THREE.Mesh(tableGeo, tableMat);
+    table.position.y = -0.1;
+    table.receiveShadow = true;
+    scene.add(table);
+
+    // Turntable Plinth (Walnut wood)
+    const plinthGeo = new THREE.BoxGeometry(2.4, 0.28, 1.9);
+    const plinthMat = new THREE.MeshStandardMaterial({
+      color: 0x5C3822,
+      roughness: 0.35,
+      metalness: 0.05
+    });
+    const plinth = new THREE.Mesh(plinthGeo, plinthMat);
+    plinth.position.set(-0.2, 0.14, 0);
+    plinth.castShadow = true;
+    plinth.receiveShadow = true;
+    scene.add(plinth);
+
+    // Aluminum faceplate
+    const topPlateGeo = new THREE.BoxGeometry(2.32, 0.02, 1.82);
+    const topPlateMat = new THREE.MeshStandardMaterial({
+      color: 0xDCDCDC,
+      roughness: 0.25,
+      metalness: 0.85
+    });
+    const topPlate = new THREE.Mesh(topPlateGeo, topPlateMat);
+    topPlate.position.set(-0.2, 0.29, 0);
+    topPlate.receiveShadow = true;
+    scene.add(topPlate);
+
+    // Turntable Platter (Aluminum rim + black felt mat)
+    const platterGroup = new THREE.Group();
+    platterGroup.position.set(-0.55, 0.32, 0);
+    scene.add(platterGroup);
+
+    const platterRimGeo = new THREE.CylinderGeometry(0.78, 0.78, 0.04, 64);
+    const platterRimMat = new THREE.MeshStandardMaterial({
+      color: 0xCCCCCC,
+      roughness: 0.2,
+      metalness: 0.95
+    });
+    const platterRim = new THREE.Mesh(platterRimGeo, platterRimMat);
+    platterRim.castShadow = true;
+    platterGroup.add(platterRim);
+
+    // Vinyl Record
+    const vinylGroup = new THREE.Group();
+    vinylGroup.position.y = 0.025;
+    platterGroup.add(vinylGroup);
+
+    // Procedural radial groove canvas
+    const grooveCanvas = document.createElement('canvas');
+    grooveCanvas.width = 512; grooveCanvas.height = 512;
+    const gctx = grooveCanvas.getContext('2d');
+    gctx.fillStyle = '#111111';
+    gctx.fillRect(0, 0, 512, 512);
+    for (let r = 80; r < 240; r += 2) {
+      gctx.beginPath();
+      gctx.arc(256, 256, r, 0, Math.PI * 2);
+      gctx.strokeStyle = (r % 4 === 0) ? '#222222' : '#080808';
+      gctx.lineWidth = 1;
+      gctx.stroke();
+    }
+    const grooveTexture = new THREE.CanvasTexture(grooveCanvas);
+
+    const vinylGeo = new THREE.CylinderGeometry(0.72, 0.72, 0.008, 64);
+    const vinylMat = new THREE.MeshStandardMaterial({
+      map: grooveTexture,
+      color: 0x111111,
+      roughness: 0.28,
+      metalness: 0.65
+    });
+    const vinylMesh = new THREE.Mesh(vinylGeo, vinylMat);
+    vinylMesh.castShadow = true;
+    vinylGroup.add(vinylMesh);
+
+    // Center Label
+    const labelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.009, 32);
+    const labelMat = new THREE.MeshStandardMaterial({
+      color: 0xD84A38,
+      roughness: 0.7,
+      metalness: 0.1
+    });
+    const labelMesh = new THREE.Mesh(labelGeo, labelMat);
+    vinylGroup.add(labelMesh);
+
+    // Center Spindle
+    const spindleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.06, 16);
+    const spindleMat = new THREE.MeshStandardMaterial({ color: 0xEEEEEE, metalness: 0.95, roughness: 0.1 });
+    const spindle = new THREE.Mesh(spindleGeo, spindleMat);
+    spindle.position.set(-0.55, 0.35, 0);
+    scene.add(spindle);
+
+    // Tonearm Base & S-shaped arm
+    const armBaseGroup = new THREE.Group();
+    armBaseGroup.position.set(0.65, 0.35, -0.6);
+    scene.add(armBaseGroup);
+
+    const baseCylGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.08, 32);
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xEEEEEE, metalness: 0.92, roughness: 0.15 });
+    const baseCyl = new THREE.Mesh(baseCylGeo, chromeMat);
+    armBaseGroup.add(baseCyl);
+
+    // Pivot group
+    const armPivot = new THREE.Group();
+    armPivot.position.y = 0.06;
+    armPivot.rotation.y = state.needleAngle;
+    armBaseGroup.add(armPivot);
+
+    // Counterweight
+    const counterGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.08, 32);
+    counterGeo.rotateZ(Math.PI / 2);
+    const counterMesh = new THREE.Mesh(counterGeo, chromeMat);
+    counterMesh.position.set(0, 0, -0.12);
+    armPivot.add(counterMesh);
+
+    // Tonearm tube (Curved S-shape approximation with splines)
+    const armCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 0, -0.1),
+      new THREE.Vector3(0, 0, 0.2),
+      new THREE.Vector3(-0.06, 0.02, 0.5),
+      new THREE.Vector3(0.02, 0, 0.85),
+      new THREE.Vector3(-0.02, -0.04, 1.1)
+    ]);
+    const armTubeGeo = new THREE.TubeGeometry(armCurve, 32, 0.012, 12, false);
+    const armTube = new THREE.Mesh(armTubeGeo, chromeMat);
+    armTube.castShadow = true;
+    armPivot.add(armTube);
+
+    // Cartridge & Stylus Head
+    const headshellGeo = new THREE.BoxGeometry(0.045, 0.035, 0.09);
+    const headshellMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4 });
+    const headshell = new THREE.Mesh(headshellGeo, headshellMat);
+    headshell.position.set(-0.02, -0.04, 1.14);
+    armPivot.add(headshell);
+
+    // Tonearm rest post under off-record position
+    const armRest = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.09, 16), chromeMat);
+    armRest.position.set(0.65 + 0.65 * Math.sin(ARM_OFF_ANGLE), 0.34, -0.6 + 0.65 * Math.cos(ARM_OFF_ANGLE));
+    scene.add(armRest);
+
+    // Wooden Speakers in Background
+    function createSpeaker(x, z) {
+      const spkGroup = new THREE.Group();
+      spkGroup.position.set(x, 0.5, z);
+      const cabinetGeo = new THREE.BoxGeometry(0.6, 1.0, 0.5);
+      const cabinetMat = new THREE.MeshStandardMaterial({ color: 0x4A2E1B, roughness: 0.5 });
+      const cabinet = new THREE.Mesh(cabinetGeo, cabinetMat);
+      cabinet.castShadow = true;
+      spkGroup.add(cabinet);
+
+      // Woofer & Tweeter
+      const wooferGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.02, 32);
+      wooferGeo.rotateX(Math.PI / 2);
+      const wooferMat = new THREE.MeshStandardMaterial({ color: 0x1E1E1E, roughness: 0.3 });
+      const woofer = new THREE.Mesh(wooferGeo, wooferMat);
+      woofer.position.set(0, -0.12, 0.25);
+      spkGroup.add(woofer);
+
+      const tweeterGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.02, 32);
+      tweeterGeo.rotateX(Math.PI / 2);
+      const tweeter = new THREE.Mesh(tweeterGeo, wooferMat);
+      tweeter.position.set(0, 0.24, 0.25);
+      spkGroup.add(tweeter);
+
+      scene.add(spkGroup);
+    }
+    createSpeaker(-2.2, -1.0);
+    createSpeaker(2.0, -1.0);
+
+    // Record sleeves on shelf
+    const shelfGeo = new THREE.BoxGeometry(1.2, 0.7, 0.4);
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0x382415, roughness: 0.6 });
+    const shelf = new THREE.Mesh(shelfGeo, shelfMat);
+    shelf.position.set(1.8, 0.35, 0.6);
+    scene.add(shelf);
+
+    // Interaction Raycasting for Scratching
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let isDraggingPlatter = false;
+    let previousAngle = 0;
+
+    function updatePointerNdc(e) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    const onPointerDown = (e) => {
+      updatePointerNdc(e);
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObject(vinylMesh, true);
+      if (hits.length > 0) {
+        initAudio();
+        isDraggingPlatter = true;
+        controls.enabled = false;
+        state.isScratching = true;
+        const p = hits[0].point;
+        previousAngle = Math.atan2(p.z - platterGroup.position.z, p.x - platterGroup.position.x);
+      }
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDraggingPlatter) return;
+      updatePointerNdc(e);
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObject(table, true);
+      if (hits.length > 0) {
+        const p = hits[0].point;
+        const angle = Math.atan2(p.z - platterGroup.position.z, p.x - platterGroup.position.x);
+        let deltaAngle = angle - previousAngle;
+        if (deltaAngle > Math.PI) deltaAngle -= Math.PI * 2;
+        if (deltaAngle < -Math.PI) deltaAngle += Math.PI * 2;
+        previousAngle = angle;
+        if (Math.abs(deltaAngle) < 1.0) {
+          platterGroup.rotation.y += deltaAngle;
+          playScratchSound();
+        }
+      }
+    };
+
+    const onPointerUp = () => {
+      if (isDraggingPlatter) {
+        isDraggingPlatter = false;
+        controls.enabled = true;
+        state.isScratching = false;
+      }
+    };
+
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
+    function targetVel() {
+      return state.isPowerOn ? ((state.rpm * Math.PI * 2) / 60) * state.pitchFactor : 0;
+    }
+
+    // Control hooks
+    window.togglePower = function() {
+      initAudio();
+      state.isPowerOn = !state.isPowerOn;
+      const btn = document.getElementById('btn-power');
+      const light = document.getElementById('power-light');
+      const status = document.getElementById('player-status');
+
+      if (state.isPowerOn) {
+        btn.classList.add('active');
+        light.classList.add('on');
+        status.textContent = 'Girando';
+        state.targetAngularVelocity = targetVel();
+        if (state.isArmOnRecord) {
+          if (state.noiseGain && audioCtx) state.noiseGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.2);
+          playChordProgression();
+        }
+      } else {
+        btn.classList.remove('active');
+        light.classList.remove('on');
+        status.textContent = 'Parado';
+        state.targetAngularVelocity = 0;
+        stopChordProgression();
+        if (state.noiseGain && audioCtx) state.noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
+      }
+    };
+
+    window.toggleArm = function() {
+      initAudio();
+      state.isArmOnRecord = !state.isArmOnRecord;
+      const btn = document.getElementById('btn-arm');
+
+      if (state.isArmOnRecord) {
+        btn.classList.add('active');
+        state.targetNeedleAngle = ARM_ON_ANGLE;
+        if (state.isPowerOn) {
+          if (state.noiseGain && audioCtx) state.noiseGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.2);
+          playChordProgression();
+        }
+      } else {
+        btn.classList.remove('active');
+        state.targetNeedleAngle = ARM_OFF_ANGLE;
+        stopChordProgression();
+        if (state.noiseGain && audioCtx) state.noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+      }
+    };
+
+    window.toggleRpm = function() {
+      initAudio();
+      state.rpm = state.rpm === 33.333 ? 45.0 : 33.333;
+      document.getElementById('rpm-label').textContent = state.rpm === 45.0 ? '45 RPM' : '33 ⅓ RPM';
+      state.targetAngularVelocity = targetVel();
+    };
+
+    window.updatePitch = function(val) {
+      const p = parseFloat(val);
+      document.getElementById('pitch-val').textContent = (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
+      state.pitchFactor = 1.0 + (p / 100);
+      state.targetAngularVelocity = targetVel();
+    };
+
+    window.triggerScratch = function() {
+      initAudio();
+      playScratchSound();
+      platterGroup.rotation.y += 0.4;
+    };
+
+    window.selectRecord = function(idx) {
+      initAudio();
+      state.activeRecord = idx;
+      document.querySelectorAll('.record-thumb').forEach((el, i) => {
+        el.classList.toggle('active', i === idx);
+      });
+      const colors = [0xD84A38, 0x3F51B5, 0x4CAF50];
+      labelMesh.material.color.setHex(colors[idx]);
+      if (state.isPowerOn && state.isArmOnRecord) {
+        playChordProgression();
+      }
+    };
+
+    window.openMenu = function() {
+      window.parent.postMessage({ type: 'cta', tipo: 'cta', target: 'cardapio' }, '*');
+      document.getElementById('player-status').textContent = 'Café Lado B · Cardápio';
+    };
+
+    // Sangi Bridge Integration
+    let rafId = null;
+    let isPaused = false;
+    let isDisposed = false;
+    window.addEventListener('sangi:pause', () => {
+      isPaused = true;
+      stopChordProgression();
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(() => {});
+    });
+    window.addEventListener('sangi:resume', () => {
+      if (isDisposed || !isPaused) return;
+      isPaused = false;
+      lastTime = performance.now();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      if (state.isPowerOn && state.isArmOnRecord) playChordProgression();
+      rafId = requestAnimationFrame(animate);
+    });
+    window.addEventListener('sangi:mute', (e) => {
+      isMuted = e.detail?.muted ?? true;
+      if (masterGain && audioCtx) masterGain.gain.setValueAtTime(isMuted ? 0 : 0.28, audioCtx.currentTime);
+    });
+    window.addEventListener('sangi:dispose', () => {
+      if (isDisposed) return;
+      isDisposed = true;
+      isPaused = true;
+      stopChordProgression();
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      resizeObserver.disconnect();
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+      controls.dispose();
+      if (vinylNoiseNode) { try { vinylNoiseNode.stop(); } catch {} vinylNoiseNode = null; }
+      if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
+      environment.dispose();
+      renderer.dispose();
+    });
+
+    // Resize
+    function resize() {
+      const w = Math.max(1, container.clientWidth);
+      const h = Math.max(1, container.clientHeight);
+      const aspect = w / h;
+      camera.fov = aspect < 1 ? Math.min(56, 40 / Math.max(0.7, aspect)) : 40;
+      camera.aspect = aspect;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(container);
+    resize();
+
+    // Animation Loop
+    let lastTime = performance.now();
+    function animate(time) {
+      if (isPaused || isDisposed) { rafId = null; return; }
+      rafId = requestAnimationFrame(animate);
+      const dt = Math.min((time - lastTime) / 1000, 0.1);
+      lastTime = time;
+
+      // Inertia on turntable platter (clockwise from top)
+      if (!isDraggingPlatter) {
+        state.angularVelocity += (state.targetAngularVelocity - state.angularVelocity) * (dt * 2.5);
+        platterGroup.rotation.y -= state.angularVelocity * dt;
+      }
+
+      // Smooth tonearm movement
+      armPivot.rotation.y += (state.targetNeedleAngle - armPivot.rotation.y) * (dt * 4.0);
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    rafId = requestAnimationFrame(animate);
+
+    console.log("Sangi3D Environment #62 Toca-Discos de Vinil initialized.");
+  </script>
+</body>
+</html>

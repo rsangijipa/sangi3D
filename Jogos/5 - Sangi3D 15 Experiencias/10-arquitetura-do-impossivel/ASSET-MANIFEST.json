@@ -1,0 +1,59 @@
+{
+  "slug": "arquitetura-do-impossivel",
+  "title": "Arquitetura do Impossível",
+  "category": "Exploração surreal / percepção",
+  "entry": "index.html",
+  "threeRevision": "0.187.0 (local shared/vendor/three.module.js)",
+  "renderer": "WebGLRenderer (WebGL 2) + sRGB + ACESFilmicToneMapping",
+  "units": "meters",
+  "seed": 44391,
+  "assets": [
+    {
+      "id": "travertine_pbr_procedural",
+      "type": "procedural-texture-set",
+      "maps": ["baseColor (sRGB)", "bumpMap (linear)", "roughnessMap (linear)"],
+      "resolution": "512x512",
+      "scaleMeters": 1.32,
+      "origin": "src/textures.js (createTravertineSet, seed 44391 / 77213)",
+      "license": "Original procedural (MIT / Sangi3D)",
+      "fallback": "Flat concrete color on LOW tier without shadow map"
+    },
+    {
+      "id": "brushed_brass_procedural",
+      "type": "procedural-texture",
+      "resolution": "256x256",
+      "origin": "src/textures.js (createBrassTexture, seed 9182)",
+      "license": "Original procedural (MIT / Sangi3D)",
+      "fallback": "Uniform metallic material"
+    },
+    {
+      "id": "plaque_signs_canvas",
+      "type": "procedural-canvas-texture",
+      "resolution": "768x176",
+      "origin": "src/textures.js (createPlaqueTexture)",
+      "license": "Original procedural (MIT / Sangi3D)"
+    },
+    {
+      "id": "studio_hdr_pmrem",
+      "type": "procedural-hdr-environment",
+      "resolution": "128x64 HalfFloat",
+      "origin": "shared/engine/studio-environment.js",
+      "license": "Sangi3D internal"
+    },
+    {
+      "id": "museum_architecture_instanced",
+      "type": "procedural-3d-geometry",
+      "parts": ["ashlar floor tiles", "colonnade columns", "arches", "anamorphic rotating bridge & hinges", "armillary sphere", "hanging gardens", "perspective ramp", "gravity wall staircases", "portal frames + RenderTargets", "planar mirrors + RenderTargets"],
+      "lodAndQuality": "Godrays, live portal RenderTargets, live planar mirror RenderTargets, and shadow maps scale cleanly across LOW / BALANCED / HIGH",
+      "origin": "src/world.js",
+      "license": "Original procedural (MIT / Sangi3D)"
+    },
+    {
+      "id": "museum_audio_synth",
+      "type": "procedural-web-audio",
+      "features": ["per-room ConvolverNode reverb IR", "footstep synthesis", "stone gear mechanism", "harmonic chimes", "portal shimmer", "gravity glide"],
+      "origin": "src/audio.js",
+      "license": "Original procedural (MIT / Sangi3D)"
+    }
+  ]
+}
