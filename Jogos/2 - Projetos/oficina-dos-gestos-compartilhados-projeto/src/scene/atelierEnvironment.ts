@@ -381,10 +381,10 @@ export function buildAtelierEnvironment(scene: THREE.Scene): AtelierEnvironmentH
         sunBeam.visible = false;
         dustPoints.visible = false;
       }
-      if (sunLight.shadow.map) {
-        sunLight.shadow.map.dispose();
-        sunLight.shadow.map = null;
-      }
+      // Three.js r128 uses a nullable WebGLRenderTarget for the shadow map.
+      const shadow = sunLight.shadow as unknown as { map: THREE.WebGLRenderTarget | null };
+      shadow.map?.dispose();
+      shadow.map = null;
     },
     dispose() {
       woodTex.map.dispose();
