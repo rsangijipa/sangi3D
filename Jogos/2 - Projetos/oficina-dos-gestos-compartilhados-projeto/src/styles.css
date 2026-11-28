@@ -580,3 +580,126 @@ canvas {
     font-size: 13px;
   }
 }
+
+/* ===== Premium pass: toolbar compacta, selos, toque ===== */
+.icon-btn {
+  min-height: 34px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.icon-btn .ico {
+  font-size: 15px;
+  line-height: 1;
+}
+.top-actions {
+  scrollbar-width: none;
+  max-width: calc(100vw - 560px);
+}
+.top-actions::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 1500px) {
+  .top-actions .lbl {
+    display: none;
+  }
+  .icon-btn {
+    min-width: 36px;
+    justify-content: center;
+    padding: 5px 8px;
+  }
+  .top-actions {
+    max-width: none;
+  }
+}
+.seal-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(119, 82, 57, 0.18);
+}
+.seal-title {
+  font-size: 11px;
+  color: #6b5040;
+  margin-right: auto;
+  letter-spacing: 0.02em;
+}
+.seal-title b {
+  color: #9b6a2f;
+}
+.seal {
+  --p: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  background: radial-gradient(circle, #f6ecdb 58%, transparent 61%), conic-gradient(#d3ac57 calc(var(--p) * 360deg), rgba(119, 82, 57, 0.16) 0);
+  filter: grayscale(0.85);
+  opacity: 0.75;
+  transition: filter 0.4s, opacity 0.4s, transform 0.3s;
+}
+.seal.earned {
+  filter: none;
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(233, 196, 106, 0.55), 0 0 12px rgba(233, 196, 106, 0.55);
+}
+.seal.pop {
+  animation: seal-pop 0.9s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes seal-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.55) rotate(-8deg); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seal.pop { animation: none; }
+}
+@media (max-width: 768px) {
+  .brand-pill span:nth-child(2),
+  .brand-pill span:nth-child(3) {
+    display: none;
+  }
+  .hud-top {
+    top: max(8px, env(safe-area-inset-top));
+  }
+  .top-actions {
+    justify-content: flex-start;
+    gap: 2px;
+    padding: 4px 6px;
+  }
+  .icon-btn {
+    min-width: 38px;
+    min-height: 38px;
+  }
+  .hud-bottom {
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .seal { width: 22px; height: 22px; font-size: 11px; }
+}
+@media (max-width: 768px) {
+  .mode-banner {
+    top: auto;
+    bottom: 132px;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  .tool-subdock,
+  .station-dock {
+    justify-content: flex-start;
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tool-subdock::-webkit-scrollbar,
+  .station-dock::-webkit-scrollbar {
+    display: none;
+  }
+}
+.color-swatch,
+.tool-btn,
+.station-pill {
+  flex: 0 0 auto;
+}

@@ -39,3 +39,16 @@ npm test         # suíte de testes unitários
 ```
 
 O arquivo `dist/index.html` (e `oficina-dos-gestos-compartilhados.html`) é autocontido e pode ser aberto diretamente em qualquer navegador moderno com suporte a WebGL.
+
+## Passe premium (2026-11)
+
+- **Render**: reflexos de ambiente (PMREM/RoomEnvironment, intensidade por papel de material), bloom suave, gradação quente com vinheta e grão leve (`src/core/premium.ts`). Shader final com `clamp` em todas as etapas para evitar NaN em amostras MSAA de borda. Qualidade "leve" desliga o pós-processamento.
+- **Luz**: sol mais quente e contrastado, hemisférica reduzida, exposição 0.94.
+- **Câmera**: enquadramentos de Argila, Areia, Fitas e Ritmo corrigidos; em retrato o FOV abre e a câmera recua para manter a estação inteira; interpolação independente de FPS.
+- **VFX**: respingos de pigmento, poeira de argila, grãos de areia, rastro nas fitas e anel + faíscas nos instrumentos.
+- **Selos de descoberta**: um selo por estação (salvo localmente) com arpejo, explosão dourada e anel de progresso no cartão de turno.
+- **Áudio**: ambiente do ateliê (vento filtrado + pad suave) com botão 🍃.
+- **UI**: barra superior compacta em ícones (rótulos ≥1500px), alvos de toque ≥38px, faixa de modo reposicionada no celular, docas roláveis, safe-area.
+- **Diagnóstico**: `?debug` grava `renderer.info` em `document.documentElement.dataset.stats` (desktop: ~196 draw calls incluindo sombra/bloom, ~35k triângulos, 32 texturas).
+
+Scorecard (0–3): Direção de arte 2.5 · Estações/herói 2 · Ferramentas/restrições 2 · Interativos 2.5 · Mundo 2.5 · Materiais 2 · Luz/render 2.5 · VFX 2 · UI 2.5 · Desempenho 2 — média 2.3.

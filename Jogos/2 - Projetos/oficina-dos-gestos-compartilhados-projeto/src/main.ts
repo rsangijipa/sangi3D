@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { AtelierAudioEngine } from './core/audio';
+import { createPremiumPipeline, GestureVfx } from './core/premium';
 import {
   MODE_META,
   SessionStore,
@@ -27,7 +28,7 @@ export function initOficinaApp(): void {
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 0.94;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
@@ -51,6 +52,58 @@ export function initOficinaApp(): void {
   const ribbonsStation = createRibbonsStation(scene);
   const rhythmStation = createRhythmStation(scene);
 
+  const pipeline = createPremiumPipeline(renderer, scene, camera);
+  const debugStats = /[?&]debug/.test(window.location.search);
+  let statFrames = 0;
+  let statT0 = performance.now();
+  renderer.info.autoReset = false;
+  const vfx = new GestureVfx(scene);
+  let lastVfx = 0;
+  const vfxAt = (pt: THREE.Vector3, color: string | number, count = 5, spread = 0.5, lift = 0.7) => {
+    if (store.state.reducedMotion) return;
+    const now = performance.now();
+    if (now - lastVfx < 45) return;
+    lastVfx = now;
+    vfx.burst(pt, color, count, spread, lift);
+  };
+
+  // Selos de descoberta: um por estação, conquistado ao criar algo algumas vezes.
+  const SEAL_KEY = 'oficina-gestos-selos-v1';
+  const seals = new Set<StationId>();
+  try {
+    (JSON.parse(localStorage.getItem(SEAL_KEY) || '[]') as StationId[]).forEach((x) => seals.add(x));
+  } catch { /* armazenamento indisponível */ }
+  const sealGesture: Record<StationId, number> = { pintura: 0, argila: 0, areia: 0, fitas: 0, ritmo: 0 };
+  const SEAL_GOAL: Record<StationId, number> = { pintura: 3, argila: 3, areia: 3, fitas: 3, ritmo: 6 };
+  const renderSeals = () => {
+    document.querySelectorAll<HTMLElement>('[data-seal]').forEach((el) => {
+      const id = el.dataset.seal as StationId;
+      el.classList.toggle('earned', seals.has(id));
+      const pct = seals.has(id) ? 1 : Math.min(1, sealGesture[id] / SEAL_GOAL[id]);
+      el.style.setProperty('--p', String(pct));
+    });
+    const count = document.getElementById('seal-count');
+    if (count) count.textContent = `${seals.size}/5`;
+  };
+  const progressSeal = (st: StationId, at?: THREE.Vector3) => {
+    if (seals.has(st)) return;
+    sealGesture[st] += 1;
+    if (sealGesture[st] >= SEAL_GOAL[st]) {
+      seals.add(st);
+      try { localStorage.setItem(SEAL_KEY, JSON.stringify([...seals])); } catch { /* ok */ }
+      audio.playReward();
+      if (at && !store.state.reducedMotion) {
+        vfx.burst(at, '#E9C46A', 26, 0.9, 1.3);
+        vfx.ring(at, new THREE.Vector3(0, 1, 0), '#E9C46A', 0.16);
+      }
+      showToast(`✨ Selo de ${STATION_META[st].label} conquistado!${seals.size === 5 ? ' Oficina completa 🎉' : ''}`);
+      const el = document.querySelector<HTMLElement>(`[data-seal="${st}"]`);
+      el?.classList.add('pop');
+      window.setTimeout(() => el?.classList.remove('pop'), 900);
+    }
+    renderSeals();
+  };
+
   // Visual Demonstration Guide Ring (for Imitação / Complete meu gesto)
   const guideMesh = new THREE.Mesh(
     new THREE.RingGeometry(0.05, 0.075, 28),
@@ -63,15 +116,20 @@ export function initOficinaApp(): void {
     const isMobile = window.innerWidth < 768;
     const baseDpr = window.devicePixelRatio || 1;
     const dpr = q === 'cinema' ? Math.min(2, baseDpr) : q === 'equilibrada' ? Math.min(1.5, baseDpr) : 1;
-    renderer.setPixelRatio(isMobile && q !== 'cinema' ? Math.min(1.25, dpr) : dpr);
+    const finalDpr = isMobile && q !== 'cinema' ? Math.min(1.25, dpr) : dpr;
+    renderer.setPixelRatio(finalDpr);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    pipeline.setSize(window.innerWidth, window.innerHeight, finalDpr);
+    pipeline.setQuality(q);
     env.setQuality(q);
   };
 
   const updateCameraTargetForStation = (station: StationId) => {
     const preset = store.state.cameraPreset;
     const isMobile = window.innerWidth < 768;
-    const distBoost = isMobile ? 0.55 : 0;
+    // Em telas estreitas (retrato) afastar a câmera para manter o objeto inteiro em quadro.
+    const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+    const distBoost = aspect < 1.2 ? Math.min(1.1, (1.2 / aspect - 1) * 0.55 + 0.15) : 0;
 
     if (preset === 'visao_geral') {
       desiredCamPos.set(0, 2.75, 4.45 + distBoost);
@@ -93,8 +151,11 @@ export function initOficinaApp(): void {
 
     if (preset === 'topo') {
       desiredCamPos.set(chosen.tgt.x, chosen.tgt.y + 1.85 + distBoost, chosen.tgt.z + 0.55);
-    } else if (isMobile) {
-      desiredCamPos.z += distBoost;
+    } else if (distBoost > 0 || isMobile) {
+      const dir = desiredCamPos.clone().sub(desiredCamTarget);
+      const len = dir.length();
+      desiredCamPos.copy(desiredCamTarget).add(dir.multiplyScalar((len + distBoost) / len));
+      desiredCamTarget.y -= distBoost * 0.08;
     }
   };
 
@@ -138,6 +199,8 @@ export function initOficinaApp(): void {
       if (hits.length > 0 && hits[0].uv) {
         const colHex = PIGMENT_COLORS[store.state.activeColorIndex]?.hex ?? '#315E67';
         paintStation.handlePointer(hits[0].uv, prevUv, phase, toolId, colHex, part, mirror);
+        vfxAt(hits[0].point, colHex, phase === 'start' ? 8 : 2, 0.35, 0.4);
+        if (phase === 'end') progressSeal('pintura', hits[0].point);
         if (phase === 'move') audio.playFriction('paint', 0.65);
         prevUv = hits[0].uv.clone();
         if (phase === 'end') store.recordAction(`Pintura (${toolId})`);
@@ -146,6 +209,8 @@ export function initOficinaApp(): void {
       const hits = raycaster.intersectObject(clayStation.clayMesh, false);
       if (hits.length > 0 && hits[0].uv) {
         clayStation.handlePointer(hits[0].uv, prevUv, phase, toolId, part, mirror);
+        vfxAt(hits[0].point, '#B8835C', phase === 'start' ? 7 : 2, 0.4, 0.55);
+        if (phase === 'end') progressSeal('argila', hits[0].point);
         if (phase === 'move') audio.playFriction('clay', 0.7);
         prevUv = hits[0].uv.clone();
         if (phase === 'end') store.recordAction(`Argila (${toolId})`);
@@ -154,6 +219,8 @@ export function initOficinaApp(): void {
       const hits = raycaster.intersectObject(sandStation.sandMesh, false);
       if (hits.length > 0 && hits[0].uv) {
         sandStation.handlePointer(hits[0].uv, prevUv, phase, toolId, part, mirror);
+        vfxAt(hits[0].point, '#E2C89A', phase === 'start' ? 9 : 3, 0.55, 0.5);
+        if (phase === 'end') progressSeal('areia', hits[0].point);
         if (phase === 'move') audio.playFriction('sand', 0.75);
         prevUv = hits[0].uv.clone();
         if (phase === 'end') store.recordAction(`Areia (${toolId})`);
@@ -164,6 +231,8 @@ export function initOficinaApp(): void {
         const pt = hits[0].point;
         const vel = lastWorldPt ? pt.clone().sub(lastWorldPt) : new THREE.Vector3(0.05, 0.02, 0);
         ribbonsStation.applyGesture(pt, vel, toolId, mirror);
+        vfxAt(pt, '#F4E3B5', 2, 0.25, 0.15);
+        if (phase === 'end') progressSeal('fitas', pt);
         if (phase === 'move') audio.playFriction('ribbon', Math.min(1.2, vel.length() * 8));
         lastWorldPt = pt.clone();
         if (phase === 'end') store.recordAction(`Fitas (${toolId})`);
@@ -173,6 +242,13 @@ export function initOficinaApp(): void {
       if (hits.length > 0) {
         const res = rhythmStation.triggerMesh(hits[0].object as THREE.Mesh, audio);
         if (res) {
+          const hp = hits[0].point;
+          const nrm = hits[0].face ? hits[0].face.normal.clone().transformDirection(hits[0].object.matrixWorld) : new THREE.Vector3(0, 0, 1);
+          if (!store.state.reducedMotion) {
+            vfx.ring(hp, nrm, '#F2D27A', 0.07);
+            vfx.burst(hp, '#F6DFA0', 10, 0.45, 0.9);
+          }
+          progressSeal('ritmo', hp);
           store.recordAction(`Ritmo (${res.label})`);
         }
       }
@@ -186,6 +262,7 @@ export function initOficinaApp(): void {
 
   renderer.domElement.addEventListener('pointerdown', (e) => {
     audio.unlock();
+    if (!store.state.muted) audio.setAmbience(ambienceOn);
     isPointerDown = true;
     interactAt(e.clientX, e.clientY, 'start');
   });
@@ -201,12 +278,23 @@ export function initOficinaApp(): void {
     interactAt(e.clientX, e.clientY, 'end');
   });
 
+  let ambienceOn = true;
+  document.getElementById('btn-ambience')?.addEventListener('click', () => {
+    audio.unlock();
+    ambienceOn = !ambienceOn;
+    audio.setAmbience(ambienceOn);
+    document.getElementById('btn-ambience')?.classList.toggle('active', ambienceOn);
+    showToast(ambienceOn ? 'Ambiente sonoro ligado' : 'Ambiente sonoro desligado');
+  });
+
   // UI Bindings
   const toastEl = document.getElementById('toast')!;
+  let toastTimer = 0;
   const showToast = (msg: string) => {
     toastEl.textContent = msg;
     toastEl.classList.remove('hidden');
-    window.setTimeout(() => toastEl.classList.add('hidden'), 2400);
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toastEl.classList.add('hidden'), 2400);
   };
 
   const sidePanel = document.getElementById('side-panel')!;
@@ -269,7 +357,7 @@ export function initOficinaApp(): void {
   });
 
   document.getElementById('btn-export')?.addEventListener('click', () => {
-    renderer.render(scene, camera);
+    pipeline.render(clock.elapsedTime);
     const dataUrl = renderer.domElement.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = dataUrl;
@@ -317,9 +405,9 @@ export function initOficinaApp(): void {
     });
 
     const muteBtn = document.getElementById('btn-mute');
-    if (muteBtn) muteBtn.textContent = s.muted ? '🔇 Mudo' : '🔊 Áudio';
+    if (muteBtn) muteBtn.innerHTML = s.muted ? '<span class="ico">🔇</span><span class="lbl">Mudo</span>' : '<span class="ico">🔊</span><span class="lbl">Áudio</span>';
     const qBtn = document.getElementById('btn-quality');
-    if (qBtn) qBtn.textContent = `✨ ${s.quality.charAt(0).toUpperCase() + s.quality.slice(1)}`;
+    if (qBtn) qBtn.innerHTML = `<span class="ico">✨</span><span class="lbl">${s.quality.charAt(0).toUpperCase() + s.quality.slice(1)}</span>`;
 
     // Turn card
     const modeLabelEl = document.getElementById('hud-mode-label');
@@ -506,9 +594,17 @@ export function initOficinaApp(): void {
     }
   });
 
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+  const fitCameraLens = () => {
+    const aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = aspect;
+    // Retrato: abrir o campo de visão vertical para preservar a largura das estações.
+    camera.fov = aspect < 1 ? Math.min(72, 44 + (1 - aspect) * 52) : 44;
     camera.updateProjectionMatrix();
+  };
+  fitCameraLens();
+  window.addEventListener('resize', () => {
+    fitCameraLens();
+    updateCameraTargetForStation(store.state.activeStation);
     applyQuality(store.state.quality);
   });
 
@@ -516,6 +612,7 @@ export function initOficinaApp(): void {
   applyQuality(store.state.quality);
   updateCameraTargetForStation(store.state.activeStation);
   renderUI();
+  renderSeals();
 
   // Main Animation Loop
   let rafId = 0;
@@ -523,11 +620,13 @@ export function initOficinaApp(): void {
 
   const animate = () => {
     rafId = requestAnimationFrame(animate);
-    const t = clock.getElapsedTime();
+    renderer.info.reset();
+    const dt = clock.getDelta();
+    const t = clock.elapsedTime;
     const reduced = store.state.reducedMotion;
 
     // Smooth camera interpolation
-    const lerpFactor = reduced ? 0.25 : 0.08;
+    const lerpFactor = 1 - Math.pow(reduced ? 0.0005 : 0.012, Math.min(0.1, dt));
     camera.position.lerp(desiredCamPos, lerpFactor);
     camTarget.lerp(desiredCamTarget, lerpFactor);
     camera.lookAt(camTarget);
@@ -541,11 +640,25 @@ export function initOficinaApp(): void {
       guideMesh.lookAt(camera.position);
     }
 
+    vfx.update(dt);
     env.update(t, reduced);
     ribbonsStation.update(t, reduced);
     rhythmStation.update(t, reduced);
 
-    renderer.render(scene, camera);
+    pipeline.render(t);
+    if (debugStats && ++statFrames % 60 === 0) {
+      const i = renderer.info;
+      const now = performance.now();
+      document.documentElement.dataset.stats = JSON.stringify({
+        fps: Math.round(60000 / (now - statT0)),
+        calls: i.render.calls,
+        triangles: i.render.triangles,
+        geometries: i.memory.geometries,
+        textures: i.memory.textures,
+        programs: i.programs?.length ?? 0
+      });
+      statT0 = now;
+    }
   };
   animate();
 
@@ -559,6 +672,8 @@ export function initOficinaApp(): void {
     ribbonsStation.dispose();
     rhythmStation.dispose();
     audio.dispose();
+    vfx.dispose();
+    pipeline.dispose();
     renderer.dispose();
   });
 }

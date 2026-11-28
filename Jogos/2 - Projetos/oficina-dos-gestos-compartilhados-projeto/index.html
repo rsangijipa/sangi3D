@@ -18,16 +18,17 @@
     </div>
 
     <div class="top-actions" role="toolbar" aria-label="Controles principais">
-      <button id="btn-panel" class="icon-btn" title="Modos e Configurações ABA">⚙️ Modos & ABA</button>
-      <button id="btn-camera" class="icon-btn" title="Alternar câmera (R)">📷 Câmera</button>
-      <button id="btn-mute" class="icon-btn" title="Ativar/silenciar áudio (M)">🔊 Áudio</button>
-      <button id="btn-quality" class="icon-btn" title="Qualidade gráfica">✨ Equilibrada</button>
-      <button id="btn-undo" class="icon-btn" title="Desfazer (Ctrl+Z)">↩️ Desfazer</button>
-      <button id="btn-redo" class="icon-btn" title="Refazer (Ctrl+Y)">↪️ Refazer</button>
-      <button id="btn-save" class="icon-btn" title="Salvar criação">💾 Salvar</button>
-      <button id="btn-export" class="icon-btn" title="Exportar imagem PNG">🖼️ Exportar</button>
-      <button id="btn-clear" class="icon-btn" title="Limpar superfície ativa">🧹 Limpar</button>
-      <button id="btn-catalog" class="icon-btn" title="Retornar ao catálogo">↩ Catálogo</button>
+      <button id="btn-panel" class="icon-btn" title="Modos e Configurações ABA" aria-label="Modos e Configurações ABA"><span class="ico" aria-hidden="true">⚙️</span><span class="lbl">Modos & ABA</span></button>
+      <button id="btn-camera" class="icon-btn" title="Alternar câmera (R)" aria-label="Alternar câmera (R)"><span class="ico" aria-hidden="true">📷</span><span class="lbl">Câmera</span></button>
+      <button id="btn-mute" class="icon-btn" title="Ativar/silenciar áudio (M)" aria-label="Ativar/silenciar áudio (M)"><span class="ico" aria-hidden="true">🔊</span><span class="lbl">Áudio</span></button>
+      <button id="btn-ambience" class="icon-btn active" title="Ambiente sonoro do ateliê" aria-label="Ambiente sonoro do ateliê"><span class="ico" aria-hidden="true">🍃</span><span class="lbl">Ambiente</span></button>
+      <button id="btn-quality" class="icon-btn" title="Qualidade gráfica" aria-label="Qualidade gráfica"><span class="ico" aria-hidden="true">✨</span><span class="lbl">Equilibrada</span></button>
+      <button id="btn-undo" class="icon-btn" title="Desfazer (Ctrl+Z)" aria-label="Desfazer (Ctrl+Z)"><span class="ico" aria-hidden="true">↩️</span><span class="lbl">Desfazer</span></button>
+      <button id="btn-redo" class="icon-btn" title="Refazer (Ctrl+Y)" aria-label="Refazer (Ctrl+Y)"><span class="ico" aria-hidden="true">↪️</span><span class="lbl">Refazer</span></button>
+      <button id="btn-save" class="icon-btn" title="Salvar criação" aria-label="Salvar criação"><span class="ico" aria-hidden="true">💾</span><span class="lbl">Salvar</span></button>
+      <button id="btn-export" class="icon-btn" title="Exportar imagem PNG" aria-label="Exportar imagem PNG"><span class="ico" aria-hidden="true">🖼️</span><span class="lbl">Exportar</span></button>
+      <button id="btn-clear" class="icon-btn" title="Limpar superfície ativa" aria-label="Limpar superfície ativa"><span class="ico" aria-hidden="true">🧹</span><span class="lbl">Limpar</span></button>
+      <button id="btn-catalog" class="icon-btn" title="Retornar ao catálogo" aria-label="Retornar ao catálogo"><span class="ico" aria-hidden="true">↩</span><span class="lbl">Catálogo</span></button>
     </div>
 
     <div class="turn-card">
@@ -36,6 +37,14 @@
         <span id="hud-mode-label">Criação compartilhada</span>
       </div>
       <button id="btn-turn" class="turn-btn" title="Alternar participante (Espaço)">✋ Sua vez (A)</button>
+      <div class="seal-row" aria-label="Selos de descoberta">
+        <span class="seal-title">Selos <b id="seal-count">0/5</b></span>
+        <span class="seal" data-seal="pintura" title="Selo da Pintura">🖌️</span>
+        <span class="seal" data-seal="argila" title="Selo da Argila">🏺</span>
+        <span class="seal" data-seal="areia" title="Selo da Areia">〰️</span>
+        <span class="seal" data-seal="fitas" title="Selo das Fitas">🎀</span>
+        <span class="seal" data-seal="ritmo" title="Selo do Ritmo">🥁</span>
+      </div>
     </div>
   </header>
 

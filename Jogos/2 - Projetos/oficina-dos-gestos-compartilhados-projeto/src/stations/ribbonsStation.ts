@@ -117,8 +117,8 @@ export function createRibbonsStation(scene: THREE.Scene): RibbonsStationHandle {
   return {
     group,
     hitPlane,
-    cameraTarget: new THREE.Vector3(0, 2.65, -1.85),
-    cameraPosition: new THREE.Vector3(0, 2.55, 1.35),
+    cameraTarget: new THREE.Vector3(0, 2.45, -1.85),
+    cameraPosition: new THREE.Vector3(0, 2.1, 1.75),
     applyGesture(worldPoint, velocity, toolId, mirror) {
       const localPt = group.worldToLocal(worldPoint.clone());
       const mult = toolId === 'onda_ampla' ? 1.8 : toolId === 'espiral' ? 1.5 : 1.0;

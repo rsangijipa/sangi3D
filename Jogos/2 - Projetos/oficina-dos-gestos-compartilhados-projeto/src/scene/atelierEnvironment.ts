@@ -286,10 +286,10 @@ export function buildAtelierEnvironment(scene: THREE.Scene): AtelierEnvironmentH
   group.add(basket);
 
   // 8. Lighting (Warm Golden Afternoon Sunlight + Ambient + Volumetric Sunbeams)
-  const hemiLight = new THREE.HemisphereLight('#FFF5E2', '#8D725B', 0.82);
+  const hemiLight = new THREE.HemisphereLight('#FFF3DE', '#7A5E48', 0.6);
   group.add(hemiLight);
 
-  const sunLight = new THREE.DirectionalLight('#FFE2B3', 1.65);
+  const sunLight = new THREE.DirectionalLight('#FFDDA8', 1.95);
   sunLight.position.set(-3.2, 7.5, -7.8);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(2048, 2048);
