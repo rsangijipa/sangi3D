@@ -22,9 +22,15 @@ function surface(color:number,style:string,repeatX=1,repeatY=1){
   for(let i=0;i<48;i++){const y=rand()*n;ctx.beginPath();ctx.moveTo(0,y);ctx.bezierCurveTo(155,y+rand()*16-8,340,y+rand()*17-8,n,y);ctx.stroke();}
  }
  const map=new T.CanvasTexture(canvas),bumpMap=map.clone();
- for(const t of [map,bumpMap]){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(repeatX,repeatY);t.anisotropy=4;t.needsUpdate=true;}
+ // Mapa de rugosidade derivado: veios/fibras escuros ficam mais foscos, áreas claras ganham leve brilho.
+ const rc=document.createElement('canvas');rc.width=rc.height=128;const rx=rc.getContext('2d')!;rx.filter='grayscale(1) invert(1) contrast(.55) brightness(1.25)';rx.drawImage(canvas,0,0,128,128);
+ const roughnessMap=new T.CanvasTexture(rc);
+ for(const t of [map,bumpMap,roughnessMap]){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(repeatX,repeatY);t.anisotropy=8;t.needsUpdate=true;}
  map.colorSpace=T.SRGBColorSpace;
- return new T.MeshStandardMaterial({map,bumpMap,bumpScale:style==='plaster'?.012:style==='wood'?.011:.018,roughness:style==='wood'?.65:.89});
+ const base={map,bumpMap,roughnessMap,bumpScale:style==='plaster'?.014:style==='wood'?.016:.022,roughness:style==='wood'?.72:.95};
+ if(style==='wood')return new T.MeshPhysicalMaterial({...base,clearcoat:.22,clearcoatRoughness:.5});
+ if(style==='weave'||style==='felt')return new T.MeshPhysicalMaterial({...base,sheen:.6,sheenRoughness:.7,sheenColor:new T.Color(0xfff0dc)});
+ return new T.MeshStandardMaterial(base);
 }
 const oak=surface(0xad744b,'wood'), walnut=surface(0x754526,'wood'), lightly=surface(0xd6ab79,'wood');
 const cream=surface(0xe3caaa,'plaster'), clay=surface(0xb57359,'plaster'), sand=surface(0xcbb28e,'plaster');
@@ -257,14 +263,20 @@ function batchStatic(root:any,excluded:Set<any>){
  }
 }
 export function mount(host:HTMLElement,select:(room:Room)=>void,fallback:(value:boolean)=>void,optimize=true){
- const renderer=new T.WebGLRenderer({antialias:true});
- renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.14;
+ const renderer=new T.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+ renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;
  const canvas=renderer.domElement;host.prepend(canvas);canvas.setAttribute('aria-hidden','true');
- const scene=new T.Scene();scene.background=new T.Color(0x6e5141);scene.fog=new T.FogExp2(0x745845,.052);
+ const scene=new T.Scene();scene.background=new T.Color(0x5e4536);scene.fog=new T.FogExp2(0x6a4f3e,.048);
+ // Iluminação baseada em imagem: um "estúdio" procedural quente gera reflexos suaves no latão e nas madeiras.
+ const pmrem=new T.PMREMGenerator(renderer),studioEnv=new T.Scene();
+ const envBox=new T.Mesh(new T.BoxGeometry(20,12,20),new T.MeshBasicMaterial({color:0x2a1d15,side:T.BackSide}));studioEnv.add(envBox);
+ for(const [x,y,z,w,h,c] of [[-6,4,4,5,3,0xffd9a8],[6,5,-2,3,4,0x9fc0d8],[0,5.9,0,8,.1,0xfff0dc],[-2,1,-9.5,6,2,0xc58a5a]] as const){const p=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:c,side:T.DoubleSide}));p.position.set(x,y,z);p.lookAt(0,2,0);studioEnv.add(p);}
+ const envRT=pmrem.fromScene(studioEnv,.04);scene.environment=envRT.texture;scene.environmentIntensity=.42;
+ studioEnv.traverse((o:any)=>{o.geometry?.dispose();o.material?.dispose();});pmrem.dispose();
  const cam=new T.PerspectiveCamera(40,1,.08,60);
- const ambient=new T.HemisphereLight(0xf5dec4,0x6b5349,1.24);scene.add(ambient);
- const key=new T.DirectionalLight(0xffdfbe,1.96);key.position.set(-3.2,7.8,7);key.castShadow=true;key.shadow.mapSize.setScalar(1536);Object.assign(key.shadow.camera,{left:-5,right:5,top:6,bottom:-5,near:.4,far:18});key.shadow.normalBias=.02;key.shadow.bias=-.0002;scene.add(key);
+ const ambient=new T.HemisphereLight(0xf5dec4,0x5b4339,.92);scene.add(ambient);
+ const key=new T.DirectionalLight(0xffdcb4,2.3);key.position.set(-3.2,7.8,7);key.castShadow=true;key.shadow.mapSize.setScalar(2048);key.shadow.radius=3;Object.assign(key.shadow.camera,{left:-5,right:5,top:6,bottom:-5,near:.4,far:18});key.shadow.normalBias=.02;key.shadow.bias=-.0002;scene.add(key);
  const rim=new T.DirectionalLight(0xb6cee0,.74);rim.position.set(4,5,-3);scene.add(rim);
  block(scene,oak,0,-.20,-.1,19,.38,11,.065);
  block(scene,sand,0,4.0,-4.0,28,9,.22,.025);
@@ -329,14 +341,54 @@ export function mount(host:HTMLElement,select:(room:Room)=>void,fallback:(value:
  const invisible=new T.MeshBasicMaterial({visible:false});
  if(optimize){const excluded=new Set([drawer,lid,reading,bedroom,studio,storage]);batchStatic(scene,excluded);for(const root of [reading,bedroom,studio,storage]){excluded.delete(root);batchStatic(root,excluded);}}
  const pick=roomKeys.map(room=>{const p=piece(scene,new T.BoxGeometry(1.95,1.65,.17),invisible,centers[room].x,centers[room].y,1.055,false);p.userData.room=room;return p;});
+ // ---- Atmosfera ----
+ const fx=new T.Group();fx.name='fx';scene.add(fx);
+ const uTime={value:0};
+ // Poeira suspensa iluminada pela janela.
+ const dustCount=260,dustPos=new Float32Array(dustCount*3),dustSeed=new Float32Array(dustCount);
+ for(let i=0;i<dustCount;i++){dustPos.set([(rand()-.5)*9,rand()*5.2,(rand()-.2)*4],i*3);dustSeed[i]=rand()*100;}
+ const dustGeo=new T.BufferGeometry();dustGeo.setAttribute('position',new T.BufferAttribute(dustPos,3));dustGeo.setAttribute('seed',new T.BufferAttribute(dustSeed,1));
+ const dust=new T.Points(dustGeo,new T.ShaderMaterial({transparent:true,depthWrite:false,blending:T.AdditiveBlending,uniforms:{uTime,uScale:{value:1}},
+  vertexShader:'attribute float seed;uniform float uTime;uniform float uScale;varying float vA;void main(){vec3 p=position;float t=uTime*.12+seed;p.x+=sin(t*1.3)*.25;p.y=mod(p.y+uTime*.03+sin(t)*.2,5.2);p.z+=cos(t*.9)*.2;vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;float d=max(-mv.z,.2);gl_PointSize=clamp(uScale*22./d,1.,9.);vA=clamp(.35+.35*sin(seed*7.+uTime*.8),0.,1.)*clamp(1.-d/16.,0.,1.);}',
+  fragmentShader:'varying float vA;void main(){float d=length(gl_PointCoord-.5);float a=clamp(1.-d*2.,0.,1.);gl_FragColor=vec4(vec3(1.,.86,.62)*a*a*vA*.55,1.);}'}));
+ dust.frustumCulled=false;fx.add(dust);
+ // Feixes de luz vindos da janela grande.
+ const shaftMat=new T.ShaderMaterial({transparent:true,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide,uniforms:{uTime},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform float uTime;varying vec2 vUv;void main(){float edge=clamp(sin(vUv.x*3.14159),0.,1.);float fall=clamp(vUv.y,0.,1.);float flick=.85+.15*sin(uTime*.4+vUv.x*6.);float a=pow(edge,1.6)*fall*fall*flick*.075;gl_FragColor=vec4(vec3(1.,.82,.55)*a,1.);}'});
+ for(const [x,w,r] of [[-3.3,1.1,.0],[-2.6,.7,.08],[-3.9,.55,-.06]] as const){const s=new T.Mesh(new T.PlaneGeometry(w,7.5),shaftMat);s.position.set(x+1.4,1.6,-1.2);s.rotation.set(-.35,.25,.62+r);fx.add(s);}
+ // Halo suave na fachada de cada cômodo (passar o mouse / cômodo em foco).
+ const haloGeo=new T.PlaneGeometry(2.05,1.72);
+ const halos=new Map<Room,any>();
+ for(const room of roomKeys){
+  const m=new T.ShaderMaterial({transparent:true,depthWrite:false,blending:T.AdditiveBlending,uniforms:{uA:{value:0},uTime},
+   vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+   fragmentShader:'uniform float uA;uniform float uTime;varying vec2 vUv;void main(){vec2 q=abs(vUv-.5)*2.;float box=max(q.x,q.y);float rim=smoothstep(.78,.97,box)*(1.-smoothstep(.97,1.,box));float a=clamp((rim*.9)*uA*(.8+.2*sin(uTime*2.)),0.,1.);gl_FragColor=vec4(vec3(1.,.8,.5)*a,1.);}'});
+  const h=new T.Mesh(haloGeo,m);h.position.set(centers[room].x,centers[room].y,1.08);h.renderOrder=5;fx.add(h);halos.set(room,h);
+ }
+ const focusLight=new T.PointLight(0xffc27a,0,3.2,1.6);scene.add(focusLight);
+ // Faíscas quando um símbolo é colocado.
+ const sparkN=48,sparkPos=new Float32Array(sparkN*3),sparkVel:number[][]=[];
+ const sparkGeo=new T.BufferGeometry();sparkGeo.setAttribute('position',new T.BufferAttribute(sparkPos,3));
+ const sparkMat=new T.PointsMaterial({color:0xffd58a,size:.06,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending});
+ const sparks=new T.Points(sparkGeo,sparkMat);sparks.frustumCulled=false;fx.add(sparks);let sparkAt=-1e9;
+ function burst(at:any){for(let i=0;i<sparkN;i++){sparkPos.set([at.x,at.y+.05,at.z],i*3);const a=rand()*Math.PI*2,u=rand();sparkVel[i]=[Math.cos(a)*(.4+u*.6),.9+rand()*1.2,Math.sin(a)*(.4+u*.6)];}sparkGeo.attributes.position.needsUpdate=true;sparkAt=performance.now();}
+ // ---- Pós-processamento: MSAA em render target HDR + bloom leve, tonemapping, vinheta e grão ----
  const mobile=matchMedia('(max-width:720px) and (orientation:portrait)');
+ const rt=new T.WebGLRenderTarget(2,2,{type:T.HalfFloatType,samples:mobile.matches?2:4});
+ const post=new T.ShaderMaterial({uniforms:{tScene:{value:rt.texture},uTime,uRes:{value:new T.Vector2(2,2)}},depthTest:false,depthWrite:false,
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
+  fragmentShader:'uniform sampler2D tScene;uniform float uTime;uniform vec2 uRes;varying vec2 vUv;\nvec3 tap(vec2 uv){return clamp(texture2D(tScene,clamp(uv,0.001,.999)).rgb,0.,64.);}\nvoid main(){vec3 c=tap(vUv);vec3 g=vec3(0.);for(int i=0;i<12;i++){float a=float(i)*.5236;float r=i<6?5.:13.;vec2 o=vec2(cos(a),sin(a))*r/max(uRes,vec2(1.));vec3 s=tap(vUv+o);g+=max(s-vec3(.85),vec3(0.));}c+=g*(.55/12.);gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\nvec2 q=vUv-.5;float vig=clamp(1.-dot(q,q)*.9,0.,1.);vec3 col=clamp(gl_FragColor.rgb,0.,1.);col=mix(col,col*vec3(1.04,.98,.9),.5);col*=mix(.72,1.,vig);float n=fract(sin(dot(vUv*uRes+uTime*61.,vec2(12.9898,78.233)))*43758.5453);col+=(n-.5)*.018;gl_FragColor=vec4(clamp(col,0.,1.),1.);}'});
+ const postScene=new T.Scene(),postCam=new T.OrthographicCamera(-1,1,1,-1,0,1);
+ const quad=new T.Mesh(new T.PlaneGeometry(2,2),post);quad.frustumCulled=false;postScene.add(quad);
+ let hover:Room|undefined;
  const visual=new Map<number,{object:any;from:any;target:any;at:number;slot:string;entry:Entry}>();
  let state:State,cw=1,ch=1,render=true,raf=0,last=0,deadline=0,lost=false,preview:any;
  const aim=new T.Vector3(),targetAim=new T.Vector3(),targetPos=new T.Vector3();
  const ray=new T.Raycaster(),pointer=new T.Vector2();
  const abort=new AbortController(),listen={signal:abort.signal};
  function resize(){cw=host.clientWidth;ch=host.clientHeight;if(!cw||!ch)return;
-  cam.aspect=cw/ch;renderer.setPixelRatio(Math.min(devicePixelRatio,mobile.matches?1.25:1.65));renderer.setSize(cw,ch);
+  cam.aspect=cw/ch;const pr=Math.min(devicePixelRatio,mobile.matches?1.25:1.65);renderer.setPixelRatio(pr);renderer.setSize(cw,ch);rt.setSize(Math.round(cw*pr),Math.round(ch*pr));post.uniforms.uRes.value.set(cw*pr,ch*pr);dust.material.uniforms.uScale.value=pr*(ch/720);
   cam.updateProjectionMatrix();render=true;deadline=performance.now()+540;
  }
  const observer=new ResizeObserver(resize);observer.observe(host);resize();
@@ -362,7 +414,7 @@ export function mount(host:HTMLElement,select:(room:Room)=>void,fallback:(value:
   for(const [id,e] of visual){if(!s.tokens.some(t=>t.id===id)){e.object.removeFromParent();visual.delete(id);}}
   for(const entry of s.tokens){
    const next=destination(entry),old=visual.get(entry.id);
-   if(!old){const object=token(scene,entry.type),from=next.clone().add(v(-.15,.37,.14));object.position.copy(from);visual.set(entry.id,{object,from,target:next,at:now,slot:entry.slot,entry});}
+   if(!old){const object=token(scene,entry.type),from=next.clone().add(v(-.15,.37,.14));object.position.copy(from);visual.set(entry.id,{object,from,target:next,at:now,slot:entry.slot,entry});if(!first&&!s.reduced)setTimeout(()=>burst(next),470);}
    else if(old.slot!==entry.slot){old.from.copy(old.object.position);old.target.copy(next);old.at=now;old.slot=entry.slot;old.entry=entry;}
   }
   const marker=s.draft&&s.stage>=2&&s.stage<=3?s.draft.type:null;
@@ -373,7 +425,7 @@ export function mount(host:HTMLElement,select:(room:Room)=>void,fallback:(value:
  }
  function animate(now:number){
   raf=requestAnimationFrame(animate);
-  if(!state||state.paused||document.hidden||lost||(!render&&deadline===0))return;
+  if(!state||state.paused||document.hidden||lost||(state.reduced&&!render&&deadline===0))return;
   const dt=Math.min(.05,(now-last)/1000||.016),blend=state.reduced||now>=deadline?1:1-Math.exp(-dt*11);last=now;
   positions();cam.position.lerp(targetPos,blend);aim.lerp(targetAim,blend);cam.lookAt(aim);
   drawer.position.z=T.MathUtils.lerp(drawer.position.z,state.drawer?.317:.025,blend);
@@ -384,7 +436,12 @@ export function mount(host:HTMLElement,select:(room:Room)=>void,fallback:(value:
    e.target.copy(destination(e.entry));e.object.position.copy(e.from).lerp(e.target,ease);e.object.position.y+=Math.sin(progress*Math.PI)*.26;
    e.object.visible=e.entry.visibility==='visible'||progress<1||(e.entry.room==='studio'?drawer.position.z>.17:lid.rotation.x<-.50);
   }
-  renderer.render(scene,cam);canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);render=false;if(now>=deadline)deadline=0;
+  uTime.value=now/1000;
+  for(const [room,h] of halos){const want=room===hover&&!state.focused?.85:0;h.material.uniforms.uA.value=T.MathUtils.lerp(h.material.uniforms.uA.value,want,state.reduced?1:1-Math.exp(-dt*9));}
+  const fc=centers[state.room];focusLight.position.set(fc.x+.2,fc.y+.35,.9);focusLight.intensity=T.MathUtils.lerp(focusLight.intensity,state.focused?1.1:0,state.reduced?1:1-Math.exp(-dt*5));
+  dust.visible=!state.reduced;
+  const sp=(now-sparkAt)/1000;if(sp<1.1){for(let i=0;i<sparkN;i++){const [vx,vy,vz]=sparkVel[i];sparkPos[i*3]+=vx*dt;sparkPos[i*3+1]+=(vy-sp*3.2)*dt;sparkPos[i*3+2]+=vz*dt;}sparkGeo.attributes.position.needsUpdate=true;sparkMat.opacity=Math.max(0,1-sp/1.1);sparks.visible=true;}else sparks.visible=false;
+  renderer.setRenderTarget(rt);renderer.render(scene,cam);const calls=renderer.info.render.calls,tris=renderer.info.render.triangles;renderer.setRenderTarget(null);renderer.render(postScene,postCam);canvas.dataset.drawCalls=String(calls);canvas.dataset.triangles=String(tris);render=false;if(now>=deadline)deadline=0;
  }
  raf=requestAnimationFrame(animate);
  function readRoom(e:PointerEvent){
@@ -392,14 +449,15 @@ export function mount(host:HTMLElement,select:(room:Room)=>void,fallback:(value:
   ray.setFromCamera(pointer,cam);return ray.intersectObjects(pick)[0]?.object.userData.room as Room|undefined;
  }
  canvas.addEventListener('pointerup',e=>{const r=readRoom(e);if(r&&!state?.paused)select(r);},listen);
- canvas.addEventListener('pointermove',e=>{canvas.style.cursor=readRoom(e)?'pointer':'default';},listen);
+ canvas.addEventListener('pointermove',e=>{hover=e.pointerType==='mouse'?readRoom(e):undefined;canvas.style.cursor=hover?'pointer':'default';host.dataset.hover=hover||'';render=true;deadline=performance.now()+400;},listen);
+ canvas.addEventListener('pointerleave',()=>{hover=undefined;host.dataset.hover='';render=true;deadline=performance.now()+400;},listen);
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;fallback(true);},listen);
  canvas.addEventListener('webglcontextrestored',()=>{lost=false;render=true;fallback(false);},listen);
  return {apply,exportables:{dollhouse_shell:shell,roof,stairs,armchair:reading.getObjectByName('armchair'),bookshelf:reading.getObjectByName('bookshelf'),bed:b,dresser:o,memory_book:o.getObjectByName('memory_book'),empty_frame:studio.getObjectByName('frame'),suitcase:base,house:scene},dispose(){
   cancelAnimationFrame(raf);observer.disconnect();abort.abort();
   const resources=new Set<any>();
   scene.traverse((o:any)=>{if(o.geometry)resources.add(o.geometry);if(o.material){resources.add(o.material);if(o.material.map)resources.add(o.material.map);if(o.material.bumpMap)resources.add(o.material.bumpMap);}});
-  for(const r of resources)r.dispose();renderer.dispose();canvas.remove();
+  for(const r of resources)r.dispose();rt.dispose();post.dispose();envRT.dispose();renderer.dispose();canvas.remove();
  }};
 }
 

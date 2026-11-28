@@ -1,10 +1,10 @@
-import {rooms,type Room,type Kind} from './game/content.ts';
+import {rooms,roomKeys,type Room,type Kind} from './game/content.ts';
 import {initial,reduce,visibleReview,type State,type Action} from './game/state.ts';
 import {type Visibility} from './game/rules.ts';
 import {mount} from './scene/house.ts';
 import {panel,setup} from './ui/views.ts';
 import {bindDrawing} from './input/drawing.ts';
-import {play,dispose} from './audio/sound.ts';
+import {play,dispose,setAmbient,type Cue} from './audio/sound.ts';
 const stage=document.querySelector<HTMLElement>('#scene')!,area=document.querySelector<HTMLElement>('#panel')!,modal=document.querySelector<HTMLDialogElement>('#dialog')!;
 const fallback=document.querySelector<HTMLElement>('#fallback')!,live=document.querySelector<HTMLElement>('#live')!,home=document.querySelector<HTMLButtonElement>('#home')!;
 const roomName=document.querySelector<HTMLElement>('#room-name')!;
@@ -26,13 +26,13 @@ function dispatch(action:Action,update=true){
  if(!['tick','label','drawing','show'].includes(action.type))scene?.apply(state);
  if(update)render();return true;
 }
-function roomSelect(room:Room){tell('');dispatch({type:'room',room});}
+function roomSelect(room:Room){tell('');if(dispatch({type:'room',room}))effect('room');}
 try{scene=mount(stage,roomSelect,fallbackMode);scene.apply(state);}catch(e){console.warn('Modo descritivo da casa.',e);fallbackMode(true);}
 function show(html:string){modal.innerHTML=html;if(!modal.open)modal.showModal();}
 function ask(title:string,text:string,confirm:string,value:string){show('<h2>'+title+'</h2><p>'+text+'</p><div class="row"><button value="cancel">Cancelar</button><button class="primary" value="'+value+'">'+confirm+'</button></div>');}
 function pause(){if(!state.stage||state.paused)return;dispatch({type:'pause'});show('<h2>Visita pausada</h2><p>Os símbolos ficam na casa durante a pausa.</p><div class="row"><button class="primary" value="resume">Continuar</button><button value="exit-ask">Sair</button></div>');}
 function changes(){try{localStorage.setItem('memorias.settings.v1',JSON.stringify({muted:state.muted,reduced:state.reduced}));}catch{}}
-function effect(){if(!state.muted)play();}
+function effect(cue:Cue='ui'){if(!state.muted)play(cue);}
 function navigate(step:number){tell('');area.scrollTop=0;dispatch({type:'stage',stage:step});area.querySelector<HTMLElement>('h2')?.focus();}
 function save(){
  const selection=visibleReview(state).map(({type,room,label,drawing})=>({type,room,label,drawing}));
@@ -50,14 +50,14 @@ area.addEventListener('click',e=>{
  case 'symbol':tell('');dispatch({type:'symbol',kind:value as Kind});break;
  case 'word':dispatch({type:'label',label:value});break;
  case 'clear':dispatch({type:'drawing',drawing:[]});break;
- case 'place':tell('');if(dispatch({type:'place',visibility:value as Visibility})){tell(value==='stored'?'Símbolo guardado na casa.':'Símbolo colocado à vista.');effect();}else tell('Esse espaço está cheio. Escolha outro cômodo ou retire um objeto.');render();break;
+ case 'place':tell('');if(dispatch({type:'place',visibility:value as Visibility})){tell(value==='stored'?'Símbolo guardado na casa.':'Símbolo colocado à vista.');effect(value==='stored'?'store':'place');}else tell('Esse espaço está cheio. Escolha outro cômodo ou retire um objeto.');render();break;
  case 'skip':tell('');dispatch({type:'skip'});area.scrollTop=0;break;
- case 'drawer':case 'case':roomSelect(action==='drawer'?'studio':'storage');dispatch({type:action});effect();break;
+ case 'drawer':case 'case':roomSelect(action==='drawer'?'studio':'storage');dispatch({type:action});effect(action==='drawer'?'drawer':'case');break;
  case 'delete':ask('Remover símbolo?','O símbolo e seus detalhes serão apagados desta sessão.','Remover','delete-'+value);break;
  case 'pause':pause();break;
- case 'mute':dispatch({type:'mute'});changes();effect();break;
+ case 'mute':dispatch({type:'mute'});changes();setAmbient(!state.muted);effect();break;
  case 'motion':dispatch({type:'motion'});changes();break;
- case 'finish':dispatch({type:'finish'});break;
+ case 'finish':dispatch({type:'finish'});effect('finish');break;
  case 'export':ask('Exportar seleção?','O arquivo inclui os detalhes dos símbolos que você marcou. Quem acessar o arquivo poderá ler esses detalhes.','Baixar JSON','export');break;
  case 'exit':ask('Sair da casa?','Os símbolos desta sessão serão descartados.','Sair e descartar','exit');break;
  case 'reset':ask('Reiniciar visita?','Os símbolos desta sessão serão descartados.','Reiniciar','reset');break;
@@ -69,7 +69,7 @@ area.addEventListener('change',e=>{
  if(control.dataset.action==='show')dispatch({type:'show',id:Number(control.value)});
  if(control.dataset.action==='move'&&control.value){
   const [room,visibility]=control.value.split('|') as [Room,Visibility];
-  tell('');if(dispatch({type:'move',id:Number(control.dataset.id),room,visibility})){tell('Símbolo movido.');effect();}else tell('O espaço selecionado está cheio.');render();
+  tell('');if(dispatch({type:'move',id:Number(control.dataset.id),room,visibility})){tell('Símbolo movido.');effect(visibility==='stored'?'store':'place');}else tell('O espaço selecionado está cheio.');render();
  }
 },listen);
 modal.addEventListener('change',e=>{const target=e.target as HTMLSelectElement;if(target.id==='mode')modal.querySelector<HTMLElement>('#companion')!.hidden=target.value!=='acompanhado';},listen);
@@ -85,12 +85,22 @@ modal.addEventListener('click',e=>{
  }
  if(value==='close'||value==='resume'||value==='cancel')dispatch({type:'resume'});
  if(value==='export')save();
- if(value.startsWith('delete-')){tell('Símbolo removido.');dispatch({type:'delete',id:Number(value.slice(7))});}
+ if(value.startsWith('delete-')){tell('Símbolo removido.');effect('remove');dispatch({type:'delete',id:Number(value.slice(7))});}
  if(value==='exit'||value==='reset'){tell('');dispatch({type:'reset'});}
  modal.close();
 },listen);
 modal.addEventListener('cancel',()=>dispatch({type:'resume'}),listen);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.open)pause();},listen);
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!modal.open){pause();return;}
+ const typing=(e.target as HTMLElement).closest('input,select,textarea,canvas');if(typing||modal.open||e.ctrlKey||e.metaKey||e.altKey)return;
+ const n=Number(e.key);if(n>=1&&n<=4&&state.stage>0){roomSelect(roomKeys[n-1]);}
+ if((e.key==='h'||e.key==='H')&&state.focused)dispatch({type:'home'});
+},listen);
+// Dica flutuante com o nome do cômodo sob o cursor.
+const tip=document.createElement('p');tip.id='hover-tip';tip.setAttribute('aria-hidden','true');tip.hidden=true;stage.after(tip);
+new MutationObserver(()=>{const r=stage.dataset.hover as Room|'';tip.hidden=!r;if(r)tip.innerHTML='<b>'+rooms[r].name+'</b><span>'+rooms[r].detail+'</span>';}).observe(stage,{attributes:true,attributeFilter:['data-hover']});
+stage.addEventListener('pointermove',e=>{tip.style.transform='translate('+(e.clientX+16)+'px,'+(e.clientY+14)+'px)';},listen);
+document.addEventListener('pointerdown',()=>{if(!state.muted)setAmbient(true);},{...listen,once:true});
 let last=performance.now();
 const timer=setInterval(()=>{const now=performance.now();if(!document.hidden&&!modal.open)dispatch({type:'tick',ms:now-last},false);last=now;},250);
 document.addEventListener('visibilitychange',()=>{last=performance.now();if(document.hidden&&!modal.open)pause();},listen);
