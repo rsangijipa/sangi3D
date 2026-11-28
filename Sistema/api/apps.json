@@ -79,12 +79,12 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/05-trem-sem-destino/cena.png",
     "order": 5,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\05-trem-sem-destino",
-    "mtime": 1795820370420.0234,
+    "mtime": 1795834240856.547,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-05-trem-sem-destino",
     "canonicalRole": "variant",
     "variantOf": "1-jogos-html-trem-sem-destino-trem-sem-destino-html",
-    "contentHash": "31899fa8ede7b9b2"
+    "contentHash": "664c42ed27157875"
   },
   {
     "name": "Cidade Submersa (Experiência 3D)",
@@ -271,15 +271,15 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/01-folha-em-contraluz/cena.png",
     "order": 1,
     "path": "Jogos\\7 - Cenas 3D\\01-folha-em-contraluz",
-    "mtime": 1795830681165.7756,
+    "mtime": 1795833888781.047,
     "versions": [],
     "id": "7-cenas-3d-01-folha-em-contraluz",
-    "contentHash": "66be43ed5f80e69c"
+    "contentHash": "16be2a32c50f44ac"
   },
   {
-    "name": "Folhagem Reticulada e Inflorescências",
+    "name": "Folhagem Reticulada & Inflorescências",
     "subtitle": "Three.js",
-    "fullTitle": "Folhagem Reticulada e Inflorescências 3D — Three.js",
+    "fullTitle": "Folhagem Reticulada & Inflorescências 3D — Three.js",
     "url": "/Jogos/7%20-%20Cenas%203D/02-folhagem-reticulada-e-inflorescencias/index.html",
     "status": "ready",
     "kind": "html",
@@ -287,10 +287,10 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/02-folhagem-reticulada-e-inflorescencias/cena.png",
     "order": 2,
     "path": "Jogos\\7 - Cenas 3D\\02-folhagem-reticulada-e-inflorescencias",
-    "mtime": 1795830699756.5984,
+    "mtime": 1795834042465.824,
     "versions": [],
     "id": "7-cenas-3d-02-folhagem-reticulada-e-inflorescencias",
-    "contentHash": "27ab731902c16d98"
+    "contentHash": "81c744a98f9d03e9"
   },
   {
     "name": "Tronco com Rosetas de Musgo Estrelado",
@@ -303,10 +303,10 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/03-tronco-com-rosetas-de-musgo-estrelado/cena.png",
     "order": 3,
     "path": "Jogos\\7 - Cenas 3D\\03-tronco-com-rosetas-de-musgo-estrelado",
-    "mtime": 1795830699815.4773,
+    "mtime": 1795834043845.8706,
     "versions": [],
     "id": "7-cenas-3d-03-tronco-com-rosetas-de-musgo-estrelado",
-    "contentHash": "80f3590c6b9be31d"
+    "contentHash": "3024b5a724ef21ba"
   },
   {
     "name": "Santuário Zen",
@@ -319,10 +319,10 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/04-santuario-zen/cena.png",
     "order": 4,
     "path": "Jogos\\7 - Cenas 3D\\04-santuario-zen",
-    "mtime": 1795830681613.3506,
+    "mtime": 1795834164298.4543,
     "versions": [],
     "id": "7-cenas-3d-04-santuario-zen",
-    "contentHash": "136b716611fdc754"
+    "contentHash": "fab2927ee315b6e1"
   },
   {
     "name": "Bico-de-papagaio",
@@ -335,10 +335,10 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/05-bico-de-papagaio-poinsettia/cena.png",
     "order": 5,
     "path": "Jogos\\7 - Cenas 3D\\05-bico-de-papagaio-poinsettia",
-    "mtime": 1795830681738.514,
+    "mtime": 1795834045490.7986,
     "versions": [],
     "id": "7-cenas-3d-05-bico-de-papagaio-poinsettia",
-    "contentHash": "858c34250043d24e"
+    "contentHash": "6368b933ed7637b9"
   },
   {
     "name": "Copa & Nuvens",
@@ -351,10 +351,10 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/06-copa-nuvens/cena.png",
     "order": 6,
     "path": "Jogos\\7 - Cenas 3D\\06-copa-nuvens",
-    "mtime": 1795830681861.0327,
+    "mtime": 1795834168986.145,
     "versions": [],
     "id": "7-cenas-3d-06-copa-nuvens",
-    "contentHash": "d5f1f6123026f87a"
+    "contentHash": "824716fce561801b"
   },
   {
     "name": "Cóleus",
@@ -367,10 +367,10 @@
     "thumb": "/Jogos/7%20-%20Cenas%203D/07-coleus-macro-jardim/cena.png",
     "order": 7,
     "path": "Jogos\\7 - Cenas 3D\\07-coleus-macro-jardim",
-    "mtime": 1795830681983.7656,
+    "mtime": 1795834047055.3718,
     "versions": [],
     "id": "7-cenas-3d-07-coleus-macro-jardim",
-    "contentHash": "c2bf396fe78c86a9"
+    "contentHash": "dec88a17e650287b"
   },
   {
     "name": "Hibiscus Rosa-Sinensis",
@@ -431,7 +431,7 @@
     "thumb": "/launcher/capas/1-jogos-html-escada-da-coragem-escada-da-coragem-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\escada-da-coragem\\escada_da_coragem_jardins_da_tcc_experi_ncia_3d.html",
-    "mtime": 1795820370029.1238,
+    "mtime": 1795834240052.8865,
     "versions": [
       {
         "url": "/Jogos/1%20-%20Jogos%20HTML/escada-da-coragem/escada-da-coragem.html",
@@ -440,7 +440,7 @@
       }
     ],
     "id": "1-jogos-html-escada-da-coragem-escada_da_coragem_jardins_da_tcc_experi_ncia_3d-html",
-    "contentHash": "b520a5d2fcb67a74"
+    "contentHash": "b1cb5a3e0b2eb967"
   },
   {
     "name": "Pensar, Sentir e Agir",
@@ -579,10 +579,10 @@
     "thumb": "/launcher/capas/1-jogos-html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins_do_sentir-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\cidade-das-conexoes\\cidade_das_conex_es_3d_jardins_do_sentir.html",
-    "mtime": 1795820370019.5806,
+    "mtime": 1795834239806.443,
     "versions": [],
     "id": "1-jogos-html-cidade-das-conexoes-cidade_das_conex_es_3d_jardins_do_sentir-html",
-    "contentHash": "484abb319f51dace"
+    "contentHash": "b76c6cc74e6a3afe"
   },
   {
     "name": "Correio das Palavras Não Ditas",
@@ -695,10 +695,10 @@
     "thumb": "/launcher/capas/2-projetos-mochila-da-travessia-projeto-mochila-da-travessia-html.webp",
     "order": 999,
     "path": "Jogos\\2 - Projetos\\mochila-da-travessia-projeto\\mochila-da-travessia.html",
-    "mtime": 1795820370142.0403,
+    "mtime": 1795834240290.6099,
     "versions": [],
     "id": "2-projetos-mochila-da-travessia-projeto-mochila-da-travessia-html",
-    "contentHash": "997aaefcacd3af76"
+    "contentHash": "a123484c357f45e8"
   },
   {
     "name": "Oficina dos Gestos Compartilhados",
@@ -747,10 +747,10 @@
     "thumb": "/launcher/capas/2-projetos-territorio-dos-vinculos-index-html.webp",
     "order": 999,
     "path": "Jogos\\2 - Projetos\\territorio-dos-vinculos\\index.html",
-    "mtime": 1795820370170.3755,
+    "mtime": 1795834240530.588,
     "versions": [],
     "id": "2-projetos-territorio-dos-vinculos-index-html",
-    "contentHash": "0554fbe32de0b82f"
+    "contentHash": "eae7250a4e599ff7"
   },
   {
     "name": "Cartografia dos Sons",
@@ -1077,8 +1077,9 @@
   },
   {
     "name": "Bancada do Florista",
-    "subtitle": "Flor de Ipê — Atelier 2.0",
-    "fullTitle": "Bancada do Florista · Flor de Ipê — Atelier 2.0",
+    "subtitle": "Ateliê Botânico 3D",
+    "fullTitle": "Bancada do Florista · Ateliê Botânico 3D",
+    "description": "Jogo 3D realista de ateliê botânico: monte buquês em espiral, atenda encomendas de clientes, corte hastes, embrulhe em papel artesanal e expanda sua floricultura.",
     "url": "/Jogos/1%20-%20Jogos%20HTML/bancada-do-florista/bancada-do-florista.html",
     "status": "ready",
     "kind": "html",
@@ -1086,10 +1087,10 @@
     "thumb": "/launcher/capas/1-jogos-html-bancada-do-florista-bancada-do-florista-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\bancada-do-florista\\bancada-do-florista.html",
-    "mtime": 1795553290400.7246,
+    "mtime": 1795834252375.7646,
     "versions": [],
     "id": "1-jogos-html-bancada-do-florista-bancada-do-florista-html",
-    "contentHash": "f645b863eeb6b4a3"
+    "contentHash": "a1b94c607d426aa0"
   },
   {
     "name": "Biblioteca Infinita",
@@ -1150,10 +1151,10 @@
     "thumb": "/launcher/capas/1-jogos-html-colmeia-transparente-colmeia-transparente-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\colmeia-transparente\\colmeia-transparente.html",
-    "mtime": 1795507146184.6643,
+    "mtime": 1795834237764.0837,
     "versions": [],
     "id": "1-jogos-html-colmeia-transparente-colmeia-transparente-html",
-    "contentHash": "c9689e48e533f60a"
+    "contentHash": "1936251ca2f0a660"
   },
   {
     "name": "Confeitaria de Bolos",
@@ -1167,10 +1168,10 @@
     "thumb": "/launcher/capas/1-jogos-html-confeitaria-de-bolos-3d-index-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\Confeitaria de Bolos 3D\\index.html",
-    "mtime": 1795511134268.9016,
+    "mtime": 1795834236871.7224,
     "versions": [],
     "id": "1-jogos-html-confeitaria-de-bolos-3d-index-html",
-    "contentHash": "174e0e7da8e1a8a0"
+    "contentHash": "ead65475ff984044"
   },
   {
     "name": "Cozinha das Descobertas",
@@ -1183,10 +1184,10 @@
     "thumb": "/launcher/capas/1-jogos-html-cozinha-das-descobertas-cozinha-das-descobertas-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\cozinha-das-descobertas\\cozinha-das-descobertas.html",
-    "mtime": 1795820421925.1426,
+    "mtime": 1795834237119.8135,
     "versions": [],
     "id": "1-jogos-html-cozinha-das-descobertas-cozinha-das-descobertas-html",
-    "contentHash": "8ac05d592dd720e4"
+    "contentHash": "bdc9b71e990ec856"
   },
   {
     "name": "Estufa das Borboletas",
@@ -1199,10 +1200,10 @@
     "thumb": "/launcher/capas/1-jogos-html-estufa-das-borboletas-estufa-das-borboletas-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\estufa-das-borboletas\\estufa-das-borboletas.html",
-    "mtime": 1795508515099.4597,
+    "mtime": 1795834237990.1897,
     "versions": [],
     "id": "1-jogos-html-estufa-das-borboletas-estufa-das-borboletas-html",
-    "contentHash": "9e98ce4c4b434253"
+    "contentHash": "3111a9e35ec4d013"
   },
   {
     "name": "Gerador de Mundos Climáticos",
@@ -1231,10 +1232,10 @@
     "thumb": "/launcher/capas/1-jogos-html-jardim-dos-fungos-jardim_dos_fungos_microfloresta_interativa_3d-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\jardim-dos-fungos\\jardim_dos_fungos_microfloresta_interativa_3d.html",
-    "mtime": 1795556230357.1587,
+    "mtime": 1795834238391.4304,
     "versions": [],
     "id": "1-jogos-html-jardim-dos-fungos-jardim_dos_fungos_microfloresta_interativa_3d-html",
-    "contentHash": "eb18a9724c861ace"
+    "contentHash": "e5da3b3645cf6fc6"
   },
   {
     "name": "Lago 3D Interativo",
@@ -1247,10 +1248,10 @@
     "thumb": "/launcher/capas/1-jogos-html-lago-3d-interativo-lago-3d-interativo-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\lago-3d-interativo\\lago-3d-interativo.html",
-    "mtime": 1795820422052.1313,
+    "mtime": 1795834238616.501,
     "versions": [],
     "id": "1-jogos-html-lago-3d-interativo-lago-3d-interativo-html",
-    "contentHash": "661b034299fe71a8"
+    "contentHash": "ffe3f73338690aa3"
   },
   {
     "name": "Maquete que se Monta",
@@ -1346,10 +1347,10 @@
     "thumb": "/launcher/capas/1-jogos-html-oficina-de-bonsais-oficina-de-bonsais-html-3d-interativo-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\oficina-de-bonsais\\Oficina de Bonsais — HTML 3D interativo.html",
-    "mtime": 1795555535865.217,
+    "mtime": 1795834238839.223,
     "versions": [],
     "id": "1-jogos-html-oficina-de-bonsais-oficina-de-bonsais-html-3d-interativo-html",
-    "contentHash": "da7b674bc7652371"
+    "contentHash": "05733e4958cac149"
   },
   {
     "name": "Oficina de Estofados",
@@ -1415,10 +1416,10 @@
     "thumb": "/launcher/capas/1-jogos-html-paisagem-sonora-3d-paisagem-sonora-3d-html.webp",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\paisagem-sonora-3d\\paisagem-sonora-3d.html",
-    "mtime": 1795820422247.5088,
+    "mtime": 1795834239047.8662,
     "versions": [],
     "id": "1-jogos-html-paisagem-sonora-3d-paisagem-sonora-3d-html",
-    "contentHash": "48ba5ca2e103679b"
+    "contentHash": "f30273f2fcc27852"
   },
   {
     "name": "Pousada Vento Leve",
@@ -1487,12 +1488,12 @@
     "thumb": "/launcher/capas/1-jogos-html-terrario-de-vidro-terrario-de-vidro-atelier-expandido-html.png",
     "order": 999,
     "path": "Jogos\\1 - Jogos HTML\\terrario-de-vidro\\terrario-de-vidro-atelier-expandido.html",
-    "mtime": 1795549629899.2915,
+    "mtime": 1795834239286.0603,
     "versions": [],
     "id": "1-jogos-html-terrario-de-vidro-terrario-de-vidro-atelier-expandido-html",
     "canonicalRole": "variant",
     "variantOf": "01_jogos_html-terrario-de-vidro-terr_rio_de_vidro_verde_mi_do_plantas-html",
-    "contentHash": "fd41a9dbea6da87b"
+    "contentHash": "4b1b821ee4ebc5e2"
   },
   {
     "name": "Trem de Engrenagens",

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Vale dos Vaga-lumes — Sangi3D</title>
+  <meta name="description" content="Explore trilhas noturnas junto a um riacho iluminado pelo luar e observe enxames de vaga-lumes com osciladores de fase sincronizados." />
+  <style>
+    :root {
+      --bg: #07101b;
+      --hud-bg: rgba(14, 21, 16, 0.72);
+      --hud-border: rgba(182, 224, 128, 0.24);
+      --hud-active-bg: rgba(84, 138, 44, 0.56);
+      --hud-active-border: rgba(180, 240, 96, 0.78);
+      --accent: #a6e34b;
+      --amber: #ffbd59;
+      --text: #f3f6ef;
+      --text-muted: #b5c3b2;
+      --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      user-select: none;
+    }
+
+    #stage-canvas-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Barra superior esquerda (cápsula fiel ao mockup) */
+    #top-bar-left {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: max(16px, env(safe-area-inset-left));
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 44px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 -2px 10px rgba(166, 227, 75, 0.14);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: transform 0.16s, border-color 0.2s;
+    }
+    .brand-pill:hover, .brand-pill:focus-visible {
+      border-color: var(--hud-active-border);
+      outline: none;
+    }
+    .brand-pill:active { transform: scale(0.98); }
+    .brand-leaf { color: var(--accent); font-size: 18px; }
+
+    /* Botões superiores direitos */
+    #top-bar-right {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(16px, env(safe-area-inset-right));
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: var(--hud-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text);
+      font-size: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      transition: background 0.18s, border-color 0.18s, transform 0.12s;
+    }
+    .icon-btn:hover, .icon-btn:focus-visible {
+      border-color: var(--hud-active-border);
+      background: rgba(34, 48, 36, 0.88);
+      outline: none;
+    }
+    .icon-btn:active { transform: scale(0.95); }
+
+    /* Dica curta de entrada */
+    #intro-hint {
+      position: fixed;
+      top: max(68px, calc(env(safe-area-inset-top) + 56px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(11, 18, 15, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+    #intro-hint.fade { opacity: 0; }
+
+    /* Dock inferior fiel ao mockup (Brilho / Hora / Som / Fotografia + slider abaixo) */
+    #bottom-dock {
+      position: fixed;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: min(640px, calc(100vw - 24px));
+      padding: 10px 12px 12px;
+      border-radius: 20px;
+      background: rgba(14, 20, 15, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.56);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dock-tools {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .tool-btn {
+      min-height: 44px;
+      padding: 6px 8px;
+      border-radius: 13px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .tool-btn:hover, .tool-btn:focus-visible {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.09);
+      outline: none;
+    }
+    .tool-btn.active {
+      color: #ffffff;
+      background: linear-gradient(180deg, rgba(84, 134, 42, 0.52), rgba(45, 78, 22, 0.58));
+      border-color: var(--hud-active-border);
+      box-shadow: 0 0 16px rgba(166, 227, 75, 0.25);
+    }
+
+    #dock-subpanel {
+      padding: 2px 6px 0;
+    }
+    .sub-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 32px;
+    }
+    .sub-ico { color: var(--amber); font-size: 15px; flex-shrink: 0; }
+    .sub-val {
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      min-width: 72px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .mini-pill {
+      min-height: 36px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .mini-pill.on {
+      border-color: var(--hud-active-border);
+      background: var(--hud-active-bg);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 10px rgba(166, 227, 75, 0.65);
+    }
+
+    /* Gaveta de Ajustes, Trilha, Kuramoto e Acessibilidade */
+    .drawer {
+      position: fixed;
+      top: max(68px, calc(env(safe-area-inset-top) + 54px));
+      right: max(16px, env(safe-area-inset-right));
+      z-index: 30;
+      width: min(350px, calc(100vw - 32px));
+      max-height: calc(100dvh - 180px);
+      overflow-y: auto;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(13, 19, 15, 0.92);
+      border: 1px solid var(--hud-border);
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+    .drawer.left {
+      right: auto;
+      left: max(16px, env(safe-area-inset-left));
+    }
+    .drawer[hidden], #pause-overlay[hidden], #webgl-status[hidden] { display: none; }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
+    }
+    .drawer-head h2 { font-size: 15px; font-weight: 600; color: var(--text); }
+    .close-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.06); color: var(--text); cursor: pointer;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label {
+      display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .field-label strong { color: var(--accent); font-weight: 600; }
+
+    .seg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .wp-btn, .cam-mode-btn {
+      min-height: 44px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .wp-btn.active, .cam-mode-btn.active {
+      border-color: var(--hud-active-border);
+      background: var(--hud-active-bg);
+      color: #ffffff;
+    }
+
+    .kuramoto-meter {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+    #kuramoto-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #62c44d, #ffd859);
+      transition: width 0.25s linear;
+    }
+
+    .check-row {
+      display: flex; align-items: center; justify-content: space-between;
+      min-height: 44px; padding: 4px 2px; font-size: 13px; color: var(--text);
+    }
+    .check-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+
+    select.ui-select {
+      min-height: 44px; padding: 6px 10px; border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: #131c15; color: var(--text); font-size: 13px;
+    }
+
+    .telemetry-line {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      opacity: 0.85;
+    }
+    .science-note {
+      font-size: 11.5px; line-height: 1.45; color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04); padding: 9px 10px; border-radius: 10px;
+    }
+
+    /* Diário de registros */
+    #journal-list { display: flex; flex-direction: column; gap: 8px; }
+    .journal-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 10px; border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .journal-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+    .journal-meta span { color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .journal-thumb { width: 56px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.2); }
+    .journal-empty { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
+
+    /* Controles direcionais para caminhada em touch / mobile */
+    #mobile-walk-pad {
+      position: fixed;
+      left: max(14px, env(safe-area-inset-left));
+      bottom: max(124px, calc(env(safe-area-inset-bottom) + 112px));
+      z-index: 18;
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(2, 44px);
+      gap: 5px;
+    }
+    #mobile-walk-pad[hidden] { display: none; }
+    .pad-btn {
+      width: 44px; height: 44px; border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(14, 21, 16, 0.65); color: var(--text);
+      font-size: 16px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: none;
+    }
+    .pad-btn.pressed { background: var(--hud-active-bg); border-color: var(--hud-active-border); }
+
+    /* Overlay de Pausa */
+    #pause-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(4, 9, 14, 0.68);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .pause-card {
+      width: min(340px, 100%);
+      padding: 22px;
+      border-radius: 20px;
+      background: rgba(14, 21, 16, 0.94);
+      border: 1px solid var(--hud-border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+    .pause-card h2 { font-size: 18px; }
+    .pause-card p { font-size: 13px; color: var(--text-muted); }
+    .primary-btn {
+      min-height: 46px; border-radius: 12px;
+      border: 1px solid var(--hud-active-border);
+      background: var(--hud-active-bg); color: #fff; font-weight: 600; cursor: pointer;
+    }
+    .secondary-btn {
+      min-height: 44px; border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06); color: var(--text); cursor: pointer;
+    }
+
+    /* Toast & Shutter flash & erro WebGL */
+    #toast-banner {
+      position: fixed;
+      bottom: max(136px, calc(env(safe-area-inset-bottom) + 124px));
+      left: 50%;
+      transform: translate(-50%, 8px);
+      z-index: 35;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(16, 26, 18, 0.92);
+      border: 1px solid var(--hud-active-border);
+      color: var(--text);
+      font-size: 12.5px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #toast-banner.visible { opacity: 1; transform: translate(-50%, 0); }
+
+    #photo-flash {
+      position: fixed; inset: 0; z-index: 50; background: #fff;
+      opacity: 0; pointer-events: none;
+    }
+    #photo-flash.active { animation: flashAnim 0.42s ease-out; }
+    @keyframes flashAnim {
+      0% { opacity: 0.72; }
+      100% { opacity: 0; }
+    }
+
+    #webgl-status {
+      position: fixed; inset: 0; z-index: 60;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: #07101b; color: #f3f6ef; text-align: center;
+    }
+
+    /* Responsividade Portrait (390x844) & Landscape compacto (844x390) */
+    @media (max-width: 640px) {
+      .brand-pill { font-size: 14px; padding: 6px 12px; }
+      #bottom-dock { padding: 8px 8px 10px; border-radius: 16px; gap: 7px; }
+      .tool-btn { font-size: 12px; gap: 4px; padding: 4px; }
+      .drawer { max-height: calc(100dvh - 170px); }
+      #intro-hint { display: none; }
+    }
+    @media (max-height: 460px) and (orientation: landscape) {
+      #top-bar-left { top: 8px; }
+      #top-bar-right { top: 8px; }
+      #bottom-dock { bottom: 8px; padding: 6px 10px 8px; gap: 6px; width: min(520px, 76vw); }
+      .tool-btn { min-height: 36px; }
+      #mobile-walk-pad { bottom: 16px; }
+      .drawer { top: 58px; max-height: calc(100dvh - 76px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="stage-canvas-wrap" aria-label="Cenário 3D do Vale dos Vaga-lumes"></div>
+  <div id="photo-flash" aria-hidden="true"></div>
+  <div id="webgl-status" hidden></div>
+
+  <div id="top-bar-left">
+    <button id="btn-brand-journal" class="brand-pill" type="button" aria-expanded="false" aria-controls="journal-drawer" title="Abrir Diário de Campo e registros">
+      <span class="brand-leaf" aria-hidden="true">🍃</span>
+      <span>Vale dos Vaga-lumes</span>
+    </button>
+  </div>
+
+  <div id="top-bar-right">
+    <button id="btn-settings" class="icon-btn" type="button" aria-label="Configurações, trilha e sincronia" aria-expanded="false" aria-controls="settings-drawer">⚙</button>
+    <button id="btn-pause" class="icon-btn" type="button" aria-label="Pausar simulação">⏸</button>
+    <button id="btn-exit" class="icon-btn" type="button" aria-label="Sair para o catálogo">↪</button>
+  </div>
+
+  <div id="intro-hint">Arraste para observar · Toque no chão ou use WASD para percorrer a trilha</div>
+
+  <div id="mobile-walk-pad" hidden aria-label="Controles de caminhada na trilha">
+    <span></span>
+    <button type="button" class="pad-btn" data-move-dir="fwd" aria-label="Avançar na trilha">▲</button>
+    <span></span>
+    <button type="button" class="pad-btn" data-move-dir="left" aria-label="Mover à esquerda">◀</button>
+    <button type="button" class="pad-btn" data-move-dir="back" aria-label="Recuar na trilha">▼</button>
+    <button type="button" class="pad-btn" data-move-dir="right" aria-label="Mover à direita">▶</button>
+  </div>
+
+  <section id="bottom-dock" aria-label="Ferramentas de observação">
+    <div class="dock-tools" role="group" aria-label="Selecionar ferramenta">
+      <button type="button" class="tool-btn active" data-tool="brilho" aria-pressed="true">☀ <span>Brilho</span></button>
+      <button type="button" class="tool-btn" data-tool="hora" aria-pressed="false">🕒 <span>Hora</span></button>
+      <button type="button" class="tool-btn" data-tool="som" aria-pressed="false">🔊 <span>Som</span></button>
+      <button type="button" class="tool-btn" data-tool="fotografia" aria-pressed="false">📷 <span>Fotografia</span></button>
+    </div>
+    <div id="dock-subpanel"></div>
+  </section>
+
+  <!-- Gaveta Recolhível de Ajustes, Trilha, Física Kuramoto e Acessibilidade -->
+  <aside id="settings-drawer" class="drawer" hidden aria-label="Exploração e parâmetros físicos">
+    <div class="drawer-head">
+      <h2>Exploração & Simulação</h2>
+      <button id="btn-close-drawer" class="close-btn" type="button" aria-label="Fechar painel">✕</button>
+    </div>
+
+    <div class="field">
+      <span class="field-label"><span>Modo de Câmera</span></span>
+      <div class="seg-grid">
+        <button type="button" class="cam-mode-btn active" data-cam-mode="walk">🥾 Caminhar Trilha</button>
+        <button type="button" class="cam-mode-btn" data-cam-mode="orbit">🛰 Órbita Livre</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="field-label"><span>Pontos de Retorno</span></span>
+      <div id="waypoint-buttons" class="seg-grid"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <label for="ctrl-density">Densidade do Enxame</label>
+        <strong id="ctrl-density-val">220 vaga-lumes</strong>
+      </div>
+      <input id="ctrl-density" type="range" min="20" max="360" step="10" value="220" />
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <label for="ctrl-sync">Acoplamento Kuramoto (rad/s)</label>
+        <strong id="ctrl-sync-val">39%</strong>
+      </div>
+      <input id="ctrl-sync" type="range" min="0" max="100" step="5" value="39" />
+      <div class="kuramoto-meter" aria-label="Ordem de sincronização R">
+        <div id="kuramoto-bar-fill"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <label for="ctrl-brightness">Brilho Bioluminescente</label>
+        <strong id="ctrl-brightness-val">74%</strong>
+      </div>
+      <input id="ctrl-brightness" type="range" min="0" max="100" step="1" value="74" />
+    </div>
+
+    <label class="check-row" for="ctrl-reduced">
+      <span>Movimento reduzido (sem cintilação)</span>
+      <input id="ctrl-reduced" type="checkbox" />
+    </label>
+
+    <div class="field">
+      <label class="field-label" for="ctrl-quality"><span>Qualidade Gráfica</span></label>
+      <select id="ctrl-quality" class="ui-select">
+        <option value="auto">Automática</option>
+        <option value="low">Baixa (economia móvel)</option>
+        <option value="medium">Média</option>
+        <option value="high">Alta</option>
+      </select>
+    </div>
+
+    <button id="btn-reset-drawer" class="secondary-btn" type="button">↺ Reiniciar Estado Determinístico</button>
+
+    <div id="telemetry-readout" class="telemetry-line">Medindo FPS e draw calls...</div>
+    <p class="science-note">
+      <strong>Nota didática:</strong> O terreno, o riacho e os osciladores de fase de Kuramoto usam modelos analíticos de timestep fixo (1/60s) para fins contemplativos e educativos, não previsões biológicas de campo.
+    </p>
+  </aside>
+
+  <!-- Diário de Campo (padrões luminosos observados & miniaturas) -->
+  <aside id="journal-drawer" class="drawer left" hidden aria-label="Diário de padrões luminosos">
+    <div class="drawer-head">
+      <h2>Diário de Padrões</h2>
+      <button id="btn-close-journal" class="close-btn" type="button" aria-label="Fechar diário">✕</button>
+    </div>
+    <button id="btn-record-journal" class="primary-btn" type="button">✦ Registrar Padrão Atual</button>
+    <div id="journal-list"></div>
+  </aside>
+
+  <!-- Sobreposição de Pausa -->
+  <div id="pause-overlay" hidden role="dialog" aria-modal="true" aria-label="Simulação pausada">
+    <div class="pause-card">
+      <h2>Vale Pausado</h2>
+      <p>A simulação física dos vaga-lumes e o áudio estão suspensos com segurança.</p>
+      <button id="btn-resume-modal" class="primary-btn" type="button">▶ Retomar Observação</button>
+      <button id="btn-reset-modal" class="secondary-btn" type="button">↺ Reiniciar Trilha e Enxame</button>
+    </div>
+  </div>
+
+  <div id="toast-banner" role="status" aria-live="polite"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/Sistema/shared/vendor/three.module.js",
+      "three/addons/": "/Sistema/shared/vendor/addons/"
+    }
+  }
+  </script>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

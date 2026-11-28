@@ -1,0 +1,6 @@
+{
+  "name": "Expedição pelo Igarapé",
+  "description": "Experiência interativa 3D em Three.js de navegação de canoa por um igarapé amazônico com observação de fauna, fotografia naturalista, física de correnteza e iluminação atmosférica.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

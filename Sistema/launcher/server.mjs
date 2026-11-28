@@ -86,7 +86,11 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (pathname === '/api/ping') {
-      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }).end('ambientes-3d');
+      res.writeHead(200, {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'X-Sangi-Root': encodeURIComponent(ROOT),
+      }).end('ambientes-3d');
       return;
     }
     if (pathname === '/api/apps' || pathname === '/api/apps.json') {
@@ -138,7 +142,7 @@ const server = createServer(async (req, res) => {
 function openBrowser(url) {
   const cmd = process.platform === 'win32' ? ['cmd.exe', ['/d', '/c', 'start', '', url]]
     : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
-  spawn(cmd[0], cmd[1], { windowsHide: true, stdio: 'ignore', detached: true }).on('error', () => {}).unref();
+  spawn(cmd[0], cmd[1], { windowsHide: true, stdio: 'ignore', detached: true }).on('error', () => { }).unref();
 }
 
 // Se o launcher já estiver aberto em outra janela, só abre o navegador nele.
