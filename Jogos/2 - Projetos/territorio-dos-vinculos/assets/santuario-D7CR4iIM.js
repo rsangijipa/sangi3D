@@ -7,7 +7,7 @@ import{A as e,C as t,D as n,E as r,F as i,G as a,H as o,I as s,J as c,K as l,L a
         float r = length(p);
         float a = atan(p.y, p.x);
         float env = exp(-dt * 0.35) * smoothstep(0.0, 0.05, dt);
-        float standing = sin(a * 4.0) * sin(dt * 46.0) * pow(r / 0.1, 2.0) * 0.0009;
+        float standing = sin(a * 4.0) * sin(dt * 46.0) * pow(abs(r / 0.1), 2.0) * 0.0009;
         float travel = sin(r * 220.0 - dt * 30.0) * exp(-r * 18.0) * 0.0005;
         return (standing + travel) * env;
       }`).replace(`#include <beginnormal_vertex>`,`vec2 pp = position.xy; float e = 0.0015;
