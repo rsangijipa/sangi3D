@@ -34,6 +34,8 @@ import {
   SeedId,
   TimeSpeedId,
   getStageFromProgress,
+  computeVitality,
+  vitalityLabel,
 } from '../../types/garden';
 
 /** Servido pelo Launcher, a raiz do site é o Launcher de ambientes. */
@@ -117,6 +119,10 @@ export const GardenUI: React.FC<GardenUIProps> = ({ onExportImage }) => {
   const [confirmReset, setConfirmReset] = useState(false);
 
   const currentStage = getStageFromProgress(growthProgress);
+  const vitality = computeVitality(moisture, lightCycle);
+  const vitalityHint =
+    moisture < 0.32 ? 'Terra seca: regue' : moisture < 0.4 ? 'Terra secando' : moisture > 0.75 ? 'Encharcada: espere secar' : 'Umidade ideal';
+  const stageIndex = GROWTH_STAGES.findIndex((st) => st.id === currentStage.id);
   const currentSeed = SEEDS[seedId];
   const currentSeason = SEASONS[seasonId];
 
@@ -295,7 +301,7 @@ export const GardenUI: React.FC<GardenUIProps> = ({ onExportImage }) => {
         </div>
         <div className="imv-actions" style={{ overflow: 'visible' }}>
           <span className="imv-sep" />
-          <button type="button" className="imv-btn imv-icon" onClick={toggleFullscreen} title="Tela cheia" aria-label="Tela cheia">
+          <button type="button" className="imv-btn imv-icon imv-fs" onClick={toggleFullscreen} title="Tela cheia" aria-label="Tela cheia">
             <Maximize2 aria-hidden="true" />
           </button>
           <button type="button" className="imv-btn" onClick={toggleContemplativeMode} title="Recolher controles (H)">
@@ -304,6 +310,22 @@ export const GardenUI: React.FC<GardenUIProps> = ({ onExportImage }) => {
           </button>
         </div>
       </header>
+      {!contemplativeMode && (
+        <section className="vital-hud imv-glass" aria-label="Estado da planta" aria-live="polite">
+          <div className="vital-ring" style={{ ['--v' as string]: `${Math.round(vitality * 100)}` }}>
+            <span>{Math.round(vitality * 100)}</span>
+          </div>
+          <div className="vital-text">
+            <strong>{vitalityLabel(vitality)}</strong>
+            <span>{vitalityHint}</span>
+            <div className="vital-stages" aria-label={`Estágio ${stageIndex + 1} de ${GROWTH_STAGES.length}`}>
+              {GROWTH_STAGES.map((st, i) => (
+                <i key={st.id} className={i < stageIndex ? 'done' : i === stageIndex ? 'now' : ''} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       <button type="button" className="imv-reveal" onClick={toggleContemplativeMode} title="Mostrar controles (H)">
         <Eye aria-hidden="true" />
         <span className="imv-label">Mostrar controles</span>

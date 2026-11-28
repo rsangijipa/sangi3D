@@ -281,3 +281,25 @@ export const PROP_LABELS: Record<CarePropId, string> = {
   pedras: 'Pedras e musgo',
   etiquetas: 'Etiquetas de madeira',
 };
+
+/**
+ * Vitalidade da planta (0–1): melhor com umidade entre 40% e 75%.
+ * Terra seca ou encharcada reduz o vigor e desacelera o crescimento.
+ */
+export function computeVitality(moisture: number, lightCycle: number): number {
+  const m = Math.min(1, Math.max(0, moisture));
+  let water: number;
+  if (m < 0.32) water = 0.3 + (m / 0.32) * 0.5;
+  else if (m < 0.4) water = 0.8 + ((m - 0.32) / 0.08) * 0.2;
+  else if (m <= 0.75) water = 1;
+  else water = 1 - ((m - 0.75) / 0.25) * 0.45;
+  const light = 0.82 + Math.sin(Math.min(1, Math.max(0, lightCycle)) * Math.PI) * 0.18;
+  return Math.min(1, Math.max(0, water * light));
+}
+
+export function vitalityLabel(v: number): string {
+  if (v >= 0.85) return 'Vigorosa';
+  if (v >= 0.65) return 'Saudável';
+  if (v >= 0.45) return 'Pedindo cuidado';
+  return 'Frágil';
+}

@@ -7,6 +7,7 @@ class GardenAudioEngine {
   private breezeSource: AudioBufferSourceNode | null = null;
   private birdTimer: number | null = null;
   private enabled = false;
+  private dayPhase = 0.5;
   private onCaption: AudioCaptionCallback | null = null;
 
   public setCaptionHandler(cb: AudioCaptionCallback | null) {
@@ -114,9 +115,59 @@ class GardenAudioEngine {
     const delay = 5200 + Math.random() * 8800;
     this.birdTimer = window.setTimeout(() => {
       if (!this.enabled) return;
-      this.playDistantBird();
+      // Pássaros durante o dia; grilos quando a luz cai no crepúsculo
+      if (this.dayPhase > 0.84 || this.dayPhase < 0.06) this.playCrickets();
+      else this.playDistantBird();
       this.scheduleNextBird();
     }, delay);
+  }
+
+  public setDayPhase(lightCycle: number) {
+    this.dayPhase = Math.min(1, Math.max(0, lightCycle));
+  }
+
+  private playCrickets() {
+    if (!this.enabled || !this.ctx || !this.masterGain) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    const freq = 4200 + Math.random() * 600;
+    const pulses = 6 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < pulses; i++) {
+      const start = now + i * 0.075;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.012, start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.05);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(start);
+      osc.stop(start + 0.06);
+    }
+  }
+
+  /** Carrilhão suave tocado quando a planta atinge um novo estágio do ciclo. */
+  public playStageChime() {
+    if (!this.enabled || !this.ctx || !this.masterGain) return;
+    this.emitCaption('Carrilhão suave: a planta mudou de estágio');
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    [659.25, 830.61, 987.77, 1318.5].forEach((f, i) => {
+      const start = now + i * 0.16;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.05, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 1.6);
+      osc.connect(gain);
+      gain.connect(this.masterGain!);
+      osc.start(start);
+      osc.stop(start + 1.7);
+    });
   }
 
   private playDistantBird() {
