@@ -11,6 +11,7 @@ import {
   SeedId,
   TimeSpeedId,
   getStageFromProgress,
+  computeVitality,
 } from '../types/garden';
 import { gardenAudio } from '../audio/gardenAudio';
 
@@ -85,7 +86,7 @@ const DEFAULT_PROP_SLOTS: Record<CarePropId, number> = {
 const DEFAULT_PERSISTED: PersistedState = {
   seedId: 'camomila',
   selectedSeedToPlant: 'camomila',
-  growthProgress: 0.43, // Starts at "Muda" so opening scene feels immediately alive and editorial
+  growthProgress: 0.6, // Starts at "Crescimento" so opening scene feels immediately alive and editorial
   moisture: 0.56,
   waterIntensity: 0.62,
   lightCycle: 0.68, // Golden late-afternoon light ("Fim de Tarde")
@@ -286,12 +287,19 @@ export const useGardenStore = create<GardenState>((set, get) => {
       // Organic growth progression when time is active
       if (state.timeSpeed !== 'pausado' && state.growthProgress < 0.995) {
         const baseSpeed = state.timeSpeed === 'contemplativo' ? 0.015 : 0.0038;
-        const moistureFactor = 0.45 + state.moisture * 0.75;
+        const vitality = computeVitality(state.moisture, state.lightCycle);
         const lightFactor = 0.6 + Math.sin(state.lightCycle * Math.PI) * 0.55;
         updates.growthProgress = Math.min(
           0.995,
-          state.growthProgress + baseSpeed * moistureFactor * lightFactor * deltaSeconds
+          state.growthProgress + baseSpeed * (0.25 + vitality * 1.0) * lightFactor * deltaSeconds
         );
+        const before = getStageFromProgress(state.growthProgress);
+        const after = getStageFromProgress(updates.growthProgress);
+        if (after.id !== before.id) {
+          gardenAudio.playStageChime();
+          window.setTimeout(() => get().showToast(`Novo estágio: ${after.label}. ${after.shortNote}`), 0);
+          window.setTimeout(() => persistState(get()), 0);
+        }
       }
 
       if (Object.keys(updates).length > 0) {

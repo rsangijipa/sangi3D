@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { HeroPotAndSoil } from './HeroPotAndSoil';
@@ -12,10 +12,21 @@ interface GardenCanvasProps {
   onCanvasReady: (canvas: HTMLCanvasElement) => void;
 }
 
+const SceneReady: React.FC<{ onReady: () => void }> = ({ onReady }) => {
+  useEffect(() => {
+    const id = window.setTimeout(onReady, 250);
+    return () => window.clearTimeout(id);
+  }, [onReady]);
+  return null;
+};
+
 export const GardenCanvas: React.FC<GardenCanvasProps> = ({ onCanvasReady }) => {
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
+
+  const [ready, setReady] = useState(false);
+  const markReady = useCallback(() => setReady(true), []);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -58,8 +69,13 @@ export const GardenCanvas: React.FC<GardenCanvasProps> = ({ onCanvasReady }) => 
           <HeroPotAndSoil />
           <HeroPlant />
           <WorkbenchProps />
+          <SceneReady onReady={markReady} />
         </Suspense>
       </Canvas>
+      <div className={`scene-loader${ready ? ' is-done' : ''}`} aria-hidden={ready} role="status">
+        <div className="scene-loader-seed" />
+        <p>Preparando a estufa…</p>
+      </div>
     </div>
   );
 };

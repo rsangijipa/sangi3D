@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Environment, Lightformer, OrbitControls } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette, ToneMapping, SMAA } from '@react-three/postprocessing';
+import { FilmGrade } from './post/FilmGrade';
 import { ToneMappingMode } from 'postprocessing';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useGardenStore } from '../../store/useGardenStore';
 import { SEASONS } from '../../types/garden';
+import { gardenAudio } from '../../audio/gardenAudio';
 
 function computeSunParams(lightCycle: number, seasonId: keyof typeof SEASONS) {
   const season = SEASONS[seasonId];
@@ -69,7 +71,7 @@ export const LightingAndCamera: React.FC = () => {
 
   // Configura fundo atmosférico da cena
   useEffect(() => {
-    scene.fog = new THREE.FogExp2(fogColorInit, 0.085);
+    scene.fog = new THREE.FogExp2(fogColorInit, 0.06);
     scene.background = new THREE.Color(fogColorInit);
     return () => {
       scene.fog = null;
@@ -80,6 +82,7 @@ export const LightingAndCamera: React.FC = () => {
     const store = useGardenStore.getState();
     const params = computeSunParams(store.lightCycle, store.seasonId);
     const k = Math.min(1, delta * 2.5);
+    gardenAudio.setDayPhase(store.lightCycle);
 
     if (sunRef.current) {
       sunRef.current.position.lerp(params.position, k);
@@ -234,12 +237,15 @@ export const LightingAndCamera: React.FC = () => {
       <EffectComposer multisampling={0}>
         <Bloom
           mipmapBlur
-          luminanceThreshold={1.06}
-          intensity={0.22}
-          radius={0.58}
+          luminanceThreshold={0.92}
+          luminanceSmoothing={0.2}
+          intensity={0.32}
+          radius={0.62}
         />
-        <Vignette eskil={false} offset={0.28} darkness={0.32} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        <FilmGrade grain={isMobile ? 0.025 : 0.035} />
+        <SMAA />
+        <Vignette eskil={false} offset={0.24} darkness={0.46} />
       </EffectComposer>
     </>
   );
