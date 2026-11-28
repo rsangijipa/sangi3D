@@ -92,7 +92,7 @@ function getSpiralGeo() {
 
 function getAmoebaBasePositions() {
   return cachedGeo('amoeba-base', () => {
-    const g = new THREE.IcosahedronGeometry(0.46, 2);
+    const g = new THREE.SphereGeometry(0.46, 28, 18);
     return new Float32Array(g.attributes.position.array);
   });
 }
@@ -191,8 +191,8 @@ export function createOrganismAssembly(agent, sharedUniforms, qualityProfile = '
     for (let i = 0; i < ciliaCount; i++) {
       const t = (i / ciliaCount) * Math.PI * 2;
       const ring = isDidinium ? (i % 2 === 0 ? 0.35 : -0.18) : ((i % 7) - 3) / 3.4;
-      const rx = isDidinium || isColeps ? 0.56 : 0.88;
-      const ry = isDidinium || isColeps ? 0.36 : 0.28;
+      const rx = isDidinium || isColeps ? 0.60 : 0.94;
+      const ry = isDidinium || isColeps ? 0.38 : 0.32;
       const x = ring * rx;
       const rScale = Math.sqrt(Math.max(0.08, 1 - ring * ring * 0.85));
       const y = Math.sin(t) * ry * rScale;
@@ -221,7 +221,7 @@ export function createOrganismAssembly(agent, sharedUniforms, qualityProfile = '
     }
 
     // Malha deformável por pseudópodes
-    const amoebaGeo = new THREE.IcosahedronGeometry(speciesId === 'arcella' ? 0.32 : 0.46, 2);
+    const amoebaGeo = new THREE.SphereGeometry(speciesId === 'arcella' ? 0.32 : 0.46, 28, 18);
     const amoebaMat = mat({
       baseColor: '#3f6e68',
       rimColor: '#b7ede4',

@@ -1826,7 +1826,7 @@ class AudioSystem {
 
   updateGain() {
     if (!this.ctx || !this.masterGain) return;
-    const audible = this.enabled && !window.__SANGI_MUTED__ && !window.__SANGI_PAUSED__;
+    const audible = this.enabled && !window.__SANGI_MUTED__ && !window.__SANGI_PAUSED__ && !this.userPaused;
     this.masterGain.gain.setTargetAtTime(audible ? this.volume : 0.0001, this.ctx.currentTime, 0.17);
   }
 
@@ -1988,6 +1988,14 @@ class InteractionSystem {
         this.audio.playRustle();
         if (hit.object.userData.inspect) {
           this.ui.showInspectCard(hit.object.userData.inspect);
+          const info = hit.object.userData.inspect;
+          const key = (info && (info.title || info.name)) || JSON.stringify(info).slice(0, 40);
+          this.seenParts = this.seenParts || new Set();
+          this.seenParts.add(key);
+          if (window.__s3dKit) {
+            window.__s3dKit.goal('inspect1');
+            if (this.seenParts.size >= 3) window.__s3dKit.goal('inspect3', '<b>Anatomia.</b> Brácteas coloridas envolvem 3 flores tubulares brancas — as flores verdadeiras.');
+          }
         }
       }
     });
@@ -2056,7 +2064,7 @@ class UIManager {
     });
 
     // Compare toggle & slider
-    $("btn-compare").addEventListener("click", () => this.toggleCompare());
+    $("btn-compare").addEventListener("click", () => { this.toggleCompare(); if (window.__s3dKit) window.__s3dKit.goal('compare', '<b>Comparação.</b> Arraste a divisória para comparar a cena 3D com a foto de referência.'); });
     $("slider-compare").addEventListener("input", (e) => this.setCompareSplit(Number(e.target.value)));
 
     // Audio toggle
@@ -2074,6 +2082,7 @@ class UIManager {
 
     // Capture screenshot
     $("btn-capture").addEventListener("click", () => {
+      if (window.__s3dKit) window.__s3dKit.goal('photo');
       this.app.render(0);
       const url = this.app.renderer.domElement.toDataURL("image/png");
       const a = document.createElement("a");
@@ -2127,6 +2136,9 @@ class UIManager {
       $("lighting-group").querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       this.app.lighting.setPreset(btn.dataset.light);
+      this.lightsSeen = this.lightsSeen || new Set(['overcast']);
+      this.lightsSeen.add(btn.dataset.light);
+      if (this.lightsSeen.size === 3 && window.__s3dKit) window.__s3dKit.goal('lights', '<b>Três luzes.</b> Nublado, sol vivo e fim de tarde: as nervuras da bráctea continuam legíveis em todas.');
     });
 
     // Sliders
@@ -2394,7 +2406,7 @@ class BougainvilleaApp {
     });
 
     document.addEventListener("visibilitychange", () => {
-      this.paused = document.hidden;
+      this.paused = document.hidden || !!this.audio.userPaused; // respeita pausa do usuário (S3DKit)
       if (!this.paused) this.lastFrameTime = performance.now();
     });
 
@@ -2417,13 +2429,86 @@ class BougainvilleaApp {
       this.lastPerfUpdate = performance.now();
       this.audio.updateGain();
     });
-    window.addEventListener("sangi:dispose", () => {
-      this.disposed = true;
-      this.lens.dispose();
-      this.audio.dispose();
-      this.assets.disposeAll();
-      this.renderer.dispose();
-    }, { once: true });
+    window.addEventListener("sangi:dispose", () => this.disposeAll(), { once: true });
+    this.createKit();
+  }
+
+  // Varre a cena e lista recursos que NÃO passaram pelo AssetManager (devem ser 0 para o descarte ser completo).
+  untrackedResources() {
+    const geos = new Set(), mats = new Set(), texs = new Set();
+    this.scene.traverse((o) => {
+      if (o.geometry && !this.assets.geometries.has(o.geometry)) geos.add(o.geometry);
+      const list = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+      for (const m of list) {
+        if (!this.assets.materials.has(m)) mats.add(m);
+        for (const v of Object.values(m)) if (v && v.isTexture && !this.assets.textures.has(v)) texs.add(v);
+      }
+    });
+    return { geometries: geos, materials: mats, textures: texs };
+  }
+
+  disposeAll() {
+    if (this.disposed) return;
+    this.disposed = true;
+    // Rede de segurança: adota o que ficou fora do AssetManager antes de liberar tudo
+    const u = this.untrackedResources();
+    u.geometries.forEach(g => this.assets.trackGeometry(g));
+    u.materials.forEach(m => this.assets.trackMaterial(m));
+    u.textures.forEach(t => this.assets.trackTexture(t));
+    if (this.scene.environment) this.assets.trackTexture(this.scene.environment);
+    if (this.scene.background && this.scene.background.isTexture) this.assets.trackTexture(this.scene.background);
+    this.lens.dispose();
+    this.audio.dispose();
+    this.assets.disposeAll();
+    this.renderer.renderLists.dispose();
+    this.renderer.dispose();
+    if (window.__s3dKit) window.__s3dKit.dispose();
+  }
+
+  createKit() {
+    const app = this;
+    window.__s3dKit = S3DKit.create({
+      id: 's3d127', title: 'Bougainvillea · Quintal em Flor', photoName: 'bougainvillea',
+      noQuality: true, noPhoto: true, side: 'left', top: 'calc(max(12px, env(safe-area-inset-top)) + 96px)',
+      tutorial: [
+        'Uma bougainvillea num quintal. Arraste para girar; pinça ou scroll para aproximar. Toque nas brácteas para inspecionar.',
+        'Troque a <b>luz</b> (nublado, sol, fim de tarde) e use <b>Comparar</b> para ver a fotografia de referência.',
+        'Complete o <b>Diário de campo</b> e capture composições macro. Sem tempo, sem pontuação.'
+      ],
+      goals: [
+        { id: 'inspect1', label: 'Inspecione uma estrutura' },
+        { id: 'inspect3', label: 'Inspecione 3 estruturas diferentes' },
+        { id: 'lights', label: 'Compare as 3 luzes' },
+        { id: 'compare', label: 'Compare com a foto de referência' },
+        { id: 'photo', label: 'Capture uma composição' }
+      ],
+      canvas: () => app.renderer.domElement,
+      render: () => app.render(0),
+      rendererInfo: () => app.renderer.info,
+      setPaused: (p) => { app.paused = p; app.audio.userPaused = p; app.lastFrameTime = performance.now(); app.audio.updateGain(); },
+      applyQuality: (lvl) => { const b = document.querySelector('#quality-group [data-quality="' + (lvl === 'balanced' ? 'medium' : lvl) + '"]') || document.querySelector('#quality-group [data-quality="' + lvl + '"]'); if (b) b.click(); },
+      onReset: () => document.getElementById('btn-reset-cam').click(),
+      qa: {
+        untracked: () => { const u = app.untrackedResources(); return { geometries: u.geometries.size, materials: u.materials.size, textures: u.textures.size, tracked: { g: app.assets.geometries.size, m: app.assets.materials.size, t: app.assets.textures.size } }; },
+        memory: () => ({ geometries: app.renderer.info.memory.geometries, textures: app.renderer.info.memory.textures }),
+        disposeNow: () => { app.disposeAll(); return { geometries: app.renderer.info.memory.geometries, textures: app.renderer.info.memory.textures, trackedLeft: app.assets.geometries.size + app.assets.materials.size + app.assets.textures.size }; },
+        // Para cada preset de luz: % de pixels estourados (>=250) e esmagados (<=5) e contraste (desvio-padrão de luminância)
+        lightingDetail: () => {
+          const out = {}, presets = ['overcast', 'sunlit', 'golden'];
+          for (const p of presets) {
+            app.lighting.setPreset(p);
+            app.render(0);
+            const src = app.renderer.domElement, c = document.createElement('canvas'); c.width = 160; c.height = Math.round(160 * src.height / src.width);
+            const x = c.getContext('2d'); x.drawImage(src, 0, 0, c.width, c.height);
+            const d = x.getImageData(0, 0, c.width, c.height).data; let hi = 0, lo = 0, sum = 0, sum2 = 0, n = d.length / 4;
+            for (let i = 0; i < d.length; i += 4) { const L = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; if (L >= 250) hi++; if (L <= 5) lo++; sum += L; sum2 += L * L; }
+            const mean = sum / n; out[p] = { clippedHighPct: +(100 * hi / n).toFixed(2), crushedLowPct: +(100 * lo / n).toFixed(2), mean: +mean.toFixed(1), stdev: +Math.sqrt(sum2 / n - mean * mean).toFixed(1) };
+          }
+          app.lighting.setPreset('overcast');
+          return out;
+        }
+      }
+    });
   }
 
   animate() {
@@ -2433,6 +2518,7 @@ class BougainvilleaApp {
     const dt = Math.min((frameTime - this.lastFrameTime) / 1000, 0.05);
     this.lastFrameTime = frameTime;
     if (this.paused || window.__SANGI_PAUSED__) return;
+    if (window.__s3dKit) window.__s3dKit.frame();
     this.elapsed += dt;
 
     this.camMgr.update(dt);
