@@ -51,6 +51,67 @@
       cursor: pointer;
     }
 
+    /* Pós-processamento CSS: vinheta quente + grão de filme muito sutil */
+    #post-vignette, #post-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    #post-vignette {
+      background:
+        radial-gradient(ellipse 120% 90% at 50% 46%, rgba(0,0,0,0) 58%, rgba(22,6,10,0.42) 100%),
+        linear-gradient(180deg, rgba(255,190,120,0.05), rgba(0,0,0,0) 30%, rgba(30,8,12,0.12));
+    }
+    #post-grain {
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+
+    /* Placar de estrelas e celebração de receita concluída */
+    .rec-stars { letter-spacing: 1px; color: #fcd34d; font-size: 11px; white-space: nowrap; }
+    .rec-stars .off { color: rgba(253, 230, 138, 0.25); }
+    #celebration {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: radial-gradient(circle at 50% 45%, rgba(40,10,18,0.35), rgba(10,3,6,0.72));
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s ease;
+    }
+    #celebration.show { opacity: 1; pointer-events: auto; }
+    #celebration .card {
+      width: min(380px, 100%);
+      text-align: center;
+      border-radius: 24px;
+      padding: 22px 20px 18px;
+      transform: translateY(14px) scale(.96);
+      transition: transform .45s cubic-bezier(.2,1.4,.4,1);
+    }
+    #celebration.show .card { transform: none; }
+    #celebration .big-stars { font-size: 38px; letter-spacing: 6px; margin: 6px 0 4px; }
+    #celebration .big-stars span { display: inline-block; color: rgba(253,230,138,.22); transform: scale(.4); transition: transform .4s cubic-bezier(.2,1.6,.4,1), color .3s; }
+    #celebration .big-stars span.on { color: #fcd34d; transform: scale(1); text-shadow: 0 0 18px rgba(252,211,77,.55); }
+    #celebration .stats { display: flex; justify-content: center; gap: 10px; margin: 10px 0 14px; font-size: 12px; color: #fed7aa; }
+    #celebration .stats div { background: rgba(0,0,0,.3); border: 1px solid rgba(251,146,60,.22); border-radius: 12px; padding: 6px 10px; min-width: 88px; }
+    #celebration .stats b { display: block; font-size: 16px; color: #fff7ed; }
+    #celebration .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    #celebration button {
+      min-height: 44px; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 13px;
+      border: 1px solid rgba(251,146,60,.4); color: #fff7ed; background: rgba(0,0,0,.3); cursor: pointer;
+    }
+    #celebration button.primary { background: linear-gradient(180deg, #f97316, #c2410c); border-color: #fdba74; }
+    #celebration button:focus-visible { outline: 3px solid #fde68a; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) {
+      #celebration, #celebration .card, #celebration .big-stars span { transition: none; }
+    }
+
     /* Glassmorphism refinado harmonizado com bordô e âmbar */
     .glass-kitchen {
       background: linear-gradient(145deg, rgba(44, 15, 24, 0.78), rgba(26, 9, 15, 0.86));
@@ -217,7 +278,9 @@
 
       #camera-controls button { justify-content: center; }
       #camera-controls svg { flex-shrink: 0; }
-      body > .imv-top .imv-title strong { white-space: normal; }
+      body > .imv-top .imv-title { min-width: 0; }
+      body > .imv-top .imv-title strong, body > .imv-top .imv-title > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      body > .imv-top .imv-title strong { font-size: 13px; line-height: 1.2; }
     }
 
     @media (max-width: 720px), (pointer: coarse) {
@@ -242,6 +305,9 @@
 
   <!-- Canvas WebGL 3D -->
   <canvas id="webgl-canvas"></canvas>
+  <!-- Pós-processamento estável em CSS: vinheta cinematográfica + grão fino (sem shaders, sem risco de NaN) -->
+  <div id="post-vignette" aria-hidden="true"></div>
+  <div id="post-grain" aria-hidden="true"></div>
 
   <!-- Tooltip contextual ao passar o mouse sobre ingredientes -->
   <div id="object-tooltip" class="opacity-0 glass-pill px-3 py-1.5 rounded-full text-[11px] font-medium text-orange-100 whitespace-nowrap flex items-center gap-1.5">
@@ -410,7 +476,7 @@
               <strong class="text-sm block">🍲 Sopa do Acolhimento</strong>
               <p class="text-[11px] text-orange-200/75 mt-0.5">Legumes cortados com calma, cozidos no tempo certo.</p>
             </div>
-            <span class="text-orange-300">›</span>
+            <span class="flex flex-col items-end gap-0.5"><span class="rec-stars" data-stars-for="sopa"></span><span class="text-orange-300">›</span></span>
           </button>
 
           <button class="btn-select-rec w-full text-left p-3 rounded-xl bg-black/35 hover:bg-orange-900/35 border border-orange-500/20 text-xs text-orange-50 flex items-center justify-between gap-2" data-recipe="salada">
@@ -418,7 +484,7 @@
               <strong class="text-sm block">🥗 Salada das Cores & Frescor</strong>
               <p class="text-[11px] text-orange-200/75 mt-0.5">Crocância, estímulo visual e equilíbrio de sabores.</p>
             </div>
-            <span class="text-orange-300">›</span>
+            <span class="flex flex-col items-end gap-0.5"><span class="rec-stars" data-stars-for="salada"></span><span class="text-orange-300">›</span></span>
           </button>
         </div>
 
@@ -440,6 +506,24 @@
       </section>
     </div>
   </aside>
+
+  <!-- Celebração de receita concluída -->
+  <div id="celebration" role="dialog" aria-modal="true" aria-labelledby="celebration-title" aria-hidden="true">
+    <div class="card glass-kitchen">
+      <div id="celebration-icon" style="font-size:40px">🍲</div>
+      <h2 id="celebration-title" class="text-lg font-bold text-orange-50">Receita concluída!</h2>
+      <div class="big-stars" aria-hidden="true"><span>★</span><span>★</span><span>★</span></div>
+      <p id="celebration-msg" class="text-xs text-orange-200/85"></p>
+      <div class="stats">
+        <div>Tempo<b id="celebration-time">0s</b></div>
+        <div>Toques certeiros<b id="celebration-acc">100%</b></div>
+      </div>
+      <div class="actions">
+        <button id="celebration-again" class="primary">↻ Preparar de novo</button>
+        <button id="celebration-other">Outra receita</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Container de Toasts -->
   <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center gap-2 w-[90%] max-w-md"></div>
@@ -480,9 +564,9 @@
       };
 
       const GRAPHICS_PROFILES = {
-        ultra:       { maxDpr: 2.0, shadowSize: 1024, steamCount: 24, bubbleCount: 16, exposure: 1.08, envIntensity: 1.0 },
-        equilibrado: { maxDpr: 1.5, shadowSize: 1024, steamCount: 18, bubbleCount: 10, exposure: 1.06, envIntensity: 0.9 },
-        leve:        { maxDpr: 1.0, shadowSize: 512,  steamCount: 10, bubbleCount: 6,  exposure: 1.04, envIntensity: 0.75 }
+        ultra:       { maxDpr: 2.0, shadowSize: 1024, steamCount: 24, bubbleCount: 16, exposure: 0.94, envIntensity: 1.0 },
+        equilibrado: { maxDpr: 1.5, shadowSize: 1024, steamCount: 18, bubbleCount: 10, exposure: 0.93, envIntensity: 0.9 },
+        leve:        { maxDpr: 1.0, shadowSize: 512,  steamCount: 10, bubbleCount: 6,  exposure: 0.92, envIntensity: 0.75 }
       };
 
       const appState = {
@@ -542,6 +626,7 @@
           filter.connect(this.simmerGain);
           this.simmerGain.connect(this.ctx.destination);
           noise.start();
+          this.startMusic();
         }
 
         playChop() {
@@ -660,8 +745,71 @@
           });
         }
 
+        // Fanfarra suave de conclusão (arpejo ascendente)
+        playFanfare(stars = 3) {
+          if (!this.enabled) return;
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.5].slice(0, 1 + stars);
+          notes.forEach((freq, idx) => {
+            const t = now + idx * 0.12;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = idx === notes.length - 1 ? 'triangle' : 'sine';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 1.45);
+          });
+        }
+
+        // Trilha ambiente: acordes suaves filtrados, bem baixinhos
+        startMusic() {
+          if (this.musicTimer || !this.ctx) return;
+          this.musicGain = this.ctx.createGain();
+          this.musicGain.gain.value = this.enabled ? 0.05 : 0;
+          const lp = this.ctx.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.value = 1500;
+          this.musicGain.connect(lp);
+          lp.connect(this.ctx.destination);
+          const chords = [
+            [261.63, 329.63, 392.0, 493.88],
+            [220.0, 261.63, 329.63, 392.0],
+            [174.61, 220.0, 261.63, 329.63],
+            [196.0, 246.94, 293.66, 392.0]
+          ];
+          let i = 0;
+          const play = () => {
+            if (!this.ctx || this.ctx.state !== 'running' || document.hidden) return;
+            const now = this.ctx.currentTime;
+            chords[i++ % chords.length].forEach((freq, k) => {
+              const t = now + k * 0.09;
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.value = freq;
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.linearRampToValueAtTime(0.22, t + 0.05);
+              g.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
+              osc.connect(g);
+              g.connect(this.musicGain);
+              osc.start(t);
+              osc.stop(t + 3.7);
+            });
+          };
+          play();
+          this.musicTimer = setInterval(play, 4000);
+        }
+
         toggle() {
           this.enabled = !this.enabled;
+          if (this.musicGain && this.ctx) this.musicGain.gain.setTargetAtTime(this.enabled ? 0.05 : 0, this.ctx.currentTime, 0.3);
           this.updateSimmer();
           return this.enabled;
         }
@@ -716,8 +864,9 @@
       const PBRFactory = {
         // 2.1 Parede de Cerâmica Bordô com rejunte discreto e variação de esmalte
         createBurgundyTileMaps() {
-          const size = 512;
-          const cols = 4, rows = 4;
+          // Azulejo "metrô" esmaltado em fiadas desencontradas (encaixe sem emenda na repetição)
+          const size = 1024;
+          const cols = 4, rows = 8;
           const tileW = size / cols, tileH = size / rows;
 
           const colC = createCanvas(size, size);
@@ -735,25 +884,41 @@
           roughCtx.fillStyle = '#e5e5e5';
           roughCtx.fillRect(0, 0, size, size);
 
-          const grout = 4;
+          colCtx.fillStyle = '#c9b8a6';
+          colCtx.fillRect(0, 0, size, size);
+          const grout = 6;
           for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-              const x = c * tileW + grout * 0.5;
+            const offset = r % 2 ? tileW * 0.5 : 0;
+            for (let c = -1; c < cols; c++) {
+              const x = c * tileW + offset + grout * 0.5;
               const y = r * tileH + grout * 0.5;
               const w = tileW - grout;
               const h = tileH - grout;
 
-              const v = (hash2D(c * 7 + 3, r * 11 + 5) - 0.5) * 14;
-              const grad = colCtx.createLinearGradient(x, y, x + w, y + h);
-              grad.addColorStop(0, `rgb(${Math.round(92 + v)}, ${Math.round(22 + v * 0.3)}, ${Math.round(36 + v * 0.4)})`);
-              grad.addColorStop(1, `rgb(${Math.round(68 + v)}, ${Math.round(14 + v * 0.2)}, ${Math.round(25 + v * 0.3)})`);
+              const cc = ((c % cols) + cols) % cols;
+              const v = (hash2D(cc * 7 + 3 + (r % 2) * 13, r * 11 + 5) - 0.5) * 22;
+              const grad = colCtx.createLinearGradient(x, y, x + w * 0.4, y + h);
+              grad.addColorStop(0, `rgb(${Math.round(118 + v)}, ${Math.round(30 + v * 0.3)}, ${Math.round(44 + v * 0.4)})`);
+              grad.addColorStop(0.55, `rgb(${Math.round(96 + v)}, ${Math.round(22 + v * 0.25)}, ${Math.round(36 + v * 0.3)})`);
+              grad.addColorStop(1, `rgb(${Math.round(72 + v)}, ${Math.round(15 + v * 0.2)}, ${Math.round(27 + v * 0.3)})`);
               colCtx.fillStyle = grad;
               colCtx.fillRect(x, y, w, h);
 
-              // Sutil brilho nas bordas chanfradas do azulejo
-              colCtx.strokeStyle = 'rgba(255, 190, 175, 0.08)';
-              colCtx.lineWidth = 2;
-              colCtx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+              // Variação do esmalte: poças de vidrado mais escuras e reflexo na borda superior
+              for (let k = 0; k < 5; k++) {
+                const px = x + hash2D(cc + k * 3.1, r + 1.7) * w;
+                const py = y + hash2D(cc + 2.3, r + k * 4.9) * h;
+                const rad = h * (0.25 + hash2D(k, cc + r) * 0.5);
+                const pool = colCtx.createRadialGradient(px, py, 0, px, py, rad);
+                pool.addColorStop(0, 'rgba(40, 6, 14, 0.18)');
+                pool.addColorStop(1, 'rgba(40, 6, 14, 0)');
+                colCtx.fillStyle = pool;
+                colCtx.fillRect(x, y, w, h);
+              }
+              colCtx.fillStyle = 'rgba(255, 214, 196, 0.16)';
+              colCtx.fillRect(x + 3, y + 2, w - 6, 3);
+              colCtx.fillStyle = 'rgba(20, 2, 8, 0.22)';
+              colCtx.fillRect(x + 3, y + h - 4, w - 6, 3);
 
               // Bump elevado para o corpo do azulejo
               const bGrad = bumpCtx.createLinearGradient(x, y, x + w, y + h);
@@ -773,7 +938,7 @@
           const wrap = (canvas, isColor) => {
             const tex = new THREE.CanvasTexture(canvas);
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            tex.repeat.set(5, 2.8);
+            tex.repeat.set(3.4, 1.6);
             tex.anisotropy = 8;
             if (isColor) tex.encoding = THREE.sRGBEncoding;
             return tex;
@@ -805,13 +970,15 @@
               const nx = x / size * 5.0;
               const ny = y / size * 5.0;
               const n1 = fbm(nx, ny, 4);
-              const vein = Math.pow(1.0 - Math.abs(Math.sin((nx * 1.6 + ny * 0.9 + n1 * 2.4) * Math.PI)), 6.0);
+              const veinMask = Math.max(0, Math.min(1, (fbm(nx * 0.45 + 3.1, ny * 0.45 + 7.7, 3) - 0.42) * 3.0));
+              const vein = Math.pow(Math.max(0, 1.0 - Math.abs(Math.sin((nx * 0.9 + ny * 0.55 + n1 * 3.2) * Math.PI))), 14.0) * veinMask;
               const micro = hash2D(x * 0.7, y * 0.7) * 0.04;
 
               // Tom âmbar-dourado natural com veios suaves e profundidade mineral
-              const r = Math.min(255, Math.round((234 + (n1 - 0.5) * 26 + vein * 18 - micro * 35)));
-              const g = Math.min(255, Math.round((166 + (n1 - 0.5) * 24 + vein * 22 - micro * 30)));
-              const b = Math.min(255, Math.round((34 + (n1 - 0.5) * 16 + vein * 26 - micro * 15)));
+              // Quartzo mel-creme: base clara e veios caramelo (menos saturado, mais mineral)
+              const r = Math.max(0, Math.min(255, Math.round(236 + (n1 - 0.5) * 22 - vein * 46 - micro * 40)));
+              const g = Math.max(0, Math.min(255, Math.round(220 + (n1 - 0.5) * 20 - vein * 62 - micro * 38)));
+              const b = Math.max(0, Math.min(255, Math.round(186 + (n1 - 0.5) * 18 - vein * 78 - micro * 30)));
 
               const i = (y * size + x) * 4;
               colImg.data[i] = r;
@@ -1490,7 +1657,7 @@
        * 5. ILUMINAÇÃO ARQUITETÔNICA E CINEMATOGRÁFICA
        * ========================================================== */
       // Luz hemisférica quente (céu âmbar / rebote bordô)
-      const hemiLight = new THREE.HemisphereLight(0xffe9c7, 0x3b111c, 0.85);
+      const hemiLight = new THREE.HemisphereLight(0xffe9c7, 0x3b111c, 0.62);
       scene.add(hemiLight);
 
       // Luz solar natural vindo da janela lateral esquerda
@@ -2678,8 +2845,63 @@
         bubblesGroup.visible = steamGroup.visible;
       }
 
+      /* Placar: tempo, toques certeiros e estrelas (melhor resultado salvo no aparelho) */
+      const score = { start: 0, hits: 0, misses: 0 };
+      const STAR_KEY = 'cozinha-das-descobertas:estrelas';
+      function loadStars() {
+        try { return JSON.parse(localStorage.getItem(STAR_KEY) || '{}') || {}; } catch (e) { return {}; }
+      }
+      function saveStars(data) {
+        try { localStorage.setItem(STAR_KEY, JSON.stringify(data)); } catch (e) { /* armazenamento indisponível */ }
+      }
+      function renderStarBadges() {
+        const best = loadStars();
+        document.querySelectorAll('[data-stars-for]').forEach(el => {
+          const n = best[el.dataset.starsFor] || 0;
+          el.innerHTML = [0, 1, 2].map(i => `<span class="${i < n ? '' : 'off'}">★</span>`).join('');
+          el.setAttribute('aria-label', n ? `Melhor resultado: ${n} de 3 estrelas` : 'Ainda não preparada');
+        });
+      }
+
+      const celebrationEl = document.getElementById('celebration');
+      function hideCelebration() {
+        celebrationEl.classList.remove('show');
+        celebrationEl.setAttribute('aria-hidden', 'true');
+      }
+      function finishRecipe() {
+        const recipe = RECIPES[appState.activeRecipe];
+        const secs = Math.max(1, Math.round((performance.now() - (score.start || performance.now())) / 1000));
+        const total = score.hits + score.misses;
+        const acc = total ? Math.round((score.hits / total) * 100) : 100;
+        const stars = score.misses === 0 && secs <= 75 ? 3 : score.misses <= 2 && secs <= 150 ? 2 : 1;
+        const best = loadStars();
+        const isRecord = stars > (best[appState.activeRecipe] || 0);
+        if (isRecord) { best[appState.activeRecipe] = stars; saveStars(best); }
+        renderStarBadges();
+        spawnSparkles();
+        audio.playFanfare(stars);
+        document.getElementById('celebration-icon').textContent = recipe.icon;
+        document.getElementById('celebration-title').textContent = `${recipe.name} pronta!`;
+        document.getElementById('celebration-time').textContent = secs >= 60 ? `${Math.floor(secs / 60)}min ${secs % 60}s` : `${secs}s`;
+        document.getElementById('celebration-acc').textContent = `${acc}%`;
+        document.getElementById('celebration-msg').textContent = stars === 3
+          ? (isRecord ? 'Novo recorde! Preparo calmo, preciso e no tempo certo.' : 'Perfeito: preparo calmo, preciso e no tempo certo.')
+          : stars === 2 ? 'Muito bom! Siga o anel dourado para acertar de primeira.' : 'Receita feita! Sem pressa: cada passo tem seu momento.';
+        const spans = celebrationEl.querySelectorAll('.big-stars span');
+        spans.forEach(sp => sp.classList.remove('on'));
+        setTimeout(() => {
+          if (currentStep()) return;
+          celebrationEl.classList.add('show');
+          celebrationEl.setAttribute('aria-hidden', 'false');
+          spans.forEach((sp, i) => setTimeout(() => sp.classList.toggle('on', i < stars), 180 + i * 220));
+          document.getElementById('celebration-again').focus({ preventScroll: true });
+        }, 900);
+      }
+
       function resetRecipe(id = appState.activeRecipe) {
         recipeAnimation = null;
+        score.start = 0; score.hits = 0; score.misses = 0;
+        hideCelebration();
         appState.activeRecipe = id;
         appState.recipeStep = 0;
         const soup = id === 'sopa';
@@ -2730,7 +2952,7 @@
         recipeAnimation = null;
         appState.recipeStep += 1;
         updateRecipeUI();
-        if (!currentStep()) audio.playChime(587.33);
+        if (!currentStep()) { audio.playChime(587.33); finishRecipe(); }
       }
 
       function runRecipeStep(target) {
@@ -2743,10 +2965,13 @@
           }
           return;
         }
+        if (!score.start) score.start = performance.now();
         if (target && target !== step.target) {
+          score.misses += 1;
           showToast(step.hint);
           return;
         }
+        score.hits += 1;
         setCameraPreset(step.view);
         recipeActions[step.action]();
         updateRecipeUI();
@@ -2936,6 +3161,49 @@
         });
       }
 
+      // Brilhos dourados de conclusão (partículas aditivas leves)
+      const SPARK_COUNT = 70;
+      const sparkGeo = new THREE.BufferGeometry();
+      const sparkPos = new Float32Array(SPARK_COUNT * 3);
+      const sparkVel = new Float32Array(SPARK_COUNT * 3);
+      sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+      const sparkMat = new THREE.PointsMaterial({ color: 0xffd27a, size: 0.035, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+      const sparkles = new THREE.Points(sparkGeo, sparkMat);
+      sparkles.frustumCulled = false;
+      sparkles.visible = false;
+      scene.add(sparkles);
+      let sparkLife = 0;
+      function spawnSparkles() {
+        if (!appState.effectsEnabled) return;
+        const origin = new THREE.Vector3();
+        (appState.activeRecipe === 'sopa' ? servingBowl : bowlStation).getWorldPosition(origin);
+        origin.y += 0.12;
+        for (let i = 0; i < SPARK_COUNT; i++) {
+          sparkPos[i * 3] = origin.x; sparkPos[i * 3 + 1] = origin.y; sparkPos[i * 3 + 2] = origin.z;
+          const a = Math.random() * Math.PI * 2;
+          const sp = 0.25 + Math.random() * 0.45;
+          sparkVel[i * 3] = Math.cos(a) * sp * 0.6;
+          sparkVel[i * 3 + 1] = 0.6 + Math.random() * 0.9;
+          sparkVel[i * 3 + 2] = Math.sin(a) * sp * 0.6;
+        }
+        sparkGeo.attributes.position.needsUpdate = true;
+        sparkLife = 1.6;
+        sparkles.visible = true;
+      }
+      function updateSparkles(dt) {
+        if (sparkLife <= 0) return;
+        sparkLife -= dt;
+        for (let i = 0; i < SPARK_COUNT; i++) {
+          sparkVel[i * 3 + 1] -= 1.4 * dt;
+          sparkPos[i * 3] += sparkVel[i * 3] * dt;
+          sparkPos[i * 3 + 1] += sparkVel[i * 3 + 1] * dt;
+          sparkPos[i * 3 + 2] += sparkVel[i * 3 + 2] * dt;
+        }
+        sparkGeo.attributes.position.needsUpdate = true;
+        sparkMat.opacity = Math.max(0, Math.min(1, sparkLife / 0.6));
+        if (sparkLife <= 0) sparkles.visible = false;
+      }
+
       const recipeActions = {
         carrot: () => cutFood(carrotSlices, false),
         tomato: () => cutFood(tomatoSlices, true),
@@ -3099,6 +3367,19 @@
         });
       });
 
+      document.getElementById('celebration-again').addEventListener('click', () => {
+        resetRecipe();
+        setCameraPreset('prep');
+        recipeButton.focus({ preventScroll: true });
+      });
+      document.getElementById('celebration-other').addEventListener('click', () => {
+        resetRecipe(appState.activeRecipe === 'sopa' ? 'salada' : 'sopa');
+        setCameraPreset('prep');
+        recipeButton.focus({ preventScroll: true });
+      });
+      celebrationEl.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideCelebration(); });
+      renderStarBadges();
+
       document.getElementById('btn-reset-recipe').addEventListener('click', () => {
         resetRecipe();
         closeRecipeBook(recipeButton);
@@ -3163,10 +3444,18 @@
         appState.ambientMotion = e.target.checked;
       });
 
+      // Em retrato (celular) abre o campo de visão para enquadrar a bancada inteira
+      function fitCameraFov() {
+        const aspect = camera.aspect;
+        camera.fov = aspect < 1 ? Math.min(62, 38 + (1 - aspect) * 34) : 38;
+        camera.updateProjectionMatrix();
+      }
+      fitCameraFov();
+
       // Responsividade
       window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+        fitCameraFov();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
@@ -3200,6 +3489,7 @@
         camera.position.x = Math.max(-2.7, Math.min(3.1, camera.position.x));
 
         advanceRecipeAnimation(Math.min(frameDelta, 0.15));
+        updateSparkles(dt);
 
         if (soupMesh.visible && (appState.ambientMotion || appState.heatOn)) {
           floatingCarrots.forEach(item => {
