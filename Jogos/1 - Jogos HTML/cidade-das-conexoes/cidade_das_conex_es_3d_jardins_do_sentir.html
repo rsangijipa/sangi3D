@@ -66,6 +66,22 @@ details{margin-top:14px}
 summary{cursor:pointer;padding:9px 0}
 #load{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;background:#17352f;z-index:5;text-align:center;padding:24px;gap:14px}
 #load p{max-width:340px}
+.panel{background:linear-gradient(160deg,#1c3330e6,#12221fe0);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);border-color:#5b7d70a8;box-shadow:0 10px 32px #0a141266,inset 0 1px 0 #ffffff14}
+.star-total{font-variant-numeric:tabular-nums;color:var(--amber);font-weight:700;font-size:13px;padding:3px 9px;border-radius:999px;background:#ffd4961a;border:1px solid #ffd49640;white-space:nowrap}
+.star-total:empty{display:none}
+#result{display:grid;gap:4px;padding:10px 12px;border-radius:8px;background:linear-gradient(135deg,#ffd49622,#c4e5c218);border:1px solid #ffd49655}
+.stars{display:flex;gap:6px;font-size:30px;line-height:1}
+.stars i{font-style:normal;color:#ffffff26;transform:scale(.6);opacity:.4;animation:star .5s cubic-bezier(.3,1.6,.5,1) both}
+.stars i.on{color:var(--amber);text-shadow:0 0 14px #ffc46a99;opacity:1;transform:none}
+#result p{font-size:12px;color:#efe3c6}
+@keyframes star{from{transform:scale(.2) rotate(-40deg);opacity:0}}
+#status{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #ffd49633;transition:opacity .25s}
+.bridge{transition:background .2s,border-color .2s}
+.bridge[data-position=pending],.bridge[data-position=moving]{border-color:var(--amber)}
+#load{background:radial-gradient(circle at 50% 40%,#2c5a50,#11251f 70%)}
+#load::after{content:'';width:120px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--amber),transparent);background-size:200% 100%;animation:sweep 1.2s linear infinite}
+@keyframes sweep{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.stars i,#load::after{animation:none}}
 [hidden]{display:none!important}
 @media(max-width:760px){
   :root{--left:max(10px,env(safe-area-inset-left));--right:max(10px,env(safe-area-inset-right));--top:max(10px,env(safe-area-inset-top));--bottom:max(10px,env(safe-area-inset-bottom))}
@@ -76,6 +92,9 @@ summary{cursor:pointer;padding:9px 0}
   .tools button{padding:4px 8px}
   .objective{top:calc(var(--top) + 60px);width:min(320px,calc(100% - var(--left) - var(--right)));padding:10px 12px;gap:6px}
   .objective h2{font-size:22px}
+  .star-total{font-size:11px;padding:2px 6px}
+  .stars{font-size:22px}
+  #result p{font-size:11px}
   #brief{display:none}
   #current{padding:6px 9px}
   footer{width:min(440px,calc(100% - var(--left) - var(--right)));padding:6px}
@@ -114,7 +133,7 @@ summary{cursor:pointer;padding:9px 0}
 <header>
   <div class="brand panel">
     <a class="launcher" href="/" aria-label="Voltar ao catálogo" title="Voltar ao catálogo">‹</a>
-    <h1>Cidade das Conexões</h1>
+    <h1>Cidade das Conexões</h1><span id="star-total" class="star-total" title="Estrelas conquistadas"></span>
   </div>
   <nav class="tools panel" aria-label="Menu do jogo">
     <button id="pause" aria-pressed="false">Pausar</button>
@@ -127,6 +146,7 @@ summary{cursor:pointer;padding:9px 0}
   <p id="brief" class="muted"></p>
   <div id="current" role="status"><strong id="step"></strong><small id="hint"></small></div>
   <div id="progress-row" class="progress-row"><progress id="progress" value="0" max="1" aria-label="Travessias concluídas"></progress><span id="tally"></span></div>
+  <div id="result" hidden><div class="stars" id="stars" aria-hidden="true"><i>★</i><i>★</i><i>★</i></div><p id="result-text"></p></div>
   <button id="next" class="primary" hidden></button>
 </main>
 <footer class="panel" aria-label="Controles das pontes">
@@ -192,6 +212,7 @@ const CHANNEL_END = 14;
 const BIKE_END = 5;
 const BOAT_CLEARANCE = 1.65;
 const BIKE_CLEARANCE = 2.77;
+const REACTION = 2.5; // segundos de tolerância por travessia antes de perder estrelas
 
 // Kinematic simulation. The actor reserves a span through the entire crossing.
 class Canal {
@@ -206,7 +227,17 @@ class Canal {
     this.paused = false;
     this.complete = false;
     this.done = 0;
+    this.elapsed = 0;
+    this.waited = 0;
+    this.streak = 0;
+    this.bestStreak = 0;
     this.spawn();
+  }
+  // 3 estrelas: quase sem espera; 2: espera moderada; 1: concluída.
+  stars() {
+    const jobs = Math.max(1,this.phase.jobs.length);
+    const per = Math.max(0,this.waited - REACTION*jobs) / jobs;
+    return per < 1 ? 3 : per < 4 ? 2 : 1;
   }
   spawn() {
     const job = this.phase.jobs[this.done % this.phase.jobs.length];
@@ -230,6 +261,10 @@ class Canal {
   step(dt) {
     if (this.paused) return;
     const a = this.actor;
+    if (!this.complete) {
+      this.elapsed += dt;
+      if (a.wait !== null) { this.waited += dt; a.waited = (a.waited||0) + dt; }
+    }
     this.bridges.forEach((b,i) => {
       if (a.reservation === i && !this.complete) return;
       b.position += clamp(Number(b.raised)-b.position,-dt*.84,dt*.84);
@@ -263,6 +298,10 @@ class Canal {
     }
     if ((a.limit*a.dir-a.p)*a.dir > 0.001) return;
     this.done++;
+    const smooth = (a.waited||0) < REACTION;
+    this.streak = smooth ? this.streak+1 : 0;
+    this.bestStreak = Math.max(this.bestStreak,this.streak);
+    this.onArrive?.(a,smooth,this.streak);
     if (this.index >= 0 && this.done === this.phase.jobs.length) {
       this.complete = true;
     } else {
@@ -272,9 +311,9 @@ class Canal {
 }
 
 const LIGHTING = {
-  day:{sky:0xaed1d3,hemi:0xe0f1ed,ground:0x616653,sun:0xffe8c6,power:2.8,ambient:1.7,position:[-12,22,9],water:0x327b73},
-  sunset:{sky:0xc7a693,hemi:0xffdfc2,ground:0x687d78,sun:0xffc286,power:3.25,ambient:1.45,position:[-18,15,5],water:0x24665d},
-  night:{sky:0x34465d,hemi:0xabc8ff,ground:0x5c675d,sun:0xa4bef2,power:1.25,ambient:1.03,position:[-13,18,11],water:0x173d46}
+  day:{sky:0xaed1d3,top:0x5f9fc4,low:0x7d8f86,hemi:0xe0f1ed,ground:0x616653,sun:0xffe8c6,power:2.8,ambient:1.25,env:.55,position:[-12,22,9],water:0x327b73,bloom:.18,exposure:1.05},
+  sunset:{sky:0xe2a983,top:0x5b6f96,low:0x6f6a66,hemi:0xffdfc2,ground:0x687d78,sun:0xffb070,power:3.25,ambient:1.05,env:.5,position:[-18,9,5],water:0x24665d,bloom:.28,exposure:1.08},
+  night:{sky:0x2c3d57,top:0x0b1426,low:0x1d2a33,hemi:0xabc8ff,ground:0x5c675d,sun:0xa4bef2,power:1.0,ambient:.8,env:.32,position:[-13,18,11],water:0x173d46,bloom:.62,exposure:1.12}
 };
 
 
@@ -292,7 +331,7 @@ function makeView(T, OrbitControls) {
   world.append(renderer.domElement);
 
   const scene = new T.Scene();
-  scene.background = new T.Color();
+  scene.background = null;
   scene.fog = new T.FogExp2(0xffffff,.018);
   const camera = new T.PerspectiveCamera(41,1,.12,140);
   const controls = new OrbitControls(camera,renderer.domElement);
@@ -311,7 +350,107 @@ function makeView(T, OrbitControls) {
   Object.assign(sun.shadow.camera,{left:-18,right:18,top:21,bottom:-21,near:1,far:58});
   sun.shadow.normalBias = .035;
   sun.shadow.bias = -.00015;
+  sun.shadow.radius = 3;
   scene.add(sun,sky);
+
+  // Gradient sky dome + sun disc; also feeds the PMREM environment for PBR reflections.
+  const skyU = {top:{value:new T.Color()},horizon:{value:new T.Color()},low:{value:new T.Color()},sunDir:{value:new T.Vector3(0,1,0)},sunCol:{value:new T.Color()}};
+  const skyMat = new T.ShaderMaterial({
+    uniforms:skyU, side:T.BackSide, depthWrite:false, fog:false,
+    vertexShader:'varying vec3 vd; void main(){ vd=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:[
+      'uniform vec3 top,horizon,low,sunCol,sunDir; varying vec3 vd;',
+      'void main(){',
+      'vec3 d=normalize(vd); float h=clamp(d.y,-1.0,1.0);',
+      'vec3 c=h>0.0?mix(horizon,top,pow(clamp(h*1.15,0.0,1.0),0.6)):mix(horizon,low,clamp(-h*4.0,0.0,1.0));',
+      'float s=clamp(dot(d,normalize(sunDir)),0.0,1.0);',
+      'c+=sunCol*(pow(s,900.0)*4.0+pow(s,10.0)*0.22);',
+      'gl_FragColor=vec4(clamp(c,0.0,16.0),1.0);',
+      '#include <tonemapping_fragment>',
+      '#include <colorspace_fragment>',
+      '}'
+    ].join('\n')
+  });
+  const skyDome = new T.Mesh(new T.SphereGeometry(100,32,16),skyMat);
+  skyDome.frustumCulled = false;
+  skyDome.renderOrder = -10;
+  scene.add(skyDome);
+  const starGeo = new T.BufferGeometry();
+  const starPos = new Float32Array(500*3);
+  for (let i=0;i<500;i++) {
+    const u=Math.random()*Math.PI*2, v=Math.acos(Math.random()*.92);
+    starPos.set([Math.sin(v)*Math.cos(u)*95,Math.cos(v)*95,Math.sin(v)*Math.sin(u)*95],i*3);
+  }
+  starGeo.setAttribute('position',new T.BufferAttribute(starPos,3));
+  const stars = new T.Points(starGeo,new T.PointsMaterial({color:0xdfe8ff,size:1.6,sizeAttenuation:false,transparent:true,opacity:.85,fog:false,depthWrite:false}));
+  stars.frustumCulled = false;
+  scene.add(stars);
+  const pmrem = new T.PMREMGenerator(renderer);
+  const envScene = new T.Scene();
+  const envDome = new T.Mesh(skyDome.geometry,skyMat);
+  envScene.add(envDome);
+  const envCache = {};
+  function environmentFor(mode) {
+    if (!envCache[mode]) envCache[mode] = pmrem.fromScene(envScene,.03).texture;
+    return envCache[mode];
+  }
+
+  // Lightweight HDR post chain: MSAA scene target -> bright pass -> blurred bloom -> grade/vignette/tonemap.
+  const hdrType = renderer.capabilities.isWebGL2 === false ? T.UnsignedByteType : T.HalfFloatType;
+  const sceneRT = new T.WebGLRenderTarget(4,4,{type:hdrType,samples:touch?2:4});
+  const bloomA = new T.WebGLRenderTarget(4,4,{type:hdrType});
+  const bloomB = new T.WebGLRenderTarget(4,4,{type:hdrType});
+  const quadCam = new T.OrthographicCamera(-1,1,1,-1,0,1);
+  const quadScene = new T.Scene();
+  const quad = new T.Mesh(new T.PlaneGeometry(2,2));
+  quad.frustumCulled = false;
+  quadScene.add(quad);
+  const quadVS = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }';
+  const brightMat = new T.ShaderMaterial({
+    uniforms:{src:{value:null},threshold:{value:1.0}}, vertexShader:quadVS, depthTest:false, depthWrite:false, toneMapped:false,
+    fragmentShader:'uniform sampler2D src; uniform float threshold; varying vec2 vUv; void main(){ vec3 c=clamp(texture2D(src,vUv).rgb,0.0,32.0); float l=dot(c,vec3(0.2126,0.7152,0.0722)); float k=smoothstep(threshold,threshold+0.9,l); gl_FragColor=vec4(c*k,1.0); }'
+  });
+  const blurMat = new T.ShaderMaterial({
+    uniforms:{src:{value:null},dir:{value:new T.Vector2()}}, vertexShader:quadVS, depthTest:false, depthWrite:false, toneMapped:false,
+    fragmentShader:'uniform sampler2D src; uniform vec2 dir; varying vec2 vUv; void main(){ vec3 c=texture2D(src,vUv).rgb*0.227; c+=(texture2D(src,vUv+dir*1.385).rgb+texture2D(src,vUv-dir*1.385).rgb)*0.316; c+=(texture2D(src,vUv+dir*3.231).rgb+texture2D(src,vUv-dir*3.231).rgb)*0.07; gl_FragColor=vec4(max(c,0.0),1.0); }'
+  });
+  const finalMat = new T.ShaderMaterial({
+    uniforms:{src:{value:null},bloom:{value:null},strength:{value:.3},tint:{value:new T.Color(1,1,1)},time:{value:0}}, vertexShader:quadVS, depthTest:false, depthWrite:false,
+    fragmentShader:[
+      'uniform sampler2D src,bloom; uniform float strength,time; uniform vec3 tint; varying vec2 vUv;',
+      'void main(){',
+      'vec3 c=clamp(texture2D(src,vUv).rgb,0.0,32.0)+clamp(texture2D(bloom,vUv).rgb,0.0,32.0)*strength;',
+      'c*=tint;',
+      'float lum=dot(c,vec3(0.2126,0.7152,0.0722)); c=max(mix(vec3(lum),c,1.12),0.0);',
+      'vec2 q=vUv-0.5; float vig=1.0-smoothstep(0.35,0.95,length(q*vec2(1.1,1.0)));',
+      'c*=mix(0.78,1.0,vig);',
+      'gl_FragColor=vec4(c,1.0);',
+      '#include <tonemapping_fragment>',
+      '#include <colorspace_fragment>',
+      'gl_FragColor.rgb=clamp(gl_FragColor.rgb,0.0,1.0); gl_FragColor.rgb=mix(gl_FragColor.rgb,gl_FragColor.rgb*gl_FragColor.rgb*(3.0-2.0*gl_FragColor.rgb),0.22);',
+      'float g=fract(sin(dot(vUv*vec2(1270.1,893.7)+time,vec2(12.9898,78.233)))*43758.5453);',
+      'gl_FragColor.rgb=clamp(gl_FragColor.rgb+(g-0.5)/255.0,0.0,1.0);',
+      '}'
+    ].join('\n')
+  });
+  function pass(material,target) {
+    quad.material = material;
+    renderer.setRenderTarget(target);
+    renderer.render(quadScene,quadCam);
+  }
+  function composite() {
+    renderer.setRenderTarget(sceneRT);
+    renderer.render(scene,camera);
+    brightMat.uniforms.src.value = sceneRT.texture;
+    pass(brightMat,bloomA);
+    for (let i=0;i<2;i++) {
+      blurMat.uniforms.src.value = bloomA.texture; blurMat.uniforms.dir.value.set((i+1)/bloomA.width,0); pass(blurMat,bloomB);
+      blurMat.uniforms.src.value = bloomB.texture; blurMat.uniforms.dir.value.set(0,(i+1)/bloomA.height); pass(blurMat,bloomA);
+    }
+    finalMat.uniforms.src.value = sceneRT.texture;
+    finalMat.uniforms.bloom.value = bloomA.texture;
+    pass(finalMat,null);
+  }
 
   let seed = 817;
   const random = () => ((seed = (Math.imul(1664525,seed)+1013904223)>>>0) / 4294967296);
@@ -354,7 +493,7 @@ function makeView(T, OrbitControls) {
     const color = normalSource.clone();
     color.colorSpace = T.SRGBColorSpace;
     color.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-    return {map:color,bumpMap:normalSource};
+    return {map:color,bumpMap:normalSource,roughnessMap:normalSource};
   }
   const stone = surface('stone'), slate = surface('slate'), wood = surface('wood'), plaster = surface('plaster');
   function physical(color, roughness=.87, details={}) {
@@ -370,8 +509,10 @@ function makeView(T, OrbitControls) {
     darkwood:physical(0x493931), dirt:physical(0x4b3c2e), grass:physical(0x617253,.96,{...plaster,bumpScale:.06}),
     glass:physical(0x355557,.28,{metalness:.18}),
     window:physical(0xc8af85,.37,{emissive:0xffb16b,emissiveIntensity:.15}),
-    lamp:physical(0xe0c08b,.34,{emissive:0xffb672,emissiveIntensity:.4})
+    lamp:physical(0xe0c08b,.34,{emissive:0xffb672,emissiveIntensity:.4}),
+    petal:physical(0xffffff,.6,{emissive:0x000000}), leafStem:physical(0x4c6a3c,.8)
   };
+  const FLOWERS = [0xf2b6c4,0xffe08a,0xe8eef5,0xd98aa8,0xb9a7ec,0xff9f7a];
   const unit = new T.BoxGeometry(1,1,1);
   const post = new T.CylinderGeometry(.5,.5,1,9);
   const gable = new T.Shape();
@@ -471,6 +612,11 @@ function makeView(T, OrbitControls) {
       staticBox(materials.dirt,s*4.49,QUAY+.25,z,.85,.04,1.23);
       tree(s*4.50,z,1.02+random()*.45);
       bench(s*3.70,z+.95);
+      for (let f=0;f<14;f++) {
+        const fx=s*4.49+jitter(.72), fz=z+jitter(1.1), fs=.045+random()*.04;
+        batch(post,materials.leafStem,false,fx,QUAY+.32,fz,.012,.14,.012);
+        batch(foliage,materials.petal,false,fx,QUAY+.40,fz,fs,fs*.8,fs,0,random()*6,0,FLOWERS[f%FLOWERS.length]);
+      }
     }
     for (const b of BRIDGES) {
       const z = b.z;
@@ -570,23 +716,27 @@ function makeView(T, OrbitControls) {
   const time = {value:0}, wake = {value:new T.Vector3(0,60,1)}, waterCol = {value:new T.Color()}, skyCol = {value:new T.Color()};
   const lit = {value:0}, wet = {value:0};
   const waterMaterial = new T.ShaderMaterial({
-    uniforms:{time,wake,waterCol,skyCol,lit,wet},
+    uniforms:{time,wake,waterCol,skyCol,lit,wet,sunDir:skyU.sunDir,sunCol:skyU.sunCol,skyTop:skyU.top},
     vertexShader:'varying vec3 wp; void main(){ wp=(modelMatrix*vec4(position,1.0)).xyz; gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.0); }',
     fragmentShader:[
-      'uniform float time,lit,wet; uniform vec3 wake,waterCol,skyCol; varying vec3 wp;',
+      'uniform float time,lit,wet; uniform vec3 wake,waterCol,skyCol,sunDir,sunCol,skyTop; varying vec3 wp;',
       'void main(){',
       'vec2 p=wp.xz; vec3 eye=normalize(cameraPosition-wp);',
       'float chop=sin(p.x*10.0+p.y*5.0-time*2.1)*0.40+cos(p.x*22.0-p.y*6.0+time*2.8)*0.29+sin(p.y*25.0+p.x*7.0-time*2.4)*0.25+sin(p.y*3.7-time*1.3)*0.37;',
       'vec3 n=normalize(vec3(chop*0.049,1.0,sin(p.y*13.0+p.x*7.0-time*2.0)*0.042));',
-      'float fres=pow(1.0-max(0.0,dot(n,eye)),2.6);',
+      'float fres=pow(clamp(1.0-dot(n,eye),0.0,1.0),2.6);',
       'float quay=1.0-smoothstep(1.1,2.54,abs(p.x));',
-      'vec3 c=mix(waterCol*(0.67+0.33*quay+chop*.12),skyCol,0.54*fres+0.035);',
+      'vec3 c=mix(waterCol*(0.67+0.33*quay+chop*.12),mix(skyCol,skyTop,0.35),0.6*fres+0.035);',
+      'float spec=pow(clamp(dot(reflect(-eye,n),normalize(sunDir)),0.0,1.0),220.0);',
+      'c+=sunCol*spec*1.8;',
+      'float caust=pow(clamp(0.5+0.5*sin(p.x*17.0+chop*3.0)*sin(p.y*9.0-time*1.4+chop*2.0),0.0,1.0),6.0);',
+      'c+=waterCol*caust*0.18*(1.0-quay);',
       'float tail=(wake.y-p.y)*wake.z; float v=abs(p.x-wake.x);',
       'float foam=exp(-abs(v-tail*.30)*9.0)*smoothstep(0.0,.5,tail)*(1.0-smoothstep(1.0,5.3,tail));',
       'float lamps=pow(max(0.0,cos((abs(p.y)-3.5)*0.7854+chop*.55)),12.0);',
       'c+=vec3(.48,.72,.66)*foam*.33*(.55+chop*.25)+vec3(.84,.37,.11)*lamps*pow(abs(p.x)/2.55,2.6)*lit*(.14+chop*.09);',
       'c+=vec3(.036,.050,.049)*wet*pow(max(0.0,chop*.68),3.0);',
-      'gl_FragColor=vec4(c,1.0);',
+      'gl_FragColor=vec4(clamp(c,0.0,32.0),1.0);',
       '#include <tonemapping_fragment>',
       '#include <colorspace_fragment>',
       '}'
@@ -741,6 +891,41 @@ function makeView(T, OrbitControls) {
   rain.frustumCulled=false;
   scene.add(rain);
 
+  // Fireflies / pollen drifting over the gardens, plus a petal burst pool for celebrations.
+  const MOTES = touch ? 70 : 140;
+  const moteGeo = new T.BufferGeometry();
+  const motePos = new Float32Array(MOTES*3);
+  const moteSeed = Array.from({length:MOTES},()=>[(random()<.5?-1:1)*(3.4+random()*3.4),QUAY+.4+random()*2.2,jitter(26),random()*6.28]);
+  moteGeo.setAttribute('position',new T.BufferAttribute(motePos,3).setUsage(T.DynamicDrawUsage));
+  const moteMat = new T.PointsMaterial({color:0xffe6a0,size:.09,map:glowTexture,transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.8});
+  const motes = new T.Points(moteGeo,moteMat);
+  motes.frustumCulled = false;
+  scene.add(motes);
+  const BURST = 90;
+  const burstGeo = new T.BufferGeometry();
+  const burstPos = new Float32Array(BURST*3), burstCol = new Float32Array(BURST*3);
+  const burstVel = Array.from({length:BURST},()=>new T.Vector3());
+  burstGeo.setAttribute('position',new T.BufferAttribute(burstPos,3).setUsage(T.DynamicDrawUsage));
+  burstGeo.setAttribute('color',new T.BufferAttribute(burstCol,3));
+  const burstMat = new T.PointsMaterial({size:.16,vertexColors:true,map:glowTexture,transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:0});
+  const burst = new T.Points(burstGeo,burstMat);
+  burst.frustumCulled = false;
+  scene.add(burst);
+  let burstAge = 99;
+  function celebrate(x,y,z) {
+    if (reduced) return;
+    const c = new T.Color();
+    for (let i=0;i<BURST;i++) {
+      burstPos.set([x,y,z],i*3);
+      burstVel[i].set(jitter(3.2),1.6+random()*2.6,jitter(3.2));
+      c.setHex(FLOWERS[i%FLOWERS.length]).multiplyScalar(2.2);
+      burstCol.set([c.r,c.g,c.b],i*3);
+    }
+    burstGeo.attributes.color.needsUpdate = true;
+    burstAge = 0;
+  }
+  let lastSeconds = 0;
+
   const views = {
     city:{pos:[14.1,22.5,27.0],target:[0,1,0]},
     canal:{pos:[0,3.3,15.5],target:[0,.72,-3]},
@@ -761,6 +946,10 @@ function makeView(T, OrbitControls) {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(devicePixelRatio,viewport==='desktop' && !touch ? 1.5 : 1.15));
     renderer.setSize(w,h,false);
+    const size = renderer.getDrawingBufferSize(new T.Vector2());
+    sceneRT.setSize(size.x,size.y);
+    const bw = Math.max(1,Math.round(size.x/4)), bh = Math.max(1,Math.round(size.y/4));
+    bloomA.setSize(bw,bh); bloomB.setSize(bw,bh);
   }
   function setCamera(name) {
     cameraMode=name;
@@ -819,9 +1008,24 @@ function makeView(T, OrbitControls) {
     lighting=mode;
     isRaining=precipitation;
     const look = LIGHTING[mode];
-    scene.background.setHex(look.sky);
-    scene.fog.color.copy(scene.background);
-    scene.fog.density=precipitation ? .027 : .016;
+    scene.fog.color.setHex(look.sky);
+    skyU.horizon.value.setHex(look.sky);
+    skyU.top.value.setHex(look.top);
+    skyU.low.value.setHex(look.low);
+    skyU.sunDir.value.set(...look.position).normalize();
+    skyU.sunCol.value.setHex(look.sun).multiplyScalar(mode==='night'?.35:1);
+    if (precipitation) { skyU.top.value.lerp(skyU.horizon.value,.55); skyU.sunCol.value.multiplyScalar(.25); }
+    stars.visible = mode==='night' && !precipitation;
+    renderer.toneMappingExposure = look.exposure;
+    finalMat.uniforms.strength.value = look.bloom;
+    brightMat.uniforms.threshold.value = mode==='night' ? .7 : 1.15;
+    finalMat.uniforms.tint.value.set(mode==='sunset'?1.04:1,1,mode==='night'?1.05:mode==='sunset'?.95:1);
+    moteMat.color.setHex(mode==='night'?0xc9ff9a:0xfff0c0);
+    moteMat.opacity = mode==='night' ? .95 : .35;
+    const envKey = mode+(precipitation?'-rain':'');
+    scene.environment = environmentFor(envKey);
+    scene.environmentIntensity = look.env;
+    scene.fog.density=precipitation ? .02 : .0095;
     sky.color.setHex(look.hemi);
     sky.groundColor.setHex(look.ground);
     sky.intensity=look.ambient;
@@ -829,7 +1033,7 @@ function makeView(T, OrbitControls) {
     sun.position.set(...look.position);
     sun.intensity=look.power*(precipitation?.56:1);
     waterCol.value.setHex(look.water);
-    skyCol.value.copy(scene.background);
+    skyCol.value.copy(scene.fog.color);
     rain.visible=precipitation && !reduced;
     wet.value=Number(precipitation);
     materials.road.roughness=precipitation?.49:.91;
@@ -893,11 +1097,35 @@ function makeView(T, OrbitControls) {
       }
       rainPositions.needsUpdate=true;
     }
+    const fdt = clamp(seconds-lastSeconds,0,.1);
+    lastSeconds = seconds;
+    const wall = performance.now()/1000;
+    for (let i=0;i<MOTES;i++) {
+      const [x,y,z,ph]=moteSeed[i];
+      const t = reduced ? 0 : wall*.5+ph;
+      motePos[i*3]=x+Math.sin(t*1.3)*.35; motePos[i*3+1]=y+Math.sin(t*.9+ph)*.25; motePos[i*3+2]=z+Math.cos(t*1.1)*.35;
+    }
+    moteGeo.attributes.position.needsUpdate = true;
+    if (burstAge < 2.4) {
+      const bdt = Math.max(fdt,1/60);
+      burstAge += bdt;
+      for (let i=0;i<BURST;i++) {
+        const v = burstVel[i];
+        v.y -= 3.2*bdt; v.multiplyScalar(.985);
+        burstPos[i*3]+=v.x*bdt; burstPos[i*3+1]=Math.max(QUAY+.05,burstPos[i*3+1]+v.y*bdt); burstPos[i*3+2]+=v.z*bdt;
+      }
+      burstGeo.attributes.position.needsUpdate = true;
+      burstMat.opacity = clamp(1-burstAge/2.4,0,1);
+    } else burstMat.opacity = 0;
+    burst.visible = burstMat.opacity>0;
+    finalMat.uniforms.time.value = reduced ? 0 : wall%10;
     controls.update();
-    renderer.render(scene,camera);
+    skyDome.position.copy(camera.position);
+    stars.position.copy(camera.position);
+    composite();
   }
   function photo() {
-    renderer.render(scene,camera);
+    composite();
     const output=Object.assign(document.createElement('canvas'),{width:canvas.width,height:canvas.height});
     const ctx=output.getContext('2d');
     ctx.drawImage(canvas,0,0);
@@ -910,49 +1138,116 @@ function makeView(T, OrbitControls) {
     ctx.fillText('Cidade das Conexões',margin,output.height-margin);
     return new Promise(resolve=>output.toBlob(resolve,'image/png'));
   }
-  return {setCamera,setWeather,render,photo,info:()=>renderer.info.render,dispose:()=>{controls.dispose();renderer.dispose();}};
+  renderer.info.autoReset = false;
+  const baseRender = render;
+  const renderAll = (sim,seconds) => { renderer.info.reset(); baseRender(sim,seconds); };
+  const celebrateAt = a => a.kind==='boat' ? celebrate(.28*a.dir,WATER+.7,a.p) : celebrate(a.p,QUAY+.7,BRIDGES[a.bridge].z);
+  return {setCamera,setWeather,render:renderAll,photo,celebrate:celebrateAt,info:()=>renderer.info.render,
+    dispose:()=>{controls.dispose();pmrem.dispose();sceneRT.dispose();bloomA.dispose();bloomB.dispose();renderer.dispose();}};
 }
 
 
 class CanalAudio {
+  noiseBuffer(seconds,smooth) {
+    const ctx=this.context, length=Math.floor(ctx.sampleRate*seconds);
+    const buffer=ctx.createBuffer(1,length,ctx.sampleRate), wave=buffer.getChannelData(0);
+    let v=0;
+    for (let i=0;i<length;i++) { v=v*smooth+(Math.random()*2-1)*(1-smooth); wave[i]=v; }
+    // crossfade the loop seam
+    const fade=Math.floor(ctx.sampleRate*.05);
+    for (let i=0;i<fade;i++) { const t=i/fade; wave[length-fade+i]=wave[length-fade+i]*(1-t)+wave[i]*t; }
+    return buffer;
+  }
+  loop(buffer,filterType,freq,gainValue) {
+    const ctx=this.context, src=ctx.createBufferSource(), filter=ctx.createBiquadFilter(), gain=ctx.createGain();
+    src.buffer=buffer; src.loop=true;
+    filter.type=filterType; filter.frequency.value=freq;
+    gain.gain.value=gainValue;
+    src.connect(filter).connect(gain).connect(this.bus);
+    src.start();
+    return {src,filter,gain};
+  }
   async toggle() {
     if (!this.context) {
       const Audio = window.AudioContext || window.webkitAudioContext;
       if (!Audio) return false;
-      this.context = new Audio();
-      this.master = this.context.createGain();
+      const ctx = this.context = new Audio();
+      this.master = ctx.createGain();
       this.master.gain.value=0;
-      this.master.connect(this.context.destination);
-      const length=this.context.sampleRate*3;
-      const buffer=this.context.createBuffer(1,length,this.context.sampleRate);
-      const wave=buffer.getChannelData(0);
-      let noise=0;
-      for (let i=0;i<length;i++) {
-        noise=noise*.94+(Math.random()*2-1)*.06;
-        wave[i]=noise*.13*Math.sin(Math.PI*i/length);
-      }
-      const stream=this.context.createBufferSource();
-      stream.buffer=buffer; stream.loop=true;
-      stream.connect(this.master);
-      stream.start();
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value=-18; comp.ratio.value=3;
+      this.master.connect(comp).connect(ctx.destination);
+      this.bus = ctx.createGain(); this.bus.gain.value=1; this.bus.connect(this.master);
+      const soft=this.noiseBuffer(4,.94), hiss=this.noiseBuffer(3,.2);
+      // água do canal com marola lenta
+      this.water=this.loop(soft,'lowpass',520,.55);
+      const lfo=ctx.createOscillator(), lfoGain=ctx.createGain();
+      lfo.frequency.value=.13; lfoGain.gain.value=180;
+      lfo.connect(lfoGain).connect(this.water.filter.frequency); lfo.start();
+      // vento/chuva
+      this.rain=this.loop(hiss,'bandpass',2600,0);
+      this.rain.filter.Q.value=.6;
+      // pad harmônico suave (pentatônica)
+      this.pad=ctx.createGain(); this.pad.gain.value=.035; this.pad.connect(this.bus);
+      const padFilter=ctx.createBiquadFilter(); padFilter.type='lowpass'; padFilter.frequency.value=900;
+      padFilter.connect(this.pad);
+      [146.83,220,293.66,369.99].forEach((f,i)=>{
+        const o=ctx.createOscillator(), g=ctx.createGain(), l=ctx.createOscillator(), lg=ctx.createGain();
+        o.type=i%2?'triangle':'sine'; o.frequency.value=f; o.detune.value=(i-1.5)*4;
+        g.gain.value=.25;
+        l.frequency.value=.05+i*.03; lg.gain.value=.2;
+        l.connect(lg).connect(g.gain); l.start();
+        o.connect(g).connect(padFilter); o.start();
+      });
     }
     if (this.context.state==='suspended') await this.context.resume();
     this.enabled=!this.enabled;
-    this.master.gain.setTargetAtTime(this.enabled?.32:0,this.context.currentTime,.07);
+    this.master.gain.setTargetAtTime(this.enabled?.5:0,this.context.currentTime,.12);
     return this.enabled;
   }
-  cue(freq,duration,type='sine') {
-    if (!this.enabled || this.context.state!=='running') return;
+  setWeather(rain,night) {
+    if (!this.context) return;
     const now=this.context.currentTime;
-    if (now-(this.lastCue??-1)<.07) return;
-    this.lastCue=now;
+    this.rain.gain.gain.setTargetAtTime(rain?.22:.025,now,.6);
+    this.pad.gain.setTargetAtTime(night?.05:.032,now,1.2);
+  }
+  ready() { return this.enabled && this.context && this.context.state==='running'; }
+  cue(freq,duration,type='sine',volume=.12,when=0) {
+    if (!this.ready()) return;
+    const now=this.context.currentTime+when;
+    if (!when && now-(this.lastCue??-1)<.05) return;
+    if (!when) this.lastCue=now;
     const osc=this.context.createOscillator(), gain=this.context.createGain();
     osc.type=type; osc.frequency.value=freq;
     gain.gain.setValueAtTime(.0001,now);
-    gain.gain.exponentialRampToValueAtTime(.12,now+.04);
+    gain.gain.exponentialRampToValueAtTime(volume,now+.02);
     gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
-    osc.connect(gain).connect(this.master);
-    osc.start(now); osc.stop(now+duration+.01);
+    osc.connect(gain).connect(this.bus);
+    osc.start(now); osc.stop(now+duration+.02);
+  }
+  motor(raising) {
+    if (!this.ready()) return;
+    const ctx=this.context, now=ctx.currentTime;
+    const osc=ctx.createOscillator(), filter=ctx.createBiquadFilter(), gain=ctx.createGain();
+    osc.type='sawtooth';
+    osc.frequency.setValueAtTime(raising?52:70,now);
+    osc.frequency.linearRampToValueAtTime(raising?70:50,now+1.1);
+    filter.type='lowpass'; filter.frequency.value=320;
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(.07,now+.15);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+1.25);
+    osc.connect(filter).connect(gain).connect(this.bus);
+    osc.start(now); osc.stop(now+1.3);
+    this.cue(raising?660:520,.35,'sine',.05);
+  }
+  chime(step=0) {
+    const scale=[523.25,587.33,659.25,783.99,880,1046.5];
+    const f=scale[Math.min(step,scale.length-1)];
+    this.cue(f,.7,'sine',.09,.001);
+    this.cue(f*1.5,.5,'triangle',.035,.06);
+  }
+  fanfare(stars) {
+    [523.25,659.25,783.99,1046.5].slice(0,1+stars).forEach((f,i)=>this.cue(f,.9,'triangle',.08,.001+i*.14));
   }
   dispose() {
     this.enabled = false;
@@ -971,13 +1266,15 @@ function run(view) {
   const names=DISTRICTS.map(d=>d.name);
   let unlocked=0, selected=0, contextLost=false, toastTimer;
   let lastCampaign=0;
+  let best=PHASES.map(()=>0);
   try {
     const saved=JSON.parse(localStorage.getItem(SAVE)??'null');
     if (Number.isInteger(saved?.unlocked)) unlocked=clamp(saved.unlocked,0,PHASES.length);
     if (Number.isInteger(saved?.current)) lastCampaign=clamp(saved.current,0,Math.min(unlocked,PHASES.length-1));
+    if (Array.isArray(saved?.stars)) best=PHASES.map((_,i)=>clamp(Number(saved.stars[i])||0,0,3));
   } catch {}
   function save() {
-    try { localStorage.setItem(SAVE,JSON.stringify({unlocked,current:lastCampaign})); } catch {}
+    try { localStorage.setItem(SAVE,JSON.stringify({unlocked,current:lastCampaign,stars:best})); } catch {}
   }
 
   function notify(text) {
@@ -997,7 +1294,7 @@ function run(view) {
   function changeBridge(index) {
     const raising=sim.toggle(index);
     const waiting=sim.actor.reservation===index;
-    if (!waiting) audio.cue(raising?89:123,.52,'triangle');
+    if (!waiting) audio.motor(raising);
     updateHUD();
   }
   const bridgeButtons=BRIDGES.map((b,i)=>{
@@ -1031,6 +1328,8 @@ function run(view) {
     }
     $('light-preset').value=sim.phase.time;
     view.setWeather(sim.phase.time,Boolean(sim.phase.rain));
+    audio.setWeather(Boolean(sim.phase.rain),sim.phase.time==='night');
+    $('result').hidden=true;
     $('signal-row').hidden=!(sim.phase.lamps || index===-1);
     $('progress-row').hidden=index===-1;
     put('chapter',index<0?'Modo livre':'Fase '+(index+1)+' de '+PHASES.length);
@@ -1038,7 +1337,29 @@ function run(view) {
     put('brief',sim.phase.brief);
     $('restart').textContent=index<0?'Reiniciar exploração':'Reiniciar fase';
     $('next').hidden=true;
+    updateStarTotal();
     updateHUD();
+  }
+  function updateStarTotal() {
+    put('star-total','★ '+best.reduce((a,b)=>a+b,0)+'/'+PHASES.length*3);
+  }
+  sim.onArrive=(a,smooth,streak)=>{
+    view.celebrate(a);
+    audio.chime(streak);
+    if (sim.done < sim.phase.jobs.length || sim.index<0) notify(smooth ? (streak>1?'Travessia fluida · sequência ×'+streak:'Travessia fluida!') : 'Travessia concluída');
+  };
+  function finishPhase() {
+    const stars=sim.stars();
+    best[sim.index]=Math.max(best[sim.index],stars);
+    unlocked=Math.max(unlocked,sim.index+1);
+    save();
+    updateStarTotal();
+    [...$('stars').children].forEach((el,i)=>{el.className=i<stars?'on':''; el.style.animationDelay=(i*.18)+'s';});
+    $('stars').setAttribute('aria-hidden','true');
+    const waitTxt=sim.waited<.5?'sem espera':'espera total de '+sim.waited.toFixed(1)+' s';
+    put('result-text',stars+(stars===1?' estrela':' estrelas')+' · '+Math.round(sim.elapsed)+' s de turno, '+waitTxt+'. Melhor sequência fluida: '+sim.bestStreak+'.');
+    $('result').hidden=false;
+    audio.fanfare(stars);
   }
 
   function updateHUD() {
@@ -1100,7 +1421,8 @@ function run(view) {
     [...$('phase-list').children].forEach((btn,i)=>{
       btn.disabled=i>unlocked;
       btn.setAttribute('aria-pressed',String(sim.index===i));
-      btn.lastElementChild.textContent=i<unlocked?'Concluída':i>unlocked?'Bloqueada':'Disponível';
+      btn.lastElementChild.textContent=i<unlocked?('★'.repeat(best[i])+'☆'.repeat(3-best[i])):i>unlocked?'Bloqueada':'Disponível';
+      if (i<unlocked) btn.lastElementChild.setAttribute('aria-label',best[i]+' de 3 estrelas'); else btn.lastElementChild.removeAttribute('aria-label');
     });
     if (!$('settings').open) $('settings').showModal();
   }
@@ -1109,7 +1431,7 @@ function run(view) {
   $('free').onclick=()=>{start(-1);$('settings').close();};
   $('restart').onclick=()=>{start(sim.index);$('settings').close();};
   $('camera').onchange=()=>view.setCamera($('camera').value);
-  $('light-preset').onchange=()=>view.setWeather($('light-preset').value,Boolean(sim.phase.rain));
+  $('light-preset').onchange=()=>{view.setWeather($('light-preset').value,Boolean(sim.phase.rain));audio.setWeather(Boolean(sim.phase.rain),$('light-preset').value==='night');};
   $('district').onchange=()=>chooseDistrict(Number($('district').value));
   $('district-name').oninput=e=>{
     const d=DISTRICTS[selected];
@@ -1121,6 +1443,7 @@ function run(view) {
   $('sound').onclick=async()=>{
     try {
       const enabled=await audio.toggle();
+      audio.setWeather(Boolean(sim.phase.rain),$('light-preset').value==='night');
       $('sound').setAttribute('aria-pressed',String(enabled));
       put('sound',enabled?'Som ligado':'Som desligado');
       audio.cue(420,.25);
@@ -1199,11 +1522,7 @@ function run(view) {
         seconds+=fixed;
         accumulator-=fixed;
       }
-      if (!wasComplete && sim.complete) {
-        unlocked=Math.max(unlocked,sim.index+1);
-        save();
-        audio.cue(523,.36);
-      }
+      if (!wasComplete && sim.complete) finishPhase();
     } else accumulator=0;
     hud+=dt;
     if (hud>=.1) {updateHUD();hud=0;}
