@@ -856,6 +856,21 @@
       .dock-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
       #toast { max-width: calc(100vw - 24px); }
     }
+
+    /* ===== Premium: medidor de saúde do microclima ===== */
+    #eco-meter { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--cor-borda); }
+    #steps-card.collapsed #eco-meter .eco-hint { display: none; }
+    .eco-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; color: var(--cor-texto); }
+    .eco-row b { font-family: var(--fonte-titulo); font-size: 15px; color: var(--cor-primaria); font-variant-numeric: tabular-nums; }
+    .eco-bar { position: relative; height: 7px; margin-top: 6px; border-radius: 99px; background: rgba(53,94,66,.12); overflow: hidden; }
+    .eco-bar i { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: inherit;
+      background: linear-gradient(90deg, #B8683E 0%, #C9A24A 45%, #5E9A55 80%, #355E42 100%);
+      background-size: 260px 100%; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+    .eco-hint { margin: 6px 0 0; font-size: 11.5px; line-height: 1.35; color: var(--cor-texto-suave); }
+    #eco-meter.balanced .eco-row b { color: #2F7A45; }
+    #eco-meter.balanced .eco-bar i { box-shadow: 0 0 10px rgba(94,154,85,.65); }
+    @media (max-width: 820px) { .eco-hint { display: none; } #eco-meter { margin-top: 7px; padding-top: 7px; } }
+    @media (prefers-reduced-motion: reduce) { .eco-bar i { transition: none; } }
   </style>
 </head>
 <body>
@@ -974,6 +989,11 @@
         <li><button type="button" class="step-item" data-step="2"><span class="step-num">3</span><span class="step-label">Plante e decore</span></button></li>
         <li><button type="button" class="step-item" data-step="3"><span class="step-num">4</span><span class="step-label">Feche e veja o ciclo</span></button></li>
       </ol>
+      <div id="eco-meter" role="group" aria-label="Saúde do microclima">
+        <div class="eco-row"><span>Saúde do microclima</span><b id="eco-value">0%</b></div>
+        <div class="eco-bar" aria-hidden="true"><i id="eco-fill"></i></div>
+        <p class="eco-hint" id="eco-hint">Monte as camadas para começar.</p>
+      </div>
     </div>
   </section>
 
@@ -3647,6 +3667,81 @@ class RoundedBoxGeometry extends sa$1 {
         if (this.ctx.state === 'suspended') {
           this.ctx.resume().catch(() => {});
         }
+        this.startAmbience();
+      }
+
+      startAmbience() {
+        if (!this.ctx || this.ambience || !state.soundEnabled) return;
+        const ctx = this.ctx, sr = ctx.sampleRate;
+        // Tom de sala: ruído marrom filtrado em loop (4 s)
+        const len = sr * 4, buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2; }
+        const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 2.5);
+        src.connect(lp); lp.connect(g); g.connect(this.master); src.start();
+        this.ambience = { src, g };
+        const tick = () => {
+          if (!this.ambience) return;
+          const h = ((state.hourOfDay % 24) + 24) % 24;
+          if (h > 5.5 && h < 18.5 && Math.random() < 0.7) this.playChirp();
+          else if ((h > 19 || h < 5) && Math.random() < 0.6) this.playCricket();
+          this.ambienceTimer = setTimeout(tick, 4200 + Math.random() * 7800);
+        };
+        this.ambienceTimer = setTimeout(tick, 2500);
+      }
+
+      stopAmbience() {
+        clearTimeout(this.ambienceTimer);
+        if (!this.ambience || !this.ctx) { this.ambience = null; return; }
+        const { src, g } = this.ambience, t = this.ctx.currentTime;
+        g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + 0.6);
+        try { src.stop(t + 0.7); } catch (e) {}
+        this.ambience = null;
+      }
+
+      playChirp() {
+        if (!this.canPlay()) return;
+        const ctx = this.ctx, t0 = ctx.currentTime, notes = 2 + Math.floor(Math.random() * 3);
+        const base = 2600 + Math.random() * 1400;
+        const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+        const out = ctx.createGain(); out.gain.value = 0.16;
+        if (pan) { pan.pan.value = Math.random() * 1.6 - 0.8; out.connect(pan); pan.connect(this.master); } else out.connect(this.master);
+        this.activeVoices++;
+        for (let i = 0; i < notes; i++) {
+          const t = t0 + i * (0.09 + Math.random() * 0.05);
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(base * (0.9 + Math.random() * 0.2), t);
+          o.frequency.exponentialRampToValueAtTime(base * (1.25 + Math.random() * 0.3), t + 0.05);
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+          o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.08);
+        }
+        setTimeout(() => { this.activeVoices = Math.max(0, this.activeVoices - 1); }, notes * 150 + 100);
+      }
+
+      playCricket() {
+        if (!this.canPlay()) return;
+        const ctx = this.ctx, t0 = ctx.currentTime;
+        const o = ctx.createOscillator(), g = ctx.createGain(), out = ctx.createGain();
+        o.type = 'triangle'; o.frequency.value = 4400; out.gain.value = 0.07;
+        g.gain.setValueAtTime(0.0001, t0);
+        for (let i = 0; i < 6; i++) { const t = t0 + i * 0.055; g.gain.exponentialRampToValueAtTime(1, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); }
+        o.connect(g); g.connect(out); out.connect(this.master); o.start(t0); o.stop(t0 + 0.4);
+        this.activeVoices++; setTimeout(() => { this.activeVoices = Math.max(0, this.activeVoices - 1); }, 450);
+      }
+
+      playChime() {
+        if (!this.canPlay()) return;
+        const ctx = this.ctx, t0 = ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const t = t0 + i * 0.11, o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 1.2);
+        });
       }
 
       canPlay() {
@@ -3816,6 +3911,37 @@ class RoundedBoxGeometry extends sa$1 {
 
       document.getElementById('preset-verde-btn').classList.toggle('primary', MARCA.id === 'verdeMiudo');
       document.getElementById('preset-neutro-btn').classList.toggle('primary', MARCA.id === 'neutro');
+    }
+
+    let ecoBalancedOnce = false;
+    function updateEcoMeter() {
+      const el = document.getElementById('eco-meter');
+      if (!el) return;
+      const L = state.layers;
+      const layerScore = ['pedriscos', 'carvao', 'substrato', 'musgo'].reduce((a, k) => a + Math.min(1, (L[k] || 0) / 0.6), 0) / 4;
+      const plantScore = Math.min(state.plants.length, 4) / 4;
+      const hum = state.humidity;
+      const lo = state.lidClosed ? 55 : 42, hi = state.lidClosed ? 82 : 68;
+      const humScore = hum >= lo && hum <= hi ? 1 : Math.max(0, 1 - Math.min(Math.abs(hum - lo), Math.abs(hum - hi)) / 30);
+      const decorScore = state.decors.length > 0 ? 1 : 0;
+      const lidScore = state.lidClosed ? 1 : 0.4;
+      const total = Math.round(layerScore * 32 + plantScore * 28 + humScore * 22 + decorScore * 8 + lidScore * 10);
+      document.getElementById('eco-value').textContent = total + '%';
+      document.getElementById('eco-fill').style.width = total + '%';
+      let hint;
+      if (layerScore < 0.95) hint = 'Complete as quatro camadas: drenagem, carvão, substrato e musgo.';
+      else if (plantScore < 1) hint = `Plante mais ${4 - Math.min(4, state.plants.length)} muda(s) para um bosque denso.`;
+      else if (humScore < 0.9) hint = hum < lo ? 'O ar está seco: borrife um pouco de água.' : 'Úmido demais: abra a tampa por um tempo.';
+      else if (!state.lidClosed) hint = 'Feche a tampa para o ciclo da água começar.';
+      else if (!decorScore) hint = 'Um detalhe decorativo deixa o mundo com história.';
+      else hint = 'Ecossistema em equilíbrio. Avance o tempo e observe.';
+      document.getElementById('eco-hint').textContent = hint;
+      const balanced = total >= 95;
+      el.classList.toggle('balanced', balanced);
+      if (balanced && !ecoBalancedOnce) {
+        ecoBalancedOnce = true;
+        if (state.hasInteracted) { audio.playChime(); showToast('Ecossistema em equilíbrio! Seu terrário se sustenta sozinho.'); }
+      } else if (total < 75) ecoBalancedOnce = false;
     }
 
     function updateStepsUI() {
@@ -4406,10 +4532,11 @@ class RoundedBoxGeometry extends sa$1 {
         return new THREE.MeshPhysicalMaterial({
           color: '#F2FAF6',
           transparent: true,
-          opacity: 0.13,
+          // Com pós-processamento a mistura ocorre em espaço linear: opacidade menor mantém o vidro límpido
+          opacity: state.quality === 'leve' ? 0.13 : 0.045,
           roughness: 0.06,
           metalness: 0.05,
-          envMapIntensity: 1.1,
+          envMapIntensity: state.quality === 'leve' ? 1.1 : 0.85,
           clearcoat: 1.0,
           clearcoatRoughness: 0.05,
           depthWrite: false,
@@ -5814,6 +5941,10 @@ class RoundedBoxGeometry extends sa$1 {
         }
         amberGlassMat.transmission = state.quality === 'alta' ? 0.65 : 0;
         amberGlassMat.opacity = state.quality === 'alta' ? 1 : 0.78;
+        const linearBlend = state.quality !== 'leve';
+        edgeGlass.opacity = linearBlend ? 0.2 : 0.37;
+        condMat.opacity = linearBlend ? 0.5 : 0.85;
+        edgeGlass.needsUpdate = condMat.needsUpdate = true;
         amberGlassMat.needsUpdate = true;
 
         updateCameraViewport();
@@ -6043,6 +6174,65 @@ class RoundedBoxGeometry extends sa$1 {
          ----------------------------------------------------------------------- */
       const clock = new THREE.Clock();
 
+      /* -----------------------------------------------------------------------
+         PÓS-PROCESSAMENTO PREMIUM: alvo MSAA HDR + bloom suave, gradação,
+         vinheta e grão. Valores saneados (clamp/NaN) antes do tone mapping.
+         ----------------------------------------------------------------------- */
+      const postFX = { rt: null, scene: new THREE.Scene(), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), mat: null, size: new THREE.Vector2() };
+      postFX.mat = new THREE.ShaderMaterial({
+        uniforms: { tScene: { value: null }, uTexel: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 }, uNight: { value: 0 } },
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: `
+          uniform sampler2D tScene; uniform vec2 uTexel; uniform float uTime; uniform float uNight;
+          varying vec2 vUv;
+          vec3 safe(vec3 c){ bvec3 bad = notEqual(c, c); if (any(bad)) return vec3(0.0); return clamp(c, 0.0, 32.0); }
+          vec3 bright(vec2 uv){ vec3 c = safe(texture2D(tScene, clamp(uv, 0.0, 1.0)).rgb); float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return c * clamp((l - 1.15) * 0.8, 0.0, 1.0); }
+          float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+          void main(){
+            vec3 col = safe(texture2D(tScene, vUv).rgb);
+            vec3 bloom = vec3(0.0);
+            for (int i = 0; i < 8; i++) {
+              float a = float(i) * 0.7853982;
+              vec2 dir = vec2(cos(a), sin(a));
+              bloom += bright(vUv + dir * uTexel * 6.0) * 0.6 + bright(vUv + dir * uTexel * 16.0) * 0.4;
+            }
+            col += bloom * (0.06 + 0.05 * uNight);
+            float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+            col = mix(col * vec3(0.97, 1.0, 1.04), col * vec3(1.04, 1.0, 0.95), clamp(l * 1.4, 0.0, 1.0));
+            vec2 q = vUv - 0.5;
+            float vig = clamp(1.0 - dot(q, q) * (0.62 + 0.25 * uNight), 0.0, 1.0);
+            col *= mix(1.0, vig, 0.85);
+            col = max(col, vec3(0.0));
+            gl_FragColor = vec4(col, 1.0);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
+            float g = hash(vUv * 1024.0 + fract(uTime) * 61.0) - 0.5;
+            gl_FragColor.rgb = clamp(gl_FragColor.rgb + g * 0.012, 0.0, 1.0);
+          }`,
+        depthTest: false, depthWrite: false
+      });
+      postFX.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postFX.mat));
+
+      function renderFrame() {
+        if (state.quality === 'leve') { renderer.render(scene, camera); return; }
+        renderer.getDrawingBufferSize(postFX.size);
+        const w = Math.max(1, postFX.size.x), h = Math.max(1, postFX.size.y);
+        if (!postFX.rt || postFX.rt.width !== w || postFX.rt.height !== h) {
+          if (postFX.rt) postFX.rt.dispose();
+          postFX.rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: state.quality === 'alta' ? 4 : 2 });
+          postFX.mat.uniforms.tScene.value = postFX.rt.texture;
+          postFX.mat.uniforms.uTexel.value.set(1 / w, 1 / h);
+        }
+        const hh = ((state.hourOfDay % 24) + 24) % 24;
+        postFX.mat.uniforms.uNight.value = (hh < 6 || hh > 19) ? 1 : (hh < 7 ? 7 - hh : (hh > 18 ? hh - 18 : 0));
+        postFX.mat.uniforms.uTime.value = performance.now() * 0.001;
+        renderer.setRenderTarget(postFX.rt);
+        renderer.render(scene, camera);
+        renderer.setRenderTarget(null);
+        renderer.render(postFX.scene, postFX.cam);
+      }
+
+      let ecoTimer = 0;
       function animate() {
         requestAnimationFrame(animate);
         const dt = Math.min(clock.getDelta(), 0.05);
@@ -6218,12 +6408,14 @@ class RoundedBoxGeometry extends sa$1 {
           syncTimePanelLive();
         }
 
+        ecoTimer += dt;
+        if (ecoTimer > 0.5) { ecoTimer = 0; updateEcoMeter(); }
         if (controls.update()) activeMotion = true;
 
         if (activeMotion || needsRender || continuousFrames > 0) {
           if (continuousFrames > 0) continuousFrames--;
           needsRender = false;
-          renderer.render(scene, camera);
+          renderFrame();
         }
       }
 
@@ -6260,7 +6452,7 @@ class RoundedBoxGeometry extends sa$1 {
       });
 
       // Render one frame and log performance metrics
-      renderer.render(scene, camera);
+      renderFrame();
       console.info(
         `[Terrário 3D] Triângulos: ${renderer.info.render.triangles} | Draw calls: ${renderer.info.render.calls} | Qualidade: ${state.quality}`
       );
@@ -6350,7 +6542,7 @@ class RoundedBoxGeometry extends sa$1 {
           showToast('Câmera centralizada.');
         },
         capturePNG() {
-          renderer.render(scene, camera);
+          renderFrame();
           const url = renderer.domElement.toDataURL('image/png');
           const a = document.createElement('a');
           a.href = url;
@@ -6784,6 +6976,7 @@ class RoundedBoxGeometry extends sa$1 {
         audio.playGlass(1.15);
         showToast('Som ambiente ativado.');
       } else {
+        audio.stopAmbience();
         showToast('Som silenciado.');
       }
     }
@@ -6911,6 +7104,7 @@ class RoundedBoxGeometry extends sa$1 {
     // Initialize UI & 3D
     applyBrandToUI();
     updateStepsUI();
+    setTimeout(updateEcoMeter, 250);
     updateSoundIcons();
     updateQualityLabels();
     if (window.innerWidth <= 820) {
