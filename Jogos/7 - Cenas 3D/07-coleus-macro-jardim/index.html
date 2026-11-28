@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Cóleus · Jardim em detalhe — 3D</title>
+<script src="/Sistema/shared/sangi-bridge.js"></script>
+<script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+<style>
+  :root {
+    --bg: #070b07;
+    --panel: rgba(17, 24, 18, 0.85);
+    --border: rgba(195, 216, 166, 0.25);
+    --accent: #b8d784;
+    --magenta: #ff1e7a;
+    --text: #eef6ef;
+    --muted: #bac5b6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); }
+  #canvas-wrap { position: fixed; inset: 0; cursor: grab; touch-action: none; }
+  #canvas-wrap:active { cursor: grabbing; }
+  #canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+  #canvas-wrap:after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, transparent 53%, #07100844 100%); }
+  .hud-top { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10; gap: 10px; }
+  .badge { pointer-events: auto; background: linear-gradient(135deg, #162219dd, #121a14bb); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; max-width: 320px; box-shadow: 0 10px 32px rgba(0,0,0,0.45); }
+  .badge h1 { font-size: 16px; font-weight: 650; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--magenta)); flex-shrink: 0; }
+  .badge p { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+  .hud-actions { pointer-events: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn, .cam-btn { min-height: 36px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(12px); transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn:hover, .cam-btn:hover { border-color: var(--accent); background: rgba(24, 38, 28, 0.85); transform: translateY(-1px); }
+  .btn.active, .cam-btn.active { background: rgba(184, 215, 132, 0.2); border-color: var(--accent); color: #dbffc4; }
+  .btn:focus-visible, .cam-btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #e2f5b2; outline-offset: 2px; }
+  .panel { position: fixed; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); width: min(306px, calc(100vw - 24px)); background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px; padding: 14px; z-index: 10; max-height: calc(100dvh - 105px); overflow: auto; box-shadow: 0 14px 40px rgba(0,0,0,0.5); transition: transform 0.28s ease, opacity 0.28s ease; }
+  .panel.collapsed { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; visibility: hidden; }
+  .ctrl { margin-bottom: 13px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-bottom: 5px; }
+  .ctrl-head strong { color: var(--text); font-weight: 600; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; height: 18px; }
+  select { width: 100%; padding: 8px; background: #1b2a20; color: #eef6ef; border: 1px solid var(--border); border-radius: 8px; }
+  .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .hint { position: fixed; left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(10px); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: var(--muted); z-index: 9; }
+  #notice { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #17251d; padding: 16px 22px; border-radius: 12px; z-index: 30; text-align: center; max-width: 85%; }
+  #notice[hidden] { display: none; }
+  #exit-photo { display: none; position: fixed; top: 14px; right: 14px; z-index: 30; }
+  body.photo .hud-top, body.photo .panel, body.photo .hint { display: none; }
+  body.photo #exit-photo { display: block; }
+  @media(max-width:640px) { .hud-top { flex-direction: column; left: 10px; right: 10px; gap: 6px; } .badge { max-width: 100%; padding: 8px 10px; } .badge p { font-size: 11px; } .hud-actions { justify-content: flex-start; gap: 5px; } .btn { padding: 7px 9px; min-height: 40px; } .panel { left: 10px; right: 10px; width: auto; max-height: 43dvh; padding: 12px; } .cam-btn { min-height: 40px; } .hint { display: none; } }
+  @media(max-height:480px) and (orientation:landscape) { .badge p { display: none; } .panel { max-height: 65dvh; width: 250px; left: auto; } .hint { display: none; } }
+  @media(prefers-reduced-motion:reduce) { *{ transition: none!important; } }
+</style>
+</head>
+<body>
+<div id="canvas-wrap" tabindex="0" aria-label="Cena 3D de Cóleus em jardim macro"></div>
+
+<div class="hud-top">
+  <div class="badge">
+    <h1><span class="dot"></span> Cóleus · Jardim em detalhe</h1>
+    <p>Estudo macro interativo · Folhagem aveludada, luz filtrada, musgo e gotículas cristalinas de orvalho.</p>
+  </div>
+  <div class="hud-actions">
+    <button class="btn" id="btn-audio">Som: Off</button>
+    <button class="btn" id="btn-uv">Luz violeta</button>
+    <button class="btn" id="btn-photo">Imersão</button>
+    <button class="btn active" id="btn-panel">Controles</button>
+  </div>
+</div>
+
+<div class="hint">Arraste para orbitar · Roda/Pinça para zoom · Botão direito para mover</div>
+
+<div class="panel" id="panel">
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Brisa nas folhas</span><strong id="val-wind">45%</strong></div>
+    <input type="range" id="rng-wind" aria-label="Intensidade da brisa" min="0" max="100" value="45" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Gotas de orvalho</span><strong id="val-dew">100%</strong></div>
+    <input type="range" id="rng-dew" aria-label="Quantidade de orvalho" min="0" max="100" value="100" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Intensidade de luz</span><strong id="val-light">100%</strong></div>
+    <input type="range" id="rng-light" aria-label="Intensidade da luz" min="40" max="170" value="100" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Ângulos de câmera</span><strong>5 vistas</strong></div>
+    <div class="cam-grid">
+      <button class="cam-btn active" data-cam="photo">Copa macro</button>
+      <button class="cam-btn" data-cam="bud">Broto Central</button>
+      <button class="cam-btn" data-cam="side">Perfil Macro</button>
+      <button class="cam-btn" data-cam="orbit">Órbita lenta</button>
+      <button class="cam-btn" data-cam="garden">Jardim inteiro</button>
+    </div>
+  </div>
+  <div class="ctrl"><div class="ctrl-head"><span>Qualidade gráfica</span><strong id="quality-label">Auto</strong></div><select id="quality" aria-label="Qualidade gráfica"><option value="auto">Automática</option><option value="high">Detalhada</option><option value="low">Leve</option></select></div>
+  <button class="cam-btn" id="btn-rain">Renovar orvalho</button> <button class="cam-btn" id="btn-reset">Restaurar</button>
+</div>
+<div id="notice" role="status">Preparando o jardim…</div>
+<button id="exit-photo" class="btn">Sair da imersão</button>
+
+<script>
+(function() {
+  'use strict';
+  const notice = document.getElementById('notice');
+  if (!window.THREE) { notice.textContent = 'Three.js não carregado.'; return; }
+  try {
+    const mobile = matchMedia('(max-width: 700px)').matches;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let seed = 18347;
+    const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+    const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+    const smooth = (a, b, x) => { const q = clamp((x - a) / (b - a)); return q * q * (3 - 2 * q); };
+    const mix = (a, b, t) => a + (b - a) * t;
+
+    const wrap = document.getElementById('canvas-wrap');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1b2b1f);
+    scene.fog = new THREE.FogExp2(0x1b2b1f, 0.058);
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.05, 80);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.15 : 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    wrap.appendChild(renderer.domElement);
+
+    const camState = {
+      theta: 0.35, phi: 0.45, radius: mobile ? 8 : 5.9,
+      targetTheta: 0.35, targetPhi: 0.45, targetRadius: mobile ? 8 : 5.9,
+      target: new THREE.Vector3(0, 0.24, 0), desiredTarget: new THREE.Vector3(0, 0.24, 0), autoOrbit: false
+    };
+
+    const pointers = new Map();
+    const onDown = e => { wrap.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, button: e.button }); camState.autoOrbit = false; };
+    const release = e => { pointers.delete(e.pointerId); };
+    const onMove = e => {
+      const old = pointers.get(e.pointerId); if (!old) return;
+      const dx = e.clientX - old.x, dy = e.clientY - old.y;
+      if (pointers.size === 2) {
+        const other = [...pointers.entries()].find(([id]) => id !== e.pointerId)[1];
+        const a = Math.hypot(old.x - other.x, old.y - other.y), b = Math.hypot(e.clientX - other.x, e.clientY - other.y);
+        if (a > 0) camState.targetRadius = clamp(camState.targetRadius * a / Math.max(1, b), 0.85, 13);
+      } else if (pointers.size === 1) {
+        if (old.button === 2) { camState.desiredTarget.x = clamp(camState.desiredTarget.x - dx * 0.004, -2, 2); camState.desiredTarget.z = clamp(camState.desiredTarget.z - dy * 0.004, -2, 2); }
+        else { camState.targetTheta -= dx * 0.006; camState.targetPhi = clamp(camState.targetPhi - dy * 0.006, 0.07, 1.46); }
+      }
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, button: old.button });
+    };
+    const onWheel = e => { e.preventDefault(); camState.targetRadius = clamp(camState.targetRadius * Math.exp(e.deltaY * 0.001), 0.85, 13); };
+    const onBlur = () => pointers.clear();
+    const onCtx = e => e.preventDefault();
+    wrap.addEventListener('pointerdown', onDown);
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => wrap.addEventListener(n, release));
+    wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('contextmenu', onCtx);
+    wrap.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('blur', onBlur);
+
+    // Three-layer natural garden lighting + PMREM canopy reflections
+    const hemi = new THREE.HemisphereLight(0xe7f1dc, 0x3b2d1f, 0.94); scene.add(hemi);
+    const keyLight = new THREE.DirectionalLight(0xffedce, 2.05);
+    keyLight.position.set(-3.8, 6.2, 3.2); keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
+    Object.assign(keyLight.shadow.camera, { left: -4.2, right: 4.2, top: 4.2, bottom: -4.2, near: 0.5, far: 18 });
+    keyLight.shadow.bias = -0.00025; keyLight.shadow.normalBias = 0.024; scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0xe5ffc6, 0.72); rimLight.position.set(2.4, 3.2, -4); scene.add(rimLight);
+    const magentaFill = new THREE.DirectionalLight(0xc4d5ff, 0.25); magentaFill.position.set(3, 1, 2); scene.add(magentaFill);
+
+    const ec = document.createElement('canvas'); ec.width = 512; ec.height = 256; const ex = ec.getContext('2d');
+    const eg = ex.createLinearGradient(0, 0, 0, 256);
+    eg.addColorStop(0, '#96beb5'); eg.addColorStop(0.42, '#c5d9b6'); eg.addColorStop(0.55, '#48603e'); eg.addColorStop(1, '#1a2117');
+    ex.fillStyle = eg; ex.fillRect(0, 0, 512, 256);
+    for (let i = 0; i < 40; i++) { ex.fillStyle = `rgba(28,62,29,${0.1 + rnd() * 0.25})`; ex.beginPath(); ex.ellipse(rnd() * 512, 90 + rnd() * 110, 10 + rnd() * 45, 8 + rnd() * 35, 0, 0, Math.PI * 2); ex.fill(); }
+    const sunSpot = ex.createRadialGradient(120, 62, 2, 120, 62, 52); sunSpot.addColorStop(0, '#fffef4'); sunSpot.addColorStop(0.22, '#fff2c7'); sunSpot.addColorStop(1, '#ffffff00');
+    ex.fillStyle = sunSpot; ex.fillRect(0, 0, 512, 256);
+    const env = new THREE.CanvasTexture(ec); env.mapping = THREE.EquirectangularReflectionMapping; env.encoding = THREE.sRGBEncoding;
+    const pmrem = new THREE.PMREMGenerator(renderer); const envRT = pmrem.fromEquirectangular(env); scene.environment = envRT.texture; pmrem.dispose(); env.dispose();
+
+    function leafTextures(phase, green = false) {
+      const N = mobile ? 384 : 768;
+      const cs = [0, 1, 2].map(() => { let c = document.createElement('canvas'); c.width = c.height = N; return c; });
+      const cx = cs.map(c => c.getContext('2d')), im = cx.map(c => c.createImageData(N, N));
+      for (let y = 0; y < N; y++) {
+        const u = 1 - y / (N - 1);
+        for (let x = 0; x < N; x++) {
+          const v = x / (N - 1) * 2 - 1, a = Math.abs(v), i = (y * N + x) * 4;
+          const noise = Math.sin(x * 0.23 + y * 0.19 + phase) * Math.cos(y * 0.31 - x * 0.14), fine = (rnd() - 0.5);
+          const cloud = Math.sin(u * 22 + v * 11 + phase) * Math.cos(v * 24 - u * 13) + 0.5 * Math.sin(u * 54 + v * 9);
+          const mid = Math.exp(-Math.pow(v / (0.018 + 0.025 * (1 - u)), 2));
+          const line = Math.abs(Math.sin(Math.PI * (u * 9 - a * 0.95 + 0.13 * a * a)));
+          const veins = Math.exp(-Math.pow(line / 0.105, 2)) * (1 - a * 0.47) * smooth(0.025, 0.13, u) * (1 - smooth(0.94, 1, u));
+          const retic = Math.pow(Math.max(0, Math.cos(u * 105 + v * 44 + Math.sin(v * 28)) * Math.cos(u * 85 - v * 55)), 9);
+          const edge = smooth(0.72 + 0.055 * cloud, 0.97, a);
+          const pink = clamp(Math.exp(-Math.pow(v / (0.21 + 0.14 * Math.sin(u * 4 + phase)), 2)) * (0.74 + 0.23 * cloud) * (1 - 0.45 * u) + mid * 0.8 + veins * 0.18);
+          let r = green ? 44 : mix(46, 184, pink), g = green ? 82 : mix(20, 38, pink), b = green ? 30 : mix(45, 92, pink);
+          r = mix(r, green ? 130 : 154, edge); g = mix(g, green ? 157 : 186, edge); b = mix(b, green ? 65 : 54, edge);
+          let m = noise * 5 + fine * 10 + cloud * 6;
+          im[0].data[i] = clamp(r + m + mid * 12, 0, 255); im[0].data[i + 1] = clamp(g + m * 0.65 + veins * 8, 0, 255); im[0].data[i + 2] = clamp(b + m * 0.7, 0, 255); im[0].data[i + 3] = 255;
+          let h = 115 + mid * 60 + veins * 38 + retic * 12 + noise * 7 + fine * 13 + cloud * 6;
+          im[1].data[i] = im[1].data[i + 1] = im[1].data[i + 2] = clamp(h, 0, 255); im[1].data[i + 3] = 255;
+          im[2].data[i] = im[2].data[i + 1] = im[2].data[i + 2] = clamp(200 + fine * 18 - mid * 23 - veins * 13, 0, 255); im[2].data[i + 3] = 255;
+        }
+      }
+      cx.forEach((c, i) => c.putImageData(im[i], 0, 0));
+      const tex = cs.map(c => { const t = new THREE.CanvasTexture(c); t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; });
+      tex[0].encoding = THREE.sRGBEncoding; return tex;
+    }
+
+    const mats = [0, 1.8, 3.5].map((p, i) => {
+      const [map, bumpMap, roughnessMap] = leafTextures(p, i === 2);
+      const m = new THREE.MeshStandardMaterial({ map, bumpMap, roughnessMap, bumpScale: 0.018, roughness: 0.86, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.42 });
+      if (i !== 2) {
+        m.onBeforeCompile = (shader) => {
+          shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCw;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvCw = (modelMatrix * vec4(transformed,1.0)).xyz;');
+          shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vCw;').replace('#include <dithering_fragment>', `
+            vec3 Vc = normalize(cameraPosition - vCw);
+            float trans = pow(clamp(dot(Vc, normalize(vec3(0.45,-0.75,-0.35))), 0.0, 1.0), 2.5);
+            gl_FragColor.rgb += vec3(0.42, 0.08, 0.22) * trans * 0.42 * diffuseColor.rgb;
+            #include <dithering_fragment>
+          `);
+        };
+      }
+      return m;
+    });
+
+    function surface(u, v, L, W, curl, p) {
+      const a = Math.abs(v), side = v < 0 ? -1 : 1;
+      const envelope = Math.pow(Math.max(0, Math.sin(Math.PI * Math.pow(u, 0.83))), 0.88);
+      const lobes = 0.88 + 0.12 * Math.cos(u * Math.PI * 16 + p + side * 0.43) + 0.025 * Math.sin(u * 53 + p);
+      const width = Math.max(0.001, envelope * lobes) * W * 0.5;
+      const x = v * width + Math.sin(u * 3.1 + p) * u * 0.075 * W;
+      const z = u * L;
+      const rib = Math.cos(Math.PI * 2 * (u * 9 - a * 0.95 + 0.13 * a * a));
+      const y = Math.sin(u * Math.PI * 0.92) * 0.20 * L - Math.pow(u, 2.2) * curl * L + a * a * 0.095 * W + Math.sin(u * 50 + p) * Math.pow(a, 3) * 0.026 * W + (1 - a * a) * Math.sin(u * Math.PI) * rib * 0.017 * W + Math.sin(u * 5 + p) * v * 0.035 * W;
+      return new THREE.Vector3(x, y, z);
+    }
+    function leafGeometry(L, W, c, p, detail = true) {
+      const g = new THREE.PlaneGeometry(1, 1, detail ? (mobile ? 26 : 34) : 12, detail ? (mobile ? 40 : 54) : 20);
+      const pos = g.attributes.position, uv = g.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        let q = surface(uv.getY(i), uv.getX(i) * 2 - 1, L, W, c, p);
+        pos.setXYZ(i, q.x, q.y, q.z);
+      }
+      g.computeVertexNormals(); return g;
+    }
+
+    const plantGroup = new THREE.Group(); scene.add(plantGroup);
+    // Natural organic purple-green striated Coleus stem (eliminates flat pale crossbars!)
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x4f3e32, roughness: 0.78, envMapIntensity: 0.3 });
+    const youngStem = new THREE.MeshStandardMaterial({ color: 0x6b6c39, roughness: 0.72 });
+    const stemCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -1.86, 0), new THREE.Vector3(0.03, -0.7, 0.02), new THREE.Vector3(-0.02, 0.2, 0.01), new THREE.Vector3(0, 0.85, 0)]);
+    const stem = new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 24, 0.075, 8, false), stemMat);
+    stem.castShadow = true; plantGroup.add(stem);
+
+    // Apical rosette terminal leaf bud hiding stem apex naturally
+    const apexBud = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.18, 7), youngStem);
+    apexBud.position.set(0, 0.89, 0); plantGroup.add(apexBud);
+
+    function tube(points, r, mat, segments = 12) { return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), segments, r, 6, false), mat); }
+    // Crystal-clear water beads (not white milky circles!)
+    const dewMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.05, roughness: 0.03, clearcoat: 1, clearcoatRoughness: 0.02, transparent: true, opacity: 0.42, depthWrite: false, envMapIntensity: 2.6 });
+    const dewGeo = new THREE.SphereGeometry(1, 14, 10);
+    const dewDrops = [], animatedLeaves = [], hairMeshes = [];
+    const obj = new THREE.Object3D();
+    const hairGeo = new THREE.ConeGeometry(0.0018, 0.025, 3);
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0xcfca91, roughness: 0.88, transparent: true, opacity: 0.56, depthWrite: false });
+    const petioleMat = new THREE.MeshStandardMaterial({ color: 0x623644, roughness: 0.74 });
+    const veinMatDark = new THREE.MeshStandardMaterial({ color: 0x8c2e50, roughness: 0.78 });
+    const veinMatYoung = new THREE.MeshStandardMaterial({ color: 0x9b7952, roughness: 0.76 });
+
+    const layers = [[-0.85, 2.18, 1.72, 0.39, 0.42, 0.22], [-0.54, 2.25, 1.79, 0.33, 0.38, 1.77], [-0.17, 2.12, 1.67, 0.25, 0.26, 0.23], [0.18, 1.87, 1.54, 0.20, 0.14, 1.86], [0.46, 1.39, 1.12, 0.14, -0.02, 0.28], [0.66, 0.88, 0.66, 0.10, -0.30, 1.92], [0.76, 0.42, 0.31, 0.08, -0.58, 0.35]];
+    layers.forEach(([y, L, W, c, tilt, angle], li) => {
+      for (let k = 0; k < 2; k++) {
+        const p = rnd() * 6.28, len = L * (0.91 + rnd() * 0.17), wid = W * (0.93 + rnd() * 0.14);
+        const pivot = new THREE.Group(); pivot.position.set(0, y, 0); pivot.rotation.y = angle + k * Math.PI + (rnd() - 0.5) * 0.16; pivot.rotation.x = tilt + (rnd() - 0.5) * 0.06;
+        plantGroup.add(pivot);
+        const pet = 0.08 + L * 0.085;
+        const petiole = tube([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.014, pet * 0.6), new THREE.Vector3(0, 0.022, pet)], 0.016 + L * 0.004, li > 4 ? youngStem : petioleMat, 8);
+        pivot.add(petiole);
+        const leaf = new THREE.Mesh(leafGeometry(len, wid, c, p), mats[(li + k) % 2]);
+        leaf.position.set(0, 0.022, pet); leaf.castShadow = true; leaf.receiveShadow = true; pivot.add(leaf);
+
+        const pts = []; for (let n = 0; n <= 14; n++) { let q = surface(0.025 + n * 0.90 / 14, 0, len, wid, c, p); q.y += 0.004; pts.push(q); }
+        const vein = tube(pts, 0.004 + len * 0.002, li > 4 ? veinMatYoung : veinMatDark, 14); leaf.add(vein);
+        animatedLeaves.push({ pivot, baseRotX: pivot.rotation.x, baseRotZ: (rnd() - 0.5) * 0.06, phase: p, speed: 0.72 + rnd() * 0.5, amp: 0.025 + li * 0.003 });
+
+        if (li >= 2) {
+          const count = li < 5 ? 44 : 28;
+          const hairs = new THREE.InstancedMesh(hairGeo, hairMat, count);
+          for (let n = 0; n < count; n++) {
+            let u = 0.05 + rnd() * 0.89, v = (rnd() < 0.5 ? -1 : 1) * (0.84 + rnd() * 0.15);
+            let q = surface(u, v, len, wid, c, p);
+            obj.position.copy(q); obj.position.y += 0.009; obj.rotation.set((rnd() - 0.5) * 0.45, 0, -v * 0.58); obj.scale.setScalar(0.6 + rnd() * 0.7); obj.updateMatrix();
+            hairs.setMatrixAt(n, obj.matrix);
+          }
+          hairs.instanceMatrix.needsUpdate = true; leaf.add(hairs); hairMeshes.push(hairs);
+        }
+        if (li >= 2 && li <= 5) {
+          for (let d = 0; d < (li === 5 ? 3 : 6); d++) {
+            const u = 0.18 + rnd() * 0.68, v = (rnd() - 0.5) * 1.4;
+            const q = surface(u, v, len, wid, c, p);
+            const r = 0.011 + Math.pow(rnd(), 2) * 0.024;
+            const drop = new THREE.Mesh(dewGeo, dewMat);
+            drop.position.copy(q); drop.position.y += r * 0.45;
+            drop.scale.set(r, r * 0.52, r * (0.88 + rnd() * 0.22)); drop.userData.rank = rnd();
+            leaf.add(drop); dewDrops.push(drop);
+          }
+        }
+      }
+    });
+
+    // Rich dark woodland humus soil + faceted mossy stones + soft moss cushions (fixes grey egg confetti!)
+    function groundTexture() {
+      const N = 512, c = document.createElement('canvas'); c.width = c.height = N;
+      const ctx = c.getContext('2d'), im = ctx.createImageData(N, N);
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const i = (y * N + x) * 4;
+        const n = Math.sin(x * 0.036) * Math.cos(y * 0.047) * 14 + Math.sin(x * 0.16 + y * 0.13) * 7 + (rnd() - 0.5) * 24;
+        const mossy = clamp(Math.sin(x * 0.022 + y * 0.019) * 0.5 + 0.15, 0, 1);
+        im.data[i] = clamp(44 + n - mossy * 16, 10, 140);
+        im.data[i + 1] = clamp(34 + n * 0.8 + mossy * 22, 10, 140);
+        im.data[i + 2] = clamp(22 + n * 0.55 - mossy * 8, 6, 110);
+        im.data[i + 3] = 255;
+      }
+      ctx.putImageData(im, 0, 0);
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 6); return t;
+    }
+    const soilMap = groundTexture(), soilBump = soilMap.clone(); soilBump.encoding = THREE.LinearEncoding; soilBump.needsUpdate = true;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ map: soilMap, bumpMap: soilBump, bumpScale: 0.055, roughness: 0.96, envMapIntensity: 0.2 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -1.86; ground.receiveShadow = true; scene.add(ground);
+
+    // Sculpted dark soil/pebble clods with organic angularity
+    const pebbleGeo = new THREE.IcosahedronGeometry(1, 0);
+    const stones = new THREE.InstancedMesh(pebbleGeo, new THREE.MeshStandardMaterial({ roughness: 0.92, bumpMap: soilBump, bumpScale: 0.02, color: 0xffffff }), mobile ? 140 : 300);
+    const moss = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({ roughness: 1, color: 0xffffff }), mobile ? 260 : 520);
+    function scatter(mesh, isMoss) {
+      for (let i = 0; i < mesh.count; i++) {
+        const a = rnd() * Math.PI * 2, r = 0.4 + Math.pow(rnd(), 0.78) * 7.2;
+        const sc = (isMoss ? 0.032 : 0.032) + rnd() * (isMoss ? 0.075 : 0.095);
+        obj.position.set(Math.cos(a) * r, -1.855 + sc * 0.12, Math.sin(a) * r);
+        obj.scale.set(sc * (0.75 + rnd() * 0.7), sc * (isMoss ? 0.35 : 0.42), sc * (0.75 + rnd() * 0.7));
+        obj.rotation.set(rnd(), rnd() * 6, rnd()); obj.updateMatrix();
+        mesh.setMatrixAt(i, obj.matrix);
+        const col = isMoss
+          ? new THREE.Color().setHSL(0.22 + rnd() * 0.09, 0.38 + rnd() * 0.24, 0.14 + rnd() * 0.16)
+          : new THREE.Color().setHSL(0.07 + rnd() * 0.04, 0.22 + rnd() * 0.18, 0.10 + rnd() * 0.14);
+        mesh.setColorAt(i, col);
+      }
+      mesh.instanceMatrix.needsUpdate = true; mesh.receiveShadow = true; scene.add(mesh);
+    }
+    scatter(stones, false); scatter(moss, true);
+
+    const garden = new THREE.Group(); scene.add(garden);
+    const fernMat = mats[2];
+    const bgGeos = [leafGeometry(1.25, 0.55, 0.22, 0.9, false), leafGeometry(0.75, 0.30, 0.16, 2, false)];
+    const leafInstances = new THREE.InstancedMesh(bgGeos[0], fernMat, mobile ? 90 : 168);
+    let idx = 0; const clumps = mobile ? 15 : 28;
+    for (let j = 0; j < clumps; j++) {
+      const a = j / clumps * Math.PI * 2 + rnd() * 0.3, r = 2.7 + rnd() * 5.5;
+      const x = Math.sin(a) * r, z = Math.cos(a) * r;
+      for (let k = 0; k < 6; k++) {
+        obj.position.set(x, -1.81 + rnd() * 0.12, z);
+        obj.rotation.set(-0.52 - rnd() * 0.58, k * Math.PI / 3 + rnd() * 0.55, 0, 'YXZ');
+        obj.scale.setScalar(0.75 + rnd() * 0.9); obj.updateMatrix();
+        leafInstances.setMatrixAt(idx++, obj.matrix);
+      }
+    }
+    leafInstances.instanceMatrix.needsUpdate = true; leafInstances.receiveShadow = true; garden.add(leafInstances);
+
+    const litterMat = new THREE.MeshStandardMaterial({ color: 0x7a5c32, roughness: 0.95, side: THREE.DoubleSide });
+    const litter = new THREE.InstancedMesh(bgGeos[1], litterMat, 35);
+    for (let i = 0; i < 35; i++) {
+      const a = rnd() * 6.28, r = 0.6 + rnd() * 4;
+      obj.position.set(Math.cos(a) * r, -1.81, Math.sin(a) * r); obj.rotation.set(0.3, rnd() * 6.28, 0, 'YXZ');
+      obj.scale.setScalar(0.25 + rnd() * 0.5); obj.updateMatrix(); litter.setMatrixAt(i, obj.matrix);
+    }
+    litter.receiveShadow = true; garden.add(litter);
+
+    const bc = document.createElement('canvas'); bc.width = bc.height = 64; const bx = bc.getContext('2d');
+    const gr = bx.createRadialGradient(32, 32, 1, 32, 32, 32); gr.addColorStop(0, '#ffffffdd'); gr.addColorStop(1, '#ffffff00');
+    bx.fillStyle = gr; bx.fillRect(0, 0, 64, 64); const bokehTex = new THREE.CanvasTexture(bc);
+    const pCount = mobile ? 36 : 72, pPos = new Float32Array(pCount * 3);
+    for (let i = 0; i < pCount; i++) { pPos[i * 3] = (rnd() - 0.5) * 8; pPos[i * 3 + 1] = -1.4 + rnd() * 4.8; pPos[i * 3 + 2] = (rnd() - 0.5) * 8; }
+    const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    const pMat = new THREE.PointsMaterial({ color: 0xeee5b5, size: 0.048, map: bokehTex, transparent: true, opacity: 0.42, depthWrite: false, blending: THREE.AdditiveBlending });
+    const pollen = new THREE.Points(pGeo, pMat); scene.add(pollen);
+
+    // Interactive controls & Web Audio
+    let windStrength = reduced ? 0 : 0.45, uvMode = false, audioCtx = null, audioOn = false, gainNode = null;
+    document.getElementById('rng-wind').addEventListener('input', e => { windStrength = e.target.value / 100; document.getElementById('val-wind').textContent = e.target.value + '%'; });
+    document.getElementById('rng-dew').addEventListener('input', e => { const v = e.target.value / 100; document.getElementById('val-dew').textContent = e.target.value + '%'; dewDrops.forEach(d => d.visible = v > 0 && d.userData.rank <= v); });
+    document.getElementById('rng-light').addEventListener('input', e => { const v = e.target.value / 100; document.getElementById('val-light').textContent = e.target.value + '%'; keyLight.intensity = 2.05 * v; hemi.intensity = 0.94 * v; });
+
+    const btnUv = document.getElementById('btn-uv');
+    btnUv.addEventListener('click', () => {
+      uvMode = !uvMode; btnUv.classList.toggle('active', uvMode);
+      if (uvMode) {
+        scene.background.setHex(0x050212); scene.fog.color.setHex(0x050212);
+        keyLight.color.setHex(0x7c4dff); rimLight.color.setHex(0x39ff14); rimLight.intensity = 2.6; magentaFill.intensity = 2.4; pMat.color.setHex(0xff3ec8);
+      } else {
+        scene.background.setHex(0x1b2b1f); scene.fog.color.setHex(0x1b2b1f);
+        keyLight.color.setHex(0xffedce); rimLight.color.setHex(0xe5ffc6); rimLight.intensity = 0.72; magentaFill.intensity = 0.25; pMat.color.setHex(0xeee5b5);
+      }
+    });
+
+    const btnPanel = document.getElementById('btn-panel'), panel = document.getElementById('panel');
+    btnPanel.addEventListener('click', () => { const collapsed = panel.classList.toggle('collapsed'); btnPanel.classList.toggle('active', !collapsed); });
+
+    const btnAudio = document.getElementById('btn-audio');
+    function toggleAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = audioCtx.sampleRate * 2, noiseBuf = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = noiseBuf.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (rnd() * 2 - 1) * 0.25;
+        const src = audioCtx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+        const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 380; filter.Q.value = 1.4;
+        gainNode = audioCtx.createGain(); gainNode.gain.value = 0;
+        src.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination); src.start();
+      }
+      audioOn = !audioOn; if (audioCtx.state === 'suspended') audioCtx.resume();
+      gainNode.gain.setTargetAtTime(audioOn ? 0.14 : 0.0, audioCtx.currentTime, 0.25);
+      btnAudio.textContent = audioOn ? 'Som: On' : 'Som: Off'; btnAudio.classList.toggle('active', audioOn);
+    }
+    btnAudio.addEventListener('click', toggleAudio);
+
+    const camPresets = { photo: { theta: 0.35, phi: 0.45, radius: 5.9, target: [0, 0.24, 0], auto: false }, bud: { theta: 0.62, phi: 0.48, radius: 1.7, target: [0, 0.78, 0], auto: false }, side: { theta: 1.25, phi: 1.13, radius: 4.8, target: [0, 0.08, 0], auto: false }, orbit: { theta: 0.6, phi: 0.67, radius: 6.2, target: [0, 0.10, 0], auto: !reduced }, garden: { theta: 0.75, phi: 0.85, radius: 9.1, target: [0, -0.45, 0], auto: false } };
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('[data-cam]').forEach(x => x.classList.remove('active')); b.classList.add('active');
+      const p = camPresets[b.dataset.cam];
+      camState.targetTheta = p.theta; camState.targetPhi = p.phi; camState.targetRadius = p.radius * (mobile && b.dataset.cam !== 'bud' ? 1.32 : 1);
+      camState.desiredTarget.set(p.target[0], p.target[1], p.target[2]); camState.autoOrbit = p.auto;
+    }));
+
+    const onResize = () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); };
+    window.addEventListener('resize', onResize);
+
+    let quality = 'auto', effective = mobile ? 'low' : 'high';
+    function applyQuality(mode) {
+      effective = mode;
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mode === 'high' ? 1.5 : 1));
+      renderer.setSize(innerWidth, innerHeight);
+      hairMeshes.forEach(h => h.visible = mode === 'high');
+      document.getElementById('quality-label').textContent = (quality === 'auto' ? 'Auto · ' : '') + (mode === 'high' ? 'Detalhada' : 'Leve');
+    }
+    document.getElementById('quality').addEventListener('change', e => { quality = e.target.value; applyQuality(quality === 'auto' ? (mobile ? 'low' : 'high') : quality); });
+    applyQuality(effective);
+
+    const photo = on => document.body.classList.toggle('photo', on);
+    document.getElementById('btn-photo').onclick = () => photo(true);
+    document.getElementById('exit-photo').onclick = () => photo(false);
+    const onKeyDown = e => {
+      if (e.key === 'Escape') photo(false);
+      if (e.target.matches && e.target.matches('input,button,select')) return;
+      if (e.key === 'ArrowLeft') camState.targetTheta += 0.14;
+      if (e.key === 'ArrowRight') camState.targetTheta -= 0.14;
+      if (e.key === 'ArrowUp') camState.targetPhi = clamp(camState.targetPhi - 0.08, 0.07, 1.46);
+      if (e.key === 'ArrowDown') camState.targetPhi = clamp(camState.targetPhi + 0.08, 0.07, 1.46);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    document.getElementById('btn-rain').onclick = () => { let el = document.getElementById('rng-dew'); el.value = 100; el.dispatchEvent(new Event('input')); };
+    function resetAll() {
+      for (const [id, val] of [['wind', reduced ? 0 : 45], ['dew', 100], ['light', 100]]) {
+        const el = document.getElementById('rng-' + id); el.value = val; el.dispatchEvent(new Event('input'));
+      }
+      if (uvMode) btnUv.click();
+      document.querySelector('[data-cam="photo"]').click();
+    }
+    document.getElementById('btn-reset').onclick = resetAll;
+    if (mobile) btnPanel.click();
+    if (reduced) { document.getElementById('rng-wind').value = 0; document.getElementById('val-wind').textContent = '0%'; }
+
+    const onContextLost = e => { e.preventDefault(); notice.hidden = false; notice.textContent = 'Contexto gráfico interrompido.'; };
+    renderer.domElement.addEventListener('webglcontextlost', onContextLost);
+    notice.hidden = true;
+
+    const clock = new THREE.Clock();
+    let t = 0, frames = 0, elapsed = 0, rafId = 0, sangiPaused = false, disposed = false;
+    function animate() {
+      if (disposed) return;
+      rafId = requestAnimationFrame(animate);
+      const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05);
+      if (sangiPaused || document.hidden) return;
+      t += dt; frames++; elapsed += rawDt;
+      if (elapsed > 4) { if (quality === 'auto' && effective === 'high' && frames / elapsed < 27) applyQuality('low'); frames = 0; elapsed = 0; }
+      const damping = 1 - Math.exp(-dt * 5);
+      if (camState.autoOrbit) camState.targetTheta += dt * 0.18;
+      camState.theta += (camState.targetTheta - camState.theta) * damping;
+      camState.phi += (camState.targetPhi - camState.phi) * damping;
+      camState.radius += (camState.targetRadius - camState.radius) * damping;
+      camState.target.lerp(camState.desiredTarget, damping);
+      camera.position.set(
+        camState.target.x + camState.radius * Math.sin(camState.phi) * Math.sin(camState.theta),
+        camState.target.y + camState.radius * Math.cos(camState.phi),
+        camState.target.z + camState.radius * Math.sin(camState.phi) * Math.cos(camState.theta)
+      );
+      camera.lookAt(camState.target);
+
+      for (let i = 0; i < animatedLeaves.length; i++) {
+        const l = animatedLeaves[i];
+        const sway = Math.sin(t * l.speed + l.phase) * l.amp * (windStrength * 1.6);
+        l.pivot.rotation.x = l.baseRotX + sway;
+        l.pivot.rotation.z = l.baseRotZ + Math.cos(t * l.speed * 0.7 + l.phase) * l.amp * 0.6 * windStrength;
+      }
+      const posArr = pollen.geometry.attributes.position.array;
+      for (let i = 0; i < pCount; i++) {
+        posArr[i * 3 + 1] += dt * (0.12 + Math.sin(t + i) * 0.04) * (0.2 + windStrength);
+        posArr[i * 3] += Math.cos(t * 0.5 + i) * dt * 0.08 * (0.2 + windStrength);
+        if (posArr[i * 3 + 1] > 3.2) posArr[i * 3 + 1] = -1.4;
+      }
+      pollen.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    rafId = requestAnimationFrame(animate);
+
+    function cleanup() {
+      if (disposed) return;
+      disposed = true;
+      cancelAnimationFrame(rafId);
+      wrap.removeEventListener('pointerdown', onDown);
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => wrap.removeEventListener(n, release));
+      wrap.removeEventListener('pointermove', onMove); wrap.removeEventListener('contextmenu', onCtx); wrap.removeEventListener('wheel', onWheel);
+      window.removeEventListener('blur', onBlur); window.removeEventListener('resize', onResize); window.removeEventListener('keydown', onKeyDown);
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      if (audioCtx) try { audioCtx.close(); } catch (e) {}
+      const seen = new Set();
+      scene.traverse(o => {
+        [o.geometry, o.material].forEach(it => {
+          if (it && !seen.has(it)) { seen.add(it); if (it.isMaterial) Object.values(it).forEach(v => { if (v && v.isTexture && !seen.has(v)) { seen.add(v); v.dispose(); } }); it.dispose(); }
+        });
+      });
+      if (scene.environment) scene.environment.dispose();
+      renderer.dispose();
+    }
+    window.addEventListener('sangi:pause', () => { sangiPaused = true; clock.stop(); if (audioCtx && audioOn) audioCtx.suspend().catch(() => {}); });
+    window.addEventListener('sangi:resume', () => { sangiPaused = false; clock.start(); if (audioCtx && audioOn) audioCtx.resume().catch(() => {}); });
+    window.addEventListener('sangi:mute', () => { if (audioOn) toggleAudio(); });
+    window.addEventListener('sangi:reset', resetAll);
+    window.addEventListener('sangi:dispose', cleanup);
+    window.addEventListener('pagehide', cleanup);
+  } catch (err) { console.error(err); notice.hidden = false; notice.textContent = 'Não foi possível iniciar a cena 3D.'; }
+})();
+</script>
+</body>
+</html>

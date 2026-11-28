@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Tronco com Rosetas de Musgo Estrelado 3D — Three.js</title>
+<script src="/Sistema/shared/sangi-bridge.js"></script>
+<script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+<style>
+  :root {
+    --bg: #070907;
+    --panel: rgba(15, 14, 12, 0.78);
+    --border: rgba(176, 212, 206, 0.25);
+    --accent: #9fd8cf;
+    --bark: #844528;
+    --text: #eef4f3;
+    --muted: #a6b4b0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); }
+  #canvas-wrap { position: fixed; inset: 0; cursor: grab; touch-action: none; }
+  #canvas-wrap:active { cursor: grabbing; }
+  .hud-top { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10; gap: 10px; }
+  .badge { pointer-events: auto; background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; max-width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .badge h1 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--bark)); box-shadow: 0 0 10px var(--accent); flex-shrink: 0; }
+  .badge p { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.38; }
+  .hud-actions { pointer-events: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; min-height: 38px; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(12px); transition: 0.2s; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.active { background: rgba(159, 216, 207, 0.22); border-color: var(--accent); color: #def8f4; }
+  .panel { position: fixed; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); width: min(306px, calc(100vw - 24px)); background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px; padding: 14px; z-index: 10; transition: 0.28s; box-shadow: 0 14px 36px rgba(0,0,0,0.5); }
+  .panel.collapsed { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; }
+  .ctrl { margin-bottom: 11px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-bottom: 5px; }
+  .ctrl-head strong { color: var(--text); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; min-height: 22px; }
+  .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .cam-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text); border-radius: 8px; padding: 7px 8px; min-height: 36px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .cam-btn:hover, .cam-btn.active { border-color: var(--accent); background: rgba(159, 216, 207, 0.2); }
+  .hint { position: fixed; left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(10px); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: var(--muted); z-index: 9; }
+  @media (max-width: 640px) {
+    .hud-top { flex-direction: column; }
+    .badge p { display: none; }
+    .hint { display: none; }
+    .panel { left: 12px; right: 12px; width: auto; max-height: 44dvh; overflow: auto; }
+  }
+</style>
+</head>
+<body>
+<div id="canvas-wrap" tabindex="0" aria-label="Cena 3D de tronco tropical com rosetas de musgo estrelado"></div>
+
+<div class="hud-top">
+  <div class="badge">
+    <h1><span class="dot"></span> Tronco &amp; Rosetas de Musgo Estrelado 3D</h1>
+    <p>Casca tropical fissurada e úmida povoada por colônias de briófitas estreladas em camadas, esporófitos, líquens e esporos sob luz de sub-bosque.</p>
+  </div>
+  <div class="hud-actions">
+    <button class="btn" id="btn-torch">Lanterna Macro</button>
+    <button class="btn active" id="btn-panel">Controles</button>
+  </div>
+</div>
+
+<div class="hint">Arraste para explorar a casca · Scroll/Pinça para zoom · Setas para girar</div>
+
+<div class="panel" id="panel">
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Umidade da casca</span><strong id="val-wet">60%</strong></div>
+    <input type="range" id="rng-wet" aria-label="Umidade da casca" min="0" max="100" value="60" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Esporos flutuantes</span><strong id="val-spores">75%</strong></div>
+    <input type="range" id="rng-spores" aria-label="Esporos flutuantes" min="0" max="100" value="75" />
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-head"><span>Ângulos de câmera</span><strong>4 presets</strong></div>
+    <div class="cam-grid">
+      <button class="cam-btn active" data-cam="photo">Frontal (Foto)</button>
+      <button class="cam-btn" data-cam="macro">Super Macro</button>
+      <button class="cam-btn" data-cam="oblique">Perfil Casca</button>
+      <button class="cam-btn" data-cam="orbit">Órbita Suave</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  const wrap = document.getElementById('canvas-wrap');
+  const isMobile = matchMedia('(max-width: 720px)').matches;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let seed = 88321;
+  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  const rand = (a, b) => a + (b - a) * rnd();
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x09100a);
+  scene.fog = new THREE.FogExp2(0x09100a, 0.068);
+
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.05, 70);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.15 : 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  wrap.appendChild(renderer.domElement);
+
+  // Misty Forest Understory PMREM Environment
+  (function buildEnv() {
+    const ec = document.createElement('canvas'); ec.width = 512; ec.height = 256;
+    const ex = ec.getContext('2d');
+    const g = ex.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0.0, '#78a596');
+    g.addColorStop(0.45, '#b8d3c9');
+    g.addColorStop(0.60, '#2a3621');
+    g.addColorStop(1.0, '#0a0705');
+    ex.fillStyle = g; ex.fillRect(0, 0, 512, 256);
+    const beam = ex.createRadialGradient(145, 58, 4, 145, 58, 72);
+    beam.addColorStop(0, '#fff7e6'); beam.addColorStop(1, 'rgba(255,247,230,0)');
+    ex.fillStyle = beam; ex.fillRect(0, 0, 512, 256);
+    const tex = new THREE.CanvasTexture(ec); tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const rt = pmrem.fromEquirectangular(tex);
+    scene.environment = rt.texture;
+    pmrem.dispose(); tex.dispose();
+  })();
+
+  const defaultCam = { theta: 0.0, phi: 1.54, radius: isMobile ? 6.6 : 5.6, target: new THREE.Vector3(0, 0.0, 0) };
+  const camState = {
+    theta: defaultCam.theta, phi: defaultCam.phi, radius: defaultCam.radius,
+    targetTheta: defaultCam.theta, targetPhi: defaultCam.phi, targetRadius: defaultCam.radius,
+    target: defaultCam.target.clone(), desiredTarget: defaultCam.target.clone(), autoOrbit: false
+  };
+
+  // Lighting: cool sky fill + warm dappled sun key + green mossy rim + macro torch
+  const hemi = new THREE.HemisphereLight(0xbce2d8, 0x22140b, 0.85);
+  scene.add(hemi);
+  const key = new THREE.DirectionalLight(0xfff0d6, 1.85);
+  key.position.set(-2.8, 4.8, 5.2);
+  key.castShadow = true;
+  key.shadow.mapSize.set(isMobile ? 512 : 1024, isMobile ? 512 : 1024);
+  key.shadow.bias = -0.0005; key.shadow.normalBias = 0.025;
+  scene.add(key);
+
+  const rim = new THREE.DirectionalLight(0x88c999, 0.65);
+  rim.position.set(4.5, 1.5, -2.5);
+  scene.add(rim);
+
+  const torch = new THREE.PointLight(0xdaf7ff, 0.0, 9, 1.6);
+  scene.add(torch);
+
+  // High-res Multi-Map Bark Textures (Albedo + Bump + Roughness)
+  function createBarkTextures() {
+    const size = isMobile ? 512 : 1024;
+    const cCol = document.createElement('canvas'); cCol.width = cCol.height = size;
+    const cBmp = document.createElement('canvas'); cBmp.width = cBmp.height = size;
+    const cRgh = document.createElement('canvas'); cRgh.width = cRgh.height = size;
+    const ctx = cCol.getContext('2d'), bCtx = cBmp.getContext('2d'), rCtx = cRgh.getContext('2d');
+    const imgC = ctx.createImageData(size, size), imgB = bCtx.createImageData(size, size), imgR = rCtx.createImageData(size, size);
+    const cd = imgC.data, bd = imgB.data, rd = imgR.data;
+
+    for (let y = 0; y < size; y++) {
+      const v = y / size;
+      for (let x = 0; x < size; x++) {
+        const u = x / size;
+        const idx = (y * size + x) * 4;
+        // Tileable harmonics in u and v so zero seam!
+        const warp = Math.sin(v * Math.PI * 6) * 0.45 + Math.cos(v * Math.PI * 14 + u * Math.PI * 2) * 0.2;
+        const ridge = Math.sin(u * Math.PI * 18 + warp * 2.2) * 0.5 + 0.5;
+        const fissure = Math.pow(Math.sin(u * Math.PI * 36 - warp * 3.1) * 0.5 + 0.5, 3.2);
+        const flake = Math.sin(v * Math.PI * 32 + u * Math.PI * 10) * Math.cos(u * Math.PI * 16 - v * Math.PI * 14) * 0.5 + 0.5;
+        const pore = (rnd() - 0.5) * 0.14;
+        const h = clamp(ridge * 0.48 + fissure * 0.36 + flake * 0.16 + pore, 0, 1);
+
+        // Damp moss-stained dark umber crevices & flaky reddish-chestnut ridges
+        const mossTint = clamp(Math.sin(u * Math.PI * 8 + v * Math.PI * 10) * 0.5 + 0.25, 0, 1) * (1 - ridge) * 0.45;
+        cd[idx] = clamp(24 + h * 82 - mossTint * 12, 8, 220);
+        cd[idx + 1] = clamp(14 + h * 44 + mossTint * 36, 6, 200);
+        cd[idx + 2] = clamp(9 + h * 22 + mossTint * 14, 4, 180);
+        cd[idx + 3] = 255;
+
+        const bv = Math.floor(h * 255);
+        bd[idx] = bd[idx + 1] = bd[idx + 2] = bv; bd[idx + 3] = 255;
+
+        // Crevices wetter (glossy), outer bark flakes matte
+        const rv = clamp(210 - (1 - fissure) * 75 - mossTint * 35, 70, 235);
+        rd[idx] = rd[idx + 1] = rd[idx + 2] = rv; rd[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imgC, 0, 0); bCtx.putImageData(imgB, 0, 0); rCtx.putImageData(imgR, 0, 0);
+    const maxA = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    const map = new THREE.CanvasTexture(cCol); map.encoding = THREE.sRGBEncoding; map.anisotropy = maxA;
+    map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(2, 2);
+    const bumpMap = new THREE.CanvasTexture(cBmp); bumpMap.anisotropy = maxA;
+    bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping; bumpMap.repeat.set(2, 2);
+    const roughnessMap = new THREE.CanvasTexture(cRgh);
+    roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping; roughnessMap.repeat.set(2, 2);
+    return { map, bumpMap, roughnessMap };
+  }
+
+  function barkDisp(ang, y) {
+    // Smooth, asymmetric organic bark fissures (no regular sine wave seam)
+    const f1 = Math.sin(ang * 16 + Math.sin(y * 1.9 + ang * 2)) * 0.075;
+    const f2 = Math.cos(y * 5.2 + ang * 9 + Math.sin(ang * 4)) * 0.042;
+    const burl = Math.exp(-Math.pow(ang + 0.16, 2) * 14 - Math.pow(y + 0.45, 2) * 1.2) * 0.14;
+    return f1 + f2 + burl;
+  }
+
+  const barkTex = createBarkTextures();
+  const barkSeg = isMobile ? 64 : 88;
+  const barkGeo = new THREE.CylinderGeometry(3.22, 3.42, 10.2, barkSeg, barkSeg, true, -Math.PI * 0.45, Math.PI * 0.90);
+  const bPos = barkGeo.attributes.position;
+  for (let i = 0; i < bPos.count; i++) {
+    const x = bPos.getX(i), y = bPos.getY(i), z = bPos.getZ(i);
+    const ang = Math.atan2(x, z);
+    const rad = Math.hypot(x, z) + barkDisp(ang, y);
+    bPos.setXYZ(i, Math.sin(ang) * rad, y, Math.cos(ang) * rad - 3.0);
+  }
+  barkGeo.computeVertexNormals();
+  const barkMat = new THREE.MeshStandardMaterial({
+    map: barkTex.map, bumpMap: barkTex.bumpMap, roughnessMap: barkTex.roughnessMap,
+    bumpScale: 0.18, roughness: 0.62, metalness: 0.04, envMapIntensity: 0.75
+  });
+  const trunk = new THREE.Mesh(barkGeo, barkMat);
+  trunk.receiveShadow = true;
+  scene.add(trunk);
+
+  // Multi-tiered Star Moss Rosette Geometry (outer arched whorl + inner spiral crown + central apex bud)
+  function buildRosetteGeometry() {
+    const positions = [], colors = [];
+    function addWhorl(count, lenBase, widBase, archH, liftBase, rotOff, darkFactor) {
+      for (let b = 0; b < count; b++) {
+        const a = rotOff + (b / count) * Math.PI * 2 + (b % 2) * 0.11;
+        const len = lenBase * (0.88 + (b % 3) * 0.12);
+        const w = widBase;
+        const ca = Math.cos(a), sa = Math.sin(a);
+        const px = -sa * w, pz = ca * w;
+        const p0 = [0, liftBase, 0];
+        const p1 = [ca * len * 0.42 + px, liftBase + archH, sa * len * 0.42 + pz];
+        const p2 = [ca * len * 0.42 - px, liftBase + archH, sa * len * 0.42 - pz];
+        const p3 = [ca * len, liftBase + archH * 0.25, sa * len];
+        // Base is deeper olive-emerald, tips are frosty silver-jade
+        const cBase = [0.22 * darkFactor, 0.36 * darkFactor, 0.28 * darkFactor];
+        const cMid  = [0.62 * darkFactor, 0.78 * darkFactor, 0.74 * darkFactor];
+        const cTip  = [0.88, 0.96, 0.94];
+        positions.push(...p0, ...p1, ...p2,  ...p1, ...p3, ...p2);
+        colors.push(...cBase, ...cMid, ...cMid,  ...cMid, ...cTip, ...cMid);
+      }
+    }
+    addWhorl(7, 0.125, 0.023, 0.026, 0.008, 0.0, 0.85);
+    addWhorl(5, 0.075, 0.016, 0.042, 0.015, 0.42, 1.0);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  const rosetteGeo = buildRosetteGeometry();
+  const rosetteMat = new THREE.MeshStandardMaterial({
+    vertexColors: true, roughness: 0.62, metalness: 0.02, side: THREE.DoubleSide, envMapIntensity: 0.85
+  });
+
+  const clusters = [
+    { a: -0.18, y: 1.85, r: 0.55, n: 130 },
+    { a: -0.52, y: 1.55, r: 0.48, n: 95 },
+    { a: -0.05, y: 0.45, r: 0.62, n: 185 },
+    { a: -0.15, y: -0.65, r: 0.72, n: 260 },
+    { a: 0.22,  y: -0.45, r: 0.52, n: 130 },
+    { a: -0.48, y: -1.65, r: 0.60, n: 120 },
+    { a: 0.08,  y: -2.15, r: 0.55, n: 100 },
+    { a: 0.78,  y: -1.35, r: 0.42, n: 90 }
+  ];
+  const totalRosettes = clusters.reduce((acc, c) => acc + c.n, 0);
+  const instRosettes = new THREE.InstancedMesh(rosetteGeo, rosetteMat, totalRosettes);
+  instRosettes.castShadow = true; instRosettes.receiveShadow = true;
+
+  // Companion bryophytes: sporophyte stalks + mossy cushions + crustose lichens
+  const setaMatrices = [], cushionMatrices = [], cushionColors = [], lichenMatrices = [], lichenColors = [];
+  const dummy = new THREE.Object3D();
+  const upVec = new THREE.Vector3(0, 1, 0);
+  let idx = 0;
+
+  clusters.forEach((cl) => {
+    for (let i = 0; i < cl.n; i++) {
+      const ang = cl.a + (rnd() - 0.5) * cl.r * 1.45;
+      const y = cl.y + (rnd() - 0.5) * cl.r * 3.1;
+      const rad = 3.31 + barkDisp(ang, y) + 0.014;
+      const x = Math.sin(ang) * rad, z = Math.cos(ang) * rad - 3.0;
+      const normal = new THREE.Vector3(Math.sin(ang), 0, Math.cos(ang)).normalize();
+
+      dummy.position.set(x, y, z);
+      dummy.quaternion.setFromUnitVectors(upVec, normal);
+      dummy.rotateY(rnd() * Math.PI * 2);
+      const sc = 0.46 + Math.pow(rnd(), 1.45) * 1.38;
+      dummy.scale.set(sc, sc * (0.85 + rnd() * 0.45), sc);
+      dummy.updateMatrix();
+      instRosettes.setMatrixAt(idx, dummy.matrix);
+
+      const col = new THREE.Color().setHSL(0.45 + (rnd() - 0.5) * 0.07, 0.22 + rnd() * 0.14, 0.58 + rnd() * 0.26);
+      instRosettes.setColorAt(idx, col);
+      idx++;
+
+      // Tiny nodding sporophyte seta on ~12% of rosettes
+      if (rnd() < 0.12 && setaMatrices.length < 180) {
+        dummy.position.set(x, y, z).addScaledVector(normal, 0.01);
+        dummy.quaternion.setFromUnitVectors(upVec, normal);
+        dummy.rotateX((rnd() - 0.5) * 0.35);
+        dummy.scale.setScalar(0.8 + rnd() * 0.65);
+        dummy.updateMatrix();
+        setaMatrices.push(dummy.matrix.clone());
+      }
+      // Underlying velvety moss cushion tufts
+      if (rnd() < 0.24 && cushionMatrices.length < 280) {
+        dummy.position.set(x, y, z).addScaledVector(normal, -0.012);
+        dummy.quaternion.setFromUnitVectors(upVec, normal);
+        dummy.scale.set(0.08 + rnd() * 0.12, 0.02 + rnd() * 0.025, 0.08 + rnd() * 0.12);
+        dummy.updateMatrix();
+        cushionMatrices.push(dummy.matrix.clone());
+        cushionColors.push(new THREE.Color().setHSL(rand(0.28, 0.38), rand(0.35, 0.55), rand(0.16, 0.30)));
+      }
+    }
+  });
+  // Crustose lichen patches along bark borders
+  for (let i = 0; i < 140; i++) {
+    const ang = rand(-0.95, 0.95), y = rand(-3.5, 3.5);
+    const rad = 3.31 + barkDisp(ang, y) + 0.008;
+    const normal = new THREE.Vector3(Math.sin(ang), 0, Math.cos(ang)).normalize();
+    dummy.position.set(Math.sin(ang) * rad, y, Math.cos(ang) * rad - 3.0);
+    dummy.quaternion.setFromUnitVectors(upVec, normal);
+    dummy.rotateY(rnd() * 6.28);
+    dummy.scale.set(rand(0.06, 0.22), 0.012, rand(0.05, 0.18));
+    dummy.updateMatrix();
+    lichenMatrices.push(dummy.matrix.clone());
+    lichenColors.push(new THREE.Color().setHSL(rand(0.20, 0.34), rand(0.18, 0.34), rand(0.34, 0.52)));
+  }
+
+  instRosettes.instanceMatrix.needsUpdate = true;
+  if (instRosettes.instanceColor) instRosettes.instanceColor.needsUpdate = true;
+  scene.add(instRosettes);
+
+  // Sporophyte capsule geometry
+  const setaCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0.09,0.01), new THREE.Vector3(0.015,0.16,0.04)]);
+  const setaGeo = new THREE.TubeGeometry(setaCurve, 8, 0.0032, 4, false);
+  const setaInst = new THREE.InstancedMesh(setaGeo, new THREE.MeshStandardMaterial({ color: 0xa86f38, roughness: 0.55 }), setaMatrices.length);
+  setaMatrices.forEach((m, i) => setaInst.setMatrixAt(i, m));
+  scene.add(setaInst);
+
+  const cushionInst = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({ roughness: 0.95 }), cushionMatrices.length);
+  cushionMatrices.forEach((m, i) => { cushionInst.setMatrixAt(i, m); cushionInst.setColorAt(i, cushionColors[i]); });
+  cushionInst.receiveShadow = true;
+  scene.add(cushionInst);
+
+  const lichenInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 0.95, 1, 7), new THREE.MeshStandardMaterial({ roughness: 0.88 }), lichenMatrices.length);
+  lichenMatrices.forEach((m, i) => { lichenInst.setMatrixAt(i, m); lichenInst.setColorAt(i, lichenColors[i]); });
+  lichenInst.receiveShadow = true;
+  scene.add(lichenInst);
+
+  // Forest canopy silhouette backdrop (soft out-of-focus parallax depth)
+  const bgTreeInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.32, 0.48, 12, 8), new THREE.MeshStandardMaterial({ color: 0x0e1810, roughness: 1 }), 14);
+  for (let i = 0; i < 14; i++) {
+    dummy.position.set(rand(-9.5, 9.5), rand(-1, 1.5), rand(-14, -6.5));
+    dummy.rotation.set(0, rnd() * 3, rand(-0.08, 0.08));
+    dummy.scale.set(rand(0.7, 1.8), 1.4, rand(0.7, 1.8));
+    dummy.updateMatrix();
+    bgTreeInst.setMatrixAt(i, dummy.matrix);
+  }
+  scene.add(bgTreeInst);
+
+  // Soft Glowing Spores with radial bokeh map (replaces crisp square dots)
+  const sporeTex = (function() {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(32, 32, 2, 32, 32, 32);
+    g.addColorStop(0, 'rgba(220, 255, 245, 1)');
+    g.addColorStop(0.45, 'rgba(170, 245, 232, 0.5)');
+    g.addColorStop(1, 'rgba(150, 240, 225, 0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    return t;
+  })();
+
+  const sCount = isMobile ? 75 : 130;
+  const sArr = new Float32Array(sCount * 3);
+  for (let i = 0; i < sCount; i++) {
+    sArr[i * 3] = (rnd() - 0.5) * 5.6;
+    sArr[i * 3 + 1] = (rnd() - 0.5) * 6.5;
+    sArr[i * 3 + 2] = 0.35 + rnd() * 2.4;
+  }
+  const sGeo = new THREE.BufferGeometry();
+  sGeo.setAttribute('position', new THREE.BufferAttribute(sArr, 3));
+  const sMat = new THREE.PointsMaterial({ color: 0xbef5ee, size: 0.072, map: sporeTex, transparent: true, opacity: 0.65, depthWrite: false, blending: THREE.AdditiveBlending });
+  const spores = new THREE.Points(sGeo, sMat);
+  scene.add(spores);
+
+  // UI & Pointer Controls
+  let torchOn = false;
+  const rngWet = document.getElementById('rng-wet');
+  const rngSpores = document.getElementById('rng-spores');
+  const btnTorch = document.getElementById('btn-torch');
+  const btnPanel = document.getElementById('btn-panel');
+  const panel = document.getElementById('panel');
+
+  rngWet.addEventListener('input', (e) => {
+    const v = e.target.value / 100;
+    document.getElementById('val-wet').textContent = e.target.value + '%';
+    barkMat.roughness = 0.90 - v * 0.56;
+    barkMat.metalness = 0.02 + v * 0.12;
+    barkMat.envMapIntensity = 0.4 + v * 0.7;
+  });
+  rngSpores.addEventListener('input', (e) => {
+    const v = e.target.value / 100;
+    document.getElementById('val-spores').textContent = e.target.value + '%';
+    sMat.opacity = 0.85 * v;
+  });
+  btnTorch.addEventListener('click', () => {
+    torchOn = !torchOn;
+    btnTorch.classList.toggle('active', torchOn);
+    torch.intensity = torchOn ? 2.6 : 0.0;
+  });
+  btnPanel.addEventListener('click', () => {
+    const c = panel.classList.toggle('collapsed');
+    btnPanel.classList.toggle('active', !c);
+  });
+
+  const camPresets = {
+    photo:   { theta: 0.0,  phi: 1.54, radius: isMobile ? 6.6 : 5.6, target: [0, 0, 0], auto: false },
+    macro:   { theta: -0.1, phi: 1.52, radius: 2.35, target: [-0.3, -0.5, 0.2], auto: false },
+    oblique: { theta: 0.78, phi: 1.38, radius: 4.4, target: [0, -0.2, 0], auto: false },
+    orbit:   { theta: 0.0,  phi: 1.48, radius: 5.2, target: [0, 0, 0], auto: !reducedMotion }
+  };
+  document.querySelectorAll('.cam-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.cam-btn').forEach((x) => x.classList.remove('active'));
+      b.classList.add('active');
+      const p = camPresets[b.dataset.cam];
+      camState.targetTheta = p.theta; camState.targetPhi = p.phi; camState.targetRadius = p.radius;
+      camState.desiredTarget.set(p.target[0], p.target[1], p.target[2]);
+      camState.autoOrbit = p.auto;
+    });
+  });
+
+  let pointerDown = false, lastX = 0, lastY = 0;
+  const onPointerDown = (e) => { pointerDown = true; lastX = e.clientX; lastY = e.clientY; camState.autoOrbit = false; };
+  const onPointerUp = () => { pointerDown = false; };
+  const onPointerMove = (e) => {
+    if (!pointerDown) return;
+    camState.targetTheta = clamp(camState.targetTheta - (e.clientX - lastX) * 0.005, -1.15, 1.15);
+    camState.targetPhi = clamp(camState.targetPhi - (e.clientY - lastY) * 0.005, 0.85, 2.25);
+    lastX = e.clientX; lastY = e.clientY;
+  };
+  const onWheel = (e) => {
+    e.preventDefault();
+    camState.targetRadius = clamp(camState.targetRadius + e.deltaY * 0.0035, 2.0, 9.5);
+  };
+  const onKeyDown = (e) => {
+    if (e.key === 'ArrowLeft') camState.targetTheta = clamp(camState.targetTheta + 0.12, -1.15, 1.15);
+    else if (e.key === 'ArrowRight') camState.targetTheta = clamp(camState.targetTheta - 0.12, -1.15, 1.15);
+    else if (e.key === 'ArrowUp') camState.targetPhi = clamp(camState.targetPhi - 0.08, 0.85, 2.25);
+    else if (e.key === 'ArrowDown') camState.targetPhi = clamp(camState.targetPhi + 0.08, 0.85, 2.25);
+  };
+  const onResize = () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  };
+  wrap.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointermove', onPointerMove);
+  wrap.addEventListener('wheel', onWheel, { passive: false });
+  wrap.addEventListener('keydown', onKeyDown);
+  window.addEventListener('resize', onResize);
+
+  let paused = false, disposed = false, rafId = 0, simT = 0, lastNow = performance.now();
+  function animate(now) {
+    if (disposed) return;
+    rafId = requestAnimationFrame(animate);
+    const rawDt = Math.min(0.05, Math.max(0.001, (now - lastNow) * 0.001));
+    lastNow = now;
+    if (paused || document.hidden) return;
+    const dt = reducedMotion ? 0 : rawDt;
+    simT += dt;
+    const t = simT;
+
+    if (camState.autoOrbit) camState.targetTheta = Math.sin(t * 0.35) * 0.72;
+    const damp = 1 - Math.exp(-rawDt * 6.0);
+    camState.theta += (camState.targetTheta - camState.theta) * damp;
+    camState.phi += (camState.targetPhi - camState.phi) * damp;
+    camState.radius += (camState.targetRadius - camState.radius) * damp;
+    camState.target.lerp(camState.desiredTarget, damp);
+
+    camera.position.set(
+      camState.target.x + camState.radius * Math.sin(camState.phi) * Math.sin(camState.theta),
+      camState.target.y + camState.radius * Math.cos(camState.phi),
+      camState.target.z + camState.radius * Math.sin(camState.phi) * Math.cos(camState.theta)
+    );
+    camera.lookAt(camState.target);
+    torch.position.copy(camera.position);
+
+    const sa = spores.geometry.attributes.position.array;
+    for (let i = 0; i < sCount; i++) {
+      sa[i * 3 + 1] += dt * 0.16;
+      sa[i * 3] += Math.sin(t * 0.7 + i) * dt * 0.10;
+      if (sa[i * 3 + 1] > 3.5) sa[i * 3 + 1] = -3.3;
+    }
+    spores.geometry.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  }
+  rafId = requestAnimationFrame(animate);
+
+  function cleanup() {
+    if (disposed) return;
+    disposed = true;
+    cancelAnimationFrame(rafId);
+    wrap.removeEventListener('pointerdown', onPointerDown);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointermove', onPointerMove);
+    wrap.removeEventListener('wheel', onWheel);
+    wrap.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('resize', onResize);
+    const seen = new Set();
+    scene.traverse((o) => {
+      [o.geometry, o.material].forEach((it) => {
+        if (it && !seen.has(it)) {
+          seen.add(it);
+          if (it.isMaterial) Object.values(it).forEach((v) => { if (v && v.isTexture && !seen.has(v)) { seen.add(v); v.dispose(); } });
+          it.dispose();
+        }
+      });
+    });
+    if (scene.environment) scene.environment.dispose();
+    renderer.dispose();
+  }
+  window.addEventListener('sangi:pause', () => { paused = true; });
+  window.addEventListener('sangi:resume', () => { paused = false; lastNow = performance.now(); });
+  window.addEventListener('sangi:mute', () => {});
+  window.addEventListener('sangi:reset', () => {
+    camState.targetTheta = defaultCam.theta; camState.targetPhi = defaultCam.phi; camState.targetRadius = defaultCam.radius;
+    camState.desiredTarget.copy(defaultCam.target); camState.autoOrbit = false;
+    rngWet.value = 60; rngWet.dispatchEvent(new Event('input'));
+    rngSpores.value = 75; rngSpores.dispatchEvent(new Event('input'));
+    if (torchOn) btnTorch.click();
+  });
+  window.addEventListener('sangi:dispose', cleanup);
+  window.addEventListener('pagehide', cleanup);
+})();
+</script>
+</body>
+</html>

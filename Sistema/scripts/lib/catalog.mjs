@@ -24,12 +24,14 @@ const COLLECTIONS = {
   '4 - Kit 17 Jogos': 'Kit 17 jogos 3D',
   '5 - Sangi3D 15 Experiencias': 'Sangi3D 15 Experiências',
   '6 - Adultos e Marcas': 'Adultos e marcas',
+  '7 - Cenas 3D': 'Cenas 3D',
   '9 - Arquivados': 'Legado arquivado',
 };
 const areaOf = (relDir) => relDir.split(sep)[1] ?? '';
 
 const COLLECTION_ORDER = [
   'Sangi3D 15 Experiências',
+  'Cenas 3D',
   'Jardins da TCC',
   'Jardins do Sentir',
   'Projetos 3D',
@@ -311,7 +313,8 @@ export async function scanCatalog({
       const collectionEntry = /^\d{2}[-_]/.test(folder) && (
         area === '4 - Kit 17 Jogos' ||
         area === '6 - Adultos e Marcas' ||
-        area === '5 - Sangi3D 15 Experiencias'
+        area === '5 - Sangi3D 15 Experiencias' ||
+        area === '7 - Cenas 3D'
       );
       const standalone = !files.includes('package.json') && (
         collectionEntry || area === '1 - Jogos HTML' || (area === '2 - Projetos' && dirs.includes('assets'))

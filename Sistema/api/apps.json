@@ -11,10 +11,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/01-corpo-de-particulas/cena.png",
     "order": 1,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\01-corpo-de-particulas",
-    "mtime": 1795820370416.0105,
+    "mtime": 1795822502701.0732,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-01-corpo-de-particulas",
-    "contentHash": "b1a471e236deacda"
+    "contentHash": "84cc47fdceb92d10"
   },
   {
     "name": "Oceano de Tinta",
@@ -28,10 +28,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/02-oceano-de-tinta/cena.png",
     "order": 2,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\02-oceano-de-tinta",
-    "mtime": 1795820370417.01,
+    "mtime": 1795822502702.0623,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-02-oceano-de-tinta",
-    "contentHash": "d5185340dc1b289e"
+    "contentHash": "cdc53e23fe4bb70a"
   },
   {
     "name": "Floresta Bioluminescente",
@@ -45,10 +45,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/03-floresta-bioluminescente/cena.png",
     "order": 3,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\03-floresta-bioluminescente",
-    "mtime": 1795820370418.0083,
+    "mtime": 1795822502702.0623,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-03-floresta-bioluminescente",
-    "contentHash": "1d279b7abc4aab25"
+    "contentHash": "93c052b6c55590b8"
   },
   {
     "name": "Cidade da Madrugada",
@@ -62,10 +62,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/04-cidade-da-madrugada/cena.png",
     "order": 4,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\04-cidade-da-madrugada",
-    "mtime": 1795820370419.0093,
+    "mtime": 1795822502702.0623,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-04-cidade-da-madrugada",
-    "contentHash": "e9264f09fcb95cd6"
+    "contentHash": "fdee83f4c0087552"
   },
   {
     "name": "Trem sem Destino (Experiência 3D)",
@@ -117,16 +117,16 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/07-laboratorio-de-ferrofluido/cena.png",
     "order": 7,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\07-laboratorio-de-ferrofluido",
-    "mtime": 1795820370421.9612,
+    "mtime": 1795822502703.5662,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-07-laboratorio-de-ferrofluido",
-    "contentHash": "85cddec9bc4d95df"
+    "contentHash": "7cf1fd3d621b5c7a"
   },
   {
     "name": "Universo Audioreativo (Experiência 3D)",
     "subtitle": "Sangi3D",
     "fullTitle": "Universo Audioreativo · Sangi3D",
-    "description": null,
+    "description": "Explore quatro cenários 3D e misture a resposta visual de graves, médios e agudos à sua faixa.",
     "url": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/08-universo-audioreativo/index.html",
     "status": "ready",
     "kind": "html",
@@ -134,12 +134,12 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/08-universo-audioreativo/cena.png",
     "order": 8,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\08-universo-audioreativo",
-    "mtime": 1795820370423.0527,
+    "mtime": 1795823532406.3518,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-08-universo-audioreativo",
     "canonicalRole": "variant",
     "variantOf": "1-jogos-html-universo-audioreativo-universo-audioreativo-html",
-    "contentHash": "32d82cb85b635871"
+    "contentHash": "77d38fbb70001fe2"
   },
   {
     "name": "Escultor de Planetas",
@@ -153,10 +153,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/09-escultor-de-planetas/cena.png",
     "order": 9,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\09-escultor-de-planetas",
-    "mtime": 1795820370424.0513,
+    "mtime": 1795822502705.0703,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-09-escultor-de-planetas",
-    "contentHash": "a5deaacbd4f16c4f"
+    "contentHash": "35e8d8794ddda77c"
   },
   {
     "name": "Arquitetura do Impossível",
@@ -170,10 +170,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/10-arquitetura-do-impossivel/cena.png",
     "order": 10,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\10-arquitetura-do-impossivel",
-    "mtime": 1795820370424.0513,
+    "mtime": 1795823350451.0447,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-10-arquitetura-do-impossivel",
-    "contentHash": "378cd70762f67870"
+    "contentHash": "5606cdf0504f69e6"
   },
   {
     "name": "Museu das Memórias",
@@ -204,10 +204,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/12-camara-antigravitacional/cena.png",
     "order": 12,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\12-camara-antigravitacional",
-    "mtime": 1795820370429.1702,
+    "mtime": 1795822502707.074,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-12-camara-antigravitacional",
-    "contentHash": "7877c1561a7a115a"
+    "contentHash": "f31a4672ac2451ba"
   },
   {
     "name": "Ateliê de Cerâmica",
@@ -221,10 +221,10 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/13-atelie-de-ceramica/cena.png",
     "order": 13,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\13-atelie-de-ceramica",
-    "mtime": 1795820370430.1702,
+    "mtime": 1795822502708.0752,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-13-atelie-de-ceramica",
-    "contentHash": "536617ab7fc458bb"
+    "contentHash": "a0308d4b557bbde9"
   },
   {
     "name": "Refúgio da Chuva",
@@ -255,10 +255,170 @@
     "thumb": "/Jogos/5%20-%20Sangi3D%2015%20Experiencias/15-maestro-invisivel/cena.png",
     "order": 15,
     "path": "Jogos\\5 - Sangi3D 15 Experiencias\\15-maestro-invisivel",
-    "mtime": 1795820370431.1692,
+    "mtime": 1795822502709.0752,
     "versions": [],
     "id": "5-sangi3d-15-experiencias-15-maestro-invisivel",
-    "contentHash": "4b4cbb52fca9d1f8"
+    "contentHash": "1f53b151b5cbcb00"
+  },
+  {
+    "name": "Folha em Contraluz",
+    "subtitle": "Cena 3D Realista",
+    "fullTitle": "Folha em Contraluz — Cena 3D Realista",
+    "url": "/Jogos/7%20-%20Cenas%203D/01-folha-em-contraluz/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/01-folha-em-contraluz/cena.png",
+    "order": 1,
+    "path": "Jogos\\7 - Cenas 3D\\01-folha-em-contraluz",
+    "mtime": 1795830681165.7756,
+    "versions": [],
+    "id": "7-cenas-3d-01-folha-em-contraluz",
+    "contentHash": "66be43ed5f80e69c"
+  },
+  {
+    "name": "Folhagem Reticulada e Inflorescências",
+    "subtitle": "Three.js",
+    "fullTitle": "Folhagem Reticulada e Inflorescências 3D — Three.js",
+    "url": "/Jogos/7%20-%20Cenas%203D/02-folhagem-reticulada-e-inflorescencias/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/02-folhagem-reticulada-e-inflorescencias/cena.png",
+    "order": 2,
+    "path": "Jogos\\7 - Cenas 3D\\02-folhagem-reticulada-e-inflorescencias",
+    "mtime": 1795830699756.5984,
+    "versions": [],
+    "id": "7-cenas-3d-02-folhagem-reticulada-e-inflorescencias",
+    "contentHash": "27ab731902c16d98"
+  },
+  {
+    "name": "Tronco com Rosetas de Musgo Estrelado",
+    "subtitle": "Three.js",
+    "fullTitle": "Tronco com Rosetas de Musgo Estrelado 3D — Three.js",
+    "url": "/Jogos/7%20-%20Cenas%203D/03-tronco-com-rosetas-de-musgo-estrelado/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/03-tronco-com-rosetas-de-musgo-estrelado/cena.png",
+    "order": 3,
+    "path": "Jogos\\7 - Cenas 3D\\03-tronco-com-rosetas-de-musgo-estrelado",
+    "mtime": 1795830699815.4773,
+    "versions": [],
+    "id": "7-cenas-3d-03-tronco-com-rosetas-de-musgo-estrelado",
+    "contentHash": "80f3590c6b9be31d"
+  },
+  {
+    "name": "Santuário Zen",
+    "subtitle": "Fotorrealismo, Meditação & Incenso",
+    "fullTitle": "Santuário Zen 3D — Fotorrealismo, Meditação & Incenso",
+    "url": "/Jogos/7%20-%20Cenas%203D/04-santuario-zen/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/04-santuario-zen/cena.png",
+    "order": 4,
+    "path": "Jogos\\7 - Cenas 3D\\04-santuario-zen",
+    "mtime": 1795830681613.3506,
+    "versions": [],
+    "id": "7-cenas-3d-04-santuario-zen",
+    "contentHash": "136b716611fdc754"
+  },
+  {
+    "name": "Bico-de-papagaio",
+    "subtitle": "Estufa botânica 3D",
+    "fullTitle": "Bico-de-papagaio · Estufa botânica 3D",
+    "url": "/Jogos/7%20-%20Cenas%203D/05-bico-de-papagaio-poinsettia/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/05-bico-de-papagaio-poinsettia/cena.png",
+    "order": 5,
+    "path": "Jogos\\7 - Cenas 3D\\05-bico-de-papagaio-poinsettia",
+    "mtime": 1795830681738.514,
+    "versions": [],
+    "id": "7-cenas-3d-05-bico-de-papagaio-poinsettia",
+    "contentHash": "858c34250043d24e"
+  },
+  {
+    "name": "Copa & Nuvens",
+    "subtitle": "Bosque Vivo 2.0",
+    "fullTitle": "Copa & Nuvens — Bosque Vivo 2.0",
+    "url": "/Jogos/7%20-%20Cenas%203D/06-copa-nuvens/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/06-copa-nuvens/cena.png",
+    "order": 6,
+    "path": "Jogos\\7 - Cenas 3D\\06-copa-nuvens",
+    "mtime": 1795830681861.0327,
+    "versions": [],
+    "id": "7-cenas-3d-06-copa-nuvens",
+    "contentHash": "d5f1f6123026f87a"
+  },
+  {
+    "name": "Cóleus",
+    "subtitle": "Jardim em detalhe — 3D",
+    "fullTitle": "Cóleus · Jardim em detalhe — 3D",
+    "url": "/Jogos/7%20-%20Cenas%203D/07-coleus-macro-jardim/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/07-coleus-macro-jardim/cena.png",
+    "order": 7,
+    "path": "Jogos\\7 - Cenas 3D\\07-coleus-macro-jardim",
+    "mtime": 1795830681983.7656,
+    "versions": [],
+    "id": "7-cenas-3d-07-coleus-macro-jardim",
+    "contentHash": "c2bf396fe78c86a9"
+  },
+  {
+    "name": "Hibiscus Rosa-Sinensis",
+    "subtitle": "Reconstrução 3D Contraluz (Three.js)",
+    "fullTitle": "Hibiscus Rosa-Sinensis — Reconstrução 3D Contraluz (Three.js)",
+    "url": "/Jogos/7%20-%20Cenas%203D/08-hibiscus-rosa-sinensis/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/08-hibiscus-rosa-sinensis/cena.png",
+    "order": 8,
+    "path": "Jogos\\7 - Cenas 3D\\08-hibiscus-rosa-sinensis",
+    "mtime": 1795830682097.015,
+    "versions": [],
+    "id": "7-cenas-3d-08-hibiscus-rosa-sinensis",
+    "contentHash": "3e203fc78d31f7c9"
+  },
+  {
+    "name": "Flor Rosa",
+    "subtitle": "Macro 3D",
+    "fullTitle": "Flor Rosa · Macro 3D",
+    "url": "/Jogos/7%20-%20Cenas%203D/09-flor-macro/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/09-flor-macro/cena.png",
+    "order": 9,
+    "path": "Jogos\\7 - Cenas 3D\\09-flor-macro",
+    "mtime": 1795830682225.674,
+    "versions": [],
+    "id": "7-cenas-3d-09-flor-macro",
+    "contentHash": "8790ebc3f0eb1da9"
+  },
+  {
+    "name": "Suculenta Espinhosa",
+    "subtitle": "Macro 3D",
+    "fullTitle": "Suculenta Espinhosa · Macro 3D",
+    "url": "/Jogos/7%20-%20Cenas%203D/10-suculenta-espinhosa-macro/index.html",
+    "status": "ready",
+    "kind": "html",
+    "collection": "Cenas 3D",
+    "thumb": "/Jogos/7%20-%20Cenas%203D/10-suculenta-espinhosa-macro/cena.png",
+    "order": 10,
+    "path": "Jogos\\7 - Cenas 3D\\10-suculenta-espinhosa-macro",
+    "mtime": 1795830682350.3384,
+    "versions": [],
+    "id": "7-cenas-3d-10-suculenta-espinhosa-macro",
+    "contentHash": "05daae1fb2f1dc88"
   },
   {
     "name": "Escada da Coragem",
@@ -552,10 +712,10 @@
     "thumb": "/launcher/capas/2-projetos-oficina-dos-gestos-compartilhados-projeto.webp",
     "order": 999,
     "path": "Jogos\\2 - Projetos\\oficina-dos-gestos-compartilhados-projeto",
-    "mtime": 1795820370144.0398,
+    "mtime": 1795824289989.6997,
     "versions": [],
     "id": "2-projetos-oficina-dos-gestos-compartilhados-projeto",
-    "contentHash": "fac5d0476516d779"
+    "contentHash": "9871dac775189735"
   },
   {
     "name": "Tear dos Vínculos",
@@ -1444,10 +1604,10 @@
     "thumb": "/launcher/capas/6-adultos-e-marcas-03_rochas-em-equilibrio-rochas-em-equilibrio-html.webp",
     "order": 3,
     "path": "Jogos\\6 - Adultos e Marcas\\03_rochas-em-equilibrio\\rochas-em-equilibrio.html",
-    "mtime": 1795817160111.0532,
+    "mtime": 1795821987107.6934,
     "versions": [],
     "id": "6-adultos-e-marcas-03_rochas-em-equilibrio-rochas-em-equilibrio-html",
-    "contentHash": "87f13c27a4fb0f21"
+    "contentHash": "2364dda5d50b3a28"
   },
   {
     "name": "Máquina de Escrever das Intenções",
@@ -1515,11 +1675,11 @@
     "thumb": "/Jogos/6%20-%20Adultos%20e%20Marcas/08_toca-discos-de-vinil/f141000f-37a1-42fe-a4dc-271ae6fcb71c.webp",
     "order": 8,
     "path": "Jogos\\6 - Adultos e Marcas\\08_toca-discos-de-vinil",
-    "mtime": 1795820370459.5452,
+    "mtime": 1795822253674.2507,
     "versions": [],
     "id": "6-adultos-e-marcas-08_toca-discos-de-vinil",
     "isConcept": false,
-    "contentHash": "758552d495162bd2"
+    "contentHash": "e80fa89ff0ff7e29"
   },
   {
     "name": "Máquina de Reação em Cadeia",
@@ -1533,11 +1693,11 @@
     "thumb": "/Jogos/6%20-%20Adultos%20e%20Marcas/10_maquina-de-reacao-em-cadeia/4650168f-a9a2-46c5-85d3-0064cc01e96e.webp",
     "order": 10,
     "path": "Jogos\\6 - Adultos e Marcas\\10_maquina-de-reacao-em-cadeia",
-    "mtime": 1795820370459.5452,
+    "mtime": 1795822255489.5952,
     "versions": [],
     "id": "6-adultos-e-marcas-10_maquina-de-reacao-em-cadeia",
     "isConcept": false,
-    "contentHash": "f4dd26b5db1bd242"
+    "contentHash": "bd96660b4f37d62f"
   },
   {
     "name": "Relógio Aberto",
@@ -1551,11 +1711,11 @@
     "thumb": "/Jogos/6%20-%20Adultos%20e%20Marcas/11_relogio-aberto/35c98294-7d6b-4672-87d2-64795ac4de3d.webp",
     "order": 11,
     "path": "Jogos\\6 - Adultos e Marcas\\11_relogio-aberto",
-    "mtime": 1795820370460.545,
+    "mtime": 1795822255866.5664,
     "versions": [],
     "id": "6-adultos-e-marcas-11_relogio-aberto",
     "isConcept": false,
-    "contentHash": "62ddc54273c72a9c"
+    "contentHash": "017c6393488b7c4c"
   },
   {
     "name": "Pinball de Madeira",
@@ -1713,10 +1873,10 @@
     "thumb": "/launcher/capas/3-expressao-e-desenvolvimento-08-sopraria-das-transformacoes.webp",
     "order": 8,
     "path": "Jogos\\3 - Expressao e Desenvolvimento\\08-sopraria-das-transformacoes",
-    "mtime": 1795817111802.8772,
+    "mtime": 1795823722132.8657,
     "versions": [],
     "id": "3-expressao-e-desenvolvimento-08-sopraria-das-transformacoes",
-    "contentHash": "0b6d40769ad07875"
+    "contentHash": "2b32661fd62b74e5"
   },
   {
     "name": "Pavilhão dos Tecidos Flutuantes",

@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Folha em Contraluz — Cena 3D Realista</title>
+  <script src="/Sistema/shared/sangi-bridge.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #080d05;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #f6efe4;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* Subtle photographic vignette overlay */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse at 50% 46%,
+        rgba(0, 0, 0, 0) 40%,
+        rgba(8, 12, 5, 0.30) 78%,
+        rgba(4, 7, 2, 0.65) 100%
+      );
+      z-index: 2;
+    }
+
+    /* Top header badge */
+    .top-bar {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 10;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .title-pill {
+      pointer-events: auto;
+      background: rgba(16, 18, 12, 0.56);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 224, 178, 0.16);
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.32);
+    }
+
+    .title-pill h1 {
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #fff5e6;
+      line-height: 1.2;
+    }
+
+    .title-pill p {
+      font-size: 0.72rem;
+      color: rgba(246, 232, 212, 0.74);
+      margin-top: 2px;
+    }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 224, 178, 0.18);
+      background: rgba(16, 18, 12, 0.58);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: #f8efe0;
+      font-family: inherit;
+      font-size: 0.76rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(34, 32, 20, 0.75);
+      border-color: rgba(255, 210, 140, 0.38);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.97);
+    }
+
+    .icon-btn:focus-visible,
+    .preset-btn:focus-visible,
+    input[type="range"]:focus-visible {
+      outline: 2px solid #ffca80;
+      outline-offset: 2px;
+    }
+
+    .icon-btn.active {
+      background: rgba(196, 68, 28, 0.42);
+      border-color: rgba(255, 178, 102, 0.55);
+      color: #fff6e8;
+    }
+
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    /* Bottom glassmorphism control dock */
+    .control-dock {
+      position: fixed;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(640px, calc(100% - 24px));
+      background: rgba(14, 16, 10, 0.64);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 224, 178, 0.16);
+      border-radius: 18px;
+      padding: 12px 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      z-index: 10;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: center;
+    }
+
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: rgba(248, 236, 218, 0.8);
+      font-weight: 500;
+    }
+
+    .slider-val {
+      color: #ffca80;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 232, 198, 0.18);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffb85c;
+      border: 2px solid #fff6e6;
+      box-shadow: 0 0 10px rgba(255, 168, 76, 0.65);
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffb85c;
+      border: 2px solid #fff6e6;
+      box-shadow: 0 0 10px rgba(255, 168, 76, 0.65);
+      cursor: pointer;
+    }
+
+    .dock-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 224, 178, 0.1);
+      flex-wrap: wrap;
+    }
+
+    .camera-presets {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      padding: 6px 10px;
+      min-height: 32px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 224, 178, 0.15);
+      background: rgba(255, 240, 215, 0.06);
+      color: rgba(248, 236, 218, 0.82);
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-btn:hover {
+      background: rgba(255, 200, 130, 0.16);
+      color: #fff8ed;
+    }
+
+    .preset-btn.active {
+      background: rgba(214, 78, 30, 0.45);
+      border-color: rgba(255, 184, 108, 0.55);
+      color: #fff8ed;
+    }
+
+    .hint-text {
+      font-size: 0.69rem;
+      color: rgba(246, 232, 212, 0.58);
+    }
+
+    /* Hidden UI cinema mode */
+    body.ui-hidden .title-pill,
+    body.ui-hidden .control-dock {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+    }
+
+    body.ui-hidden .control-dock {
+      transform: translate(-50%, 16px);
+    }
+
+    /* Loading veil */
+    #loading-veil {
+      position: fixed;
+      inset: 0;
+      background: #070b04;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 30;
+      transition: opacity 0.6s ease;
+    }
+
+    #loading-veil.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 200, 120, 0.18);
+      border-top-color: #ff9f43;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .title-pill p,
+      .hint-text {
+        display: none;
+      }
+      .control-dock {
+        padding: 10px 12px;
+        bottom: max(10px, env(safe-area-inset-bottom));
+      }
+      .top-bar {
+        top: max(10px, env(safe-area-inset-top));
+        left: 10px;
+        right: 10px;
+      }
+      .icon-btn span {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-veil" aria-live="polite">
+    <div class="spinner"></div>
+    <span style="font-size:0.78rem;color:rgba(255,235,205,0.75);letter-spacing:0.02em;">Renderizando luz e nervuras...</span>
+  </div>
+
+  <div id="canvas-container" role="application" aria-label="Cena 3D interativa de uma folha translúcida em contraluz na floresta"></div>
+  <div class="vignette"></div>
+
+  <header class="top-bar">
+    <div class="title-pill">
+      <h1>Folha em Contraluz</h1>
+      <p>Macro botânica 3D · Arraste para orbitar ou toque na folha</p>
+    </div>
+    <div class="top-actions">
+      <button id="btn-audio" class="icon-btn" type="button" aria-pressed="false" title="Ativar ou silenciar som da floresta (M)">
+        <svg id="icon-audio-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <svg id="icon-audio-on" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <span>Som</span>
+      </button>
+      <button id="btn-ui" class="icon-btn" type="button" aria-pressed="false" title="Ocultar ou mostrar controles (H)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span id="ui-btn-label">Cinema</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="control-dock" aria-label="Controles da cena">
+    <div class="controls-grid">
+      <div class="slider-group">
+        <div class="slider-header">
+          <label for="slider-sun">Ângulo do Sol</label>
+          <span class="slider-val" id="val-sun">0°</span>
+        </div>
+        <input id="slider-sun" type="range" min="-100" max="100" value="0" step="1" />
+      </div>
+      <div class="slider-group">
+        <div class="slider-header">
+          <label for="slider-wind">Brisa</label>
+          <span class="slider-val" id="val-wind">35%</span>
+        </div>
+        <input id="slider-wind" type="range" min="0" max="100" value="35" step="1" />
+      </div>
+      <div class="slider-group">
+        <div class="slider-header">
+          <label for="slider-bokeh">Bokeh &amp; Brilho</label>
+          <span class="slider-val" id="val-bokeh">80%</span>
+        </div>
+        <input id="slider-bokeh" type="range" min="20" max="140" value="80" step="1" />
+      </div>
+    </div>
+
+    <div class="dock-footer">
+      <div class="camera-presets" role="group" aria-label="Ângulos de câmera">
+        <button class="preset-btn active" type="button" data-preset="macro">Macro</button>
+        <button class="preset-btn" type="button" data-preset="side">Lateral 3D</button>
+        <button class="preset-btn" type="button" data-preset="low">Contraluz</button>
+        <button class="preset-btn" type="button" id="btn-nudge">Tocar Folha</button>
+      </div>
+      <span class="hint-text">Arraste para girar · Scroll para zoom</span>
+    </div>
+  </section>
+
+  <script src="/Sistema/shared/vendor/three-r128.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      if (typeof THREE === 'undefined') {
+        var veil = document.getElementById('loading-veil');
+        if (veil) veil.innerHTML = '<span style="color:#ffb380;font-size:0.9rem;">Não foi possível carregar o motor 3D.</span>';
+        return;
+      }
+
+      // =========================================================================
+      // 1. STATE & CONFIGURATION
+      // =========================================================================
+      var isPortrait = window.innerWidth < window.innerHeight;
+      var state = {
+        sunShift: 0.0,        // -1 to 1
+        windStrength: 0.35,   // 0 to 1
+        bokehIntensity: 0.80, // 0.2 to 1.4
+        uiHidden: false,
+        audioActive: false,
+        hostMuted: false,
+        isPaused: false,
+        isDisposed: false,
+        // Camera orbit spherical state (smoothly damped)
+        camTargetYaw: 0.0,
+        camTargetPitch: 0.02,
+        camTargetDist: isPortrait ? 6.15 : 5.45,
+        camTargetY: isPortrait ? -0.32 : -0.08,
+        camYaw: 0.0,
+        camPitch: 0.02,
+        camDist: isPortrait ? 6.15 : 5.45,
+        camY: isPortrait ? -0.32 : -0.08,
+        // Spring physics for leaf impulse
+        leafImpulseVelX: 0,
+        leafImpulseVelZ: 0,
+        leafAngleX: 0,
+        leafAngleZ: 0
+      };
+
+      var CAMERA_PRESETS = {
+        macro: { yaw: 0.0, pitch: 0.02, dist: 5.45, y: -0.08 },
+        side:  { yaw: 0.64, pitch: 0.08, dist: 5.05, y: -0.10 },
+        low:   { yaw: -0.26, pitch: -0.24, dist: 4.80, y: -0.24 }
+      };
+
+      // =========================================================================
+      // 2. RENDERER, SCENE & CAMERA
+      // =========================================================================
+      var container = document.getElementById('canvas-container');
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b1206);
+      scene.fog = new THREE.FogExp2(0x121c09, 0.028);
+
+      var camera = new THREE.PerspectiveCamera(
+        isPortrait ? 44 : 38,
+        Math.max(1, window.innerWidth) / Math.max(1, window.innerHeight),
+        0.1,
+        100
+      );
+
+      var renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+        alpha: false
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      // =========================================================================
+      // 3. PROCEDURAL TEXTURES (LEAF ALBEDO/SSS, VEINS, ALPHA CUTOUT, BARK, GRASS)
+      // =========================================================================
+      function mulberry32(seed) {
+        return function () {
+          var t = (seed += 0x6d2b79f5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      // Leaf silhouette function: returns normalized half-width at v in [0,1] (0 = top petiole, 1 = bottom tip)
+      function leafHalfWidth(v) {
+        if (v <= 0.0 || v >= 1.0) return 0.0;
+        var base = Math.sin(Math.pow(Math.max(0, v), 0.76) * Math.PI);
+        var fullness = 0.88 + 0.16 * Math.sin(v * Math.PI * 1.15);
+        return Math.max(0, base * fullness * 0.44);
+      }
+
+      function createLeafTextures() {
+        var W = 1024;
+        var H = 1024;
+        var rand = mulberry32(4219);
+
+        var colorCanvas = document.createElement('canvas');
+        colorCanvas.width = W;
+        colorCanvas.height = H;
+        var cCtx = colorCanvas.getContext('2d');
+
+        // Vein / thickness heightfield (white = thin translucent tissue, dark = thick opaque rib)
+        var veinCanvas = document.createElement('canvas');
+        veinCanvas.width = W;
+        veinCanvas.height = H;
+        var vCtx = veinCanvas.getContext('2d');
+
+        // Alpha cutout canvas (white = leaf present, black = bitten/perforated)
+        var alphaCanvas = document.createElement('canvas');
+        alphaCanvas.width = W;
+        alphaCanvas.height = H;
+        var aCtx = alphaCanvas.getContext('2d');
+
+        function midribX(v) {
+          return W * (0.5 + 0.015 * Math.sin(v * Math.PI * 1.4) - 0.01 * v);
+        }
+
+        // --- A. Rich botanical anthocyanin-amber tissue base ---
+        var grad = cCtx.createRadialGradient(W * 0.52, H * 0.56, 28, W * 0.5, H * 0.48, W * 0.56);
+        grad.addColorStop(0.0, '#ff6822');
+        grad.addColorStop(0.28, '#e0300e');
+        grad.addColorStop(0.64, '#8f1609');
+        grad.addColorStop(1.0, '#360704');
+        cCtx.fillStyle = grad;
+        cCtx.fillRect(0, 0, W, H);
+
+        // Soft organic pigment blotches & translucent sunlit cells
+        for (var i = 0; i < 4200; i++) {
+          var mx = rand() * W;
+          var my = rand() * H;
+          var mr = 2 + rand() * 14;
+          var tone = rand();
+          cCtx.fillStyle = tone > 0.52
+            ? 'rgba(255, 132, 42, ' + (0.035 + rand() * 0.075).toFixed(3) + ')'
+            : tone > 0.12
+              ? 'rgba(56, 7, 4, ' + (0.05 + rand() * 0.11).toFixed(3) + ')'
+              : 'rgba(255, 195, 78, ' + (0.04 + rand() * 0.06).toFixed(3) + ')';
+          cCtx.beginPath();
+          cCtx.arc(mx, my, mr, 0, Math.PI * 2);
+          cCtx.fill();
+        }
+
+        // --- B. Vein / Thickness heightmap ---
+        vCtx.fillStyle = '#ebebeb';
+        vCtx.fillRect(0, 0, W, H);
+
+        // Fine cellular reticulate polygon web (quaternary capillaries)
+        vCtx.lineWidth = 0.9;
+        for (var r = 0; r < 1100; r++) {
+          var rx = W * (0.10 + rand() * 0.80);
+          var ry = H * (0.03 + rand() * 0.94);
+          var len = 10 + rand() * 24;
+          var ang = rand() * Math.PI * 2;
+          vCtx.strokeStyle = 'rgba(85, 85, 85, ' + (0.18 + rand() * 0.24).toFixed(2) + ')';
+          vCtx.beginPath();
+          vCtx.moveTo(rx, ry);
+          vCtx.quadraticCurveTo(
+            rx + Math.cos(ang + 0.35) * len * 0.5,
+            ry + Math.sin(ang + 0.35) * len * 0.5,
+            rx + Math.cos(ang) * len,
+            ry + Math.sin(ang) * len
+          );
+          vCtx.stroke();
+
+          if (r % 3 === 0) {
+            cCtx.strokeStyle = 'rgba(72, 12, 4, 0.14)';
+            cCtx.lineWidth = 0.9;
+            cCtx.beginPath();
+            cCtx.moveTo(rx, ry);
+            cCtx.lineTo(rx + Math.cos(ang) * len, ry + Math.sin(ang) * len);
+            cCtx.stroke();
+          }
+        }
+
+        function drawTaperedCurve(ctx, x0, y0, cx, cy, x1, y1, w0, w1, color) {
+          var steps = 26;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = color;
+          for (var s = 0; s < steps; s++) {
+            var t0 = s / steps;
+            var t1 = (s + 1) / steps;
+            var px0 = (1 - t0) * (1 - t0) * x0 + 2 * (1 - t0) * t0 * cx + t0 * t0 * x1;
+            var py0 = (1 - t0) * (1 - t0) * y0 + 2 * (1 - t0) * t0 * cy + t0 * t0 * y1;
+            var px1 = (1 - t1) * (1 - t1) * x0 + 2 * (1 - t1) * t1 * cx + t1 * t1 * x1;
+            var py1 = (1 - t1) * (1 - t1) * y0 + 2 * (1 - t1) * t1 * cy + t1 * t1 * y1;
+            ctx.lineWidth = w0 + (w1 - w0) * t0;
+            ctx.beginPath();
+            ctx.moveTo(px0, py0);
+            ctx.lineTo(px1, py1);
+            ctx.stroke();
+          }
+        }
+
+        // Arcuate secondary lateral veins + anastomosing margin loops + tertiary rungs
+        var lateralCount = 15;
+        for (var side = -1; side <= 1; side += 2) {
+          var prevEnd = null;
+          for (var lv = 0; lv < lateralCount; lv++) {
+            var vStart = 0.055 + (lv / (lateralCount - 1)) * 0.85 + (side > 0 ? 0.014 : 0.0);
+            if (vStart > 0.945) continue;
+            var hw = leafHalfWidth(vStart) * W;
+            var x0 = midribX(vStart);
+            var y0 = vStart * H;
+            var vEnd = Math.min(0.975, vStart + 0.085 + 0.045 * (1 - vStart));
+            var hwEnd = leafHalfWidth(vEnd) * W;
+            var x1 = midribX(vEnd) + side * hwEnd * 0.94;
+            var y1 = vEnd * H;
+            var cx = x0 + side * hw * 0.62;
+            var cy = y0 + (y1 - y0) * 0.30;
+            var thick = (1 - vStart * 0.52) * 6.4;
+
+            drawTaperedCurve(vCtx, x0, y0, cx, cy, x1, y1, thick, 1.3, '#141414');
+            drawTaperedCurve(cCtx, x0, y0, cx, cy, x1, y1, thick * 1.15, 1.4, 'rgba(34, 5, 2, 0.78)');
+
+            // Marginal anastomosing loop connecting to previous lateral vein
+            if (prevEnd) {
+              var lx = (prevEnd.x + x1) * 0.5 + side * 12;
+              var ly = (prevEnd.y + y1) * 0.5;
+              drawTaperedCurve(vCtx, prevEnd.x, prevEnd.y, lx, ly, x1, y1, 1.6, 1.2, 'rgba(42, 42, 42, 0.65)');
+              drawTaperedCurve(cCtx, prevEnd.x, prevEnd.y, lx, ly, x1, y1, 1.6, 1.2, 'rgba(54, 10, 4, 0.40)');
+            }
+            prevEnd = { x: x1, y: y1 };
+
+            // Tertiary cross-venules & sub-branches
+            for (var sb = 1; sb <= 5; sb++) {
+              var bt = sb / 6;
+              var bx = (1 - bt) * (1 - bt) * x0 + 2 * (1 - bt) * bt * cx + bt * bt * x1;
+              var by = (1 - bt) * (1 - bt) * y0 + 2 * (1 - bt) * bt * cy + bt * bt * y1;
+              var bLen = 22 + rand() * 34;
+              var bDir = (sb % 2 === 0 ? 1 : -1);
+              var bx2 = bx + side * bLen * 0.42;
+              var by2 = by + bDir * bLen * 0.78;
+              vCtx.strokeStyle = 'rgba(44, 44, 44, 0.55)';
+              vCtx.lineWidth = 1.5;
+              vCtx.beginPath();
+              vCtx.moveTo(bx, by);
+              vCtx.lineTo(bx2, by2);
+              vCtx.stroke();
+
+              cCtx.strokeStyle = 'rgba(58, 10, 4, 0.30)';
+              cCtx.lineWidth = 1.5;
+              cCtx.beginPath();
+              cCtx.moveTo(bx, by);
+              cCtx.lineTo(bx2, by2);
+              cCtx.stroke();
+            }
+          }
+        }
+
+        // Main central midrib (thick at petiole, tapering seamlessly to tip)
+        var mSteps = 44;
+        for (var ms = 0; ms < mSteps; ms++) {
+          var mv0 = ms / mSteps;
+          var mv1 = (ms + 1) / mSteps;
+          var mw = 14.5 * (1 - mv0 * 0.84) + 1.8;
+          vCtx.strokeStyle = '#060606';
+          vCtx.lineWidth = mw;
+          vCtx.lineCap = 'round';
+          vCtx.beginPath();
+          vCtx.moveTo(midribX(mv0), mv0 * H);
+          vCtx.lineTo(midribX(mv1), mv1 * H);
+          vCtx.stroke();
+
+          cCtx.strokeStyle = 'rgba(30, 7, 3, 0.90)';
+          cCtx.lineWidth = mw * 1.1;
+          cCtx.lineCap = 'round';
+          cCtx.beginPath();
+          cCtx.moveTo(midribX(mv0), mv0 * H);
+          cCtx.lineTo(midribX(mv1), mv1 * H);
+          cCtx.stroke();
+        }
+
+        // --- C. Alpha Cutout Silhouette with organic bite & insect holes ---
+        aCtx.fillStyle = '#000000';
+        aCtx.fillRect(0, 0, W, H);
+
+        aCtx.fillStyle = '#ffffff';
+        aCtx.beginPath();
+        var contourSteps = 140;
+        for (var cs = 0; cs <= contourSteps; cs++) {
+          var v = cs / contourSteps;
+          var serration = Math.sin(v * Math.PI * 38) * 2.4 + Math.sin(v * Math.PI * 13) * 3.8;
+          var x = midribX(v) + leafHalfWidth(v) * W + serration * Math.sin(v * Math.PI);
+          var y = v * H;
+          if (cs === 0) aCtx.moveTo(x, y);
+          else aCtx.lineTo(x, y);
+        }
+        for (var cs2 = contourSteps; cs2 >= 0; cs2--) {
+          var v2 = cs2 / contourSteps;
+          var serration2 = Math.sin(v2 * Math.PI * 36 + 1.2) * 2.4 + Math.sin(v2 * Math.PI * 11) * 4.2;
+          var x2 = midribX(v2) - leafHalfWidth(v2) * W - serration2 * Math.sin(v2 * Math.PI);
+          var y2 = v2 * H;
+          aCtx.lineTo(x2, y2);
+        }
+        aCtx.closePath();
+        aCtx.fill();
+
+        // Carve out the curved caterpillar bite and insect perforations, painting golden-brown wound rims on colorCtx
+        function carveBite(cx, cy, rx, ry, rot) {
+          aCtx.save();
+          aCtx.globalCompositeOperation = 'destination-out';
+          aCtx.fillStyle = '#000000';
+          aCtx.beginPath();
+          aCtx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2);
+          aCtx.fill();
+          aCtx.restore();
+
+          cCtx.save();
+          cCtx.strokeStyle = 'rgba(65, 28, 6, 0.72)';
+          cCtx.lineWidth = Math.max(2.5, Math.min(rx, ry) * 0.14);
+          cCtx.beginPath();
+          cCtx.ellipse(cx, cy, rx + 2, ry + 2, rot, 0, Math.PI * 2);
+          cCtx.stroke();
+          cCtx.restore();
+        }
+
+        carveBite(W * 0.14, H * 0.31, W * 0.155, H * 0.105, -0.22);
+        carveBite(W * 0.21, H * 0.22, W * 0.055, H * 0.032, 0.30);
+        carveBite(W * 0.82, H * 0.79, W * 0.042, H * 0.036, 0.40);
+
+        var holes = [
+          [0.24, 0.44, 9, 12],
+          [0.23, 0.47, 5, 6],
+          [0.54, 0.89, 18, 22],
+          [0.44, 0.91, 10, 12],
+          [0.37, 0.84, 7, 8],
+          [0.39, 0.82, 5, 5],
+          [0.41, 0.85, 6, 7],
+          [0.47, 0.94, 8, 9],
+          [0.57, 0.82, 6, 7],
+          [0.61, 0.85, 5, 6],
+          [0.60, 0.78, 4, 5],
+          [0.35, 0.88, 6, 7],
+          [0.33, 0.78, 5, 5],
+          [0.51, 0.95, 6, 8],
+          [0.46, 0.87, 4, 5]
+        ];
+        for (var h = 0; h < holes.length; h++) {
+          var hole = holes[h];
+          carveBite(W * hole[0], H * hole[1], hole[2], hole[3], rand() * Math.PI);
+        }
+
+        var colorTex = new THREE.CanvasTexture(colorCanvas);
+        colorTex.encoding = THREE.sRGBEncoding;
+        colorTex.anisotropy = 4;
+
+        var veinTex = new THREE.CanvasTexture(veinCanvas);
+        veinTex.anisotropy = 4;
+
+        var alphaTex = new THREE.CanvasTexture(alphaCanvas);
+        alphaTex.anisotropy = 4;
+
+        return { colorTex: colorTex, veinTex: veinTex, alphaTex: alphaTex };
+      }
+
+      // Procedural woody bark diffuse + bump textures
+      function createBarkTextures() {
+        var W = 512, H = 512;
+        var c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        var ctx = c.getContext('2d');
+
+        var b = document.createElement('canvas');
+        b.width = W; b.height = H;
+        var bCtx = b.getContext('2d');
+
+        var rand = mulberry32(991);
+
+        ctx.fillStyle = '#2d2116';
+        ctx.fillRect(0, 0, W, H);
+        bCtx.fillStyle = '#808080';
+        bCtx.fillRect(0, 0, W, H);
+
+        for (var i = 0; i < 720; i++) {
+          var x = rand() * W;
+          var y = rand() * H;
+          var h = 28 + rand() * 145;
+          var w = 1 + rand() * 4.5;
+          var light = rand() > 0.55;
+          ctx.fillStyle = light
+            ? 'rgba(98, 74, 48, ' + (0.14 + rand() * 0.2).toFixed(2) + ')'
+            : 'rgba(16, 11, 6, ' + (0.25 + rand() * 0.35).toFixed(2) + ')';
+          ctx.fillRect(x, y, w, h);
+
+          bCtx.fillStyle = light ? 'rgba(220,220,220,0.22)' : 'rgba(20,20,20,0.34)';
+          bCtx.fillRect(x, y, w, h);
+        }
+
+        for (var j = 0; j < 280; j++) {
+          var lx = rand() * W, ly = rand() * H, lr = 1 + rand() * 3.2;
+          ctx.fillStyle = 'rgba(122, 104, 70, 0.17)';
+          ctx.beginPath();
+          ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+          ctx.fill();
+
+          bCtx.fillStyle = 'rgba(230,230,230,0.16)';
+          bCtx.beginPath();
+          bCtx.arc(lx, ly, lr, 0, Math.PI * 2);
+          bCtx.fill();
+        }
+
+        var tex = new THREE.CanvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(1, 5);
+        tex.encoding = THREE.sRGBEncoding;
+
+        var bumpTex = new THREE.CanvasTexture(b);
+        bumpTex.wrapS = THREE.RepeatWrapping;
+        bumpTex.wrapT = THREE.RepeatWrapping;
+        bumpTex.repeat.set(1, 5);
+
+        return { map: tex, bumpMap: bumpTex };
+      }
+
+      // Procedural parallel-veined grass blade texture
+      function createGrassTexture() {
+        var W = 128, H = 512;
+        var c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        var ctx = c.getContext('2d');
+
+        var grad = ctx.createLinearGradient(0, H, 0, 0);
+        grad.addColorStop(0.0, '#243d0b');
+        grad.addColorStop(0.55, '#467418');
+        grad.addColorStop(1.0, '#789c2a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Longitudinal parallel leaf veins
+        for (var x = 4; x < W; x += 6) {
+          var isMid = Math.abs(x - W * 0.5) < 5;
+          ctx.fillStyle = isMid ? 'rgba(210, 232, 120, 0.42)' : 'rgba(24, 42, 6, 0.28)';
+          ctx.fillRect(x, 0, isMid ? 4 : 2, H);
+        }
+        var tex = new THREE.CanvasTexture(c);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      // Creamy photographic f/1.8 lens bokeh texture
+      function createBokehTexture(type) {
+        var S = 256;
+        var c = document.createElement('canvas');
+        c.width = S; c.height = S;
+        var ctx = c.getContext('2d');
+        var cx = S / 2;
+        var g = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
+        if (type === 'disc') {
+          // Creamy out-of-focus bokeh circle with ultra-soft rim
+          g.addColorStop(0.0, 'rgba(255,255,255,0.52)');
+          g.addColorStop(0.55, 'rgba(255,255,255,0.56)');
+          g.addColorStop(0.78, 'rgba(255,255,255,0.62)');
+          g.addColorStop(0.90, 'rgba(255,255,255,0.18)');
+          g.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+        } else {
+          g.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+          g.addColorStop(0.32, 'rgba(255,255,255,0.55)');
+          g.addColorStop(0.72, 'rgba(255,255,255,0.12)');
+          g.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+        }
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, S, S);
+        var tex = new THREE.CanvasTexture(c);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      var leafTextures = createLeafTextures();
+      var barkTextures = createBarkTextures();
+      var grassTex = createGrassTexture();
+      var bokehDiscTex = createBokehTexture('disc');
+      var softGlowTex = createBokehTexture('glow');
+
+      // =========================================================================
+      // 4. LIGHTING SETUP
+      // =========================================================================
+      var ambientLight = new THREE.HemisphereLight(0x9fc2a8, 0x16220b, 0.55);
+      scene.add(ambientLight);
+
+      var sunLight = new THREE.DirectionalLight(0xffdf9e, 3.1);
+      sunLight.position.set(0.7, -0.55, -7.5);
+      scene.add(sunLight);
+
+      var rimLight = new THREE.DirectionalLight(0xffc96b, 2.2);
+      rimLight.position.set(-2.5, 4.5, -5.0);
+      scene.add(rimLight);
+
+      var fillLight = new THREE.DirectionalLight(0x7c8e58, 0.58);
+      fillLight.position.set(1.5, 1.0, 5.0);
+      scene.add(fillLight);
+
+      // =========================================================================
+      // 5. HERO LEAF (3D CURVED MESH + 3D VEIN RELIEF + SSS GLSL SHADER)
+      // =========================================================================
+      var leafPivot = new THREE.Group();
+      leafPivot.position.set(-0.08, 1.38, 0.04);
+      scene.add(leafPivot);
+
+      function buildLeafGeometry() {
+        var segX = 48;
+        var segY = 72;
+        var width = 2.02;
+        var height = 2.88;
+        var geom = new THREE.PlaneGeometry(width, height, segX, segY);
+        var pos = geom.attributes.position;
+
+        for (var i = 0; i < pos.count; i++) {
+          var x = pos.getX(i);
+          var y = pos.getY(i);
+          var ny = y - height * 0.5;
+          var v = -ny / height;
+          var u = x / (width * 0.5);
+
+          var archZ = Math.sin(v * Math.PI) * 0.16;
+          var cupZ = -Math.pow(Math.abs(u), 1.65) * 0.14 * Math.sin(v * Math.PI);
+          var veinV = Math.abs(u) * 0.045 * Math.sin(v * Math.PI);
+          var rippleZ = Math.sin(v * 11.0 + u * 3.0) * 0.018 * Math.sin(v * Math.PI);
+          var twistX = x + Math.sin(v * Math.PI * 1.2) * 0.035;
+
+          pos.setXYZ(i, twistX, ny - 0.16, archZ + cupZ + veinV + rippleZ);
+        }
+        geom.computeVertexNormals();
+        return geom;
+      }
+
+      var leafUniforms = {
+        uColorMap: { value: leafTextures.colorTex },
+        uVeinMap: { value: leafTextures.veinTex },
+        uAlphaMap: { value: leafTextures.alphaTex },
+        uSunPos: { value: new THREE.Vector3(0.45, -0.55, -3.5) },
+        uTime: { value: 0 },
+        uWind: { value: state.windStrength },
+        uBokeh: { value: state.bokehIntensity }
+      };
+
+      var leafVertexShader = [
+        'uniform float uTime;',
+        'uniform float uWind;',
+        'varying vec2 vUv;',
+        'varying vec3 vWorldPos;',
+        'varying vec3 vWorldNormal;',
+        'varying vec3 vWorldTangent;',
+        'void main() {',
+        '  vUv = uv;',
+        '  vec3 p = position;',
+        '  float tip = clamp(-p.y / 3.0, 0.0, 1.0);',
+        '  float flutter = sin(uTime * 2.6 + p.y * 2.4 + p.x * 3.2) * 0.032 * tip * (0.25 + uWind);',
+        '  float curl = cos(uTime * 1.4 + p.y * 1.5) * 0.024 * tip * tip * (0.2 + uWind);',
+        '  p.z += flutter + curl;',
+        '  p.x += sin(uTime * 1.7 + p.y * 1.2) * 0.015 * tip * (0.2 + uWind);',
+        '  vec4 worldPosition = modelMatrix * vec4(p, 1.0);',
+        '  vWorldPos = worldPosition.xyz;',
+        '  vWorldNormal = normalize(mat3(modelMatrix) * normal);',
+        '  vWorldTangent = normalize(mat3(modelMatrix) * vec3(1.0, 0.0, 0.0));',
+        '  gl_Position = projectionMatrix * viewMatrix * worldPosition;',
+        '}'
+      ].join('\n');
+
+      var leafFragmentShader = [
+        'uniform sampler2D uColorMap;',
+        'uniform sampler2D uVeinMap;',
+        'uniform sampler2D uAlphaMap;',
+        'uniform vec3 uSunPos;',
+        'uniform float uTime;',
+        'uniform float uBokeh;',
+        'varying vec2 vUv;',
+        'varying vec3 vWorldPos;',
+        'varying vec3 vWorldNormal;',
+        'varying vec3 vWorldTangent;',
+        'void main() {',
+        '  float alpha = texture2D(uAlphaMap, vUv).r;',
+        '  if (alpha < 0.42) discard;',
+        '',
+        '  vec3 baseCol = texture2D(uColorMap, vUv).rgb;',
+        '  float thinness = texture2D(uVeinMap, vUv).r;',
+        '  float tissueTrans = pow(clamp(thinness, 0.0, 1.0), 1.60);',
+        '',
+        '  // 3D normal perturbation from vein & cellular heightfield',
+        '  vec2 texel = vec2(1.0 / 1024.0);',
+        '  float hL = texture2D(uVeinMap, vUv - vec2(texel.x * 2.0, 0.0)).r;',
+        '  float hR = texture2D(uVeinMap, vUv + vec2(texel.x * 2.0, 0.0)).r;',
+        '  float hD = texture2D(uVeinMap, vUv - vec2(0.0, texel.y * 2.0)).r;',
+        '  float hU = texture2D(uVeinMap, vUv + vec2(0.0, texel.y * 2.0)).r;',
+        '  vec3 N = normalize(vWorldNormal);',
+        '  if (!gl_FrontFacing) N = -N;',
+        '  vec3 T = normalize(vWorldTangent - N * dot(N, vWorldTangent));',
+        '  vec3 B = cross(N, T);',
+        '  float bumpScale = 0.72;',
+        '  N = normalize(N + T * (hL - hR) * bumpScale + B * (hD - hU) * bumpScale);',
+        '',
+        '  vec3 V = normalize(cameraPosition - vWorldPos);',
+        '  vec3 toSun = uSunPos - vWorldPos;',
+        '  float sunDist = length(toSun);',
+        '  vec3 L = toSun / max(sunDist, 0.001);',
+        '',
+        '  // Localized subsurface glow where the sun sits behind the lower-right leaf blade',
+        '  vec2 sunProj = uSunPos.xy * 0.46;',
+        '  vec2 sunScreenDiff = (vWorldPos.xy - sunProj);',
+        '  float radialHotspot = exp(-dot(sunScreenDiff, sunScreenDiff) * 1.45);',
+        '  float broadGlow = exp(-dot(sunScreenDiff, sunScreenDiff) * 0.28);',
+        '',
+        '  float backAlign = pow(max(dot(V, -L), 0.0), 2.2);',
+        '  float wrapDiff = max(0.0, dot(N, L) * 0.45 + 0.55);',
+        '  float sss = (0.34 + 1.25 * backAlign + 1.40 * radialHotspot + 0.60 * broadGlow) * tissueTrans * (0.65 + uBokeh * 0.44);',
+        '',
+        '  // Diagonal soft shadow cast by the descending woody branch across upper-right lamina',
+        '  vec2 p2 = vWorldPos.xy;',
+        '  vec2 a = vec2(-0.08, 1.38);',
+        '  vec2 b = vec2(1.45, -0.58);',
+        '  vec2 ba = b - a;',
+        '  float tProj = clamp(dot(p2 - a, ba) / dot(ba, ba), 0.0, 1.0);',
+        '  float distToBranch = length((p2 - a) - ba * tProj);',
+        '  float branchShadow = smoothstep(0.09, 0.28, distToBranch);',
+        '  float topShadow = smoothstep(-0.35, 0.45, vUv.y * -1.0 + 0.92);',
+        '  float shadowFactor = mix(0.35, 1.0, branchShadow) * mix(0.64, 1.0, topShadow);',
+        '',
+        '  vec3 deepCrimson = vec3(0.22, 0.022, 0.010);',
+        '  vec3 glowingRed  = vec3(0.98, 0.19, 0.03);',
+        '  vec3 amberCore   = vec3(1.0, 0.66, 0.16);',
+        '',
+        '  vec3 transColor = mix(deepCrimson, baseCol * 1.45, 0.55);',
+        '  transColor = mix(transColor, glowingRed, clamp(sss * 0.58, 0.0, 1.0));',
+        '  transColor += amberCore * pow(radialHotspot, 1.8) * tissueTrans * 1.15;',
+        '',
+        '  // Crisp dark vein silhouette contrast',
+        '  vec3 veinColor = vec3(0.09, 0.020, 0.010);',
+        '  vec3 color = mix(veinColor, transColor, smoothstep(0.10, 0.76, thinness));',
+        '',
+        '  color *= shadowFactor * (0.74 + 0.26 * wrapDiff);',
+        '',
+        '  // Sunlit rim glow along bitten edge & insect perforations',
+        '  float edgeBand = smoothstep(0.42, 0.72, alpha) * (1.0 - smoothstep(0.72, 0.96, alpha));',
+        '  float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);',
+        '  color += vec3(1.0, 0.62, 0.20) * (edgeBand * 0.92 + fresnel * 0.28) * (0.45 + radialHotspot);',
+        '',
+        '  // Waxy cuticle specular highlight across raised veins',
+        '  vec3 H = normalize(L + V);',
+        '  float spec = pow(max(dot(N, H), 0.0), 42.0) * 0.22 * (0.4 + 0.6 * tissueTrans);',
+        '  color += vec3(1.0, 0.85, 0.60) * spec;',
+        '',
+        '  gl_FragColor = vec4(color, 1.0);',
+        '}'
+      ].join('\n');
+
+      var leafMaterial = new THREE.ShaderMaterial({
+        uniforms: leafUniforms,
+        vertexShader: leafVertexShader,
+        fragmentShader: leafFragmentShader,
+        side: THREE.DoubleSide
+      });
+
+      var leafMesh = new THREE.Mesh(buildLeafGeometry(), leafMaterial);
+      leafMesh.name = 'heroLeaf';
+      leafPivot.add(leafMesh);
+
+      var barkMat = new THREE.MeshStandardMaterial({
+        map: barkTextures.map,
+        bumpMap: barkTextures.bumpMap,
+        bumpScale: 0.018,
+        color: 0x62482f,
+        roughness: 0.86,
+        metalness: 0.02
+      });
+
+      // Petiole connecting woody node seamlessly into the leaf midrib
+      var petioleCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0.0, 0.12, -0.04),
+        new THREE.Vector3(-0.018, -0.02, -0.01),
+        new THREE.Vector3(0.0, -0.22, 0.015),
+        new THREE.Vector3(0.01, -0.45, 0.032)
+      ]);
+      var petioleGeom = new THREE.TubeGeometry(petioleCurve, 18, 0.028, 10, false);
+      var petioleMesh = new THREE.Mesh(petioleGeom, barkMat);
+      leafPivot.add(petioleMesh);
+
+      // Morning dewdrops clinging to the translucent blade
+      var dewMat = new THREE.MeshPhysicalMaterial({
+        color: 0xfff8ea,
+        roughness: 0.04,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.82,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.02
+      });
+      var dewGeom = new THREE.SphereGeometry(1, 16, 12);
+      [
+        { pos: [0.34, -1.65, 0.135], scale: [0.026, 0.022, 0.016] },
+        { pos: [-0.28, -2.02, 0.115], scale: [0.020, 0.018, 0.013] },
+        { pos: [0.18, -2.35, 0.075], scale: [0.015, 0.014, 0.011] }
+      ].forEach(function (d) {
+        var drop = new THREE.Mesh(dewGeom, dewMat);
+        drop.position.set(d.pos[0], d.pos[1], d.pos[2]);
+        drop.scale.set(d.scale[0], d.scale[1], d.scale[2]);
+        leafPivot.add(drop);
+      });
+
+      // =========================================================================
+      // 6. FORKED WOODY BRANCH & TWIGS
+      // =========================================================================
+      var branchGroup = new THREE.Group();
+      scene.add(branchGroup);
+
+      function addTaperedBranch(points, rStart, rEnd, radialSegs) {
+        var curve = new THREE.CatmullRomCurve3(points);
+        var tubularSegs = 40;
+        var segs = radialSegs || 12;
+        var geom = new THREE.TubeGeometry(curve, tubularSegs, 1.0, segs, false);
+        var pos = geom.attributes.position;
+        var v = new THREE.Vector3();
+        var c = new THREE.Vector3();
+        for (var i = 0; i <= tubularSegs; i++) {
+          var t = i / tubularSegs;
+          var r = rStart + (rEnd - rStart) * t;
+          r *= 1.0 + 0.08 * Math.sin(t * 19.0);
+          curve.getPointAt(t, c);
+          for (var j = 0; j <= segs; j++) {
+            var idx = i * (segs + 1) + j;
+            v.fromBufferAttribute(pos, idx);
+            v.sub(c).multiplyScalar(r).add(c);
+            pos.setXYZ(idx, v.x, v.y, v.z);
+          }
+        }
+        geom.computeVertexNormals();
+        var mesh = new THREE.Mesh(geom, barkMat);
+        branchGroup.add(mesh);
+        return mesh;
+      }
+
+      addTaperedBranch([
+        new THREE.Vector3(-3.4, 3.05, -0.25),
+        new THREE.Vector3(-1.6, 2.02, -0.10),
+        new THREE.Vector3(-0.08, 1.48, -0.02),
+        new THREE.Vector3(0.82, 0.35, 0.14),
+        new THREE.Vector3(2.15, -1.15, 0.25),
+        new THREE.Vector3(3.10, -2.25, 0.32)
+      ], 0.048, 0.068, 12);
+
+      addTaperedBranch([
+        new THREE.Vector3(-0.06, 1.48, -0.04),
+        new THREE.Vector3(0.68, 2.15, -0.12),
+        new THREE.Vector3(1.55, 2.95, -0.24),
+        new THREE.Vector3(2.35, 3.75, -0.35)
+      ], 0.082, 0.052, 12);
+
+      addTaperedBranch([
+        new THREE.Vector3(-1.25, 1.88, -0.08),
+        new THREE.Vector3(-2.35, 2.28, -0.18),
+        new THREE.Vector3(-3.55, 2.55, -0.30)
+      ], 0.032, 0.014, 8);
+
+      var nodeGeom = new THREE.DodecahedronGeometry(0.115, 2);
+      var nPos = nodeGeom.attributes.position;
+      for (var ni = 0; ni < nPos.count; ni++) {
+        var nx = nPos.getX(ni), ny = nPos.getY(ni), nz = nPos.getZ(ni);
+        var bump = 1.0 + 0.14 * Math.sin(nx * 24 + ny * 18);
+        nPos.setXYZ(ni, nx * 0.9 * bump, ny * 1.25 * bump, nz * 0.9 * bump);
+      }
+      nodeGeom.computeVertexNormals();
+      var nodeMesh = new THREE.Mesh(nodeGeom, barkMat);
+      nodeMesh.position.set(-0.08, 1.50, -0.01);
+      branchGroup.add(nodeMesh);
+
+      // =========================================================================
+      // 7. OCCLUDED SUN DISC (BEHIND LEAF) + OPTICAL DIFFRACTION FLARE (IN FRONT)
+      // =========================================================================
+      var sunDiscMat = new THREE.ShaderMaterial({
+        uniforms: { uIntensity: { value: 1.0 } },
+        vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: [
+          'uniform float uIntensity;',
+          'varying vec2 vUv;',
+          'void main() {',
+          '  float r = length((vUv - 0.5) * 2.0);',
+          '  float core = exp(-r * r * 28.0) * 2.4 + exp(-r * 6.5) * 0.9;',
+          '  vec3 col = mix(vec3(1.0, 0.72, 0.25), vec3(1.0, 0.98, 0.92), clamp(core * 0.5, 0.0, 1.0)) * core;',
+          '  float edge = 1.0 - smoothstep(0.68, 1.0, r);',
+          '  gl_FragColor = vec4(col * edge * uIntensity, 1.0);',
+          '}'
+        ].join('\n'),
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        depthTest: true
+      });
+      var sunDiscMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), sunDiscMat);
+      sunDiscMesh.position.set(0.32, -0.36, -1.9);
+      sunDiscMesh.renderOrder = 4;
+      scene.add(sunDiscMesh);
+
+      var flareUniforms = {
+        uTime: { value: 0 },
+        uIntensity: { value: 1.0 }
+      };
+
+      var flareMat = new THREE.ShaderMaterial({
+        uniforms: flareUniforms,
+        vertexShader: [
+          'varying vec2 vUv;',
+          'void main() {',
+          '  vUv = uv;',
+          '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+          '}'
+        ].join('\n'),
+        fragmentShader: [
+          'uniform float uTime;',
+          'uniform float uIntensity;',
+          'varying vec2 vUv;',
+          'void main() {',
+          '  vec2 p = (vUv - 0.5) * 2.0;',
+          '  float r = length(p);',
+          '  float angle = atan(p.y, p.x);',
+          '',
+          '  // Soft optical bloom & 12-point aperture starburst (never washes out leaf veins)',
+          '  float core = exp(-r * r * 95.0) * 0.65 + exp(-r * 9.0) * 0.42;',
+          '  float halo = exp(-r * 3.1) * 0.30;',
+          '  float ray1 = pow(abs(cos(angle * 6.0 + 0.18 + sin(uTime * 0.5) * 0.02)), 28.0);',
+          '  float ray2 = pow(abs(cos(angle * 6.0 + 0.70)), 14.0) * 0.42;',
+          '  float rays = (ray1 + ray2) * exp(-r * 2.75) * 1.15;',
+          '',
+          '  vec3 col = vec3(1.0, 0.96, 0.88) * core;',
+          '  col += vec3(1.0, 0.70, 0.25) * (halo + rays);',
+          '',
+          '  // Magenta-rose optical lens ghost',
+          '  vec2 ghostPos = p - vec2(-0.14, -0.09);',
+          '  float gr = length(ghostPos);',
+          '  float ghostDisc = smoothstep(0.115, 0.088, gr) * (0.42 + 0.58 * smoothstep(0.03, 0.098, gr));',
+          '  col += vec3(0.95, 0.14, 0.48) * ghostDisc * 0.46;',
+          '',
+          '  // Chromatic diagonal diffraction streak',
+          '  float ca = cos(0.32), sa = sin(0.32);',
+          '  vec2 sp = vec2(p.x * ca + p.y * sa, -p.x * sa + p.y * ca);',
+          '  float along = smoothstep(0.15, -0.95, sp.x) * smoothstep(-1.05, -0.05, sp.x);',
+          '  float across = exp(-abs(sp.y) * 46.0);',
+          '  float acrossWide = exp(-abs(sp.y) * 16.0);',
+          '  vec3 rainbow = vec3(',
+          '    exp(-abs(sp.y - 0.012) * 38.0),',
+          '    exp(-abs(sp.y) * 42.0),',
+          '    exp(-abs(sp.y + 0.013) * 38.0)',
+          '  );',
+          '  col += (rainbow * 0.62 + vec3(0.75, 0.88, 1.0) * across * 0.42 + vec3(1.0, 0.72, 0.42) * acrossWide * 0.16) * along * 0.88;',
+          '',
+          '  float edgeFade = 1.0 - smoothstep(0.78, 1.0, r);',
+          '  col *= edgeFade * uIntensity;',
+          '  gl_FragColor = vec4(col, 1.0);',
+          '}'
+        ].join('\n'),
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        depthTest: false
+      });
+
+      var sunFlareMesh = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 5.6), flareMat);
+      sunFlareMesh.position.set(0.30, -0.34, 0.28);
+      sunFlareMesh.renderOrder = 20;
+      scene.add(sunFlareMesh);
+
+      // =========================================================================
+      // 8. TROPICAL FOREST BACKGROUND & CREAMY BOKEH CANOPY
+      // =========================================================================
+      var bgUniforms = {
+        uTime: { value: 0 },
+        uBokeh: { value: state.bokehIntensity }
+      };
+
+      var bgMat = new THREE.ShaderMaterial({
+        uniforms: bgUniforms,
+        vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: [
+          'uniform float uTime;',
+          'uniform float uBokeh;',
+          'varying vec2 vUv;',
+          'float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+          'float noise(vec2 p) {',
+          '  vec2 i = floor(p); vec2 f = fract(p);',
+          '  vec2 u = f * f * (3.0 - 2.0 * f);',
+          '  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),',
+          '             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);',
+          '}',
+          'void main() {',
+          '  vec2 uv = vUv;',
+          '  vec3 deepForest = vec3(0.030, 0.058, 0.015);',
+          '  vec3 midCanopy  = vec3(0.10, 0.18, 0.032);',
+          '  vec3 sunlitGold = vec3(0.55, 0.62, 0.09);',
+          '  vec3 skyBlue    = vec3(0.60, 0.79, 0.95);',
+          '',
+          '  float n1 = noise(uv * 5.0 + vec2(0.0, uTime * 0.015));',
+          '  float n2 = noise(uv * 11.0 - vec2(uTime * 0.01, 0.0));',
+          '  float canopyGap = smoothstep(0.46, 0.78, n1 * 0.65 + n2 * 0.35 + (uv.y - 0.42) * 0.65);',
+          '',
+          '  vec3 col = mix(deepForest, midCanopy, smoothstep(0.1, 0.72, uv.y));',
+          '  float upperRight = smoothstep(0.32, 0.88, uv.x) * smoothstep(0.42, 0.95, uv.y);',
+          '  col = mix(col, sunlitGold, upperRight * 0.72 * uBokeh);',
+          '  col = mix(col, skyBlue, canopyGap * smoothstep(0.35, 0.85, uv.y) * 0.76);',
+          '',
+          '  float trunk = exp(-pow((uv.x - 0.30) * 14.0, 2.0)) * smoothstep(0.85, 0.15, uv.y);',
+          '  col *= (1.0 - trunk * 0.68);',
+          '',
+          '  gl_FragColor = vec4(col, 1.0);',
+          '}'
+        ].join('\n'),
+        depthWrite: false
+      });
+
+      var bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(42, 32), bgMat);
+      bgPlane.position.set(0, 0, -14);
+      scene.add(bgPlane);
+
+      var bokehGroup = new THREE.Group();
+      scene.add(bokehGroup);
+
+      var bokehCount = 95;
+      var bokehGeom = new THREE.PlaneGeometry(1, 1);
+      var bokehMat = new THREE.MeshBasicMaterial({
+        map: bokehDiscTex,
+        transparent: true,
+        opacity: 0.44,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      var bokehInst = new THREE.InstancedMesh(bokehGeom, bokehMat, bokehCount);
+      var randBokeh = mulberry32(7731);
+      var dummy = new THREE.Object3D();
+      var bColor = new THREE.Color();
+      var bokehBaseData = [];
+
+      var bokehPalette = [
+        0xd8e242,
+        0xf7d854,
+        0x79a828,
+        0xa8d4f5,
+        0xffc862,
+        0x527a18
+      ];
+
+      for (var bi = 0; bi < bokehCount; bi++) {
+        var bx, by, bz, scale;
+        if (bi < 32) {
+          bx = 0.6 + randBokeh() * 5.8;
+          by = 0.7 + randBokeh() * 4.2;
+          bz = -4.5 - randBokeh() * 6.5;
+          scale = 0.90 + randBokeh() * 1.55;
+          bColor.setHex(bi % 3 === 0 ? 0xfbe158 : 0xbad634);
+        } else if (bi < 58) {
+          bx = -4.8 + randBokeh() * 9.2;
+          by = -3.8 + randBokeh() * 4.4;
+          bz = -3.5 - randBokeh() * 6.0;
+          scale = 0.24 + randBokeh() * 0.56;
+          bColor.setHex(bi % 2 === 0 ? 0xffd56b : 0xaad138);
+        } else {
+          bx = -5.4 + randBokeh() * 7.0;
+          by = 0.4 + randBokeh() * 4.6;
+          bz = -5.0 - randBokeh() * 6.5;
+          scale = 0.70 + randBokeh() * 1.40;
+          bColor.setHex(bokehPalette[Math.floor(randBokeh() * bokehPalette.length)]);
+        }
+
+        dummy.position.set(bx, by, bz);
+        dummy.scale.set(scale, scale, 1);
+        dummy.updateMatrix();
+        bokehInst.setMatrixAt(bi, dummy.matrix);
+        bokehInst.setColorAt(bi, bColor);
+        bokehBaseData.push({
+          x: bx, y: by, z: bz, s: scale,
+          phase: randBokeh() * Math.PI * 2,
+          speed: 0.4 + randBokeh() * 0.6
+        });
+      }
+      bokehInst.instanceMatrix.needsUpdate = true;
+      if (bokehInst.instanceColor) bokehInst.instanceColor.needsUpdate = true;
+      bokehGroup.add(bokehInst);
+
+      // =========================================================================
+      // 9. FOREGROUND CURVED TROPICAL GRASS BLADES (TEXTURED & RIM-LIT)
+      // =========================================================================
+      var grassGroup = new THREE.Group();
+      scene.add(grassGroup);
+      var grassBlades = [];
+
+      var grassMat = new THREE.MeshStandardMaterial({
+        map: grassTex,
+        color: 0xffffff,
+        emissive: 0x2a4006,
+        emissiveIntensity: 0.42,
+        roughness: 0.34,
+        metalness: 0.04,
+        side: THREE.DoubleSide
+      });
+
+      function createGrassBlade(x, y, z, length, width, arch, rotY, rotZ) {
+        var segs = 16;
+        var geom = new THREE.PlaneGeometry(width, length, 2, segs);
+        var pos = geom.attributes.position;
+        for (var i = 0; i < pos.count; i++) {
+          var gx = pos.getX(i);
+          var gy = pos.getY(i) + length * 0.5;
+          var t = THREE.MathUtils.clamp(gy / length, 0, 1);
+          var taper = Math.sin(Math.pow(Math.max(0, 1 - t), 0.72) * Math.PI * 0.5);
+          var curveZ = Math.pow(t, 1.9) * arch;
+          var curveX = Math.pow(t, 1.7) * arch * 0.55;
+          pos.setXYZ(i, gx * taper + curveX, gy, curveZ);
+        }
+        geom.computeVertexNormals();
+        geom.computeBoundingBox();
+        geom.computeBoundingSphere();
+
+        var mesh = new THREE.Mesh(geom, grassMat);
+        mesh.position.set(x, y, z);
+        mesh.rotation.set(0, rotY, rotZ);
+        grassGroup.add(mesh);
+        grassBlades.push({
+          mesh: mesh,
+          baseRotZ: rotZ,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      createGrassBlade(2.15, -3.15, -0.55, 2.8, 0.20, 0.9, -0.4, 0.58);
+      createGrassBlade(2.55, -3.25, -0.85, 3.1, 0.22, 1.1, -0.25, 0.72);
+      createGrassBlade(1.75, -3.35, -1.15, 2.6, 0.18, 0.85, -0.55, 0.46);
+      createGrassBlade(2.80, -2.90, -1.45, 2.9, 0.19, 1.0, -0.15, 0.84);
+      createGrassBlade(1.25, -3.50, -1.65, 2.3, 0.16, 0.7, -0.6, 0.34);
+      createGrassBlade(2.45, -1.10, -1.80, 2.7, 0.23, 0.75, -0.35, 0.62);
+
+      // =========================================================================
+      // 10. DRIFTING SUNLIT FOREST POLLEN / DUST MOTES
+      // =========================================================================
+      var moteCount = 72;
+      var moteGeom = new THREE.BufferGeometry();
+      var motePositions = new Float32Array(moteCount * 3);
+      var moteMeta = [];
+      var randMote = mulberry32(3141);
+
+      for (var mi = 0; mi < moteCount; mi++) {
+        var mx = (randMote() - 0.5) * 7.5;
+        var my = (randMote() - 0.5) * 6.0;
+        var mz = -2.2 + randMote() * 3.8;
+        motePositions[mi * 3] = mx;
+        motePositions[mi * 3 + 1] = my;
+        motePositions[mi * 3 + 2] = mz;
+        moteMeta.push({
+          bx: mx, by: my, bz: mz,
+          speed: 0.22 + randMote() * 0.45,
+          phase: randMote() * Math.PI * 2,
+          amp: 0.12 + randMote() * 0.22
+        });
+      }
+      moteGeom.setAttribute('position', new THREE.BufferAttribute(motePositions, 3));
+      var moteMat = new THREE.PointsMaterial({
+        map: softGlowTex,
+        color: 0xffe4a0,
+        size: 0.085,
+        transparent: true,
+        opacity: 0.58,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      var motes = new THREE.Points(moteGeom, moteMat);
+      scene.add(motes);
+
+      // =========================================================================
+      // 11. INTERACTIVE ORBIT, ZOOM, KEYBOARD & LEAF TAP PHYSICS
+      // =========================================================================
+      var isDragging = false;
+      var dragDistance = 0;
+      var prevPointer = { x: 0, y: 0 };
+      var raycaster = new THREE.Raycaster();
+      var pointerNDC = new THREE.Vector2();
+      var presetBtns = document.querySelectorAll('.preset-btn[data-preset]');
+
+      function clearPresetActive() {
+        presetBtns.forEach(function (b) { b.classList.remove('active'); });
+      }
+
+      function nudgeLeaf(strengthX, strengthZ) {
+        state.leafImpulseVelZ += strengthZ;
+        state.leafImpulseVelX += strengthX;
+      }
+
+      function onPointerDown(e) {
+        isDragging = true;
+        dragDistance = 0;
+        prevPointer.x = e.clientX;
+        prevPointer.y = e.clientY;
+        try { container.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+
+      function onPointerMove(e) {
+        if (!isDragging) return;
+        var dx = e.clientX - prevPointer.x;
+        var dy = e.clientY - prevPointer.y;
+        dragDistance += Math.hypot(dx, dy);
+        prevPointer.x = e.clientX;
+        prevPointer.y = e.clientY;
+        if (dragDistance > 6) clearPresetActive();
+
+        state.camTargetYaw = THREE.MathUtils.clamp(state.camTargetYaw - dx * 0.0045, -1.15, 1.15);
+        state.camTargetPitch = THREE.MathUtils.clamp(state.camTargetPitch + dy * 0.0038, -0.52, 0.58);
+      }
+
+      function onPointerUp(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        try { container.releasePointerCapture(e.pointerId); } catch (err) {}
+
+        if (dragDistance < 8) {
+          var rect = renderer.domElement.getBoundingClientRect();
+          pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          raycaster.setFromCamera(pointerNDC, camera);
+          var hits = raycaster.intersectObject(leafMesh, false);
+          if (hits.length > 0) {
+            var dir = hits[0].point.x >= 0 ? -1 : 1;
+            nudgeLeaf((Math.random() - 0.5) * 0.35 + 0.25, dir * (0.55 + Math.random() * 0.35));
+          }
+        }
+      }
+
+      function onWheel(e) {
+        e.preventDefault();
+        clearPresetActive();
+        state.camTargetDist = THREE.MathUtils.clamp(state.camTargetDist + e.deltaY * 0.003, 3.3, 7.6);
+      }
+
+      container.addEventListener('pointerdown', onPointerDown);
+      container.addEventListener('pointermove', onPointerMove);
+      container.addEventListener('pointerup', onPointerUp);
+      container.addEventListener('pointercancel', onPointerUp);
+      container.addEventListener('wheel', onWheel, { passive: false });
+
+      // =========================================================================
+      // 12. SYNTHESIZED FOREST AMBIENT AUDIO (WEB AUDIO API)
+      // =========================================================================
+      var audioCtx = null;
+      var audioMasterGain = null;
+      var windSource = null;
+      var birdTimer = null;
+
+      function startForestAudio() {
+        if (state.isDisposed || state.isPaused || state.hostMuted) return;
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        if (!audioCtx) {
+          audioCtx = new AudioContextClass();
+          audioMasterGain = audioCtx.createGain();
+          audioMasterGain.gain.value = 0.0;
+          audioMasterGain.connect(audioCtx.destination);
+
+          var bufferSize = audioCtx.sampleRate * 3;
+          var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+          var data = noiseBuffer.getChannelData(0);
+          var lastOut = 0;
+          for (var i = 0; i < bufferSize; i++) {
+            var white = Math.random() * 2 - 1;
+            data[i] = (lastOut + 0.035 * white) / 1.035;
+            lastOut = data[i];
+            data[i] *= 1.8;
+          }
+
+          windSource = audioCtx.createBufferSource();
+          windSource.buffer = noiseBuffer;
+          windSource.loop = true;
+
+          var windFilter = audioCtx.createBiquadFilter();
+          windFilter.type = 'bandpass';
+          windFilter.frequency.value = 340;
+          windFilter.Q.value = 0.7;
+
+          var windGain = audioCtx.createGain();
+          windGain.gain.value = 0.22;
+
+          windSource.connect(windFilter);
+          windFilter.connect(windGain);
+          windGain.connect(audioMasterGain);
+          windSource.start();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(function () {});
+        }
+        audioMasterGain.gain.setTargetAtTime(0.45, audioCtx.currentTime, 0.4);
+
+        function scheduleBird() {
+          if (!state.audioActive || state.hostMuted || state.isPaused || state.isDisposed || !audioCtx) return;
+          var now = audioCtx.currentTime;
+          var osc = audioCtx.createOscillator();
+          var g = audioCtx.createGain();
+          var baseFreq = 2200 + Math.random() * 1400;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * (1.18 + Math.random() * 0.2), now + 0.09);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.92, now + 0.19);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.045, now + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+          osc.connect(g);
+          g.connect(audioMasterGain);
+          osc.start(now);
+          osc.stop(now + 0.24);
+          birdTimer = window.setTimeout(scheduleBird, 2400 + Math.random() * 4800);
+        }
+        if (birdTimer) clearTimeout(birdTimer);
+        birdTimer = window.setTimeout(scheduleBird, 1200);
+      }
+
+      function stopForestAudio() {
+        if (birdTimer) {
+          clearTimeout(birdTimer);
+          birdTimer = null;
+        }
+        if (audioCtx && audioMasterGain) {
+          audioMasterGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.25);
+        }
+      }
+
+      // =========================================================================
+      // 13. UI CONTROLS WIRING
+      // =========================================================================
+      var sliderSun = document.getElementById('slider-sun');
+      var sliderWind = document.getElementById('slider-wind');
+      var sliderBokeh = document.getElementById('slider-bokeh');
+      var valSun = document.getElementById('val-sun');
+      var valWind = document.getElementById('val-wind');
+      var valBokeh = document.getElementById('val-bokeh');
+
+      sliderSun.addEventListener('input', function () {
+        var v = parseInt(sliderSun.value, 10);
+        state.sunShift = v / 100;
+        valSun.textContent = (v > 0 ? '+' : '') + Math.round(v * 0.35) + '°';
+      });
+
+      sliderWind.addEventListener('input', function () {
+        var v = parseInt(sliderWind.value, 10);
+        state.windStrength = v / 100;
+        leafUniforms.uWind.value = state.windStrength;
+        valWind.textContent = v + '%';
+      });
+
+      sliderBokeh.addEventListener('input', function () {
+        var v = parseInt(sliderBokeh.value, 10);
+        state.bokehIntensity = v / 100;
+        bgUniforms.uBokeh.value = state.bokehIntensity;
+        leafUniforms.uBokeh.value = state.bokehIntensity;
+        bokehMat.opacity = THREE.MathUtils.clamp(0.44 * state.bokehIntensity, 0.08, 0.80);
+        valBokeh.textContent = v + '%';
+      });
+
+      function applyPreset(key) {
+        var p = CAMERA_PRESETS[key];
+        if (!p) return;
+        var portrait = window.innerWidth < window.innerHeight;
+        state.camTargetYaw = p.yaw;
+        state.camTargetPitch = p.pitch;
+        state.camTargetDist = portrait ? p.dist + 0.70 : p.dist;
+        state.camTargetY = portrait ? p.y - 0.24 : p.y;
+        presetBtns.forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-preset') === key);
+        });
+      }
+
+      presetBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          applyPreset(btn.getAttribute('data-preset'));
+        });
+      });
+
+      document.getElementById('btn-nudge').addEventListener('click', function () {
+        nudgeLeaf(0.32, (Math.random() > 0.5 ? 1 : -1) * 0.68);
+      });
+
+      var btnAudio = document.getElementById('btn-audio');
+      var iconOff = document.getElementById('icon-audio-off');
+      var iconOn = document.getElementById('icon-audio-on');
+      function updateAudioUI() {
+        var active = state.audioActive && !state.hostMuted;
+        btnAudio.classList.toggle('active', active);
+        btnAudio.setAttribute('aria-pressed', String(active));
+        iconOff.style.display = active ? 'none' : 'block';
+        iconOn.style.display = active ? 'block' : 'none';
+      }
+
+      btnAudio.addEventListener('click', function () {
+        state.audioActive = !state.audioActive;
+        if (state.audioActive && state.hostMuted) state.hostMuted = false;
+        updateAudioUI();
+        if (state.audioActive) startForestAudio();
+        else stopForestAudio();
+      });
+
+      var btnUi = document.getElementById('btn-ui');
+      var uiBtnLabel = document.getElementById('ui-btn-label');
+      function toggleCinemaMode() {
+        state.uiHidden = !state.uiHidden;
+        document.body.classList.toggle('ui-hidden', state.uiHidden);
+        btnUi.classList.toggle('active', state.uiHidden);
+        btnUi.setAttribute('aria-pressed', String(state.uiHidden));
+        uiBtnLabel.textContent = state.uiHidden ? 'Controles' : 'Cinema';
+      }
+      btnUi.addEventListener('click', toggleCinemaMode);
+
+      function onKeyDown(e) {
+        if (e.target && e.target.tagName === 'INPUT') return;
+        var k = e.key.toLowerCase();
+        if (k === ' ') {
+          e.preventDefault();
+          nudgeLeaf(0.32, (Math.random() > 0.5 ? 1 : -1) * 0.68);
+        } else if (k === 'r') {
+          applyPreset('macro');
+        } else if (k === 'm') {
+          btnAudio.click();
+        } else if (k === 'h') {
+          toggleCinemaMode();
+        }
+      }
+      window.addEventListener('keydown', onKeyDown);
+
+      // =========================================================================
+      // 14. RESIZE, LIFECYCLE BRIDGE & ANIMATION LOOP
+      // =========================================================================
+      function onResize() {
+        var w = Math.max(1, window.innerWidth);
+        var h = Math.max(1, window.innerHeight);
+        camera.fov = w < h ? 44 : 38;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+      window.addEventListener('resize', onResize);
+
+      var clock = new THREE.Clock();
+      var elapsed = 0;
+      var rafId = null;
+
+      function animate() {
+        if (state.isPaused || state.isDisposed) {
+          rafId = null;
+          return;
+        }
+        rafId = requestAnimationFrame(animate);
+        var dt = Math.min(clock.getDelta(), 0.05);
+        elapsed += dt;
+        var t = elapsed;
+
+        // 1. Update Sun & occluded sun disc position from slider
+        var sunX = 0.28 + state.sunShift * 0.95;
+        var sunY = -0.34 + Math.sin(state.sunShift * 1.4) * 0.45;
+        sunLight.position.set(sunX * 3.0, sunY * 2.5, -7.5);
+        leafUniforms.uSunPos.value.set(sunX * 2.1, sunY * 2.0, -3.4);
+        leafUniforms.uTime.value = t;
+        flareUniforms.uTime.value = t;
+        bgUniforms.uTime.value = t;
+
+        // 2. Smoothly damp camera orbit
+        var damp = 1.0 - Math.exp(-6.0 * dt);
+        state.camYaw += (state.camTargetYaw - state.camYaw) * damp;
+        state.camPitch += (state.camTargetPitch - state.camPitch) * damp;
+        state.camDist += (state.camTargetDist - state.camDist) * damp;
+        state.camY += (state.camTargetY - state.camY) * damp;
+
+        var camX = Math.sin(state.camYaw) * Math.cos(state.camPitch) * state.camDist;
+        var camYPos = state.camY + Math.sin(state.camPitch) * state.camDist;
+        var camZ = Math.cos(state.camYaw) * Math.cos(state.camPitch) * state.camDist;
+        camera.position.set(camX, camYPos, camZ);
+        camera.lookAt(0.0, state.camY, 0.0);
+
+        // 3. Leaf pendulum sway + spring impulse physics
+        var springK = 18.0;
+        var damping = 2.6;
+        state.leafImpulseVelX += (-springK * state.leafAngleX - damping * state.leafImpulseVelX) * dt;
+        state.leafImpulseVelZ += (-springK * state.leafAngleZ - damping * state.leafImpulseVelZ) * dt;
+        state.leafAngleX += state.leafImpulseVelX * dt;
+        state.leafAngleZ += state.leafImpulseVelZ * dt;
+
+        var wind = state.windStrength;
+        var ambientSwayZ = (Math.sin(t * 1.15) * 0.045 + Math.sin(t * 2.35) * 0.018) * (0.22 + wind * 1.35);
+        var ambientSwayX = (Math.cos(t * 0.92) * 0.032 + Math.sin(t * 1.85) * 0.014) * (0.22 + wind * 1.2);
+        var ambientTwistY = Math.sin(t * 0.78) * 0.06 * (0.25 + wind * 1.4);
+
+        leafPivot.rotation.z = ambientSwayZ + state.leafAngleZ;
+        leafPivot.rotation.x = ambientSwayX + state.leafAngleX;
+        leafPivot.rotation.y = ambientTwistY + state.leafAngleZ * 0.4;
+
+        // 4. Keep occluded sun disc & diffraction flare aligned with sun direction
+        var shimmer = 0.92 + 0.08 * Math.sin(t * 3.1 + leafPivot.rotation.z * 8.0);
+        var viewAlign = THREE.MathUtils.clamp(1.0 - Math.abs(state.camYaw) * 0.48, 0.25, 1.0);
+        var flareStrength = shimmer * viewAlign * (0.58 + state.bokehIntensity * 0.46);
+
+        sunDiscMesh.position.set(sunX * 1.45, sunY * 1.45, -2.0);
+        sunDiscMesh.quaternion.copy(camera.quaternion);
+        sunDiscMat.uniforms.uIntensity.value = flareStrength;
+
+        sunFlareMesh.position.set(sunX, sunY, 0.28);
+        sunFlareMesh.quaternion.copy(camera.quaternion);
+        flareUniforms.uIntensity.value = flareStrength;
+
+        // 5. Gentle canopy bokeh breathing
+        for (var bi = 0; bi < bokehCount; bi++) {
+          var bd = bokehBaseData[bi];
+          var driftX = Math.sin(t * bd.speed + bd.phase) * 0.08 * (0.3 + wind);
+          var driftY = Math.cos(t * bd.speed * 0.8 + bd.phase) * 0.05 * (0.3 + wind);
+          dummy.position.set(bd.x + driftX, bd.y + driftY, bd.z);
+          dummy.quaternion.copy(camera.quaternion);
+          var pulse = bd.s * (0.94 + 0.06 * Math.sin(t * 1.3 + bd.phase));
+          dummy.scale.set(pulse, pulse, 1);
+          dummy.updateMatrix();
+          bokehInst.setMatrixAt(bi, dummy.matrix);
+        }
+        bokehInst.instanceMatrix.needsUpdate = true;
+
+        // 6. Foreground grass blades gentle sway
+        for (var gi = 0; gi < grassBlades.length; gi++) {
+          var gb = grassBlades[gi];
+          gb.mesh.rotation.z = gb.baseRotZ + Math.sin(t * 1.4 + gb.phase) * 0.035 * (0.25 + wind * 1.4);
+          gb.mesh.rotation.x = Math.cos(t * 1.1 + gb.phase) * 0.025 * (0.25 + wind * 1.4);
+        }
+
+        // 7. Drifting sunlit pollen motes
+        var mp = moteGeom.attributes.position.array;
+        for (var mi = 0; mi < moteCount; mi++) {
+          var mm = moteMeta[mi];
+          mp[mi * 3] = mm.bx + Math.sin(t * mm.speed + mm.phase) * mm.amp + t * 0.04 * wind;
+          if (mp[mi * 3] > 3.8) mm.bx -= 7.6;
+          mp[mi * 3 + 1] = mm.by + Math.cos(t * mm.speed * 0.8 + mm.phase) * mm.amp * 0.7;
+        }
+        moteGeom.attributes.position.needsUpdate = true;
+
+        renderer.render(scene, camera);
+      }
+
+      function onPause() {
+        state.isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        if (audioCtx && audioCtx.state === 'running') {
+          audioCtx.suspend().catch(function () {});
+        }
+      }
+
+      function onResume() {
+        if (state.isDisposed || !state.isPaused) return;
+        state.isPaused = false;
+        clock.getDelta();
+        if (state.audioActive && !state.hostMuted && audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(function () {});
+        }
+        rafId = requestAnimationFrame(animate);
+      }
+
+      function onMute(e) {
+        state.hostMuted = e && e.detail ? Boolean(e.detail.muted) : true;
+        updateAudioUI();
+        if (state.hostMuted) stopForestAudio();
+        else if (state.audioActive) startForestAudio();
+      }
+
+      function onReset() {
+        sliderSun.value = '0';
+        sliderWind.value = '35';
+        sliderBokeh.value = '80';
+        state.sunShift = 0;
+        state.windStrength = 0.35;
+        state.bokehIntensity = 0.80;
+        valSun.textContent = '0°';
+        valWind.textContent = '35%';
+        valBokeh.textContent = '80%';
+        leafUniforms.uWind.value = 0.35;
+        bgUniforms.uBokeh.value = 0.80;
+        leafUniforms.uBokeh.value = 0.80;
+        bokehMat.opacity = 0.44 * 0.80;
+        applyPreset('macro');
+      }
+
+      function disposeAll() {
+        if (state.isDisposed) return;
+        state.isDisposed = true;
+        state.isPaused = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        stopForestAudio();
+        if (windSource) {
+          try { windSource.stop(); } catch (err) {}
+          windSource = null;
+        }
+        if (audioCtx) {
+          try { audioCtx.close(); } catch (err) {}
+          audioCtx = null;
+        }
+        window.removeEventListener('resize', onResize);
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('sangi:pause', onPause);
+        window.removeEventListener('sangi:resume', onResume);
+        window.removeEventListener('sangi:mute', onMute);
+        window.removeEventListener('sangi:reset', onReset);
+        window.removeEventListener('sangi:dispose', disposeAll);
+        window.removeEventListener('beforeunload', disposeAll);
+        container.removeEventListener('pointerdown', onPointerDown);
+        container.removeEventListener('pointermove', onPointerMove);
+        container.removeEventListener('pointerup', onPointerUp);
+        container.removeEventListener('pointercancel', onPointerUp);
+        container.removeEventListener('wheel', onWheel);
+
+        scene.traverse(function (obj) {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) obj.material.forEach(function (m) { m.dispose(); });
+            else obj.material.dispose();
+          }
+        });
+        leafTextures.colorTex.dispose();
+        leafTextures.veinTex.dispose();
+        leafTextures.alphaTex.dispose();
+        barkTextures.map.dispose();
+        barkTextures.bumpMap.dispose();
+        grassTex.dispose();
+        bokehDiscTex.dispose();
+        softGlowTex.dispose();
+        renderer.dispose();
+      }
+
+      window.addEventListener('sangi:pause', onPause);
+      window.addEventListener('sangi:resume', onResume);
+      window.addEventListener('sangi:mute', onMute);
+      window.addEventListener('sangi:reset', onReset);
+      window.addEventListener('sangi:dispose', disposeAll);
+      window.addEventListener('beforeunload', disposeAll);
+
+      // Start render loop and fade out loading veil
+      rafId = requestAnimationFrame(animate);
+      var veilEl = document.getElementById('loading-veil');
+      if (veilEl) {
+        window.setTimeout(function () {
+          veilEl.classList.add('fade-out');
+        }, 180);
+      }
+    })();
+  </script>
+</body>
+</html>

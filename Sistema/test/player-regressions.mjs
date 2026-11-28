@@ -37,7 +37,7 @@ try {
   const catalog = await fetch(base + '/api/apps').then(response => response.json());
   const oficina = catalog.find(entry => /Projetos.+01-oficina-do-vitralista/i.test(entry.direct || entry.url || '') && entry.status === 'ready');
   assert.ok(oficina, 'Oficina moderna ausente no catálogo');
-  await page.goto(base);
+  await page.goto(base + '/?acervo=aprimorar');
   await page.locator('#q').fill('Oficina do Vitralista');
   const card = page.locator('.card.ready').filter({ has: page.locator('[data-play=' + JSON.stringify(oficina.id) + ']') });
   const open = card.getByRole('button', { name: 'Abrir', exact: true });

@@ -158,7 +158,7 @@ try {
     try {
       const [catalogResponse] = await Promise.all([
         page.waitForResponse(response => response.url() === base + '/api/apps' && response.ok(), { timeout: 60000 }),
-        page.goto(base, { waitUntil: 'domcontentloaded' }),
+        page.goto(base + '/?acervo=aprimorar', { waitUntil: 'domcontentloaded' }),
       ]);
       const published = await catalogResponse.json();
       const playable = new Set(published.filter(entry => entry.status === 'ready').map(entry => entry.url));

@@ -357,6 +357,9 @@
       .fav { width: 44px; height: 44px; }
     }
     @media (max-width: 560px) {
+      .tabs { gap: 2px; }
+      .tabs button { padding-inline: 6px; }
+      .tabs .ic { display: none; }
       .grid { grid-template-columns: 1fr; }
       .ctl .lbl { display: none; }
       .row { grid-template-columns: 56px 1fr; }
@@ -398,6 +401,8 @@
         <nav class="tabs" id="navTabs" aria-label="Navegação principal">
           <button type="button" data-view="all">Explorar</button>
           <button type="button" data-view="releases">Lançamentos</button>
+          <button type="button" data-view="scenes">Cenas</button>
+          <button type="button" data-view="improve">A aprimorar</button>
         </nav>
         <label class="search">
           <span class="sr">Buscar ambiente</span>
@@ -425,8 +430,8 @@
 
       <div class="head">
         <div>
-          <h1 id="title" tabindex="-1">Explore os Ambientes 3D</h1>
-          <p id="lede">Encontre jogos, oficinas e mundos interativos por tema.</p>
+          <h1 id="title" tabindex="-1">Seleção principal</h1>
+          <p id="lede">Os ambientes que terão prioridade nas próximas melhorias.</p>
         </div>
         <div class="stats" id="stats" role="status"></div>
       </div>
@@ -435,6 +440,9 @@
         <button type="button" data-release="all" aria-pressed="true">Todos</button>
         <button type="button" data-release="new" aria-pressed="false">Novos</button>
         <button type="button" data-release="updated" aria-pressed="false">Atualizados</button>
+      </div>
+      <div class="release-filters" id="improveFilters" role="group" aria-label="Filtros dos jogos a aprimorar" hidden>
+        <button type="button" id="improveMobile" aria-pressed="false">Adaptados para celular</button>
       </div>
       <div id="list"><p class="empty">Carregando catálogo…</p></div>
     </main>
@@ -488,6 +496,7 @@
 
   <script src="/Sistema/shared/mobile-game-menu.js"></script>
   <script src="/Sistema/shared/launcher-catalog.js"></script>
+  <script src="/Sistema/shared/launcher-curadoria.js"></script>
   <script src="/launcher/ids-antigos.js"></script>
   <script>
     const STATUS = {
@@ -503,14 +512,21 @@
     };
     const KIND = { project: 'Projeto', build: 'Build', html: 'HTML', game: 'Jogo', source: 'Código', concept: 'Conceito' };
     const { categories, describe } = window.SangiLauncherCatalog;
+    const { mobileIds, curatedGroups } = window.SangiLauncherCuration;
+    const curatedReasons = new Map(curatedGroups.flatMap(group =>
+      group.entries.map(({ id, reason }) => [id, reason])));
     const RELEASE_LABEL = { new: 'Novo', updated: 'Atualizado' };
-    const FEATURE_ID = '1-jogos-html-cidade-submersa-cidade-submersa-html';
+    const FEATURE_ID = '1-jogos-html-lago-3d-interativo-lago-3d-interativo-html';
     const ICONS = {
       all: '<path d="M3 11 12 4l9 7v9H3z"/><path d="M9 20v-6h6v6"/>',
       releases: '<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3ZM19 15v6m-3-3h6"/>',
+      improve: '<path d="M4 6h16M4 12h16M4 18h10"/><path d="M19 15v6m-3-3h6"/>',
       fav: '<path d="m12 4 2.5 5.2 5.7.8-4.1 4 1 5.6L12 17l-5.1 2.6 1-5.6-4.1-4 5.7-.8z"/>',
       recent: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+      mobile: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 17h2"/>',
+      curated: '<path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6L12 16.8l-5.4 2.8 1-6-4.3-4.2 6-.9z"/>',
       concept: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+      scenes: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/>',
       archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/>',
     };
     const STAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="m12 4 2.5 5.2 5.7.8-4.1 4 1 5.6L12 17l-5.1 2.6 1-5.6-4.1-4 5.7-.8z"/></svg>';
@@ -527,11 +543,15 @@
     store.set('launcher.recent', store.get('launcher.recent', []).map((r) => ({ ...r, id: aliasId(r.id) })));
     const previousView = store.get('launcher.view', 'all');
     const previousSort = store.get('launcher.sort', 'categoria');
+    const isImprovePage = () => new URLSearchParams(location.search).get('acervo') === 'aprimorar';
     const state = {
       apps: [], q: '',
-      view: previousView === 'col:Legado arquivado' ? 'archive' : previousView,
+      view: isImprovePage() ? 'improve'
+        : previousView === 'col:Legado arquivado' ? 'archive'
+        : previousView === 'improve' ? 'all' : previousView,
       sort: ['categoria', 'az', 'recentes'].includes(previousSort) ? previousSort : 'categoria',
       releaseFilter: 'all',
+      improveMobile: false,
       layout: store.get('launcher.layout', 'grid'),
       fav: new Set(store.get('launcher.fav', [])),
       recent: store.get('launcher.recent', []),
@@ -622,6 +642,7 @@
       const status = statusOf(a);
       if (showStatus && status && status !== STATUS.ready) bits.push(`<span><span class="dot${status.busy ? ' busy' : ''}" style="background:${status.color}"></span>${status.label}</span>`);
       bits.push(`<span><span class="dot" style="background:${swatch(a.category)}"></span>${esc(a.category.label)}</span>`);
+      if (state.view === 'curated' && isMobileReady(a)) bits.push('<span class="tag">Celular</span>');
       if (state.view === 'releases' && a.release) {
         const { date, type } = a.release;
         if (showStatus) bits.push(`<span class="release-${type}">${RELEASE_LABEL[type]}</span>`);
@@ -640,13 +661,14 @@
         ? `<span class="badge"><span class="dot${st.busy ? ' busy' : ''}" style="background:${st.color}"></span>${st.label}</span>`
         : state.view === 'releases' && a.release ? `<span class="badge release-${a.release.type}">${RELEASE_LABEL[a.release.type]}</span>` : '';
       const cover = ready ? `<button class="cover" data-play="${esc(a.id)}" aria-label="Abrir ${esc(cleanName(a.name))}" tabindex="-1"></button>` : '';
+      const reason = state.view === 'curated' ? curatedReasons.get(a.id) : null;
       return `<article class="card ${ready ? 'ready' : 'muted'}">${cover}
         <div class="thumb">${thumbOf(a)}${badge}${favBtn(a)}</div>
         <div class="body">
           <h3>${esc(cleanName(a.name))}</h3>
           ${metaOf(a)}
           ${a.subtitle && a.subtitle !== 'Sangi3D' ? `<div class="sub">${esc(a.subtitle)}</div>` : ''}
-          ${a.description ? `<div class="desc">${esc(cleanName(a.description))}</div>` : ''}
+          ${reason || a.description ? `<div class="desc">${esc(reason || cleanName(a.description))}</div>` : ''}
           <div class="actions">${actionsOf(a)}</div>
         </div>
       </article>`;
@@ -654,23 +676,31 @@
     function row(a) {
       const ready = a.status === 'ready';
       const cover = ready ? `<button class="cover" data-play="${esc(a.id)}" aria-label="Abrir ${esc(cleanName(a.name))}" tabindex="-1"></button>` : '';
+      const description = (state.view === 'curated' && curatedReasons.get(a.id)) || a.description
+        || (a.subtitle !== 'Sangi3D' ? a.subtitle : '');
       return `<div class="row ${ready ? 'ready' : 'muted'}">${cover}
         <div class="thumb">${thumbOf(a)}</div>
         <div class="info"><h3>${esc(cleanName(a.name))}</h3>
           ${metaOf(a, true)}
-          ${a.description || (a.subtitle && a.subtitle !== 'Sangi3D') ? `<div class="desc">${esc(cleanName(a.description || a.subtitle))}</div>` : ''}</div>
+          ${description ? `<div class="desc">${esc(cleanName(description))}</div>` : ''}</div>
         <div class="actions">${favBtn(a)}${actionsOf(a, true)}</div>
       </div>`;
     }
 
     // ---------- Filtros ----------
     const isMain = (a) => a.status === 'ready' && a.category.id !== 'archive';
-    const isRelease = (a) => isMain(a) && a.release;
+    const isPriority = (a) => isMain(a) && curatedReasons.has(a.id);
+    const isImprove = (a) => isMain(a) && !curatedReasons.has(a.id);
+    const isRelease = (a) => isPriority(a) && a.release;
+    const isMobileReady = (a) => isMain(a) && mobileIds.has(a.id);
     const byName = (a, b) => cleanName(a.name).localeCompare(cleanName(b.name), 'pt-BR');
     function pool() {
       const v = state.view;
-      if (v === 'all') return state.apps.filter(isMain);
+      if (v === 'all' || v === 'curated') return state.apps.filter(isPriority);
+      if (v === 'improve') return state.apps.filter((a) => isImprove(a) && (!state.improveMobile || isMobileReady(a)));
+      if (v === 'mobile') return state.apps.filter((a) => isPriority(a) && isMobileReady(a));
       if (v === 'releases') return state.apps.filter((a) => isRelease(a) && (state.releaseFilter === 'all' || a.release.type === state.releaseFilter));
+      if (v === 'scenes') return state.apps.filter((a) => a.collection === 'Cenas 3D');
       if (v === 'fav') return state.apps.filter((a) => state.fav.has(a.id));
       if (v === 'recent') {
         const byId = new Map(state.apps.map((a) => [a.id, a]));
@@ -678,7 +708,7 @@
       }
       if (v === 'concept') return state.apps.filter((a) => a.status !== 'ready');
       if (v === 'archive') return state.apps.filter((a) => a.category.id === 'archive');
-      if (v.startsWith('cat:')) return state.apps.filter((a) => isMain(a) && a.category.id === v.slice(4));
+      if (v.startsWith('cat:')) return state.apps.filter((a) => isPriority(a) && a.category.id === v.slice(4));
       return [];
     }
     function matches(a, q) { return !q || norm(`${a.name} ${a.fullTitle} ${a.description ?? ''} ${a.category.label} ${a.path}`).includes(q); }
@@ -696,17 +726,21 @@
     for (const button of document.querySelectorAll('#navTabs button')) button.insertAdjacentHTML('afterbegin', icon(button.dataset.view));
     function renderNav() {
       const counts = new Map();
-      for (const app of state.apps.filter(isMain)) counts.set(app.category.id, (counts.get(app.category.id) ?? 0) + 1);
-      const valid = ['all', 'releases', 'fav', 'recent', 'concept', 'archive', ...categories.map((c) => 'cat:' + c.id)];
+      const priority = state.apps.filter(isPriority);
+      for (const app of priority) counts.set(app.category.id, (counts.get(app.category.id) ?? 0) + 1);
+      const valid = ['all', 'releases', 'scenes', 'improve', 'mobile', 'curated', 'fav', 'recent', 'concept', 'archive', ...categories.map((c) => 'cat:' + c.id)];
       if (!valid.includes(state.view)) state.view = 'all';
       for (const button of document.querySelectorAll('#navTabs button')) {
         button.setAttribute('aria-current', String(button.dataset.view === state.view));
       }
       const recentN = state.recent.filter((r) => state.apps.some((a) => a.id === r.id)).length;
       $('#navMain').innerHTML =
+        navBtn('curated', 'Curadoria', priority.length, icon('curated')) +
         navBtn('fav', 'Favoritos', state.apps.filter((a) => state.fav.has(a.id)).length, icon('fav')) +
         navBtn('recent', 'Histórico', recentN, icon('recent'));
-      $('#navCategories').innerHTML = categories.filter((c) => counts.has(c.id)).map((c) =>
+      $('#navCategories').innerHTML =
+        navBtn('mobile', 'Adaptados para celular', priority.filter(isMobileReady).length, icon('mobile')) +
+        categories.filter((c) => counts.has(c.id)).map((c) =>
         navBtn('cat:' + c.id, c.label, counts.get(c.id), `<span class="sw" style="background:${swatch(c)}"></span>`)).join('');
       $('#navArchive').innerHTML =
         navBtn('concept', 'Conceitos e pendentes', state.apps.filter((a) => a.status !== 'ready').length, icon('concept')) +
@@ -716,8 +750,12 @@
     function renderHead(count, searching) {
       const v = state.view;
       const headings = {
-        all: ['Explore os Ambientes 3D', 'Encontre jogos, oficinas e mundos interativos por tema.'],
+        all: ['Seleção principal', 'Os ambientes que terão prioridade nas próximas melhorias.'],
         releases: ['Lançamentos', 'Veja as estreias e as novas versões do catálogo.'],
+        scenes: ['Cenas 3D', 'Cenas botânicas e contemplativas em Three.js: folhas, flores, musgo, bosque e santuário zen.'],
+        improve: ['A aprimorar', 'Jogos e experiências que serão aprimorados aos poucos.'],
+        mobile: ['Adaptados para celular', 'Testados com toque simulado em retrato e layout verificado em paisagem.'],
+        curated: ['Curadoria', 'Explore os jogos e recursos da seleção principal por tipo de experiência.'],
         fav: ['Seus favoritos', 'Use a estrela de qualquer ambiente para guardá-lo aqui.'],
         recent: ['Histórico', 'Os últimos ambientes que você abriu neste navegador.'],
         concept: ['Conceitos e pendentes', 'Prompts e projetos em planejamento.'],
@@ -729,7 +767,8 @@
       $('#lede').hidden = !$('#lede').textContent;
       $('#stats').textContent = plural(count, 'ambiente', 'ambientes');
       $('#releaseFilters').hidden = v !== 'releases';
-      $('#sortControl').hidden = v === 'recent' || v === 'releases';
+      $('#improveFilters').hidden = v !== 'improve';
+      $('#sortControl').hidden = ['recent', 'releases', 'curated'].includes(v);
     }
 
     function block(title, apps, opts = {}) {
@@ -750,7 +789,7 @@
         <div class="feature-content">
           <div class="feature-category">${esc(app.category.label)}</div>
           <h2 id="featuredTitle">${esc(cleanName(app.name))}</h2>
-          <p>Mergulhe e explore um cenário de ruínas subaquáticas.</p>
+          <p>${esc(curatedReasons.get(app.id))}</p>
           <button class="btn primary" data-play="${esc(app.id)}">Explorar ambiente <span aria-hidden="true">→</span></button>
         </div>
       </section>`;
@@ -770,11 +809,12 @@
     }
 
     function render() {
+      const opener = document.activeElement?.closest('#list button[data-play]');
       renderNav();
       document.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.layout === state.layout));
       $('#sort').value = state.sort;
       const q = norm(state.q.trim());
-      const list = sorted((q && state.view === 'all' ? state.apps : pool()).filter((a) => matches(a, q)));
+      const list = sorted(pool().filter((a) => matches(a, q)));
       renderHead(list.length, Boolean(q));
       if (!list.length) {
         const msg = q ? ['Nada encontrado', `Nenhum ambiente corresponde a “${esc(state.q.trim())}”.`]
@@ -791,10 +831,19 @@
         const recent = state.recent.map((r) => list.find((a) => a.id === r.id)).filter(Boolean).slice(0, 8);
         if (recent.length) html += block('Continuar explorando', recent, { rail: state.layout === 'grid', more: 'recent' });
         html += categoryBlocks(list);
+      } else if (state.view === 'curated') {
+        const byId = new Map(list.map(app => [app.id, app]));
+        html = curatedGroups.map(({ title, entries }) =>
+          block(esc(title), entries.map(({ id }) => byId.get(id)).filter(Boolean))).join('');
       } else {
         html = block('', list, { noHead: true });
       }
       $('#list').innerHTML = html;
+      if (opener) {
+        const id = CSS.escape(opener.dataset.play);
+        const kind = opener.classList.contains('cover') ? '.cover' : ':not(.cover)';
+        $(`#list button[data-play="${id}"]${kind}`)?.focus({ preventScroll: true });
+      }
     }
 
     function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); }
@@ -802,7 +851,14 @@
       document.body.classList.toggle('nav-open', open);
       $('#menuBtn').setAttribute('aria-expanded', String(open));
     }
-    function setView(view) {
+    function setView(view, updateUrl = true) {
+      if (updateUrl && (view === 'improve') !== isImprovePage()) {
+        const url = new URL(location.href);
+        if (view === 'improve') url.searchParams.set('acervo', 'aprimorar');
+        else url.searchParams.delete('acervo');
+        history.replaceState({ ...history.state, catalogView: state.view }, '');
+        history.pushState({ catalogView: view }, '', url);
+      }
       state.view = view;
       store.set('launcher.view', view);
       setNavOpen(false);
@@ -931,7 +987,7 @@
     }
     async function loadFileMode() {
       const port = await findServer();
-      if (port) { location.replace(`http://127.0.0.1:${port}/${location.hash}`); return; }
+      if (port) { location.replace(`http://127.0.0.1:${port}/${location.search}${location.hash}`); return; }
       $('#list').innerHTML = `<div class="empty file-mode"><b>Abra pelo servidor local</b>
         Os jogos 3D precisam do servidor do launcher para funcionar.
         <ol><li>Na pasta <i>Ambientes 3D</i>, dê dois cliques em <b>Abrir Launcher.cmd</b>.</li>
@@ -979,6 +1035,11 @@
       for (const button of $('#releaseFilters').querySelectorAll('button')) {
         button.setAttribute('aria-pressed', String(button === filter));
       }
+      render();
+    });
+    $('#improveMobile').addEventListener('click', (event) => {
+      state.improveMobile = !state.improveMobile;
+      event.currentTarget.setAttribute('aria-pressed', String(state.improveMobile));
       render();
     });
     document.querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('click', () => {
@@ -1033,7 +1094,7 @@
 
     $('#random').addEventListener('click', () => {
       const list = pool().filter((a) => a.status === 'ready');
-      const src = list.length ? list : state.apps.filter(isMain);
+      const src = list.length || state.view === 'improve' ? list : state.apps.filter(isPriority);
       if (!src.length) return;
       const a = src[Math.floor(Math.random() * src.length)];
       toast(`Abrindo ${cleanName(a.name)}…`);
@@ -1069,7 +1130,7 @@
       }
     });
 
-    window.addEventListener('popstate', () => {
+    window.addEventListener('popstate', (event) => {
       if (!location.hash.startsWith('#play=') && !$('#playerModal').hidden) {
         closeApp();
       } else if (location.hash.startsWith('#play=')) {
@@ -1077,6 +1138,9 @@
         const normalizedId = targetId.replace(/-mockup-html$/, '');
         const matched = state.apps.find(a => a.id === targetId) || state.apps.find(a => a.id === normalizedId);
         if (matched) openApp(matched.id);
+      }
+      if (!location.hash.startsWith('#play=') && isImprovePage() !== (state.view === 'improve')) {
+        setView(isImprovePage() ? 'improve' : event.state?.catalogView ?? 'all', false);
       }
     });
 
