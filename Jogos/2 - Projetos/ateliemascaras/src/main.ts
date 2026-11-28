@@ -55,6 +55,31 @@ let toastTimer = 0;
 let dialogRevision = 0;
 let activeGesture: { pointer: number; orbit: boolean; lastX: number; lastY: number; acted: boolean; stroke: boolean } | undefined;
 const getColor = () => palette[pigment][1];
+// Expressões: Testa, Sobrancelhas, Olhos, Nariz, Maçãs do rosto, Boca, Queixo, Contorno.
+const expressions: [string, number[]][] = [
+  ['Neutra',[0,0,0,0,0,0,0,0]],
+  ['Alegria',[.1,.35,.15,0,.7,.8,.1,.1]],
+  ['Tristeza',[-.1,-.65,-.35,0,-.3,-.75,-.2,-.1]],
+  ['Raiva',[-.3,-.9,-.5,.2,.2,-.45,.35,.15]],
+  ['Surpresa',[.35,.9,.8,0,-.1,.6,-.25,0]],
+  ['Serenidade',[.05,.15,-.25,0,.25,.2,0,-.05]],
+];
+let expressionTween = 0;
+function setExpression(index: number) {
+  history();
+  const from = [...active.state.morph], to = expressions[index][1], start = performance.now(), target = active;
+  cancelAnimationFrame(expressionTween);
+  const step = (now: number) => {
+    const k = Math.min(1,(now-start)/650), e = k*k*(3-2*k);
+    to.forEach((v,i)=>{ target.state.morph[i] = from[i]+(v-from[i])*e; });
+    if (target === active) studio.updateForm(target.state);
+    if (k < 1) expressionTween = requestAnimationFrame(step);
+    else if (mode === 'sculpt') syncPanel();
+  };
+  expressionTween = requestAnimationFrame(step);
+  audio.chime(index*2);
+  notify('Expressão: '+expressions[index][0]);
+}
 
 function notify(message: string) {
   const el = byId('toast');
@@ -122,10 +147,13 @@ function syncPanel() {
   const controls = byId('mode-controls');
   if (mode === 'sculpt') {
     controls.innerHTML = `<div class="control-grid">${select('tool','Ferramenta',tools,tool)}${select('material','Material',Object.keys(materials),active.state.material[side])}</div>
-      ${range('size','Área',brushSize,.08)}<details id="sculpt-details"${edited?' open':''}><summary>Forma e simetria</summary>
+      ${range('size','Área',brushSize,.08)}
+      <div class="expressions" role="group" aria-label="Expressões prontas">${expressions.map(([n],i)=>`<button type="button" class="chip" data-expression="${i}">${n}</button>`).join('')}</div>
+      <details id="sculpt-details"${edited?' open':''}><summary>Forma e simetria</summary>
       ${select('form','Formato',forms,active.state.form)}${range('intensity','Intensidade',intensity,.08)}
       <label class="toggle-label"><input id="symmetry" type="checkbox"${symmetry?' checked':''}> Escultura simétrica</label>
       ${features.map((name,i)=>range('morph-'+i,name,active.state.morph[i],-1,1)).join('')}</details>`;
+    controls.querySelectorAll<HTMLButtonElement>('[data-expression]').forEach(el=>el.onclick=()=>setExpression(Number(el.dataset.expression)));
     changed('tool',value=>{tool=value as Tool;});
     changed('material',value=>{history(); active.state.material[side]=value as MaterialName; studio.setState(active.state);});
     changed('form',value=>{history(); active.state.form=value as MaskState['form']; studio.updateForm(active.state);});
@@ -199,6 +227,7 @@ function apply(x: number,y: number,gesture: NonNullable<typeof activeGesture>,re
     active.state.ornaments.push({kind:decor,side,color:getColor(),vertex:nearestVertex(hit.uv),size:.38+brushSize*1.32});
     studio.setState(active.state);
     if (mode === 'decorate') byId<HTMLButtonElement>('remove-ornament').disabled=false;
+    audio.chime(decorations.indexOf(decor));
   }
   audio.play(mode);
 }
