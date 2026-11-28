@@ -501,9 +501,16 @@
           max-width: calc(100% - 16px);
         }
         #dock button {
-          min-width: 70px;
-          padding: 7px 8px;
-          font-size: 11px;
+          min-width: 0;
+          flex: 1 1 0;
+          padding: 7px 4px;
+          font-size: 10.5px;
+        }
+        #dock {
+          left: 8px;
+          right: 8px;
+          transform: none;
+          justify-content: space-between;
         }
         #error {
           top: 213px;
@@ -556,7 +563,113 @@
           top: 68px;
         }
       }
+      .ticket {
+        border: 1px dashed #c9a99a;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: linear-gradient(180deg, #fffaf3, #fbefe4);
+        margin: 4px 0 10px;
+      }
+      .ticket h3 {
+        margin: 0 0 2px;
+        font: 600 17px/1.2 Georgia, 'Times New Roman', serif;
+        color: var(--ink);
+      }
+      .ticket .who {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .ticket ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 4px;
+        font-size: 13px;
+      }
+      .ticket li {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .ticket li b {
+        width: 18px;
+        height: 18px;
+        flex: none;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        border: 1.5px solid #cdb3a5;
+        color: transparent;
+      }
+      .ticket li.ok b {
+        background: #6f8f5a;
+        border-color: #6f8f5a;
+        color: #fff;
+      }
+      .ticket li.ok {
+        color: var(--muted);
+      }
+      .meter {
+        height: 8px;
+        border-radius: 8px;
+        background: #efdfd3;
+        overflow: hidden;
+        margin: 8px 0 2px;
+      }
+      .meter i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #c27a82, #793b43);
+        transition: width 0.35s ease;
+      }
+      #orderDialog .stars {
+        font-size: 40px;
+        letter-spacing: 6px;
+        color: #c9a24f;
+        text-align: center;
+        margin: 4px 0;
+      }
+      #orderDialog .stars span {
+        color: #e3d3c6;
+      }
+      #orderDialog .score {
+        text-align: center;
+        font: 600 30px/1 Georgia, serif;
+        color: var(--accent);
+      }
+      #orderDialog ul {
+        font-size: 13px;
+        color: var(--muted);
+        padding-left: 18px;
+      }
+      #confetti {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 30;
+      }
+      #confetti i {
+        position: absolute;
+        top: -14px;
+        width: 8px;
+        height: 12px;
+        border-radius: 2px;
+        animation: fall 1.9s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
+      }
+      @keyframes fall {
+        to {
+          transform: translate3d(var(--dx), 105vh, 0) rotate(var(--r));
+          opacity: 0.85;
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
+        #confetti {
+          display: none;
+        }
         * {
           scroll-behavior: auto !important;
         }
@@ -638,6 +751,18 @@
         <form method="dialog"><button class="wide">Fechar</button></form>
       </div>
     </dialog>
+    <dialog id="orderDialog" aria-labelledby="orderTitle">
+      <h2 id="orderTitle">Encomenda entregue</h2>
+      <div class="stars" id="orderStars"></div>
+      <div class="score" id="orderScore"></div>
+      <p id="orderFeedback"></p>
+      <ul id="orderNotes"></ul>
+      <div class="row">
+        <button id="orderNext" class="primary">Próxima encomenda</button>
+        <form method="dialog"><button class="wide">Continuar decorando</button></form>
+      </div>
+    </dialog>
+    <div id="confetti" aria-hidden="true"></div>
     <dialog id="ctaDialog">
       <h2>Consultar composição</h2>
       <p>
@@ -692,6 +817,7 @@
         hide: '<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M15 5v14"/>',
         help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2l-1.5 1.4v1M12 16.5h.01"/>',
         close: '<path d="m7 7 10 10m0-10L7 17"/>',
+        order: '<path d="M7 3h10l1 4H6l1-4Zm-1 4h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/><path d="m9.5 13.5 2 2 3.5-4"/>',
       };
       const icon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name]}</svg>`;
       const tools = [
@@ -719,6 +845,7 @@
           title: 'Decorar com bicos',
           example: 'Crie uma coroa de creme ou experimente os confeitos.',
         },
+        { id: 'order', label: 'Encomendas', title: 'Encomenda da clientela' },
         { id: 'view', label: 'Vitrine', title: 'Vitrine e projetos' },
       ];
       const recipes = [
@@ -919,6 +1046,111 @@
         /* Session controls remain available. */
       }
 
+      // ===== Encomendas: desafios com pontuação =====
+      const clients = ['Dona Lúcia', 'Sr. Ernesto', 'Ana e Theo', 'Madame Colette', 'Pietro', 'Beatriz', 'Vó Cida', 'Rafael'];
+      const occasions = ['aniversário', 'chá da tarde', 'casamento íntimo', 'formatura', 'piquenique', 'bodas de prata'];
+      let order = null;
+      let orderStats = { done: 0, best: 0, stars: 0 };
+      try {
+        const raw = JSON.parse(localStorage.getItem('amelie-orders') || 'null');
+        if (raw && Number.isFinite(raw.done)) orderStats = { done: raw.done | 0, best: raw.best | 0, stars: raw.stars | 0 };
+      } catch {
+        /* Estatísticas valem só nesta sessão. */
+      }
+      const pick = (list) => list[Math.floor(Math.random() * list.length)];
+      function newOrder() {
+        order = {
+          client: pick(clients),
+          occasion: pick(occasions),
+          layers: 2 + Math.floor(Math.random() * 3),
+          mass: pick(Object.keys(masses)),
+          filling: pick(Object.keys(fillings)),
+          coat: pick(Object.keys(frostings)),
+          finish: pick(finishes),
+          tip: pick(tips),
+          minDecor: 8 + Math.floor(Math.random() * 3) * 4,
+          started: performance.now(),
+        };
+      }
+      function scoreOrder(cake = state) {
+        if (!order) return { total: 0, checks: [] };
+        const n = cake.layers.length;
+        const joins = Math.max(0, n - 1);
+        const massShare = n ? cake.layers.filter((l) => l.m === order.mass).length / n : 0;
+        const fillShare = joins ? cake.layers.slice(0, -1).filter((l) => l.f === order.filling).length / joins : 0;
+        const tipCount = cake.decor.filter((d) => d.kind === order.tip).length;
+        const checks = [
+          { label: `${order.layers} camadas`, pts: 20, got: n === order.layers ? 20 : Math.abs(n - order.layers) === 1 ? 9 : 0 },
+          { label: `Massa de ${order.mass.toLowerCase()}`, pts: 20, got: Math.round(20 * massShare) },
+          { label: `Recheio de ${order.filling.toLowerCase()}`, pts: 15, got: Math.round(15 * fillShare) },
+          { label: `Cobertura ${order.coat.toLowerCase()}`, pts: 15, got: cake.coat === order.coat ? 15 : cake.coat ? 4 : 0 },
+          { label: `Acabamento ${order.finish.toLowerCase()}`, pts: 10, got: cake.coat && cake.finish === order.finish ? 10 : 0 },
+          { label: `${order.minDecor}+ bicos ${order.tip.toLowerCase()}`, pts: 20, got: Math.round(20 * Math.min(1, tipCount / order.minDecor)) },
+        ];
+        for (const c of checks) c.ok = c.got >= c.pts;
+        const total = checks.reduce((sum, c) => sum + c.got, 0);
+        return { total, checks, tipCount };
+      }
+      function confetti() {
+        const box = $('confetti');
+        if (!box || reducedMotion.matches) return;
+        box.innerHTML = '';
+        const colors = ['#c27a82', '#e9c46a', '#f6e6d0', '#793b43', '#9db07a', '#e0a4a9'];
+        for (let i = 0; i < 70; i++) {
+          const piece = document.createElement('i');
+          piece.style.left = `${Math.random() * 100}%`;
+          piece.style.background = colors[i % colors.length];
+          piece.style.animationDelay = `${Math.random() * 0.45}s`;
+          piece.style.setProperty('--dx', `${(Math.random() - 0.5) * 220}px`);
+          piece.style.setProperty('--r', `${Math.random() * 900 - 450}deg`);
+          box.append(piece);
+        }
+        setTimeout(() => (box.innerHTML = ''), 2600);
+      }
+      function deliverOrder() {
+        sceneView?.finishGesture();
+        if (!order || !state.layers.length) return;
+        const result = scoreOrder();
+        const seconds = (performance.now() - order.started) / 1000;
+        const bonus = result.total >= 80 && seconds < 150 ? 5 : 0;
+        const total = Math.min(100, result.total + bonus);
+        const stars = total >= 90 ? 3 : total >= 70 ? 2 : total >= 45 ? 1 : 0;
+        orderStats.done++;
+        orderStats.best = Math.max(orderStats.best, total);
+        orderStats.stars += stars;
+        try {
+          localStorage.setItem('amelie-orders', JSON.stringify(orderStats));
+        } catch {
+          /* Sem armazenamento: placar da sessão. */
+        }
+        $('orderStars').innerHTML = '★'.repeat(stars) + `<span>${'★'.repeat(3 - stars)}</span>`;
+        $('orderStars').setAttribute('aria-label', `${stars} de 3 estrelas`);
+        $('orderScore').textContent = `${total} pontos`;
+        $('orderFeedback').textContent =
+          stars === 3
+            ? `${order.client} ficou encantada(o)! Um bolo digno da vitrine.`
+            : stars === 2
+              ? `${order.client} gostou muito. Alguns detalhes ainda podem brilhar mais.`
+              : stars === 1
+                ? `${order.client} aceitou o bolo, mas esperava algo mais próximo do pedido.`
+                : `O bolo ficou bem diferente do pedido de ${order.client}. Tente de novo!`;
+        $('orderNotes').innerHTML =
+          result.checks
+            .filter((c) => !c.ok)
+            .map((c) => `<li>${c.label}: ${c.got}/${c.pts}</li>`)
+            .join('') + (bonus ? '<li>Bônus de agilidade: +5</li>' : '');
+        $('orderDialog').showModal();
+        if (stars >= 2) confetti();
+        tone(stars >= 2 ? 'success' : 'fail');
+        sceneView?.celebrate?.(stars);
+        notify(`Encomenda entregue: ${total} pontos.`);
+      }
+      $('orderNext').onclick = () => {
+        $('orderDialog').close();
+        newOrder();
+        replace(empty(), 'Nova encomenda! Leia o pedido e monte o bolo.');
+        selectTool('order');
+      };
       const notify = (message) => {
         $('status').textContent = message;
       };
@@ -981,7 +1213,7 @@
         sceneView?.finishGesture();
         tool = id;
         panelOpen = true;
-        if (guided && id !== 'view') step = tools.findIndex((item) => item.id === id);
+        if (guided && id !== 'view' && id !== 'order') step = tools.findIndex((item) => item.id === id);
         refresh();
       }
       function startGuide() {
@@ -1079,6 +1311,15 @@
           void audio.resume().catch(() => notify('Som indisponível neste navegador.'));
           const now = audio.currentTime;
           audioOutput.gain.setTargetAtTime(1, now, 0.01);
+          startAmbience();
+          if (kind === 'success' || kind === 'fail') {
+            const notes = kind === 'success' ? [523.25, 659.25, 783.99, 1046.5] : [392, 349.23, 311.13];
+            notes.forEach((f, i) => chime(f, now + i * 0.11, kind === 'success' ? 0.06 : 0.045, 0.9));
+            lastNote = performance.now();
+            return;
+          }
+          if (kind === 'decor' || kind === 'filling' || kind === 'coat') squish(now, kind === 'decor' ? 0.05 : 0.09);
+          chime((({ layers: 196, filling: 330, coat: 262, decor: 587, view: 440, order: 494 })[kind] ?? 330) * 2, now + 0.005, 0.012, 0.25);
           const osc = audio.createOscillator();
           const gain = audio.createGain();
           const frequencies = { layers: 170, filling: 330, coat: 256, decor: 520, view: 415 };
@@ -1086,7 +1327,7 @@
           osc.frequency.setValueAtTime(frequencies[kind] ?? 330, now);
           osc.frequency.exponentialRampToValueAtTime((frequencies[kind] ?? 330) * 0.65, now + 0.12);
           gain.gain.setValueAtTime(0.001, now);
-          gain.gain.linearRampToValueAtTime(0.045, now + 0.012);
+          gain.gain.linearRampToValueAtTime(0.03, now + 0.012);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
           osc.connect(gain).connect(audioOutput);
           osc.start(now);
@@ -1095,6 +1336,78 @@
         } catch {
           notify('Som indisponível neste navegador.');
         }
+      }
+      function chime(freq, at, level, length) {
+        const osc = audio.createOscillator();
+        const over = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = 'sine';
+        over.type = 'sine';
+        osc.frequency.setValueAtTime(freq, at);
+        over.frequency.setValueAtTime(freq * 2.76, at);
+        const overGain = audio.createGain();
+        overGain.gain.value = 0.18;
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.linearRampToValueAtTime(level, at + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+        osc.connect(gain);
+        over.connect(overGain).connect(gain);
+        gain.connect(audioOutput);
+        osc.start(at);
+        over.start(at);
+        osc.stop(at + length + 0.05);
+        over.stop(at + length + 0.05);
+      }
+      let noiseBuffer = null;
+      function squish(at, length) {
+        if (!noiseBuffer) {
+          noiseBuffer = audio.createBuffer(1, audio.sampleRate * 0.4, audio.sampleRate);
+          const data = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        }
+        const src = audio.createBufferSource();
+        src.buffer = noiseBuffer;
+        const filter = audio.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.Q.value = 2.2;
+        filter.frequency.setValueAtTime(1400, at);
+        filter.frequency.exponentialRampToValueAtTime(380, at + length);
+        const gain = audio.createGain();
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.linearRampToValueAtTime(0.05, at + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+        src.connect(filter).connect(gain).connect(audioOutput);
+        src.start(at);
+        src.stop(at + length + 0.02);
+      }
+      let ambience = null;
+      function startAmbience() {
+        if (ambience || !audio) return;
+        // Ambiente do ateliê: pad quente e caixinha de música esparsa.
+        const bus = audio.createGain();
+        bus.gain.value = 0.0001;
+        bus.gain.setTargetAtTime(0.5, audio.currentTime, 1.5);
+        const lp = audio.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 900;
+        bus.connect(lp).connect(audioOutput);
+        for (const [f, d] of [[130.81, -4], [196, 3], [261.63, 6]]) {
+          const o = audio.createOscillator();
+          o.type = 'triangle';
+          o.frequency.value = f;
+          o.detune.value = d;
+          const g = audio.createGain();
+          g.gain.value = 0.012;
+          o.connect(g).connect(bus);
+          o.start();
+        }
+        const melody = [523.25, 659.25, 587.33, 783.99, 659.25, 523.25, 587.33, 493.88];
+        let index = 0;
+        const timer = setInterval(() => {
+          if (muted || !audio || audio.state !== 'running') return;
+          chime(melody[index++ % melody.length], audio.currentTime + 0.02, 0.014, 1.6);
+        }, 1400);
+        ambience = { bus, timer };
       }
       function download(blob, filename) {
         const link = document.createElement('a');
@@ -1195,6 +1508,13 @@
           html += `${select('Creme de cobertura', 'coat', Object.keys(frostings), settings.coat)}${select('Acabamento', 'finish', finishes, state.finish)}<div class="stack"><button id="apply" class="primary" ${disabled}>Aplicar cobertura</button><button id="uncoat" class="soft" ${state.coat ? '' : 'disabled'}>Retirar cobertura</button></div>`;
         if (tool === 'decor')
           html += `${select('Bico de confeitar', 'tip', tips, settings.kind)}<div class="row swatch-group"><div><label for="color">Cor do creme</label><input id="color" type="color" value="${settings.color}"></div><div><label for="size">Tamanho</label><input id="size" type="range" min="0.06" max="0.19" step="0.01" value="${settings.size}"></div></div><div class="stack"><div class="row"><button id="center" ${disabled}>Centro</button><button id="ring" class="primary" ${disabled}>Coroa</button></div><button id="sprinkle" ${disabled}>Espalhar confeitos</button><button id="clearDecor" class="soft" ${state.decor.length ? '' : 'disabled'}>Limpar decoração</button></div>`;
+        if (tool === 'order') {
+          if (!order) newOrder();
+          const result = scoreOrder();
+          html += `<div class="ticket"><h3>${order.client}</h3><div class="who">Bolo para ${order.occasion}</div><ul>${result.checks
+            .map((c) => `<li class="${c.ok ? 'ok' : ''}"><b>✓</b>${c.label}</li>`)
+            .join('')}</ul><div class="meter" role="progressbar" aria-label="Fidelidade ao pedido" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${result.total}"><i style="width:${result.total}%"></i></div><p class="meta">Fidelidade ao pedido: ${result.total}%</p></div><div class="stack"><button id="deliver" class="primary" ${disabled}>Entregar encomenda</button><div class="row"><button id="orderFresh">Começar vazio</button><button id="orderSkip" class="soft">Outro pedido</button></div></div><p class="meta">${orderStats.done} entregues · recorde ${orderStats.best} pts · ${orderStats.stars} ★</p>`;
+        }
         if (tool === 'view')
           html += `${select('Catálogo da casa', 'preset', ['Escolher receita…', ...recipes.map((recipe) => recipe.name)], 'Escolher receita…')}<div class="stack"><div class="row"><button id="save" class="primary">Salvar</button><button id="load">Reabrir</button></div><div class="row"><button id="export">Exportar JSON</button><button id="import">Importar JSON</button></div><div class="row"><button id="photo" ${sceneView ? '' : 'disabled'}>Salvar PNG</button><button id="compare">${compare ? 'Alternar versão' : 'Guardar versão'}</button></div><button id="new">Começar vazio</button><button id="cta">Consultar composição</button></div>`;
         if (guided)
@@ -1284,6 +1604,13 @@
             guided = false;
             refresh();
           } else startGuide();
+        });
+        bind('deliver', deliverOrder);
+        bind('orderFresh', () => replace(empty(), 'Pedestal vazio. Monte o bolo da encomenda.'));
+        bind('orderSkip', () => {
+          newOrder();
+          renderUI();
+          notify('Novo pedido recebido.');
         });
         bind('save', save);
         bind('load', load);
@@ -1502,7 +1829,7 @@
         el.setAttribute('aria-hidden', 'true');
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.02;
+        renderer.toneMappingExposure = 0.94;
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.shadowMap.autoUpdate = false;
@@ -1521,7 +1848,7 @@
         controls.maxPolarAngle = Math.PI * 0.48;
         const env = new RoomEnvironment();
         const pmrem = new THREE.PMREMGenerator(renderer);
-        const envTarget = pmrem.fromScene(env, 0.06);
+        const envTarget = pmrem.fromScene(env, 0.04);
         scene.environment = envTarget.texture;
         scene.environmentIntensity = 0.45;
         env.dispose?.();
@@ -1546,6 +1873,7 @@
         fillLight.position.set(3, 3, -5);
         scene.add(fillLight);
 
+        let dustMotes = null;
         const textures = new Map();
         const mats = new Map();
         function texture(type, color, relief = false) {
@@ -1654,7 +1982,81 @@
           cyl(0.2, 0.23, 0.23, ceramic, x, 4.59, -4.04);
         }
         box(2.55, 2.5, 0.1, mat('#f4dfc4', 0.8), -3.4, 3.4, -4.29);
-        box(2.32, 2.26, 0.12, new THREE.MeshBasicMaterial({ color: '#f6e8cf' }), -3.4, 3.4, -4.21);
+        {
+          // Janela com céu em gradiente HDR (alimenta o bloom) e feixe de luz com poeira.
+          const sky = document.createElement('canvas');
+          sky.width = 64;
+          sky.height = 128;
+          const sctx = sky.getContext('2d');
+          const grad = sctx.createLinearGradient(0, 0, 0, 128);
+          grad.addColorStop(0, '#fff6e2');
+          grad.addColorStop(0.55, '#ffe2bd');
+          grad.addColorStop(1, '#f7c9a2');
+          sctx.fillStyle = grad;
+          sctx.fillRect(0, 0, 64, 128);
+          const skyTex = new THREE.CanvasTexture(sky);
+          skyTex.colorSpace = THREE.SRGBColorSpace;
+          const glass = new THREE.MeshBasicMaterial({ map: skyTex, color: new THREE.Color(1.9, 1.8, 1.65) });
+          box(2.32, 2.26, 0.12, glass, -3.4, 3.4, -4.21);
+          const beamCanvas = document.createElement('canvas');
+          beamCanvas.width = 32;
+          beamCanvas.height = 128;
+          const bctx = beamCanvas.getContext('2d');
+          const bg = bctx.createLinearGradient(0, 0, 0, 128);
+          bg.addColorStop(0, 'rgba(255,236,205,0.55)');
+          bg.addColorStop(1, 'rgba(255,236,205,0)');
+          bctx.fillStyle = bg;
+          bctx.fillRect(0, 0, 32, 128);
+          const side = bctx.createLinearGradient(0, 0, 32, 0);
+          side.addColorStop(0, 'rgba(0,0,0,1)');
+          side.addColorStop(0.5, 'rgba(0,0,0,0)');
+          side.addColorStop(1, 'rgba(0,0,0,1)');
+          bctx.globalCompositeOperation = 'destination-out';
+          bctx.fillStyle = side;
+          bctx.fillRect(0, 0, 32, 128);
+          const beamTex = new THREE.CanvasTexture(beamCanvas);
+          const beamMat = new THREE.MeshBasicMaterial({
+            map: beamTex,
+            transparent: true,
+            opacity: 0.32,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            fog: false,
+          });
+          for (let i = 0; i < 3; i++) {
+            const beam = new THREE.Mesh(new THREE.PlaneGeometry(1.9 - i * 0.35, 6.2), beamMat);
+            beam.position.set(-2.35 + i * 0.12, 2.45, -2.55 + i * 0.1);
+            beam.rotation.set(-0.62, 0.5 + i * 0.2, 0.55);
+            beam.renderOrder = 2;
+            scene.add(beam);
+          }
+          const dust = new THREE.BufferGeometry();
+          const dustRandom = rng(77);
+          const pts = [];
+          for (let i = 0; i < 140; i++)
+            pts.push(-3.2 + dustRandom() * 2.4, 1.4 + dustRandom() * 3, -3.8 + dustRandom() * 2.6);
+          dust.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+          dustMotes = new THREE.Points(
+            dust,
+            new THREE.PointsMaterial({
+              color: new THREE.Color(1.4, 1.25, 1.05),
+              size: 0.018,
+              transparent: true,
+              opacity: 0.7,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+            }),
+          );
+          scene.add(dustMotes);
+          const key = new THREE.SpotLight(0xffe0bd, 20, 14, 0.42, 0.85, 1.6);
+          key.position.set(-2.6, 5.6, 2.8);
+          key.target.position.set(0, 1.6, 0);
+          scene.add(key, key.target);
+          const rim = new THREE.DirectionalLight(0xffd6c4, 0.9);
+          rim.position.set(2.5, 3.2, -4);
+          scene.add(rim);
+        }
         for (let x of [-4.55, -3.4, -2.25]) box(0.055, 2.34, 0.15, wood, x, 3.4, -4.11);
         for (let y of [2.26, 3.4, 4.54]) box(2.36, 0.055, 0.15, wood, -3.4, y, -4.11);
         function lathe(points, m, x, y, z, p = scene, n = 80) {
@@ -2089,6 +2491,136 @@
         let draggingOrbit = false;
         let cameraNeedsUpdate = false;
 
+        // ===== Pós-processamento próprio (sem addons): bloom suave, grade quente, vinheta, grão =====
+        const post = (() => {
+          const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+          const quadScene = new THREE.Scene();
+          const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+          quad.frustumCulled = false;
+          quadScene.add(quad);
+          const rtOptions = { type: THREE.HalfFloatType, depthBuffer: false };
+          const main = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 });
+          const bloomA = new THREE.WebGLRenderTarget(4, 4, rtOptions);
+          const bloomB = new THREE.WebGLRenderTarget(4, 4, rtOptions);
+          const vertexShader = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+          const bright = new THREE.ShaderMaterial({
+            uniforms: { tDiffuse: { value: null } },
+            vertexShader,
+            fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+              void main(){
+                vec3 c = clamp(texture2D(tDiffuse, vUv).rgb, 0.0, 16.0);
+                float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+                float k = clamp((l - 1.05) / 1.2, 0.0, 1.0);
+                gl_FragColor = vec4(c * k, 1.0);
+              }`,
+            toneMapped: false,
+            depthTest: false,
+            depthWrite: false,
+          });
+          const blur = new THREE.ShaderMaterial({
+            uniforms: { tDiffuse: { value: null }, direction: { value: new THREE.Vector2() } },
+            vertexShader,
+            fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 direction; varying vec2 vUv;
+              void main(){
+                vec3 sum = texture2D(tDiffuse, vUv).rgb * 0.227027;
+                sum += texture2D(tDiffuse, vUv + direction * 1.3846).rgb * 0.316216;
+                sum += texture2D(tDiffuse, vUv - direction * 1.3846).rgb * 0.316216;
+                sum += texture2D(tDiffuse, vUv + direction * 3.2308).rgb * 0.070270;
+                sum += texture2D(tDiffuse, vUv - direction * 3.2308).rgb * 0.070270;
+                gl_FragColor = vec4(clamp(sum, 0.0, 16.0), 1.0);
+              }`,
+            toneMapped: false,
+            depthTest: false,
+            depthWrite: false,
+          });
+          const finalPass = new THREE.ShaderMaterial({
+            uniforms: {
+              tDiffuse: { value: null },
+              tBloom: { value: null },
+              bloomStrength: { value: 0.3 },
+              grain: { value: 0.012 },
+              seed: { value: 0 },
+            },
+            vertexShader,
+            fragmentShader: `uniform sampler2D tDiffuse; uniform sampler2D tBloom; uniform float bloomStrength; uniform float grain; uniform float seed; varying vec2 vUv;
+              float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + seed) * 43758.5453); }
+              void main(){
+                vec3 c = clamp(texture2D(tDiffuse, vUv).rgb, 0.0, 16.0);
+                vec3 b = clamp(texture2D(tBloom, vUv).rgb, 0.0, 16.0);
+                c += b * bloomStrength;
+                float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+                vec3 warm = c * vec3(1.035, 1.0, 0.955);
+                vec3 shadowTint = mix(vec3(0.97, 0.985, 1.03), vec3(1.0), clamp(l * 2.0, 0.0, 1.0));
+                c = max(warm * shadowTint, vec3(0.0));
+                gl_FragColor = vec4(c, 1.0);
+                #include <tonemapping_fragment>
+                #include <colorspace_fragment>
+                vec2 d = vUv - 0.5;
+                float vig = clamp(1.0 - dot(d, d) * 0.62, 0.0, 1.0);
+                gl_FragColor.rgb *= mix(0.86, 1.0, vig);
+                gl_FragColor.rgb += (hash(vUv * 917.0) - 0.5) * grain;
+                gl_FragColor.rgb = clamp(gl_FragColor.rgb, 0.0, 1.0);
+              }`,
+            depthTest: false,
+            depthWrite: false,
+          });
+          let enabled = true;
+          function setSize(w, h, ratio) {
+            const W = Math.max(1, Math.round(w * ratio));
+            const H = Math.max(1, Math.round(h * ratio));
+            main.setSize(W, H);
+            bloomA.setSize(Math.max(1, W >> 2), Math.max(1, H >> 2));
+            bloomB.setSize(Math.max(1, W >> 2), Math.max(1, H >> 2));
+          }
+          function pass(material, target) {
+            quad.material = material;
+            renderer.setRenderTarget(target);
+            renderer.render(quadScene, quadCam);
+          }
+          function render() {
+            if (!enabled) {
+              renderer.setRenderTarget(null);
+              renderer.render(scene, camera);
+              return;
+            }
+            renderer.setRenderTarget(main);
+            renderer.render(scene, camera);
+            bright.uniforms.tDiffuse.value = main.texture;
+            pass(bright, bloomA);
+            blur.uniforms.tDiffuse.value = bloomA.texture;
+            blur.uniforms.direction.value.set(1 / bloomA.width, 0);
+            pass(blur, bloomB);
+            blur.uniforms.tDiffuse.value = bloomB.texture;
+            blur.uniforms.direction.value.set(0, 1 / bloomA.height);
+            pass(blur, bloomA);
+            finalPass.uniforms.tDiffuse.value = main.texture;
+            finalPass.uniforms.tBloom.value = bloomA.texture;
+            finalPass.uniforms.seed.value = (finalPass.uniforms.seed.value + 0.618) % 10;
+            pass(finalPass, null);
+          }
+          function dispose() {
+            for (const t of [main, bloomA, bloomB]) t.dispose();
+            for (const m of [bright, blur, finalPass]) m.dispose();
+            quad.geometry.dispose();
+          }
+          return {
+            setSize,
+            render,
+            dispose,
+            set enabled(v) {
+              enabled = v;
+            },
+            get enabled() {
+              return enabled;
+            },
+          };
+        })();
+        let celebrateUntil = 0;
+        function celebrate(stars) {
+          if (reducedMotion.matches || stars < 2) return;
+          celebrateUntil = performance.now() + 1600;
+          wake();
+        }
         function wake() {
           if (!frameID && !disposed && !document.hidden) frameID = requestAnimationFrame(frame);
         }
@@ -2138,6 +2670,7 @@
           if (key === layoutKey) return;
           layoutKey = key;
           renderer.setSize(width, heightPx, false);
+          post.setSize(width, heightPx, dpr);
           camera.aspect = width / heightPx;
           camera.fov = small ? 46 : 37;
           camera.clearViewOffset();
@@ -2167,6 +2700,8 @@
           }
           renderer.setPixelRatio(dpr);
           renderer.shadowMap.enabled = qualityProfile !== 'Leve';
+          post.enabled = qualityProfile !== 'Leve';
+          layoutKey = '';
           samples = 0;
           sampleTime = 0;
           dirtyShadow();
@@ -2300,10 +2835,21 @@
             }
           }
           cameraNeedsUpdate = false;
+          const celebrating = now < celebrateUntil;
+          if (celebrating) {
+            const t = 1 - (celebrateUntil - now) / 1600;
+            turn.rotation.y += dt * 2.4 * (1 - t);
+            turn.position.y = config.base + Math.sin(t * Math.PI) * 0.06;
+            dirtyShadow();
+          } else if (turn.position.y !== config.base) {
+            turn.position.y = config.base;
+            dirtyShadow();
+          }
+          if (dustMotes && !reducedMotion.matches) dustMotes.rotation.y = Math.sin(now * 0.00012) * 0.05;
           controls.update();
-          renderer.render(scene, camera);
+          post.render();
           spinning = rotation && !gesture;
-          if (draggingOrbit || goal || spinning || particleInstances.size || cameraNeedsUpdate) {
+          if (draggingOrbit || goal || spinning || celebrating || particleInstances.size || cameraNeedsUpdate) {
             samples++;
             sampleTime += elapsed;
             if (sampleTime > 2500) {
@@ -2311,7 +2857,10 @@
               if (quality === 'Auto' && fps < 29 && dpr > 0.76) {
                 dpr = Math.max(0.75, dpr - 0.15);
                 renderer.setPixelRatio(dpr);
-                if (fps < 22 && dpr < 0.85) renderer.shadowMap.enabled = false;
+                if (fps < 22 && dpr < 0.85) {
+                  renderer.shadowMap.enabled = false;
+                  post.enabled = false;
+                }
                 resize(false);
               }
               samples = 0;
@@ -2323,7 +2872,7 @@
         function capture() {
           try {
             dirtyShadow();
-            renderer.render(scene, camera);
+            post.render();
             el.toBlob((blob) => {
               if (!blob) return notify('A imagem não pôde ser capturada.');
               download(blob, 'bolo-maison-amelie.png');
@@ -2352,6 +2901,7 @@
           for (const material of mats.values()) if (!materials.has(material)) material.dispose();
           sun.shadow.map?.dispose();
           envTarget.dispose();
+          post.dispose();
           renderer.dispose();
           el.remove();
         }
@@ -2381,7 +2931,9 @@
           capture,
           dispose,
           finishGesture: endGesture,
+          celebrate,
           stats: () => ({
+            post: post.enabled,
             revision: THREE.REVISION,
             calls: renderer.info.render.calls,
             triangles: renderer.info.render.triangles,
@@ -2428,6 +2980,7 @@
           state: () => copy(state),
           stats: () => sceneView?.stats() ?? null,
           diagnostics,
+          order: () => (order ? { ...order, score: scoreOrder() } : null),
         };
       }
       void startScene();
